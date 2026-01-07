@@ -184,7 +184,7 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
         <div className="max-w-7xl mx-auto w-full">
           {/* Movie Title */}
           <h1 
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3 leading-none tracking-tight"
+            className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-2 md:mb-3 leading-none tracking-tight"
             style={{ 
               fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif",
               textShadow: '2px 4px 20px rgba(0,0,0,0.8)'
@@ -194,14 +194,14 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
           </h1>
 
           {/* Meta Info Row */}
-          <div className="flex flex-wrap items-center gap-3 mb-5 text-sm text-white/80">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5 text-xs md:text-sm text-white/80">
             <span>{new Date().getFullYear()}</span>
             <span className="w-1 h-1 rounded-full" style={{ backgroundColor: primaryColor }} />
             <span>{formatDuration(currentMovie.duration_minutes)}</span>
             {currentMovie.rating && (
               <>
                 <span className="w-1 h-1 rounded-full" style={{ backgroundColor: primaryColor }} />
-                <span className="px-2 py-0.5 border border-white/40 rounded text-xs">
+                <span className="px-1.5 md:px-2 py-0.5 border border-white/40 rounded text-xs">
                   {currentMovie.rating}
                 </span>
               </>
@@ -209,11 +209,11 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 mb-5">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5">
             <Link to={`/cinema/${cinemaSlug}#movies`}>
               <Button
-                size="default"
-                className="font-semibold px-5 py-2 text-sm rounded-md hover:opacity-90 transition-opacity"
+                size="sm"
+                className="font-semibold px-4 md:px-5 py-1.5 md:py-2 text-xs md:text-sm rounded-md hover:opacity-90 transition-opacity"
                 style={{ 
                   backgroundColor: primaryColor, 
                   color: '#000' 
@@ -227,9 +227,9 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
               <Dialog>
                 <DialogTrigger asChild>
                   <Button
-                    size="default"
+                    size="sm"
                     variant="outline"
-                    className="font-semibold px-5 py-2 text-sm rounded-md border text-white hover:bg-white/10 transition-colors"
+                    className="font-semibold px-4 md:px-5 py-1.5 md:py-2 text-xs md:text-sm rounded-md border text-white hover:bg-white/10 transition-colors"
                     style={{ borderColor: 'rgba(255,255,255,0.4)' }}
                   >
                     Review
@@ -251,9 +251,9 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
               </Dialog>
             ) : (
               <Button
-                size="default"
+                size="sm"
                 variant="outline"
-                className="font-semibold px-5 py-2 text-sm rounded-md border text-white hover:bg-white/10 transition-colors"
+                className="font-semibold px-4 md:px-5 py-1.5 md:py-2 text-xs md:text-sm rounded-md border text-white hover:bg-white/10 transition-colors"
                 style={{ borderColor: 'rgba(255,255,255,0.4)' }}
               >
                 Review
@@ -261,9 +261,9 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             )}
 
             <Button
-              size="default"
+              size="sm"
               variant="ghost"
-              className="font-semibold px-5 py-2 text-sm rounded-md text-white hover:bg-white/10 transition-colors"
+              className="font-semibold px-4 md:px-5 py-1.5 md:py-2 text-xs md:text-sm rounded-md text-white hover:bg-white/10 transition-colors"
             >
               More
             </Button>
