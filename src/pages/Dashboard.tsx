@@ -13,6 +13,7 @@ import { ChartCard } from '@/components/dashboard/ChartCard';
 import { RecentBookingsTable } from '@/components/dashboard/RecentBookingsTable';
 import { BookingStatusChart } from '@/components/dashboard/BookingStatusChart';
 import { WebsiteStatsWidget } from '@/components/dashboard/WebsiteStatsWidget';
+import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { WelcomeTour, useTour } from '@/components/dashboard/WelcomeTour';
 import {
   DollarSign,
@@ -258,7 +259,7 @@ export default function Dashboard() {
           </div>
 
           {/* Charts & Widgets Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
             {/* Website Stats Widget */}
             <WebsiteStatsWidget 
               organizationId={profile?.organization_id} 
@@ -346,6 +347,9 @@ export default function Dashboard() {
                 </div>
               </div>
             </ChartCard>
+
+            {/* Low Stock Widget */}
+            <LowStockWidget organizationId={profile?.organization_id} />
           </div>
 
           {/* Bottom Row */}

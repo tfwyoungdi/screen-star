@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, AlertTriangle } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, AlertTriangle, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -47,6 +47,9 @@ export default function ConcessionManagement() {
   const { data: profile } = useUserProfile();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const {
@@ -83,6 +86,56 @@ export default function ConcessionManagement() {
     },
     enabled: !!profile?.organization_id,
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.organization_id) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.organization_id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('concession-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('concession-images')
+        .getPublicUrl(fileName);
+
+      setValue('image_url', publicUrl);
+      setImagePreview(publicUrl);
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const clearImage = () => {
+    setValue('image_url', '');
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const onSubmit = async (data: ItemFormData) => {
     if (!profile?.organization_id) return;
@@ -125,8 +178,10 @@ export default function ConcessionManagement() {
       }
 
       queryClient.invalidateQueries({ queryKey: ['concession-items'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
       reset();
       setEditingItem(null);
+      setImagePreview(null);
       setDialogOpen(false);
     } catch (error) {
       console.error('Error saving item:', error);
@@ -168,6 +223,7 @@ export default function ConcessionManagement() {
 
   const openEditDialog = (item: any) => {
     setEditingItem(item);
+    setImagePreview(item.image_url || null);
     reset({
       name: item.name,
       description: item.description || '',
@@ -183,6 +239,7 @@ export default function ConcessionManagement() {
 
   const openAddDialog = () => {
     setEditingItem(null);
+    setImagePreview(null);
     reset({
       name: '',
       description: '',
@@ -300,9 +357,55 @@ export default function ConcessionManagement() {
                   </div>
                 </div>
 
+                {/* Image Upload */}
                 <div className="space-y-2">
-                  <Label>Image URL (optional)</Label>
-                  <Input {...register('image_url')} placeholder="https://..." />
+                  <Label>Item Image</Label>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                  
+                  {imagePreview ? (
+                    <div className="relative w-full h-32 rounded-lg overflow-hidden border bg-muted">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6"
+                        onClick={clearImage}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/50 transition-colors"
+                    >
+                      {uploadingImage ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <Upload className="h-6 w-6 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Click to upload image</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-muted-foreground">Or enter URL:</div>
+                  <Input {...register('image_url')} placeholder="https://..." onChange={(e) => {
+                    setValue('image_url', e.target.value);
+                    if (e.target.value) setImagePreview(e.target.value);
+                  }} />
                 </div>
 
                 {/* Inventory Tracking */}
