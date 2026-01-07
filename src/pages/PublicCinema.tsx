@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar, Play, X } from 'lucide-react';
+import { CinemaHero } from '@/components/public/CinemaHero';
 
 interface CinemaData {
   id: string;
@@ -240,21 +241,12 @@ export default function PublicCinema() {
       </header>
 
       {/* Hero */}
-      <section
-        className="py-16 text-center"
-        style={{
-          background: `linear-gradient(135deg, ${cinema?.secondary_color || '#1a1a2e'} 0%, ${cinema?.primary_color}20 100%)`,
-        }}
-      >
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Welcome to {cinema?.name}
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Experience the magic of cinema. Browse our latest movies and book your tickets online.
-          </p>
-        </div>
-      </section>
+      <CinemaHero 
+        movies={movies}
+        cinemaSlug={slug!}
+        cinemaName={cinema?.name || ''}
+        primaryColor={cinema?.primary_color || '#D4AF37'}
+      />
 
       {/* Now Showing */}
       <section id="movies" className="py-16 bg-background">
