@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format, addDays, parse } from 'date-fns';
-import { Loader2, Plus, Calendar, Clock, Trash2, Film, Monitor, CalendarPlus } from 'lucide-react';
+import { format, addDays, addMinutes, isWithinInterval } from 'date-fns';
+import { Loader2, Plus, Calendar, Clock, Trash2, Film, Monitor, CalendarPlus, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +33,14 @@ const bulkShowtimeSchema = z.object({
 
 type BulkShowtimeFormData = z.infer<typeof bulkShowtimeSchema>;
 
+interface ConflictInfo {
+  newStart: Date;
+  newEnd: Date;
+  existingMovie: string;
+  existingStart: Date;
+  existingEnd: Date;
+}
+
 const COMMON_TIMES = [
   { label: '10:00 AM', value: '10:00' },
   { label: '12:30 PM', value: '12:30' },
@@ -41,11 +50,14 @@ const COMMON_TIMES = [
   { label: '9:30 PM', value: '21:30' },
 ];
 
+const BUFFER_MINUTES = 15; // Buffer between showtimes for cleaning/previews
+
 export default function ShowtimeManagement() {
   const { data: profile } = useUserProfile();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [customTime, setCustomTime] = useState('');
+  const [conflicts, setConflicts] = useState<ConflictInfo[]>([]);
   const queryClient = useQueryClient();
 
   const {
@@ -131,6 +143,81 @@ export default function ShowtimeManagement() {
     }
   };
 
+  // Check for conflicts when form values change
+  const checkConflicts = (
+    movieId: string,
+    screenId: string,
+    startDate: string,
+    endDate: string,
+    times: string[]
+  ): ConflictInfo[] => {
+    if (!movieId || !screenId || !startDate || !endDate || times.length === 0 || !showtimes || !movies) {
+      return [];
+    }
+
+    const selectedMovie = movies.find(m => m.id === movieId);
+    if (!selectedMovie) return [];
+
+    const movieDuration = selectedMovie.duration_minutes + BUFFER_MINUTES;
+    const foundConflicts: ConflictInfo[] = [];
+
+    // Get existing showtimes for this screen
+    const screenShowtimes = showtimes.filter(s => s.screen_id === screenId);
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    let currentDate = start;
+
+    while (currentDate <= end) {
+      for (const time of times) {
+        const [hours, minutes] = time.split(':').map(Number);
+        const newShowtimeStart = new Date(currentDate);
+        newShowtimeStart.setHours(hours, minutes, 0, 0);
+        const newShowtimeEnd = addMinutes(newShowtimeStart, movieDuration);
+
+        // Check against existing showtimes
+        for (const existing of screenShowtimes) {
+          const existingStart = new Date(existing.start_time);
+          const existingDuration = (existing.movies?.duration_minutes || 120) + BUFFER_MINUTES;
+          const existingEnd = addMinutes(existingStart, existingDuration);
+
+          // Check for overlap: new showtime overlaps if it starts before existing ends AND ends after existing starts
+          const hasOverlap = newShowtimeStart < existingEnd && newShowtimeEnd > existingStart;
+
+          if (hasOverlap) {
+            foundConflicts.push({
+              newStart: newShowtimeStart,
+              newEnd: newShowtimeEnd,
+              existingMovie: existing.movies?.title || 'Unknown',
+              existingStart,
+              existingEnd,
+            });
+          }
+        }
+      }
+      currentDate = addDays(currentDate, 1);
+    }
+
+    return foundConflicts;
+  };
+
+  // Watch form values for conflict detection
+  const watchedMovieId = watch('movie_id');
+  const watchedScreenId = watch('screen_id');
+  const watchedStartDate = watch('start_date');
+  const watchedEndDate = watch('end_date');
+
+  // Memoize conflict detection to avoid recalculating on every render
+  const detectedConflicts = useMemo(() => {
+    return checkConflicts(
+      watchedMovieId,
+      watchedScreenId,
+      watchedStartDate,
+      watchedEndDate,
+      selectedTimes
+    );
+  }, [watchedMovieId, watchedScreenId, watchedStartDate, watchedEndDate, selectedTimes, showtimes, movies]);
+
   const onSubmit = async (data: BulkShowtimeFormData) => {
     if (!profile?.organization_id) return;
 
@@ -182,6 +269,7 @@ export default function ShowtimeManagement() {
       toast.success(`Created ${showtimesToCreate.length} showtimes successfully`);
       reset();
       setSelectedTimes([]);
+      setConflicts([]);
       setDialogOpen(false);
     } catch (error) {
       console.error('Error creating showtimes:', error);
@@ -401,11 +489,53 @@ export default function ShowtimeManagement() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {/* Conflict Warning */}
+                {detectedConflicts.length > 0 && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Scheduling Conflicts Detected</AlertTitle>
+                    <AlertDescription>
+                      <p className="mb-2">
+                        {detectedConflicts.length} showtime(s) will overlap with existing screenings on this screen:
+                      </p>
+                      <ul className="text-xs space-y-1 max-h-32 overflow-y-auto">
+                        {detectedConflicts.slice(0, 5).map((conflict, i) => (
+                          <li key={i} className="flex items-start gap-1">
+                            <span>•</span>
+                            <span>
+                              {format(conflict.newStart, 'MMM d, h:mm a')} conflicts with "{conflict.existingMovie}" 
+                              ({format(conflict.existingStart, 'h:mm a')} - {format(conflict.existingEnd, 'h:mm a')})
+                            </span>
+                          </li>
+                        ))}
+                        {detectedConflicts.length > 5 && (
+                          <li className="text-muted-foreground">
+                            ...and {detectedConflicts.length - 5} more conflicts
+                          </li>
+                        )}
+                      </ul>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        You can still proceed, but overlapping showtimes may cause scheduling issues.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isSubmitting}
+                  variant={detectedConflicts.length > 0 ? 'destructive' : 'default'}
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating...
+                    </>
+                  ) : detectedConflicts.length > 0 ? (
+                    <>
+                      <AlertTriangle className="mr-2 h-4 w-4" />
+                      Create Anyway ({detectedConflicts.length} conflicts)
                     </>
                   ) : (
                     'Create Showtimes'
