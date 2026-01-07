@@ -826,6 +826,42 @@ export default function ShowtimeManagement() {
                           </TableRow>
                         );
                       })}
+                      {/* Summary row for past showtimes */}
+                      {timeFilter === 'past' && dateShowtimes && dateShowtimes.length > 0 && (
+                        (() => {
+                          const dayTotals = dateShowtimes.reduce(
+                            (acc, s) => {
+                              const stats = bookingStats?.[s.id];
+                              return {
+                                tickets: acc.tickets + (stats?.count || 0),
+                                capacity: acc.capacity + (stats?.capacity || 0),
+                                revenue: acc.revenue + (stats?.revenue || 0),
+                              };
+                            },
+                            { tickets: 0, capacity: 0, revenue: 0 }
+                          );
+                          return (
+                            <TableRow className="bg-muted/50 font-medium">
+                              <TableCell colSpan={4} className="text-right">
+                                Daily Total
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  <Badge variant="default" className="w-fit gap-1">
+                                    <Ticket className="h-3 w-3" />
+                                    {dayTotals.tickets} / {dayTotals.capacity} tickets
+                                  </Badge>
+                                  <Badge className="w-fit gap-1 bg-emerald-600 hover:bg-emerald-600">
+                                    <DollarSign className="h-3 w-3" />
+                                    ${dayTotals.revenue.toFixed(0)} total
+                                  </Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell colSpan={2} />
+                            </TableRow>
+                          );
+                        })()
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
