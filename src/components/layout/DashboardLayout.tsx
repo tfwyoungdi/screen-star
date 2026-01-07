@@ -186,7 +186,7 @@ function SidebarContentWrapper() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {organization && !isCollapsed && (
+          {organization && (
             <SidebarGroup className="mt-4">
               <SidebarGroupContent>
                 <SidebarMenu className="px-2">
@@ -196,11 +196,16 @@ function SidebarContentWrapper() {
                         href={`/cinema/${organization.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sidebar-accent transition-colors"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 text-primary transition-colors"
+                        title="View Public Website"
                       >
-                        <Globe className="h-[18px] w-[18px] text-muted-foreground" />
-                        <span className="text-sm flex-1">Public Site</span>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        <Globe className="h-[18px] w-[18px]" />
+                        {!isCollapsed && (
+                          <>
+                            <span className="text-sm flex-1">View Public Website</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </>
+                        )}
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
