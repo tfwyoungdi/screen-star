@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
-import { Loader2, DollarSign, Ticket, TrendingUp, Calendar, Film, Users } from 'lucide-react';
+import { Loader2, DollarSign, Ticket, TrendingUp, Calendar, Film, Users, Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useExportReports } from '@/hooks/useExportReports';
 import {
   BarChart,
   Bar,
@@ -28,6 +30,7 @@ const COLORS = ['hsl(38, 95%, 55%)', 'hsl(0, 70%, 50%)', 'hsl(200, 70%, 50%)', '
 
 export default function SalesDashboard() {
   const { data: profile } = useUserProfile();
+  const { exportToCSV, exportToPDF } = useExportReports();
   const [dateRange, setDateRange] = useState('7');
 
   const startDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
@@ -138,17 +141,37 @@ export default function SalesDashboard() {
             </p>
           </div>
 
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="14">Last 14 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-              <SelectItem value="90">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToCSV(bookings || [], 'sales-report')}
+              disabled={!bookings || bookings.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToPDF(bookings || [], `Sales Report - Last ${dateRange} Days`)}
+              disabled={!bookings || bookings.length === 0}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 days</SelectItem>
+                <SelectItem value="14">Last 14 days</SelectItem>
+                <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last 90 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {isLoading ? (
