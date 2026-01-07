@@ -73,7 +73,7 @@ function SidebarContentWrapper() {
     <Sidebar
       className={cn(
         'border-r border-sidebar-border bg-sidebar transition-all duration-300',
-        isCollapsed ? 'w-[70px]' : 'w-[260px]'
+        isCollapsed ? 'w-[70px]' : 'w-[240px]'
       )}
       collapsible="icon"
     >
@@ -85,29 +85,18 @@ function SidebarContentWrapper() {
               <img
                 src={organization.logo_url}
                 alt={organization.name}
-                className="h-10 w-10 rounded-xl object-cover shadow-sm"
+                className="h-9 w-9 rounded-xl object-cover"
               />
             ) : (
-              <div className="h-10 w-10 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-md">
+              <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center">
                 <Clapperboard className="h-5 w-5 text-primary-foreground" />
               </div>
             )}
           </div>
           {!isCollapsed && (
-            <div className="flex-1 min-w-0 overflow-hidden">
-              {loading ? (
-                <Skeleton className="h-5 w-24" />
-              ) : (
-                <>
-                  <span className="font-bold text-sidebar-foreground block truncate">
-                    {organization?.name || 'CineTix'}
-                  </span>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Cinema Dashboard
-                  </p>
-                </>
-              )}
-            </div>
+            <span className="font-bold text-sidebar-foreground truncate">
+              {organization?.name || 'CineTix'}
+            </span>
           )}
         </div>
       </div>
@@ -116,13 +105,13 @@ function SidebarContentWrapper() {
         <SidebarContent>
           <SidebarGroup>
             {!isCollapsed && (
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-semibold px-4 mb-2">
+              <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium px-4 mb-2">
                 Menu
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5 px-2">
-                {navItems.map((item) => {
+                {navItems.slice(0, 7).map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
@@ -131,22 +120,60 @@ function SidebarContentWrapper() {
                           to={item.url}
                           end={item.url === '/dashboard'}
                           className={cn(
-                            'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
-                            'hover:bg-sidebar-accent group',
+                            'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150',
+                            'hover:bg-sidebar-accent',
                             isActive && 'bg-primary/10 text-primary'
                           )}
                           activeClassName="bg-primary/10 text-primary font-medium"
                         >
                           <item.icon
                             className={cn(
-                              'h-[18px] w-[18px] flex-shrink-0 transition-colors',
-                              isActive
-                                ? 'text-primary'
-                                : 'text-muted-foreground group-hover:text-foreground'
+                              'h-[18px] w-[18px] flex-shrink-0',
+                              isActive ? 'text-primary' : 'text-muted-foreground'
                             )}
                           />
                           {!isCollapsed && (
-                            <span className="text-sm font-medium">{item.title}</span>
+                            <span className="text-sm">{item.title}</span>
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup className="mt-6">
+            {!isCollapsed && (
+              <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium px-4 mb-2">
+                General
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-0.5 px-2">
+                {navItems.slice(7).map((item) => {
+                  const isActive = location.pathname === item.url;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className={cn(
+                            'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150',
+                            'hover:bg-sidebar-accent',
+                            isActive && 'bg-primary/10 text-primary'
+                          )}
+                          activeClassName="bg-primary/10 text-primary font-medium"
+                        >
+                          <item.icon
+                            className={cn(
+                              'h-[18px] w-[18px] flex-shrink-0',
+                              isActive ? 'text-primary' : 'text-muted-foreground'
+                            )}
+                          />
+                          {!isCollapsed && (
+                            <span className="text-sm">{item.title}</span>
                           )}
                         </NavLink>
                       </SidebarMenuButton>
@@ -158,10 +185,7 @@ function SidebarContentWrapper() {
           </SidebarGroup>
 
           {organization && !isCollapsed && (
-            <SidebarGroup className="mt-6">
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-semibold px-4 mb-2">
-                External
-              </SidebarGroupLabel>
+            <SidebarGroup className="mt-4">
               <SidebarGroupContent>
                 <SidebarMenu className="px-2">
                   <SidebarMenuItem>
@@ -170,10 +194,10 @@ function SidebarContentWrapper() {
                         href={`/cinema/${organization.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sidebar-accent transition-colors group"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sidebar-accent transition-colors"
                       >
-                        <Globe className="h-[18px] w-[18px] text-muted-foreground group-hover:text-foreground transition-colors" />
-                        <span className="text-sm font-medium flex-1">Public Site</span>
+                        <Globe className="h-[18px] w-[18px] text-muted-foreground" />
+                        <span className="text-sm flex-1">Public Site</span>
                         <ExternalLink className="h-3 w-3 text-muted-foreground" />
                       </a>
                     </SidebarMenuButton>
@@ -197,7 +221,7 @@ function SidebarContentWrapper() {
           onClick={handleSignOut}
         >
           <LogOut className="h-[18px] w-[18px]" />
-          {!isCollapsed && <span className="ml-2 font-medium">Logout</span>}
+          {!isCollapsed && <span className="ml-2">Logout</span>}
         </Button>
       </div>
     </Sidebar>

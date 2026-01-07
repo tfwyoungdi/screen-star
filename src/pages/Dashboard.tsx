@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
@@ -8,7 +7,6 @@ import { useRealtimeBookings, useRealtimeShowtimes, useRealtimeMovies } from '@/
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { QuickAction } from '@/components/dashboard/QuickAction';
 import { ChartCard } from '@/components/dashboard/ChartCard';
@@ -22,34 +20,15 @@ import {
   Users,
   Settings,
   TrendingUp,
-  ArrowRight,
-  Zap,
   Plus,
-  Radio,
-  HelpCircle,
 } from 'lucide-react';
 import {
-  AreaChart,
-  Area,
   XAxis,
-  YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
 } from 'recharts';
-import {
-  Tooltip as UITooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-
-const CHART_COLORS = {
-  primary: 'hsl(25, 95%, 53%)',
-  secondary: 'hsl(173, 58%, 39%)',
-  tertiary: 'hsl(197, 71%, 52%)',
-};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -194,34 +173,24 @@ export default function Dashboard() {
       {showTour && <WelcomeTour onComplete={() => setShowTour(false)} />}
 
       {loading ? (
-        <div className="space-y-8">
-          <Skeleton className="h-12 w-80" />
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-60" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-36 rounded-2xl" />
+              <Skeleton key={i} className="h-32 rounded-2xl" />
             ))}
           </div>
         </div>
       ) : (
-        <div className="space-y-8">
-          {/* Welcome Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground" data-tour="dashboard">
-                  Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {firstName}
-                </h1>
-                <Badge variant="secondary" className="hidden sm:flex gap-1 text-xs font-medium">
-                  <Zap className="h-3 w-3" />
-                  Pro Plan
-                </Badge>
-                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <Radio className="h-3 w-3 animate-pulse" />
-                  <span className="text-xs font-medium">Live</span>
-                </div>
-              </div>
-              <p className="text-muted-foreground">
-                Here's what's happening with your cinema today
+              <h1 className="text-2xl font-bold text-foreground" data-tour="dashboard">
+                Dashboard
+              </h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Plan, prioritize, and accomplish your tasks with ease.
                 {newBookingsCount > 0 && (
                   <span className="ml-2 text-primary font-medium">
                     • {newBookingsCount} new booking{newBookingsCount > 1 ? 's' : ''}!
@@ -230,29 +199,12 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex gap-2">
-              <UITooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      localStorage.removeItem('cinetix_tour_completed');
-                      setShowTour(true);
-                    }}
-                    className="text-muted-foreground"
-                  >
-                    <HelpCircle className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Restart tour</TooltipContent>
-              </UITooltip>
-              <Button variant="outline" onClick={() => navigate('/sales')} className="gap-2">
-                View Analytics
-                <ArrowRight className="h-4 w-4" />
-              </Button>
               <Button onClick={() => navigate('/movies')} className="gap-2" data-tour="movies">
                 <Plus className="h-4 w-4" />
                 Add Movie
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/sales')}>
+                Import Data
               </Button>
             </div>
           </div>
@@ -261,130 +213,119 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title="Total Revenue"
-              value={`$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-              subtitle={`${totalBookings} orders this week`}
+              value={`$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
               icon={DollarSign}
               variant="primary"
-              trend={{ value: 12.5, label: 'vs last week' }}
+              trend={{ value: 12.5, label: 'Increased from last month' }}
             />
             <StatCard
               title="Tickets Sold"
               value={totalTickets.toLocaleString()}
-              subtitle="Last 7 days"
               icon={Ticket}
-              variant="success"
-              trend={{ value: 8.2, label: 'vs last week' }}
+              trend={{ value: 8.2, label: 'Increased from last month' }}
             />
             <StatCard
               title="Active Movies"
               value={activeMovies}
-              subtitle="Currently showing"
               icon={Film}
-              variant="info"
+              trend={{ value: 5, label: 'Increased from last month' }}
             />
             <StatCard
               title="Upcoming Shows"
               value={scheduledShowtimes}
-              subtitle="Scheduled screenings"
               icon={Calendar}
-              variant="warning"
+              subtitle="On Schedule"
             />
           </div>
 
-          {/* Charts & Quick Actions Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Revenue Chart */}
+          {/* Charts & Widgets Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Project Analytics Chart */}
             <ChartCard
-              title="Revenue Overview"
-              subtitle="Last 7 days performance"
-              icon={TrendingUp}
-              className="lg:col-span-2"
-              actions={[
-                { label: 'View Details', onClick: () => navigate('/sales') },
-                { label: 'Export Data', onClick: () => {} },
-              ]}
+              title="Project Analytics"
+              className="lg:col-span-1"
             >
               {dailyRevenueData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={280}>
-                  <AreaChart data={dailyRevenueData}>
-                    <defs>
-                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.2} />
-                        <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={dailyRevenueData} barGap={8}>
                     <XAxis
                       dataKey="day"
                       stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
+                      fontSize={11}
                       tickLine={false}
                       axisLine={false}
-                    />
-                    <YAxis
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value) => `$${value}`}
                     />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '12px',
-                        boxShadow: 'var(--shadow-lg)',
+                        borderRadius: '8px',
                       }}
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                      formatter={(value: number) => [`$${value.toFixed(0)}`, 'Revenue']}
                     />
-                    <Area
-                      type="monotone"
+                    <Bar
                       dataKey="revenue"
-                      stroke={CHART_COLORS.primary}
-                      strokeWidth={2.5}
-                      fill="url(#revenueGradient)"
+                      fill="hsl(var(--primary))"
+                      radius={[20, 20, 20, 20]}
+                      maxBarSize={32}
                     />
-                  </AreaChart>
+                  </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[280px] flex flex-col items-center justify-center text-center">
-                  <div className="p-4 rounded-full bg-secondary mb-4">
-                    <TrendingUp className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <p className="font-medium text-foreground">No revenue data yet</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Revenue will appear here once you start selling tickets
-                  </p>
+                <div className="h-[200px] flex flex-col items-center justify-center text-center">
+                  <TrendingUp className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No data yet</p>
                 </div>
               )}
             </ChartCard>
 
-            {/* Quick Actions */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-foreground">Quick Actions</h2>
+            {/* Reminders / Upcoming */}
+            <ChartCard
+              title="Reminders"
+              className="lg:col-span-1"
+            >
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-foreground text-lg">
+                    {scheduledShowtimes > 0 ? 'Next Showtime' : 'No Showtimes'}
+                  </h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Time: {scheduledShowtimes > 0 ? 'Check showtimes' : 'Schedule one'}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => navigate('/showtimes')}
+                  className="w-full gap-2"
+                  data-tour="showtimes"
+                >
+                  <Calendar className="h-4 w-4" />
+                  View Showtimes
+                </Button>
               </div>
-              <div className="space-y-2">
+            </ChartCard>
+
+            {/* Quick Links */}
+            <ChartCard
+              title="Quick Actions"
+              actionLabel="New"
+              onActionClick={() => navigate('/movies')}
+              className="lg:col-span-1"
+            >
+              <div className="space-y-1">
                 <QuickAction
-                  title="Add New Movie"
-                  description="Upload poster and details"
+                  title="Movies"
                   icon={Film}
                   onClick={() => navigate('/movies')}
-                  variant="gradient"
+                  variant="primary"
                 />
-                <div data-tour="showtimes">
-                  <QuickAction
-                    title="Schedule Showtime"
-                    description="Create new screening"
-                    icon={Calendar}
-                    onClick={() => navigate('/showtimes')}
-                    variant="primary"
-                  />
-                </div>
+                <QuickAction
+                  title="Showtimes"
+                  icon={Calendar}
+                  onClick={() => navigate('/showtimes')}
+                />
                 <div data-tour="staff">
                   <QuickAction
-                    title="Manage Staff"
-                    description="Add team members"
+                    title="Staff"
                     icon={Users}
                     onClick={() => navigate('/staff')}
                   />
@@ -392,61 +333,37 @@ export default function Dashboard() {
                 <div data-tour="settings">
                   <QuickAction
                     title="Settings"
-                    description="Configure your cinema"
                     icon={Settings}
                     onClick={() => navigate('/settings')}
                   />
                 </div>
               </div>
-            </div>
+            </ChartCard>
           </div>
 
           {/* Bottom Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Top Movies Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Top Movies */}
             <ChartCard
-              title="Top Performing Movies"
-              subtitle="By revenue this week"
-              icon={Film}
+              title="Top Movies"
               className="lg:col-span-1"
             >
               {movieRevenueData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={movieRevenueData} layout="vertical" margin={{ left: 0, right: 20 }}>
-                    <XAxis
-                      type="number"
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value) => `$${value}`}
-                    />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      width={80}
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '12px',
-                      }}
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
-                    />
-                    <Bar
-                      dataKey="value"
-                      fill={CHART_COLORS.primary}
-                      radius={[0, 6, 6, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="space-y-3">
+                  {movieRevenueData.map((movie, index) => (
+                    <div key={movie.name} className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Film className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{movie.name}</p>
+                        <p className="text-xs text-muted-foreground">${movie.value.toFixed(0)} revenue</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div className="h-[220px] flex flex-col items-center justify-center text-center">
+                <div className="py-8 flex flex-col items-center justify-center text-center">
                   <Film className="h-8 w-8 text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">No movie data yet</p>
                 </div>
@@ -456,11 +373,9 @@ export default function Dashboard() {
             {/* Recent Bookings */}
             <ChartCard
               title="Recent Bookings"
-              subtitle="Latest ticket purchases"
-              icon={Ticket}
               className="lg:col-span-2"
               actions={[
-                { label: 'View All', onClick: () => navigate('/sales') },
+                { label: 'View All →', onClick: () => navigate('/sales') },
               ]}
             >
               <div data-tour="sales">

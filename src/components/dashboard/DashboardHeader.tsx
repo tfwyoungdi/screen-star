@@ -50,7 +50,7 @@ export function DashboardHeader({
   return (
     <>
       <CommandPalette />
-      <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
+      <header className="h-16 border-b border-border bg-background flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <SidebarTrigger className="p-2 hover:bg-secondary rounded-lg transition-colors">
             <Menu className="h-5 w-5" />
@@ -59,27 +59,27 @@ export function DashboardHeader({
           {showSearch && (
             <Button
               variant="outline"
-              className="hidden md:flex items-center gap-2 w-[280px] lg:w-[360px] justify-start text-muted-foreground bg-secondary/50 border-border hover:border-primary/30 hover:bg-secondary"
+              className="hidden md:flex items-center gap-2 w-[240px] lg:w-[320px] justify-start text-muted-foreground bg-background border-border hover:border-border hover:bg-secondary/50"
               onClick={() => {
                 document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
               }}
             >
               <Search className="h-4 w-4" />
-              <span className="flex-1 text-left text-sm">Search anything...</span>
-              <kbd className="pointer-events-none hidden lg:inline-flex h-5 select-none items-center gap-0.5 rounded-md border border-border bg-card px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              <span className="flex-1 text-left text-sm">Search task</span>
+              <kbd className="pointer-events-none hidden lg:inline-flex h-5 select-none items-center gap-0.5 rounded border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
                 <Command className="h-3 w-3" />
-                <span>K</span>
+                <span>F</span>
               </kbd>
             </Button>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {showAddButton && (
             <Button
               onClick={onAddClick}
               size="sm"
-              className="gap-1.5 rounded-lg shadow-md shadow-primary/10"
+              className="gap-1.5 rounded-lg"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{addButtonLabel}</span>
@@ -88,23 +88,26 @@ export function DashboardHeader({
 
           <ThemeToggle />
 
-          <Button variant="ghost" size="icon" className="relative rounded-lg">
+          <Button variant="ghost" size="icon" className="relative rounded-lg text-muted-foreground hover:text-foreground">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full ring-2 ring-card" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-10 w-10 rounded-full ring-2 ring-border hover:ring-primary/30 transition-all ml-1"
+                className="flex items-center gap-3 h-auto py-1.5 px-2 rounded-xl hover:bg-secondary/50"
               >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={organization?.logo_url || undefined} alt={profile?.full_name || 'Admin'} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                <Avatar className="h-9 w-9 border-2 border-border">
+                  <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || 'Admin'} />
+                  <AvatarFallback className="bg-secondary text-foreground font-medium text-sm">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
+                <div className="hidden lg:block text-left">
+                  <p className="text-sm font-medium text-foreground leading-tight">{profile?.full_name || 'Admin'}</p>
+                  <p className="text-xs text-muted-foreground leading-tight">{profile?.email}</p>
+                </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 rounded-xl" align="end" forceMount>
