@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2 } from 'lucide-react';
+import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2, Popcorn, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -54,6 +54,20 @@ interface BookingData {
   customer_phone: string;
 }
 
+interface ConcessionItem {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  category: string;
+  image_url: string | null;
+}
+
+interface SelectedConcession {
+  item: ConcessionItem;
+  quantity: number;
+}
+
 export default function BookingFlow() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
@@ -61,7 +75,7 @@ export default function BookingFlow() {
   const paymentStatus = searchParams.get('status');
   const paymentRef = searchParams.get('ref');
 
-  const [step, setStep] = useState<'seats' | 'details' | 'payment' | 'confirmation'>('seats');
+  const [step, setStep] = useState<'seats' | 'snacks' | 'details' | 'payment' | 'confirmation'>('seats');
   const [showtime, setShowtime] = useState<Showtime | null>(null);
   const [seatLayouts, setSeatLayouts] = useState<any[]>([]);
   const [bookedSeats, setBookedSeats] = useState<any[]>([]);
@@ -81,6 +95,8 @@ export default function BookingFlow() {
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [concessionItems, setConcessionItems] = useState<ConcessionItem[]>([]);
+  const [selectedConcessions, setSelectedConcessions] = useState<SelectedConcession[]>([]);
 
   // Handle payment callback
   useEffect(() => {
@@ -223,6 +239,17 @@ export default function BookingFlow() {
 
       // Fetch already booked seats
       await fetchBookedSeats();
+
+      // Fetch concession items for this cinema
+      const { data: concessions } = await supabase
+        .from('concession_items')
+        .select('*')
+        .eq('organization_id', cinemaData.id)
+        .eq('is_available', true)
+        .order('category')
+        .order('name');
+
+      setConcessionItems(concessions || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -276,16 +303,43 @@ export default function BookingFlow() {
     return 'bg-secondary hover:bg-secondary/80 cursor-pointer';
   };
 
-  const subtotal = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+  // Concession functions
+  const addConcession = (item: ConcessionItem) => {
+    setSelectedConcessions(prev => {
+      const existing = prev.find(c => c.item.id === item.id);
+      if (existing) {
+        return prev.map(c => c.item.id === item.id ? { ...c, quantity: c.quantity + 1 } : c);
+      }
+      return [...prev, { item, quantity: 1 }];
+    });
+  };
+
+  const removeConcession = (itemId: string) => {
+    setSelectedConcessions(prev => {
+      const existing = prev.find(c => c.item.id === itemId);
+      if (existing && existing.quantity > 1) {
+        return prev.map(c => c.item.id === itemId ? { ...c, quantity: c.quantity - 1 } : c);
+      }
+      return prev.filter(c => c.item.id !== itemId);
+    });
+  };
+
+  const getConcessionQuantity = (itemId: string) => {
+    return selectedConcessions.find(c => c.item.id === itemId)?.quantity || 0;
+  };
+
+  const ticketsSubtotal = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+  const concessionsSubtotal = selectedConcessions.reduce((sum, c) => sum + (c.item.price * c.quantity), 0);
+  const subtotal = ticketsSubtotal + concessionsSubtotal;
   
   const calculateDiscount = () => {
     if (!appliedPromo) return 0;
-    if (subtotal < appliedPromo.min_purchase_amount) return 0;
+    if (ticketsSubtotal < appliedPromo.min_purchase_amount) return 0;
     
     if (appliedPromo.discount_type === 'percentage') {
-      return subtotal * (appliedPromo.discount_value / 100);
+      return ticketsSubtotal * (appliedPromo.discount_value / 100);
     }
-    return Math.min(appliedPromo.discount_value, subtotal);
+    return Math.min(appliedPromo.discount_value, ticketsSubtotal);
   };
   
   const discountAmount = calculateDiscount();
@@ -432,6 +486,25 @@ export default function BookingFlow() {
         .insert(seatsToBook);
 
       if (seatsError) throw seatsError;
+
+      // Create booking concessions if any selected
+      if (selectedConcessions.length > 0) {
+        const concessionsToBook = selectedConcessions.map(c => ({
+          booking_id: booking.id,
+          concession_item_id: c.item.id,
+          quantity: c.quantity,
+          unit_price: c.item.price,
+        }));
+
+        const { error: concessionsError } = await supabase
+          .from('booking_concessions')
+          .insert(concessionsToBook);
+
+        if (concessionsError) {
+          console.error('Failed to save concessions:', concessionsError);
+          // Don't fail the booking for concession errors
+        }
+      }
 
       // Send confirmation email (don't await to not block UI)
       sendConfirmationEmail(bookingReference);
@@ -625,12 +698,121 @@ export default function BookingFlow() {
                     <Button
                       className="w-full mt-6"
                       size="lg"
+                      onClick={() => setStep(concessionItems.length > 0 ? 'snacks' : 'details')}
+                      style={{ backgroundColor: cinema.primary_color }}
+                    >
+                      {concessionItems.length > 0 ? 'Continue to Snacks' : 'Continue to Details'}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {step === 'snacks' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Popcorn className="h-5 w-5" />
+                    Add Snacks & Drinks
+                  </CardTitle>
+                  <CardDescription>Enhance your movie experience (optional)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {Object.entries(
+                    concessionItems.reduce((acc, item) => {
+                      if (!acc[item.category]) acc[item.category] = [];
+                      acc[item.category].push(item);
+                      return acc;
+                    }, {} as Record<string, ConcessionItem[]>)
+                  ).map(([category, items]) => (
+                    <div key={category} className="mb-6 last:mb-0">
+                      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3 capitalize">
+                        {category}
+                      </h3>
+                      <div className="grid gap-3">
+                        {items.map((item) => {
+                          const quantity = getConcessionQuantity(item.id);
+                          return (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                {item.image_url ? (
+                                  <img
+                                    src={item.image_url}
+                                    alt={item.name}
+                                    className="w-12 h-12 rounded object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                                    <Popcorn className="h-6 w-6 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-medium">{item.name}</p>
+                                  {item.description && (
+                                    <p className="text-sm text-muted-foreground line-clamp-1">
+                                      {item.description}
+                                    </p>
+                                  )}
+                                  <p className="text-sm font-semibold" style={{ color: cinema.primary_color }}>
+                                    ${item.price.toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {quantity > 0 ? (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => removeConcession(item.id)}
+                                    >
+                                      <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <span className="w-8 text-center font-medium">{quantity}</span>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => addConcession(item)}
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => addConcession(item)}
+                                  >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Add
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="flex gap-4 pt-6 border-t mt-6">
+                    <Button variant="outline" onClick={() => setStep('seats')}>
+                      Back
+                    </Button>
+                    <Button
+                      className="flex-1"
                       onClick={() => setStep('details')}
                       style={{ backgroundColor: cinema.primary_color }}
                     >
                       Continue to Details
+                      {concessionsSubtotal > 0 && ` (+$${concessionsSubtotal.toFixed(2)})`}
                     </Button>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -674,7 +856,7 @@ export default function BookingFlow() {
                   </div>
 
                   <div className="flex gap-4 pt-4">
-                    <Button variant="outline" onClick={() => setStep('seats')}>
+                    <Button variant="outline" onClick={() => setStep(concessionItems.length > 0 ? 'snacks' : 'seats')}>
                       Back
                     </Button>
                     {cinema.payment_gateway && cinema.payment_gateway !== 'none' && cinema.payment_gateway_configured ? (
@@ -912,8 +1094,25 @@ export default function BookingFlow() {
                         <span>${seat.price.toFixed(2)}</span>
                       </div>
                     ))}
+
+                    {/* Concessions */}
+                    {selectedConcessions.length > 0 && (
+                      <>
+                        <div className="flex justify-between text-sm pt-2 border-t">
+                          <span className="font-medium flex items-center gap-1">
+                            <Popcorn className="h-3 w-3" /> Snacks
+                          </span>
+                        </div>
+                        {selectedConcessions.map((c) => (
+                          <div key={c.item.id} className="flex justify-between text-sm">
+                            <span>{c.item.name} x{c.quantity}</span>
+                            <span>${(c.item.price * c.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
                     
-                    <div className="flex justify-between text-sm pt-2">
+                    <div className="flex justify-between text-sm pt-2 border-t">
                       <span>Subtotal</span>
                       <span>${subtotal.toFixed(2)}</span>
                     </div>
