@@ -27,6 +27,8 @@ import {
   Menu,
   Monitor,
   Calendar,
+  BarChart3,
+  QrCode,
 } from 'lucide-react';
 
 const navItems = [
@@ -34,6 +36,8 @@ const navItems = [
   { title: 'Movies', url: '/movies', icon: Film },
   { title: 'Screens', url: '/screens', icon: Monitor },
   { title: 'Showtimes', url: '/showtimes', icon: Calendar },
+  { title: 'Sales', url: '/sales', icon: BarChart3 },
+  { title: 'Scanner', url: '/scanner', icon: QrCode },
   { title: 'Staff', url: '/staff', icon: Users },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
