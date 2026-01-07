@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { QRCodeSVG } from 'qrcode.react';
@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, Download } from 'lucide-react';
+import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Showtime {
   id: string;
@@ -65,11 +66,63 @@ export default function BookingFlow() {
     customer_phone: '',
   });
 
+  const fetchBookedSeats = useCallback(async () => {
+    if (!showtimeId) return;
+    const { data: booked } = await supabase
+      .from('booked_seats')
+      .select('row_label, seat_number')
+      .eq('showtime_id', showtimeId);
+    setBookedSeats(booked || []);
+  }, [showtimeId]);
+
   useEffect(() => {
     if (slug && showtimeId) {
       fetchData();
     }
   }, [slug, showtimeId]);
+
+  // Real-time subscription for seat updates
+  useEffect(() => {
+    if (!showtimeId) return;
+
+    const channel = supabase
+      .channel(`seats-${showtimeId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'booked_seats',
+          filter: `showtime_id=eq.${showtimeId}`,
+        },
+        (payload) => {
+          console.log('Real-time seat update:', payload);
+          const newSeat = payload.new as { row_label: string; seat_number: number };
+          
+          // Add newly booked seat
+          setBookedSeats(prev => [...prev, { row_label: newSeat.row_label, seat_number: newSeat.seat_number }]);
+          
+          // Remove from selected if another user booked it
+          setSelectedSeats(prev => {
+            const wasSelected = prev.some(
+              s => s.row_label === newSeat.row_label && s.seat_number === newSeat.seat_number
+            );
+            if (wasSelected) {
+              toast.warning(`Seat ${newSeat.row_label}${newSeat.seat_number} was just booked by someone else`);
+              return prev.filter(
+                s => !(s.row_label === newSeat.row_label && s.seat_number === newSeat.seat_number)
+              );
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [showtimeId]);
 
   const fetchData = async () => {
     try {
@@ -114,12 +167,7 @@ export default function BookingFlow() {
       setSeatLayouts(layouts || []);
 
       // Fetch already booked seats
-      const { data: booked } = await supabase
-        .from('booked_seats')
-        .select('row_label, seat_number')
-        .eq('showtime_id', showtimeId);
-
-      setBookedSeats(booked || []);
+      await fetchBookedSeats();
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -175,6 +223,34 @@ export default function BookingFlow() {
 
   const totalAmount = selectedSeats.reduce((sum, s) => sum + s.price, 0);
 
+  const sendConfirmationEmail = async (bookingReference: string) => {
+    try {
+      const qrCodeData = JSON.stringify({ ref: bookingReference, cinema: cinema.slug });
+      const seatLabels = selectedSeats
+        .sort((a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number)
+        .map(s => `${s.row_label}${s.seat_number}${s.seat_type === 'vip' ? ' (VIP)' : ''}`);
+
+      await supabase.functions.invoke('send-booking-confirmation', {
+        body: {
+          customerName: bookingData.customer_name,
+          customerEmail: bookingData.customer_email,
+          cinemaName: cinema.name,
+          movieTitle: showtime!.movies.title,
+          showtime: format(new Date(showtime!.start_time), 'EEEE, MMMM d, yyyy \'at\' h:mm a'),
+          screenName: showtime!.screens.name,
+          seats: seatLabels,
+          totalAmount,
+          bookingReference,
+          qrCodeData,
+        },
+      });
+      console.log('Confirmation email sent');
+    } catch (error) {
+      console.error('Failed to send confirmation email:', error);
+      // Don't fail the booking if email fails
+    }
+  };
+
   const handleBooking = async () => {
     if (!showtime || selectedSeats.length === 0 || !cinema) return;
 
@@ -218,9 +294,12 @@ export default function BookingFlow() {
 
       if (seatsError) throw seatsError;
 
+      // Send confirmation email (don't await to not block UI)
+      sendConfirmationEmail(bookingReference);
+
       setBookingRef(bookingReference);
       setStep('confirmation');
-      toast.success('Booking confirmed!');
+      toast.success('Booking confirmed! Confirmation email sent.');
     } catch (error: any) {
       console.error('Booking error:', error);
       toast.error(error.message || 'Failed to complete booking');
@@ -340,7 +419,13 @@ export default function BookingFlow() {
               <Card>
                 <CardHeader>
                   <CardTitle>Select Your Seats</CardTitle>
-                  <CardDescription>Click on available seats to select them</CardDescription>
+                  <CardDescription className="flex items-center gap-2">
+                    Click on available seats to select them
+                    <Badge variant="outline" className="text-xs">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-1" />
+                      Live updates
+                    </Badge>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-4 mb-6">
