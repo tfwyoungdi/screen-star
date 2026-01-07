@@ -5,9 +5,9 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization, useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { QuickAction } from '@/components/dashboard/QuickAction';
 import { ChartCard } from '@/components/dashboard/ChartCard';
@@ -20,9 +20,9 @@ import {
   Users,
   Settings,
   TrendingUp,
-  Monitor,
   ArrowRight,
-  Sparkles,
+  Zap,
+  Plus,
 } from 'lucide-react';
 import {
   LineChart,
@@ -34,12 +34,15 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
+  AreaChart,
+  Area,
 } from 'recharts';
 
-const CHART_COLORS = ['hsl(38, 95%, 55%)', 'hsl(0, 70%, 50%)', 'hsl(200, 70%, 50%)', 'hsl(280, 65%, 60%)'];
+const CHART_COLORS = {
+  primary: 'hsl(25, 95%, 53%)',
+  secondary: 'hsl(173, 58%, 39%)',
+  tertiary: 'hsl(197, 71%, 52%)',
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -138,14 +141,14 @@ export default function Dashboard() {
 
   // Revenue by day for chart
   const revenueByDay = bookings?.reduce((acc, booking) => {
-    const day = format(new Date(booking.created_at), 'MMM d');
+    const day = format(new Date(booking.created_at), 'EEE');
     acc[day] = (acc[day] || 0) + Number(booking.total_amount);
     return acc;
   }, {} as Record<string, number>) || {};
 
   const dailyRevenueData = Object.entries(revenueByDay)
     .map(([day, revenue]) => ({ day, revenue }))
-    .reverse();
+    .slice(-7);
 
   // Revenue by movie for chart
   const revenueByMovie = bookings?.reduce((acc, booking) => {
@@ -155,110 +158,108 @@ export default function Dashboard() {
   }, {} as Record<string, number>) || {};
 
   const movieRevenueData = Object.entries(revenueByMovie)
-    .map(([name, value]) => ({ name, value }))
+    .map(([name, value]) => ({ name: name.length > 20 ? name.slice(0, 20) + '...' : name, value }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
-  // Ticket types for pie chart
-  const ticketsByType = bookedSeats?.reduce((acc, seat) => {
-    const type = seat.seat_type === 'vip' ? 'VIP' : 'Standard';
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>) || {};
-
-  const ticketTypeData = Object.entries(ticketsByType).map(([name, value]) => ({
-    name,
-    value,
-  }));
-
-  const recentBookings = bookings?.slice(0, 6) || [];
+  const recentBookings = bookings?.slice(0, 5) || [];
+  const firstName = profile?.full_name?.split(' ')[0] || 'there';
 
   return (
     <DashboardLayout>
       {loading ? (
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-72" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="space-y-8">
+          <Skeleton className="h-12 w-80" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-32 rounded-xl" />
+              <Skeleton key={i} className="h-36 rounded-2xl" />
             ))}
           </div>
         </div>
       ) : (
         <div className="space-y-8">
           {/* Welcome Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-                Welcome back, {profile?.full_name?.split(' ')[0]}!
-                <Sparkles className="h-6 w-6 text-primary" />
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Here's what's happening with your cinema today.
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+                  Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {firstName}
+                </h1>
+                <Badge variant="secondary" className="hidden sm:flex gap-1 text-xs font-medium">
+                  <Zap className="h-3 w-3" />
+                  Pro Plan
+                </Badge>
+              </div>
+              <p className="text-muted-foreground">
+                Here's what's happening with your cinema today
               </p>
             </div>
-            <Button
-              onClick={() => navigate('/sales')}
-              variant="outline"
-              className="gap-2 self-start"
-            >
-              View Full Analytics
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate('/sales')} className="gap-2">
+                View Analytics
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button onClick={() => navigate('/movies')} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Movie
+              </Button>
+            </div>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              title="Today's Revenue"
-              value={`$${totalRevenue.toFixed(2)}`}
-              subtitle={`${totalBookings} bookings`}
+              title="Total Revenue"
+              value={`$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              subtitle={`${totalBookings} orders this week`}
               icon={DollarSign}
               variant="primary"
-              trend={{ value: 12, label: 'vs last week' }}
+              trend={{ value: 12.5, label: 'vs last week' }}
             />
             <StatCard
               title="Tickets Sold"
-              value={totalTickets}
+              value={totalTickets.toLocaleString()}
               subtitle="Last 7 days"
               icon={Ticket}
               variant="success"
-              trend={{ value: 8, label: 'vs last week' }}
+              trend={{ value: 8.2, label: 'vs last week' }}
             />
             <StatCard
               title="Active Movies"
               value={activeMovies}
               subtitle="Currently showing"
               icon={Film}
+              variant="info"
             />
             <StatCard
               title="Upcoming Shows"
               value={scheduledShowtimes}
-              subtitle="Scheduled"
+              subtitle="Scheduled screenings"
               icon={Calendar}
               variant="warning"
             />
           </div>
 
-          {/* Charts Section */}
+          {/* Charts & Quick Actions Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Revenue Chart */}
             <ChartCard
-              title="Revenue Trend"
+              title="Revenue Overview"
+              subtitle="Last 7 days performance"
               icon={TrendingUp}
               className="lg:col-span-2"
               actions={[
                 { label: 'View Details', onClick: () => navigate('/sales') },
-                { label: 'Export', onClick: () => {} },
+                { label: 'Export Data', onClick: () => {} },
               ]}
             >
               {dailyRevenueData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={dailyRevenueData}>
+                  <AreaChart data={dailyRevenueData}>
                     <defs>
                       <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(38, 95%, 55%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(38, 95%, 55%)" stopOpacity={0} />
+                        <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.2} />
+                        <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -285,184 +286,132 @@ export default function Dashboard() {
                       }}
                       formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
                     />
-                    <Line
+                    <Area
                       type="monotone"
                       dataKey="revenue"
-                      stroke="hsl(38, 95%, 55%)"
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(38, 95%, 55%)', strokeWidth: 0, r: 4 }}
-                      activeDot={{ r: 6, fill: 'hsl(38, 95%, 55%)' }}
+                      stroke={CHART_COLORS.primary}
+                      strokeWidth={2.5}
                       fill="url(#revenueGradient)"
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <TrendingUp className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                    <p>No revenue data yet</p>
+                <div className="h-[280px] flex flex-col items-center justify-center text-center">
+                  <div className="p-4 rounded-full bg-secondary mb-4">
+                    <TrendingUp className="h-8 w-8 text-muted-foreground" />
                   </div>
+                  <p className="font-medium text-foreground">No revenue data yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Revenue will appear here once you start selling tickets
+                  </p>
                 </div>
               )}
             </ChartCard>
 
-            {/* Ticket Types Chart */}
-            <ChartCard title="Ticket Types" icon={Ticket}>
-              {ticketTypeData.length > 0 ? (
-                <>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={ticketTypeData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {ticketTypeData.map((_, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={CHART_COLORS[index % CHART_COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '12px',
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex justify-center gap-6 mt-2">
-                    {ticketTypeData.map((item, index) => (
-                      <div key={item.name} className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {item.name}: {item.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <Ticket className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                    <p>No ticket data</p>
-                  </div>
-                </div>
-              )}
-            </ChartCard>
-          </div>
-
-          {/* Quick Actions & Recent Bookings */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Quick Actions */}
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Quick Actions</h2>
-              <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-foreground">Quick Actions</h2>
+              </div>
+              <div className="space-y-2">
                 <QuickAction
                   title="Add New Movie"
-                  description="Upload movie details and poster"
+                  description="Upload poster and details"
                   icon={Film}
                   onClick={() => navigate('/movies')}
-                  variant="primary"
+                  variant="gradient"
                 />
                 <QuickAction
                   title="Schedule Showtime"
-                  description="Create new screening times"
+                  description="Create new screening"
                   icon={Calendar}
                   onClick={() => navigate('/showtimes')}
+                  variant="primary"
                 />
                 <QuickAction
                   title="Manage Staff"
-                  description="Add or edit team members"
+                  description="Add team members"
                   icon={Users}
                   onClick={() => navigate('/staff')}
                 />
                 <QuickAction
-                  title="Cinema Settings"
-                  description="Configure your cinema profile"
+                  title="Settings"
+                  description="Configure your cinema"
                   icon={Settings}
                   onClick={() => navigate('/settings')}
                 />
               </div>
             </div>
-
-            {/* Recent Bookings */}
-            <Card className="lg:col-span-2">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Recent Bookings</CardTitle>
-                  <CardDescription>Latest ticket purchases</CardDescription>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-primary"
-                  onClick={() => navigate('/sales')}
-                >
-                  View All
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <RecentBookingsTable
-                  bookings={recentBookings}
-                  isLoading={bookingsLoading}
-                />
-              </CardContent>
-            </Card>
           </div>
 
-          {/* Top Movies Chart */}
-          {movieRevenueData.length > 0 && (
-            <ChartCard title="Top Performing Movies" icon={Film}>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={movieRevenueData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                  <XAxis
-                    type="number"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `$${value}`}
-                  />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    width={120}
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => (value.length > 15 ? `${value.slice(0, 15)}...` : value)}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '12px',
-                    }}
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill="hsl(38, 95%, 55%)"
-                    radius={[0, 8, 8, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+          {/* Bottom Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Top Movies Chart */}
+            <ChartCard
+              title="Top Performing Movies"
+              subtitle="By revenue this week"
+              icon={Film}
+              className="lg:col-span-1"
+            >
+              {movieRevenueData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={movieRevenueData} layout="vertical" margin={{ left: 0, right: 20 }}>
+                    <XAxis
+                      type="number"
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `$${value}`}
+                    />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      width={80}
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                      }}
+                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                    />
+                    <Bar
+                      dataKey="value"
+                      fill={CHART_COLORS.primary}
+                      radius={[0, 6, 6, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[220px] flex flex-col items-center justify-center text-center">
+                  <Film className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No movie data yet</p>
+                </div>
+              )}
             </ChartCard>
-          )}
+
+            {/* Recent Bookings */}
+            <ChartCard
+              title="Recent Bookings"
+              subtitle="Latest ticket purchases"
+              icon={Ticket}
+              className="lg:col-span-2"
+              actions={[
+                { label: 'View All', onClick: () => navigate('/sales') },
+              ]}
+            >
+              <RecentBookingsTable
+                bookings={recentBookings}
+                isLoading={bookingsLoading}
+              />
+            </ChartCard>
+          </div>
         </div>
       )}
     </DashboardLayout>
