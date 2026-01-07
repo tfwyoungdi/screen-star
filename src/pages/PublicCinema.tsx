@@ -71,6 +71,7 @@ export default function PublicCinema() {
   const { slug } = useParams<{ slug: string }>();
   const [cinema, setCinema] = useState<CinemaData | null>(null);
   const [movies, setMovies] = useState<MovieWithShowtimes[]>([]);
+  const [allMovies, setAllMovies] = useState<MovieWithShowtimes[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -132,6 +133,9 @@ export default function PublicCinema() {
         .eq('is_active', true);
 
       if (moviesData && moviesData.length > 0) {
+        // Store all movies for hero display
+        setAllMovies(moviesData.map(m => ({ ...m, showtimes: [] })));
+        
         // Fetch showtimes for each movie
         const moviesWithShowtimes = await Promise.all(
           moviesData.map(async (movie) => {
@@ -151,7 +155,7 @@ export default function PublicCinema() {
           })
         );
 
-        // Only include movies with upcoming showtimes
+        // Only include movies with upcoming showtimes for the listing
         setMovies(moviesWithShowtimes.filter(m => m.showtimes.length > 0));
       }
     } catch (error) {
@@ -242,10 +246,11 @@ export default function PublicCinema() {
 
       {/* Hero */}
       <CinemaHero 
-        movies={movies}
+        movies={allMovies.length > 0 ? allMovies : movies}
         cinemaSlug={slug!}
         cinemaName={cinema?.name || ''}
-        primaryColor={cinema?.primary_color || '#D4AF37'}
+        primaryColor={cinema?.primary_color || '#F59E0B'}
+        logoUrl={cinema?.logo_url}
       />
 
       {/* Now Showing */}
