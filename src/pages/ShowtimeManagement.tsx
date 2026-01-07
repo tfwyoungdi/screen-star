@@ -62,6 +62,7 @@ export default function ShowtimeManagement() {
   const [customTime, setCustomTime] = useState('');
   const [conflicts, setConflicts] = useState<ConflictInfo[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [timeFilter, setTimeFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [editingShowtime, setEditingShowtime] = useState<any | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -111,7 +112,7 @@ export default function ShowtimeManagement() {
     enabled: !!profile?.organization_id,
   });
 
-  const { data: showtimes, isLoading } = useQuery({
+  const { data: allShowtimes, isLoading } = useQuery({
     queryKey: ['showtimes', profile?.organization_id],
     queryFn: async () => {
       if (!profile?.organization_id) return [];
@@ -123,13 +124,24 @@ export default function ShowtimeManagement() {
           screens (name, rows, columns)
         `)
         .eq('organization_id', profile.organization_id)
-        .gte('start_time', new Date().toISOString())
-        .order('start_time');
+        .order('start_time', { ascending: false });
 
       if (error) throw error;
       return data;
     },
     enabled: !!profile?.organization_id,
+  });
+
+  // Filter showtimes based on timeFilter
+  const now = new Date();
+  const showtimes = allShowtimes?.filter(s => {
+    const showtimeDate = new Date(s.start_time);
+    return timeFilter === 'upcoming' ? showtimeDate >= now : showtimeDate < now;
+  }).sort((a, b) => {
+    // Upcoming: ascending order, Past: descending order
+    const dateA = new Date(a.start_time).getTime();
+    const dateB = new Date(b.start_time).getTime();
+    return timeFilter === 'upcoming' ? dateA - dateB : dateB - dateA;
   });
 
   // Fetch booking counts for all showtimes
@@ -387,6 +399,14 @@ export default function ShowtimeManagement() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Time Filter Tabs */}
+            <Tabs value={timeFilter} onValueChange={(v) => setTimeFilter(v as 'upcoming' | 'past')}>
+              <TabsList>
+                <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                <TabsTrigger value="past">Past</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             {/* View Toggle */}
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'calendar')} className="hidden sm:block">
               <TabsList>
@@ -782,8 +802,10 @@ export default function ShowtimeManagement() {
           <Card>
             <CardContent className="py-8 text-center">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No upcoming showtimes</p>
-              {movies?.length && screens?.length ? (
+              <p className="text-muted-foreground">
+                {timeFilter === 'upcoming' ? 'No upcoming showtimes' : 'No past showtimes'}
+              </p>
+              {timeFilter === 'upcoming' && movies?.length && screens?.length ? (
                 <Button className="mt-4" onClick={() => setDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Schedule First Showtime
