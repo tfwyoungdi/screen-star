@@ -258,6 +258,9 @@ export type Database = {
       }
       combo_deals: {
         Row: {
+          available_days: number[] | null
+          available_from: string | null
+          available_until: string | null
           combo_price: number
           created_at: string
           description: string | null
@@ -269,6 +272,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          available_days?: number[] | null
+          available_from?: string | null
+          available_until?: string | null
           combo_price: number
           created_at?: string
           description?: string | null
@@ -280,6 +286,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          available_days?: number[] | null
+          available_from?: string | null
+          available_until?: string | null
           combo_price?: number
           created_at?: string
           description?: string | null
@@ -308,9 +317,12 @@ export type Database = {
           id: string
           image_url: string | null
           is_available: boolean
+          low_stock_threshold: number | null
           name: string
           organization_id: string
           price: number
+          stock_quantity: number | null
+          track_inventory: boolean | null
           updated_at: string
         }
         Insert: {
@@ -320,9 +332,12 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_available?: boolean
+          low_stock_threshold?: number | null
           name: string
           organization_id: string
           price: number
+          stock_quantity?: number | null
+          track_inventory?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -332,9 +347,12 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_available?: boolean
+          low_stock_threshold?: number | null
           name?: string
           organization_id?: string
           price?: number
+          stock_quantity?: number | null
+          track_inventory?: boolean | null
           updated_at?: string
         }
         Relationships: [
