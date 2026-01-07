@@ -73,6 +73,29 @@ export default function PublicCinema() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // Track page view
+  const trackPageView = async (orgId: string) => {
+    try {
+      // Get or create a visitor ID for anonymous tracking
+      let visitorId = localStorage.getItem('visitor_id');
+      if (!visitorId) {
+        visitorId = crypto.randomUUID();
+        localStorage.setItem('visitor_id', visitorId);
+      }
+
+      await supabase.from('page_views').insert({
+        organization_id: orgId,
+        page_path: `/cinema/${slug}`,
+        visitor_id: visitorId,
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || null,
+      });
+    } catch (error) {
+      // Silently fail - don't disrupt user experience for analytics
+      console.error('Failed to track page view:', error);
+    }
+  };
+
   useEffect(() => {
     if (slug) {
       fetchCinemaData();
@@ -98,8 +121,9 @@ export default function PublicCinema() {
       }
 
       setCinema(cinemaData);
-
-      // Fetch movies with upcoming showtimes
+      
+      // Track page view after confirming cinema exists
+      trackPageView(cinemaData.id);
       const { data: moviesData } = await supabase
         .from('movies')
         .select('id, title, description, duration_minutes, poster_url, genre, rating, trailer_url')
