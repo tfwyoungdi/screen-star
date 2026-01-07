@@ -269,15 +269,6 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             </Button>
           </div>
 
-          {/* Director & Cast */}
-          <div className="space-y-1 text-sm">
-            <p className="text-white/70">
-              <span style={{ color: primaryColor }}>Director</span> : Film Director
-            </p>
-            <p className="text-white/70">
-              <span style={{ color: primaryColor }}>Cast</span> : Featured Stars
-            </p>
-          </div>
         </div>
 
         {/* Navigation Dots */}
