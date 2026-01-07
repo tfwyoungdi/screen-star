@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
+import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check } from 'lucide-react';
+import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Showtime {
@@ -475,18 +476,32 @@ export default function BookingFlow() {
                     <Check className="h-8 w-8" style={{ color: cinema.primary_color }} />
                   </div>
                   <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-muted-foreground mb-4">
                     Your booking reference is:
                   </p>
                   <div className="text-3xl font-mono font-bold mb-6" style={{ color: cinema.primary_color }}>
                     {bookingRef}
                   </div>
+                  
+                  {/* QR Code */}
+                  <div className="bg-white p-4 rounded-lg inline-block mb-6">
+                    <QRCodeSVG
+                      value={JSON.stringify({ ref: bookingRef, cinema: cinema.slug })}
+                      size={180}
+                      level="H"
+                      includeMargin
+                    />
+                  </div>
+                  
                   <p className="text-sm text-muted-foreground mb-6">
-                    A confirmation has been saved. Please present this reference at the box office.
+                    Show this QR code at the gate for entry. Screenshot or save this page.
                   </p>
-                  <Button asChild>
-                    <a href={`/cinema/${slug}`}>Back to Cinema</a>
-                  </Button>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button asChild variant="outline">
+                      <a href={`/cinema/${slug}`}>Back to Cinema</a>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}

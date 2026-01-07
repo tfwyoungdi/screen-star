@@ -16,6 +16,8 @@ import StaffManagement from "./pages/StaffManagement";
 import MovieManagement from "./pages/MovieManagement";
 import ScreenManagement from "./pages/ScreenManagement";
 import ShowtimeManagement from "./pages/ShowtimeManagement";
+import SalesDashboard from "./pages/SalesDashboard";
+import TicketScanner from "./pages/TicketScanner";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import PublicCinema from "./pages/PublicCinema";
 import BookingFlow from "./pages/BookingFlow";
@@ -68,6 +70,22 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['cinema_admin']}>
                   <ShowtimeManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sales"
+              element={
+                <ProtectedRoute allowedRoles={['cinema_admin', 'manager', 'accountant']}>
+                  <SalesDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scanner"
+              element={
+                <ProtectedRoute allowedRoles={['cinema_admin', 'gate_staff']}>
+                  <TicketScanner />
                 </ProtectedRoute>
               }
             />
