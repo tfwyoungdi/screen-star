@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format, addDays, addMinutes, isWithinInterval } from 'date-fns';
-import { Loader2, Plus, Calendar, Clock, Trash2, Film, Monitor, CalendarPlus, AlertTriangle } from 'lucide-react';
+import { format, addDays, addMinutes } from 'date-fns';
+import { Loader2, Plus, Calendar, Clock, Trash2, Film, Monitor, CalendarPlus, AlertTriangle, CalendarDays, List, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,11 +15,14 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { ShowtimeCalendar } from '@/components/dashboard/ShowtimeCalendar';
+import { EditShowtimeDialog } from '@/components/dashboard/EditShowtimeDialog';
 
 const bulkShowtimeSchema = z.object({
   movie_id: z.string().min(1, 'Please select a movie'),
@@ -58,6 +61,9 @@ export default function ShowtimeManagement() {
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [customTime, setCustomTime] = useState('');
   const [conflicts, setConflicts] = useState<ConflictInfo[]>([]);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [editingShowtime, setEditingShowtime] = useState<any | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const {
@@ -315,6 +321,11 @@ export default function ShowtimeManagement() {
     return acc;
   }, {} as Record<string, typeof showtimes>);
 
+  const handleEditShowtime = (showtime: any) => {
+    setEditingShowtime(showtime);
+    setEditDialogOpen(true);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -326,16 +337,31 @@ export default function ShowtimeManagement() {
             </p>
           </div>
 
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => {
-                reset({ price: 10, vip_price: 15, times: [] });
-                setSelectedTimes([]);
-              }}>
-                <CalendarPlus className="mr-2 h-4 w-4" />
-                Bulk Schedule
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            {/* View Toggle */}
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'calendar')} className="hidden sm:block">
+              <TabsList>
+                <TabsTrigger value="list" className="gap-2">
+                  <List className="h-4 w-4" />
+                  List
+                </TabsTrigger>
+                <TabsTrigger value="calendar" className="gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  Calendar
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => {
+                  reset({ price: 10, vip_price: 15, times: [] });
+                  setSelectedTimes([]);
+                }}>
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Bulk Schedule
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader className="pb-4 border-b">
                 <DialogTitle className="flex items-center gap-2">
@@ -585,9 +611,9 @@ export default function ShowtimeManagement() {
                 </Button>
               </form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
-
         {(!movies?.length || !screens?.length) && (
           <Card className="border-dashed">
             <CardContent className="py-8 text-center">
@@ -606,6 +632,16 @@ export default function ShowtimeManagement() {
           <div className="flex items-center justify-center min-h-[200px]">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        ) : viewMode === 'calendar' && showtimes && screens ? (
+          <Card>
+            <CardContent className="pt-6">
+              <ShowtimeCalendar
+                showtimes={showtimes}
+                screens={screens}
+                onShowtimeClick={handleEditShowtime}
+              />
+            </CardContent>
+          </Card>
         ) : groupedShowtimes && Object.keys(groupedShowtimes).length > 0 ? (
           <div className="space-y-6">
             {Object.entries(groupedShowtimes).map(([date, dateShowtimes]) => (
@@ -626,7 +662,7 @@ export default function ShowtimeManagement() {
                         <TableHead>Time</TableHead>
                         <TableHead>Pricing</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="w-[80px]">Actions</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -665,14 +701,23 @@ export default function ShowtimeManagement() {
                             />
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteShowtime(showtime.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditShowtime(showtime)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteShowtime(showtime.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -697,6 +742,15 @@ export default function ShowtimeManagement() {
           </Card>
         )}
       </div>
+
+      {/* Edit Showtime Dialog */}
+      <EditShowtimeDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        showtime={editingShowtime}
+        movies={movies || []}
+        screens={screens || []}
+      />
     </DashboardLayout>
   );
 }
