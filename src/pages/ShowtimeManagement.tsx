@@ -120,7 +120,7 @@ export default function ShowtimeManagement() {
         .select(`
           *,
           movies (title, duration_minutes),
-          screens (name)
+          screens (name, rows, columns)
         `)
         .eq('organization_id', profile.organization_id)
         .gte('start_time', new Date().toISOString())
@@ -130,6 +130,38 @@ export default function ShowtimeManagement() {
       return data;
     },
     enabled: !!profile?.organization_id,
+  });
+
+  // Fetch booking counts for all showtimes
+  const { data: bookingCounts } = useQuery({
+    queryKey: ['showtime-booking-counts', profile?.organization_id],
+    queryFn: async () => {
+      if (!profile?.organization_id || !showtimes?.length) return [];
+      
+      const showtimeIds = showtimes.map(s => s.id);
+      
+      // Get booked seats count per showtime
+      const { data: bookedSeats, error } = await supabase
+        .from('booked_seats')
+        .select('showtime_id')
+        .in('showtime_id', showtimeIds);
+
+      if (error) throw error;
+
+      // Count seats per showtime
+      const countsMap: Record<string, number> = {};
+      bookedSeats?.forEach(seat => {
+        countsMap[seat.showtime_id] = (countsMap[seat.showtime_id] || 0) + 1;
+      });
+
+      // Build the result with capacity info
+      return showtimes.map(showtime => ({
+        showtime_id: showtime.id,
+        count: countsMap[showtime.id] || 0,
+        capacity: (showtime.screens?.rows || 10) * (showtime.screens?.columns || 10),
+      }));
+    },
+    enabled: !!profile?.organization_id && !!showtimes?.length,
   });
 
   const toggleTime = (time: string) => {
@@ -324,6 +356,23 @@ export default function ShowtimeManagement() {
   const handleEditShowtime = (showtime: any) => {
     setEditingShowtime(showtime);
     setEditDialogOpen(true);
+  };
+
+  const handleShowtimeMove = async (showtimeId: string, newDateTime: Date) => {
+    try {
+      const { error } = await supabase
+        .from('showtimes')
+        .update({ start_time: newDateTime.toISOString() })
+        .eq('id', showtimeId);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['showtimes'] });
+      toast.success(`Showtime rescheduled to ${format(newDateTime, 'MMM d, h:mm a')}`);
+    } catch (error) {
+      console.error('Error moving showtime:', error);
+      toast.error('Failed to reschedule showtime');
+    }
   };
 
   return (
@@ -638,7 +687,9 @@ export default function ShowtimeManagement() {
               <ShowtimeCalendar
                 showtimes={showtimes}
                 screens={screens}
+                bookingCounts={bookingCounts}
                 onShowtimeClick={handleEditShowtime}
+                onShowtimeMove={handleShowtimeMove}
               />
             </CardContent>
           </Card>
