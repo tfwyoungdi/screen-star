@@ -43,6 +43,8 @@ const navItems = [
   { title: 'Showtimes', url: '/showtimes', icon: Calendar },
   { title: 'Promos', url: '/promos', icon: Tag },
   { title: 'Sales', url: '/sales', icon: BarChart3 },
+  { title: 'Customers', url: '/customers', icon: Users },
+  { title: 'Analytics', url: '/analytics', icon: BarChart3 },
   { title: 'Scanner', url: '/scanner', icon: QrCode },
   { title: 'Staff', url: '/staff', icon: Users },
   { title: 'Settings', url: '/settings', icon: Settings },
@@ -111,7 +113,7 @@ function SidebarContentWrapper() {
             )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5 px-2">
-                {navItems.slice(0, 7).map((item) => {
+                {navItems.slice(0, 9).map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
@@ -152,7 +154,7 @@ function SidebarContentWrapper() {
             )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5 px-2">
-                {navItems.slice(7).map((item) => {
+                {navItems.slice(9).map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>

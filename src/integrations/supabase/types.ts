@@ -64,6 +64,7 @@ export type Database = {
           booking_reference: string
           created_at: string
           customer_email: string
+          customer_id: string | null
           customer_name: string
           customer_phone: string | null
           discount_amount: number | null
@@ -78,6 +79,7 @@ export type Database = {
           booking_reference: string
           created_at?: string
           customer_email: string
+          customer_id?: string | null
           customer_name: string
           customer_phone?: string | null
           discount_amount?: number | null
@@ -92,6 +94,7 @@ export type Database = {
           booking_reference?: string
           created_at?: string
           customer_email?: string
+          customer_id?: string | null
           customer_name?: string
           customer_phone?: string | null
           discount_amount?: number | null
@@ -103,6 +106,13 @@ export type Database = {
           total_amount?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_organization_id_fkey"
             columns: ["organization_id"]
@@ -122,6 +132,62 @@ export type Database = {
             columns: ["showtime_id"]
             isOneToOne: false
             referencedRelation: "showtimes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          created_at: string
+          email: string
+          first_booking_at: string | null
+          full_name: string
+          id: string
+          last_booking_at: string | null
+          loyalty_points: number
+          notes: string | null
+          organization_id: string
+          phone: string | null
+          total_bookings: number
+          total_spent: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_booking_at?: string | null
+          full_name: string
+          id?: string
+          last_booking_at?: string | null
+          loyalty_points?: number
+          notes?: string | null
+          organization_id: string
+          phone?: string | null
+          total_bookings?: number
+          total_spent?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_booking_at?: string | null
+          full_name?: string
+          id?: string
+          last_booking_at?: string | null
+          loyalty_points?: number
+          notes?: string | null
+          organization_id?: string
+          phone?: string | null
+          total_bookings?: number
+          total_spent?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
