@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import CinemaSettings from "./pages/CinemaSettings";
 import StaffManagement from "./pages/StaffManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import PublicCinema from "./pages/PublicCinema";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/accept-invitation" element={<AcceptInvitation />} />
+            <Route path="/cinema/:slug" element={<PublicCinema />} />
             <Route
               path="/dashboard"
               element={
