@@ -127,7 +127,7 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
   }
 
   return (
-    <section className="relative h-[600px] overflow-hidden" style={{ backgroundColor: '#0a0a12' }}>
+    <section className="relative h-[400px] md:h-[600px] overflow-hidden" style={{ backgroundColor: '#0a0a12' }}>
       {/* Background Movie Poster - Fixed size container */}
       {featuredMovies.map((movie, index) => (
         <div
