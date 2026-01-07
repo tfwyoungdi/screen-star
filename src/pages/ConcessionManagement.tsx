@@ -21,6 +21,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ConcessionAnalytics } from '@/components/concessions/ConcessionAnalytics';
 import { ComboDealsManager } from '@/components/concessions/ComboDealsManager';
+import { InventoryHistory } from '@/components/concessions/InventoryHistory';
+import { BulkRestockDialog } from '@/components/concessions/BulkRestockDialog';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -299,7 +301,13 @@ export default function ConcessionManagement() {
           </TabsList>
 
           <TabsContent value="menu" className="space-y-6">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {profile?.organization_id && items && (
+                <BulkRestockDialog 
+                  items={items} 
+                  organizationId={profile.organization_id} 
+                />
+              )}
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={openAddDialog}>
@@ -535,6 +543,9 @@ export default function ConcessionManagement() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
+                                {item.track_inventory && (
+                                  <InventoryHistory itemId={item.id} itemName={item.name} />
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="icon"

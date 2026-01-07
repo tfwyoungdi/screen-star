@@ -421,6 +421,60 @@ export type Database = {
           },
         ]
       }
+      inventory_history: {
+        Row: {
+          change_amount: number
+          change_type: string
+          concession_item_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          new_quantity: number
+          notes: string | null
+          organization_id: string
+          previous_quantity: number | null
+        }
+        Insert: {
+          change_amount: number
+          change_type: string
+          concession_item_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_quantity: number
+          notes?: string | null
+          organization_id: string
+          previous_quantity?: number | null
+        }
+        Update: {
+          change_amount?: number
+          change_type?: string
+          concession_item_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_quantity?: number
+          notes?: string | null
+          organization_id?: string
+          previous_quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_history_concession_item_id_fkey"
+            columns: ["concession_item_id"]
+            isOneToOne: false
+            referencedRelation: "concession_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       low_stock_notifications: {
         Row: {
           created_at: string
