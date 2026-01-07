@@ -4,6 +4,7 @@ import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization, useUserProfile } from '@/hooks/useUserProfile';
+import { useRealtimeBookings, useRealtimeShowtimes, useRealtimeMovies } from '@/hooks/useRealtimeDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +13,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { QuickAction } from '@/components/dashboard/QuickAction';
 import { ChartCard } from '@/components/dashboard/ChartCard';
 import { RecentBookingsTable } from '@/components/dashboard/RecentBookingsTable';
+import { WelcomeTour, useTour } from '@/components/dashboard/WelcomeTour';
 import {
   DollarSign,
   Ticket,
@@ -23,10 +25,12 @@ import {
   ArrowRight,
   Zap,
   Plus,
+  Radio,
+  HelpCircle,
 } from 'lucide-react';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -34,9 +38,12 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  AreaChart,
-  Area,
 } from 'recharts';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const CHART_COLORS = {
   primary: 'hsl(25, 95%, 53%)',
@@ -48,10 +55,25 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { data: organization, isLoading: orgLoading } = useOrganization();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
+  const { showTour, setShowTour } = useTour();
   const dateRange = 7;
 
   const startDate = startOfDay(subDays(new Date(), dateRange));
   const endDate = endOfDay(new Date());
+
+  // Real-time subscriptions
+  const { newBookingsCount, resetNewBookingsCount } = useRealtimeBookings({
+    organizationId: profile?.organization_id,
+    enabled: !!profile?.organization_id,
+  });
+  useRealtimeShowtimes({
+    organizationId: profile?.organization_id,
+    enabled: !!profile?.organization_id,
+  });
+  useRealtimeMovies({
+    organizationId: profile?.organization_id,
+    enabled: !!profile?.organization_id,
+  });
 
   // Fetch bookings for analytics
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
@@ -74,6 +96,7 @@ export default function Dashboard() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      resetNewBookingsCount();
       return data;
     },
     enabled: !!profile?.organization_id,
@@ -167,6 +190,9 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
+      {/* Welcome Tour */}
+      {showTour && <WelcomeTour onComplete={() => setShowTour(false)} />}
+
       {loading ? (
         <div className="space-y-8">
           <Skeleton className="h-12 w-80" />
@@ -182,24 +208,49 @@ export default function Dashboard() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+                <h1 className="text-2xl lg:text-3xl font-bold text-foreground" data-tour="dashboard">
                   Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {firstName}
                 </h1>
                 <Badge variant="secondary" className="hidden sm:flex gap-1 text-xs font-medium">
                   <Zap className="h-3 w-3" />
                   Pro Plan
                 </Badge>
+                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <Radio className="h-3 w-3 animate-pulse" />
+                  <span className="text-xs font-medium">Live</span>
+                </div>
               </div>
               <p className="text-muted-foreground">
                 Here's what's happening with your cinema today
+                {newBookingsCount > 0 && (
+                  <span className="ml-2 text-primary font-medium">
+                    • {newBookingsCount} new booking{newBookingsCount > 1 ? 's' : ''}!
+                  </span>
+                )}
               </p>
             </div>
             <div className="flex gap-2">
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      localStorage.removeItem('cinetix_tour_completed');
+                      setShowTour(true);
+                    }}
+                    className="text-muted-foreground"
+                  >
+                    <HelpCircle className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Restart tour</TooltipContent>
+              </UITooltip>
               <Button variant="outline" onClick={() => navigate('/sales')} className="gap-2">
                 View Analytics
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button onClick={() => navigate('/movies')} className="gap-2">
+              <Button onClick={() => navigate('/movies')} className="gap-2" data-tour="movies">
                 <Plus className="h-4 w-4" />
                 Add Movie
               </Button>
@@ -321,25 +372,31 @@ export default function Dashboard() {
                   onClick={() => navigate('/movies')}
                   variant="gradient"
                 />
-                <QuickAction
-                  title="Schedule Showtime"
-                  description="Create new screening"
-                  icon={Calendar}
-                  onClick={() => navigate('/showtimes')}
-                  variant="primary"
-                />
-                <QuickAction
-                  title="Manage Staff"
-                  description="Add team members"
-                  icon={Users}
-                  onClick={() => navigate('/staff')}
-                />
-                <QuickAction
-                  title="Settings"
-                  description="Configure your cinema"
-                  icon={Settings}
-                  onClick={() => navigate('/settings')}
-                />
+                <div data-tour="showtimes">
+                  <QuickAction
+                    title="Schedule Showtime"
+                    description="Create new screening"
+                    icon={Calendar}
+                    onClick={() => navigate('/showtimes')}
+                    variant="primary"
+                  />
+                </div>
+                <div data-tour="staff">
+                  <QuickAction
+                    title="Manage Staff"
+                    description="Add team members"
+                    icon={Users}
+                    onClick={() => navigate('/staff')}
+                  />
+                </div>
+                <div data-tour="settings">
+                  <QuickAction
+                    title="Settings"
+                    description="Configure your cinema"
+                    icon={Settings}
+                    onClick={() => navigate('/settings')}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -406,10 +463,12 @@ export default function Dashboard() {
                 { label: 'View All', onClick: () => navigate('/sales') },
               ]}
             >
-              <RecentBookingsTable
-                bookings={recentBookings}
-                isLoading={bookingsLoading}
-              />
+              <div data-tour="sales">
+                <RecentBookingsTable
+                  bookings={recentBookings}
+                  isLoading={bookingsLoading}
+                />
+              </div>
             </ChartCard>
           </div>
         </div>
