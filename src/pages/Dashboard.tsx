@@ -11,6 +11,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { QuickAction } from '@/components/dashboard/QuickAction';
 import { ChartCard } from '@/components/dashboard/ChartCard';
 import { RecentBookingsTable } from '@/components/dashboard/RecentBookingsTable';
+import { BookingStatusChart } from '@/components/dashboard/BookingStatusChart';
 import { WelcomeTour, useTour } from '@/components/dashboard/WelcomeTour';
 import {
   DollarSign,
@@ -164,6 +165,22 @@ export default function Dashboard() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
+  // Booking status distribution
+  const bookingStatusData = bookings?.reduce(
+    (acc, booking) => {
+      const status = booking.status?.toLowerCase() || 'pending';
+      if (status === 'paid' || status === 'confirmed' || status === 'completed') {
+        acc.completed++;
+      } else if (status === 'cancelled') {
+        acc.cancelled++;
+      } else {
+        acc.pending++;
+      }
+      return acc;
+    },
+    { completed: 0, pending: 0, cancelled: 0 }
+  ) || { completed: 0, pending: 0, cancelled: 0 };
+
   const recentBookings = bookings?.slice(0, 5) || [];
   const firstName = profile?.full_name?.split(' ')[0] || 'there';
 
@@ -213,14 +230,15 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title="Total Revenue"
-              value={`$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+              value={Math.round(totalRevenue)}
+              prefix="$"
               icon={DollarSign}
               variant="primary"
               trend={{ value: 12.5, label: 'Increased from last month' }}
             />
             <StatCard
               title="Tickets Sold"
-              value={totalTickets.toLocaleString()}
+              value={totalTickets}
               icon={Ticket}
               trend={{ value: 8.2, label: 'Increased from last month' }}
             />
@@ -279,29 +297,12 @@ export default function Dashboard() {
               )}
             </ChartCard>
 
-            {/* Reminders / Upcoming */}
+            {/* Booking Status Donut Chart */}
             <ChartCard
-              title="Reminders"
+              title="Booking Status"
               className="lg:col-span-1"
             >
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-foreground text-lg">
-                    {scheduledShowtimes > 0 ? 'Next Showtime' : 'No Showtimes'}
-                  </h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Time: {scheduledShowtimes > 0 ? 'Check showtimes' : 'Schedule one'}
-                  </p>
-                </div>
-                <Button
-                  onClick={() => navigate('/showtimes')}
-                  className="w-full gap-2"
-                  data-tour="showtimes"
-                >
-                  <Calendar className="h-4 w-4" />
-                  View Showtimes
-                </Button>
-              </div>
+              <BookingStatusChart data={bookingStatusData} />
             </ChartCard>
 
             {/* Quick Links */}
