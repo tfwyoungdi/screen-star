@@ -23,6 +23,8 @@ import PromoCodeManagement from "./pages/PromoCodeManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import PublicCinema from "./pages/PublicCinema";
 import BookingFlow from "./pages/BookingFlow";
+import CustomerManagement from "./pages/CustomerManagement";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +115,22 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['cinema_admin']}>
                     <PromoCodeManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/customers"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager']}>
+                    <CustomerManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager', 'accountant']}>
+                    <AnalyticsDashboard />
                   </ProtectedRoute>
                 }
               />
