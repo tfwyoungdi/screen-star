@@ -180,7 +180,7 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
       </header>
 
       {/* Main Content */}
-      <div className="relative z-10 h-full flex flex-col justify-end px-6 lg:px-12 pb-12">
+      <div className="relative z-10 h-full flex flex-col justify-center px-6 lg:px-12">
         <div className="max-w-7xl mx-auto w-full">
           {/* Movie Title */}
           <h1 
