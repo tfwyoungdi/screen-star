@@ -9,9 +9,17 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle } from 'lucide-react';
+import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+
+interface PromoCode {
+  id: string;
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  min_purchase_amount: number;
+}
 
 interface Showtime {
   id: string;
@@ -65,6 +73,10 @@ export default function BookingFlow() {
     customer_email: '',
     customer_phone: '',
   });
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   const fetchBookedSeats = useCallback(async () => {
     if (!showtimeId) return;
@@ -221,7 +233,79 @@ export default function BookingFlow() {
     return 'bg-secondary hover:bg-secondary/80 cursor-pointer';
   };
 
-  const totalAmount = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+  const subtotal = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+  
+  const calculateDiscount = () => {
+    if (!appliedPromo) return 0;
+    if (subtotal < appliedPromo.min_purchase_amount) return 0;
+    
+    if (appliedPromo.discount_type === 'percentage') {
+      return subtotal * (appliedPromo.discount_value / 100);
+    }
+    return Math.min(appliedPromo.discount_value, subtotal);
+  };
+  
+  const discountAmount = calculateDiscount();
+  const totalAmount = subtotal - discountAmount;
+
+  const applyPromoCode = async () => {
+    if (!promoCode.trim() || !cinema) return;
+    
+    setPromoLoading(true);
+    setPromoError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('promo_codes')
+        .select('id, code, discount_type, discount_value, min_purchase_amount, max_uses, current_uses, valid_until')
+        .eq('organization_id', cinema.id)
+        .eq('code', promoCode.toUpperCase())
+        .eq('is_active', true)
+        .single();
+      
+      if (error || !data) {
+        setPromoError('Invalid promo code');
+        return;
+      }
+      
+      // Check if expired
+      if (data.valid_until && new Date(data.valid_until) < new Date()) {
+        setPromoError('This promo code has expired');
+        return;
+      }
+      
+      // Check max uses
+      if (data.max_uses && data.current_uses >= data.max_uses) {
+        setPromoError('This promo code has reached its usage limit');
+        return;
+      }
+      
+      // Check minimum purchase
+      if (subtotal < data.min_purchase_amount) {
+        setPromoError(`Minimum purchase of $${data.min_purchase_amount} required`);
+        return;
+      }
+      
+      setAppliedPromo({
+        id: data.id,
+        code: data.code,
+        discount_type: data.discount_type as 'percentage' | 'fixed',
+        discount_value: data.discount_value,
+        min_purchase_amount: data.min_purchase_amount,
+      });
+      setPromoCode('');
+      toast.success('Promo code applied!');
+    } catch (error) {
+      setPromoError('Failed to apply promo code');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const removePromoCode = () => {
+    setAppliedPromo(null);
+    setPromoError(null);
+  };
 
   const sendConfirmationEmail = async (bookingReference: string) => {
     try {
@@ -270,11 +354,23 @@ export default function BookingFlow() {
           customer_email: bookingData.customer_email,
           customer_phone: bookingData.customer_phone || null,
           total_amount: totalAmount,
+          discount_amount: discountAmount,
+          promo_code_id: appliedPromo?.id || null,
           booking_reference: bookingReference,
           status: 'confirmed',
         })
         .select()
         .single();
+
+      if (bookingError) throw bookingError;
+      
+      // Update promo code usage count if used
+      if (appliedPromo) {
+        await supabase
+          .from('promo_codes')
+          .update({ current_uses: (await supabase.from('promo_codes').select('current_uses').eq('id', appliedPromo.id).single()).data?.current_uses + 1 || 1 })
+          .eq('id', appliedPromo.id);
+      }
 
       if (bookingError) throw bookingError;
 
@@ -630,7 +726,7 @@ export default function BookingFlow() {
                 </div>
 
                 {selectedSeats.length > 0 && (
-                  <div className="border-t pt-4">
+                  <div className="border-t pt-4 space-y-3">
                     {selectedSeats.map((seat, i) => (
                       <div key={i} className="flex justify-between text-sm">
                         <span>
@@ -640,7 +736,57 @@ export default function BookingFlow() {
                         <span>${seat.price.toFixed(2)}</span>
                       </div>
                     ))}
-                    <div className="flex justify-between font-bold mt-4 pt-4 border-t">
+                    
+                    <div className="flex justify-between text-sm pt-2">
+                      <span>Subtotal</span>
+                      <span>${subtotal.toFixed(2)}</span>
+                    </div>
+
+                    {/* Promo Code */}
+                    <div className="pt-2">
+                      {appliedPromo ? (
+                        <div className="flex items-center justify-between bg-green-500/10 p-2 rounded">
+                          <div className="flex items-center gap-2">
+                            <Tag className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-mono">{appliedPromo.code}</span>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removePromoCode}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Promo code"
+                              value={promoCode}
+                              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                              className="font-mono text-sm"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={applyPromoCode}
+                              disabled={promoLoading || !promoCode}
+                            >
+                              Apply
+                            </Button>
+                          </div>
+                          {promoError && (
+                            <p className="text-xs text-destructive">{promoError}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Discount</span>
+                        <span>-${discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between font-bold pt-2 border-t">
                       <span>Total</span>
                       <span style={{ color: cinema.primary_color }}>${totalAmount.toFixed(2)}</span>
                     </div>
