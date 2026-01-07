@@ -206,43 +206,6 @@ export default function PublicCinema() {
 
   return (
     <div className="min-h-screen" style={customStyles}>
-      {/* Header */}
-      <header
-        className="border-b"
-        style={{ backgroundColor: cinema?.secondary_color || 'hsl(var(--card))' }}
-      >
-        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {cinema?.logo_url ? (
-              <img
-                src={cinema.logo_url}
-                alt={`${cinema.name} logo`}
-                className="h-12 w-auto object-contain"
-              />
-            ) : (
-              <div
-                className="p-3 rounded-lg"
-                style={{ backgroundColor: `${cinema?.primary_color}20` }}
-              >
-                <Film
-                  className="h-6 w-6"
-                  style={{ color: cinema?.primary_color }}
-                />
-              </div>
-            )}
-            <h1 className="text-2xl font-bold text-foreground">{cinema?.name}</h1>
-          </div>
-
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#movies" className="text-foreground/80 hover:text-foreground transition-colors">
-              Now Showing
-            </a>
-            <a href="#about" className="text-foreground/80 hover:text-foreground transition-colors">
-              About
-            </a>
-          </nav>
-        </div>
-      </header>
 
       {/* Hero */}
       <CinemaHero 
