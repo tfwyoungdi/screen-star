@@ -49,7 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const redirectUrl = `${window.location.origin}/dashboard`;
 
-      // 1. Create the user account
+      // 1. Generate unique slug first (this works without auth)
+      const { data: slugData, error: slugError } = await supabase.rpc('generate_unique_slug', {
+        cinema_name: cinemaName,
+      });
+
+      if (slugError) throw slugError;
+      const slug = slugData as string;
+
+      // 2. Create the user account with metadata including org info
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -58,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             full_name: fullName,
             cinema_name: cinemaName,
+            cinema_slug: slug,
           },
         },
       });
@@ -65,45 +74,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authError) throw authError;
       if (!authData.user) throw new Error('User creation failed');
 
-      // 2. Generate unique slug for the cinema
-      const { data: slugData, error: slugError } = await supabase.rpc('generate_unique_slug', {
-        cinema_name: cinemaName,
-      });
+      // 3. Wait briefly for the session to be established
+      // Then create org, profile, and role
+      if (authData.session) {
+        // User is already authenticated (email confirmation disabled)
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: cinemaName,
+            slug: slug,
+          })
+          .select()
+          .single();
 
-      if (slugError) throw slugError;
+        if (orgError) throw orgError;
 
-      const slug = slugData as string;
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: authData.user.id,
+          organization_id: orgData.id,
+          full_name: fullName,
+          email: email,
+        });
 
-      // 3. Create the organization
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .insert({
-          name: cinemaName,
-          slug: slug,
-        })
-        .select()
-        .single();
+        if (profileError) throw profileError;
 
-      if (orgError) throw orgError;
+        const { error: roleError } = await supabase.from('user_roles').insert({
+          user_id: authData.user.id,
+          organization_id: orgData.id,
+          role: 'cinema_admin',
+        });
 
-      // 4. Create the profile
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        organization_id: orgData.id,
-        full_name: fullName,
-        email: email,
-      });
-
-      if (profileError) throw profileError;
-
-      // 5. Assign cinema_admin role
-      const { error: roleError } = await supabase.from('user_roles').insert({
-        user_id: authData.user.id,
-        organization_id: orgData.id,
-        role: 'cinema_admin',
-      });
-
-      if (roleError) throw roleError;
+        if (roleError) throw roleError;
+      }
 
       return { error: null, organizationSlug: slug };
     } catch (error) {
