@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserProfile, useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -44,6 +44,7 @@ const roleDescriptions: Record<string, string> = {
 
 export default function StaffManagement() {
   const { data: profile } = useUserProfile();
+  const { data: organization } = useOrganization();
   const [dialogOpen, setDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -110,7 +111,7 @@ export default function StaffManagement() {
   });
 
   const onSubmit = async (data: InviteFormData) => {
-    if (!profile?.organization_id || !profile?.id) return;
+    if (!profile?.organization_id || !profile?.id || !organization) return;
 
     try {
       // Check if email is already invited
@@ -120,7 +121,7 @@ export default function StaffManagement() {
         .eq('organization_id', profile.organization_id)
         .eq('email', data.email)
         .is('accepted_at', null)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         toast.error('An invitation has already been sent to this email');
@@ -128,16 +129,40 @@ export default function StaffManagement() {
       }
 
       // Create invitation
-      const { error } = await supabase
+      const { data: invitation, error } = await supabase
         .from('staff_invitations')
         .insert({
           organization_id: profile.organization_id,
           email: data.email,
           role: data.role,
           invited_by: profile.id,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Send invitation email via edge function
+      const inviteUrl = `${window.location.origin}/accept-invitation?token=${invitation.token}`;
+      
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-staff-invitation', {
+          body: {
+            email: data.email,
+            cinemaName: organization.name,
+            role: data.role,
+            inviteToken: invitation.token,
+            inviteUrl,
+          },
+        });
+
+        if (emailError) {
+          console.error('Failed to send email:', emailError);
+          toast.warning('Invitation created but email could not be sent');
+        }
+      } catch (emailErr) {
+        console.error('Email sending error:', emailErr);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['staff-invitations'] });
       toast.success(`Invitation sent to ${data.email}`);

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Film, Ticket, Clock, MapPin, Phone, Mail } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar } from 'lucide-react';
 
 interface CinemaData {
   id: string;
@@ -15,33 +17,84 @@ interface CinemaData {
   secondary_color: string;
 }
 
+interface MovieWithShowtimes {
+  id: string;
+  title: string;
+  description: string | null;
+  duration_minutes: number;
+  poster_url: string | null;
+  genre: string | null;
+  rating: string | null;
+  showtimes: {
+    id: string;
+    start_time: string;
+    price: number;
+    screens: { name: string };
+  }[];
+}
+
 export default function PublicCinema() {
   const { slug } = useParams<{ slug: string }>();
   const [cinema, setCinema] = useState<CinemaData | null>(null);
+  const [movies, setMovies] = useState<MovieWithShowtimes[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (slug) {
-      fetchCinema();
+      fetchCinemaData();
     }
   }, [slug]);
 
-  const fetchCinema = async () => {
+  const fetchCinemaData = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch cinema
+      const { data: cinemaData, error: cinemaError } = await supabase
         .from('organizations')
         .select('id, name, slug, logo_url, primary_color, secondary_color')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
 
-      if (error) throw error;
+      if (cinemaError) throw cinemaError;
 
-      if (!data) {
+      if (!cinemaData) {
         setNotFound(true);
-      } else {
-        setCinema(data);
+        setLoading(false);
+        return;
+      }
+
+      setCinema(cinemaData);
+
+      // Fetch movies with upcoming showtimes
+      const { data: moviesData } = await supabase
+        .from('movies')
+        .select('id, title, description, duration_minutes, poster_url, genre, rating')
+        .eq('organization_id', cinemaData.id)
+        .eq('is_active', true);
+
+      if (moviesData && moviesData.length > 0) {
+        // Fetch showtimes for each movie
+        const moviesWithShowtimes = await Promise.all(
+          moviesData.map(async (movie) => {
+            const { data: showtimes } = await supabase
+              .from('showtimes')
+              .select('id, start_time, price, screens (name)')
+              .eq('movie_id', movie.id)
+              .eq('is_active', true)
+              .gte('start_time', new Date().toISOString())
+              .order('start_time')
+              .limit(6);
+
+            return {
+              ...movie,
+              showtimes: showtimes || [],
+            };
+          })
+        );
+
+        // Only include movies with upcoming showtimes
+        setMovies(moviesWithShowtimes.filter(m => m.showtimes.length > 0));
       }
     } catch (error) {
       console.error('Error fetching cinema:', error);
@@ -57,9 +110,9 @@ export default function PublicCinema() {
         <Skeleton className="h-20 w-full" />
         <div className="container mx-auto px-4 py-8">
           <Skeleton className="h-64 w-full mb-8" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-48" />
+              <Skeleton key={i} className="h-96" />
             ))}
           </div>
         </div>
@@ -84,7 +137,6 @@ export default function PublicCinema() {
     );
   }
 
-  // Apply custom cinema colors via CSS variables
   const customStyles = {
     '--cinema-primary': cinema?.primary_color || '#D4AF37',
     '--cinema-secondary': cinema?.secondary_color || '#1a1a2e',
@@ -92,7 +144,7 @@ export default function PublicCinema() {
 
   return (
     <div className="min-h-screen" style={customStyles}>
-      {/* Header with cinema branding */}
+      {/* Header */}
       <header
         className="border-b"
         style={{ backgroundColor: cinema?.secondary_color || 'hsl(var(--card))' }}
@@ -108,11 +160,11 @@ export default function PublicCinema() {
             ) : (
               <div
                 className="p-3 rounded-lg"
-                style={{ backgroundColor: `${cinema?.primary_color}20` || 'hsl(var(--primary) / 0.2)' }}
+                style={{ backgroundColor: `${cinema?.primary_color}20` }}
               >
                 <Film
                   className="h-6 w-6"
-                  style={{ color: cinema?.primary_color || 'hsl(var(--primary))' }}
+                  style={{ color: cinema?.primary_color }}
                 />
               </div>
             )}
@@ -126,16 +178,13 @@ export default function PublicCinema() {
             <a href="#about" className="text-foreground/80 hover:text-foreground transition-colors">
               About
             </a>
-            <a href="#contact" className="text-foreground/80 hover:text-foreground transition-colors">
-              Contact
-            </a>
           </nav>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero */}
       <section
-        className="py-20 text-center"
+        className="py-16 text-center"
         style={{
           background: `linear-gradient(135deg, ${cinema?.secondary_color || '#1a1a2e'} 0%, ${cinema?.primary_color}20 100%)`,
         }}
@@ -144,63 +193,105 @@ export default function PublicCinema() {
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Welcome to {cinema?.name}
           </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Experience the magic of cinema. Browse our latest movies and book your tickets online.
           </p>
-          <Button
-            size="lg"
-            style={{
-              backgroundColor: cinema?.primary_color || 'hsl(var(--primary))',
-              color: '#000',
-            }}
-            className="hover:opacity-90 transition-opacity"
-          >
-            <Ticket className="mr-2 h-5 w-5" />
-            Book Tickets
-          </Button>
         </div>
       </section>
 
-      {/* Now Showing Section */}
+      {/* Now Showing */}
       <section id="movies" className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <h3 className="text-2xl font-bold text-foreground mb-8 flex items-center gap-2">
-            <Film
-              className="h-6 w-6"
-              style={{ color: cinema?.primary_color || 'hsl(var(--primary))' }}
-            />
+            <Film className="h-6 w-6" style={{ color: cinema?.primary_color }} />
             Now Showing
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Placeholder movies - will be replaced with real data */}
-            {[
-              { title: 'Coming Soon', description: 'Movies will appear here once scheduled' },
-            ].map((movie, index) => (
-              <Card key={index} className="overflow-hidden">
-                <div
-                  className="h-48 flex items-center justify-center"
-                  style={{ backgroundColor: `${cinema?.secondary_color}80` || 'hsl(var(--muted))' }}
-                >
-                  <Film className="h-12 w-12 text-muted-foreground" />
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-lg">{movie.title}</CardTitle>
-                  <CardDescription>{movie.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-8">
-            <p className="text-muted-foreground">
-              No movies are currently scheduled. Check back soon!
-            </p>
-          </div>
+          {movies.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {movies.map((movie) => (
+                <Card key={movie.id} className="overflow-hidden flex flex-col">
+                  <div
+                    className="h-48 flex items-center justify-center relative"
+                    style={{ backgroundColor: `${cinema?.secondary_color}80` }}
+                  >
+                    {movie.poster_url ? (
+                      <img
+                        src={movie.poster_url}
+                        alt={movie.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Film className="h-16 w-16 text-muted-foreground" />
+                    )}
+                    {movie.rating && (
+                      <Badge className="absolute top-2 right-2" variant="secondary">
+                        {movie.rating}
+                      </Badge>
+                    )}
+                  </div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">{movie.title}</CardTitle>
+                    <CardDescription className="flex items-center gap-4">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {movie.duration_minutes} min
+                      </span>
+                      {movie.genre && <span>{movie.genre}</span>}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 flex flex-col">
+                    {movie.description && (
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                        {movie.description}
+                      </p>
+                    )}
+                    
+                    <div className="mt-auto">
+                      <p className="text-sm font-medium mb-2">Upcoming Showtimes:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {movie.showtimes.slice(0, 4).map((showtime) => (
+                          <Link
+                            key={showtime.id}
+                            to={`/cinema/${slug}/book?showtime=${showtime.id}`}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs hover:border-primary"
+                            >
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {format(new Date(showtime.start_time), 'MMM d')}
+                              <span className="mx-1">•</span>
+                              {format(new Date(showtime.start_time), 'h:mm a')}
+                            </Button>
+                          </Link>
+                        ))}
+                      </div>
+                      {movie.showtimes.length > 4 && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          +{movie.showtimes.length - 4} more showtimes
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="text-center py-12">
+              <CardContent>
+                <Film className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  No movies are currently scheduled. Check back soon!
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </section>
 
-      {/* About Section */}
+      {/* About */}
       <section id="about" className="py-16" style={{ backgroundColor: 'hsl(var(--card))' }}>
         <div className="container mx-auto px-4">
           <h3 className="text-2xl font-bold text-foreground mb-8">About Us</h3>
@@ -211,10 +302,7 @@ export default function PublicCinema() {
                   className="p-4 rounded-full inline-block mb-4"
                   style={{ backgroundColor: `${cinema?.primary_color}20` }}
                 >
-                  <Ticket
-                    className="h-8 w-8"
-                    style={{ color: cinema?.primary_color }}
-                  />
+                  <Ticket className="h-8 w-8" style={{ color: cinema?.primary_color }} />
                 </div>
                 <h4 className="font-semibold text-foreground mb-2">Easy Booking</h4>
                 <p className="text-muted-foreground text-sm">
@@ -229,10 +317,7 @@ export default function PublicCinema() {
                   className="p-4 rounded-full inline-block mb-4"
                   style={{ backgroundColor: `${cinema?.primary_color}20` }}
                 >
-                  <Clock
-                    className="h-8 w-8"
-                    style={{ color: cinema?.primary_color }}
-                  />
+                  <Clock className="h-8 w-8" style={{ color: cinema?.primary_color }} />
                 </div>
                 <h4 className="font-semibold text-foreground mb-2">Flexible Showtimes</h4>
                 <p className="text-muted-foreground text-sm">
@@ -247,10 +332,7 @@ export default function PublicCinema() {
                   className="p-4 rounded-full inline-block mb-4"
                   style={{ backgroundColor: `${cinema?.primary_color}20` }}
                 >
-                  <Film
-                    className="h-8 w-8"
-                    style={{ color: cinema?.primary_color }}
-                  />
+                  <Film className="h-8 w-8" style={{ color: cinema?.primary_color }} />
                 </div>
                 <h4 className="font-semibold text-foreground mb-2">Latest Movies</h4>
                 <p className="text-muted-foreground text-sm">
@@ -258,62 +340,6 @@ export default function PublicCinema() {
                 </p>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section id="contact" className="py-16 bg-background">
-        <div className="container mx-auto px-4">
-          <h3 className="text-2xl font-bold text-foreground mb-8">Contact Us</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-center gap-4">
-              <div
-                className="p-3 rounded-lg"
-                style={{ backgroundColor: `${cinema?.primary_color}20` }}
-              >
-                <MapPin
-                  className="h-5 w-5"
-                  style={{ color: cinema?.primary_color }}
-                />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Location</p>
-                <p className="text-sm text-muted-foreground">Contact cinema for address</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div
-                className="p-3 rounded-lg"
-                style={{ backgroundColor: `${cinema?.primary_color}20` }}
-              >
-                <Phone
-                  className="h-5 w-5"
-                  style={{ color: cinema?.primary_color }}
-                />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Phone</p>
-                <p className="text-sm text-muted-foreground">Contact cinema for phone</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div
-                className="p-3 rounded-lg"
-                style={{ backgroundColor: `${cinema?.primary_color}20` }}
-              >
-                <Mail
-                  className="h-5 w-5"
-                  style={{ color: cinema?.primary_color }}
-                />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Email</p>
-                <p className="text-sm text-muted-foreground">Contact cinema for email</p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
