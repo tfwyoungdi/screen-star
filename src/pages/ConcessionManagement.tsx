@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,11 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { ConcessionAnalytics } from '@/components/concessions/ConcessionAnalytics';
+import { ComboDealsManager } from '@/components/concessions/ComboDealsManager';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -195,21 +198,38 @@ export default function ConcessionManagement() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Concessions Menu</h1>
-            <p className="text-muted-foreground">
-              Manage snacks, drinks, and combos for your cinema
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Concessions</h1>
+          <p className="text-muted-foreground">
+            Manage menu items, combo deals, and view sales analytics
+          </p>
+        </div>
 
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openAddDialog}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Item
-              </Button>
-            </DialogTrigger>
+        <Tabs defaultValue="menu" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="menu" className="flex items-center gap-2">
+              <Popcorn className="h-4 w-4" />
+              Menu Items
+            </TabsTrigger>
+            <TabsTrigger value="combos" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Combo Deals
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="menu" className="space-y-6">
+            <div className="flex justify-end">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={openAddDialog}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Item
+                  </Button>
+                </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editingItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
@@ -369,18 +389,32 @@ export default function ConcessionManagement() {
               );
             })}
           </div>
-        ) : (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Popcorn className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">No concession items yet</p>
-              <Button onClick={openAddDialog}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Item
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Popcorn className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">No concession items yet</p>
+                  <Button onClick={openAddDialog}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Your First Item
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="combos">
+            {profile?.organization_id && (
+              <ComboDealsManager organizationId={profile.organization_id} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            {profile?.organization_id && (
+              <ConcessionAnalytics organizationId={profile.organization_id} />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
