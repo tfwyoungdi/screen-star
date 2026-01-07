@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -113,28 +114,33 @@ export default function CinemaSettings() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (!organization) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>Organization not found.</AlertDescription>
-      </Alert>
+      <DashboardLayout>
+        <Alert variant="destructive">
+          <AlertDescription>Organization not found.</AlertDescription>
+        </Alert>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Cinema Settings</h1>
-        <p className="text-muted-foreground">
-          Customize your cinema's branding and appearance
-        </p>
-      </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Cinema Settings</h1>
+          <p className="text-muted-foreground">
+            Customize your cinema's branding and appearance
+          </p>
+        </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Logo Upload */}
@@ -277,7 +283,8 @@ export default function CinemaSettings() {
             </>
           )}
         </Button>
-      </form>
-    </div>
+        </form>
+      </div>
+    </DashboardLayout>
   );
 }
