@@ -1,9 +1,12 @@
 import { LucideIcon, ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 
 interface StatCardProps {
   title: string;
-  value: string | number;
+  value: number;
+  prefix?: string;
+  suffix?: string;
   subtitle?: string;
   icon: LucideIcon;
   trend?: {
@@ -16,18 +19,21 @@ interface StatCardProps {
 export function StatCard({
   title,
   value,
+  prefix = '',
+  suffix = '',
   subtitle,
   icon: Icon,
   trend,
   variant = 'default',
 }: StatCardProps) {
+  const animatedValue = useAnimatedCounter(value, { duration: 1200 });
   const isPositive = trend && trend.value >= 0;
   const isPrimary = variant === 'primary';
 
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl p-5 transition-all duration-200',
+        'relative overflow-hidden rounded-2xl p-5 transition-all duration-200 animate-fade-in',
         isPrimary
           ? 'bg-primary text-primary-foreground shadow-lg'
           : 'bg-card border border-border hover:border-border/80'
@@ -64,11 +70,11 @@ export function StatCard({
 
         <p
           className={cn(
-            'text-4xl font-bold tracking-tight',
+            'text-4xl font-bold tracking-tight tabular-nums',
             isPrimary ? 'text-primary-foreground' : 'text-foreground'
           )}
         >
-          {value}
+          {prefix}{animatedValue.toLocaleString()}{suffix}
         </p>
 
         {(trend || subtitle) && (
