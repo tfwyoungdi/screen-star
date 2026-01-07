@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,9 @@ const itemSchema = z.object({
   price: z.coerce.number().min(0.01, 'Price must be greater than 0'),
   category: z.string().min(1, 'Category is required'),
   image_url: z.string().optional(),
+  track_inventory: z.boolean().optional(),
+  stock_quantity: z.coerce.number().optional(),
+  low_stock_threshold: z.coerce.number().optional(),
 });
 
 type ItemFormData = z.infer<typeof itemSchema>;
@@ -50,14 +53,19 @@ export default function ConcessionManagement() {
     register,
     handleSubmit,
     setValue,
+    watch,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ItemFormData>({
     resolver: zodResolver(itemSchema),
     defaultValues: {
       category: 'snacks',
+      track_inventory: false,
+      low_stock_threshold: 10,
     },
   });
+
+  const trackInventory = watch('track_inventory');
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['concession-items', profile?.organization_id],
@@ -89,6 +97,9 @@ export default function ConcessionManagement() {
             price: data.price,
             category: data.category,
             image_url: data.image_url || null,
+            track_inventory: data.track_inventory || false,
+            stock_quantity: data.track_inventory ? (data.stock_quantity || 0) : null,
+            low_stock_threshold: data.low_stock_threshold || 10,
           })
           .eq('id', editingItem.id);
 
@@ -104,6 +115,9 @@ export default function ConcessionManagement() {
             price: data.price,
             category: data.category,
             image_url: data.image_url || null,
+            track_inventory: data.track_inventory || false,
+            stock_quantity: data.track_inventory ? (data.stock_quantity || 0) : null,
+            low_stock_threshold: data.low_stock_threshold || 10,
           });
 
         if (error) throw error;
@@ -160,6 +174,9 @@ export default function ConcessionManagement() {
       price: item.price,
       category: item.category,
       image_url: item.image_url || '',
+      track_inventory: item.track_inventory || false,
+      stock_quantity: item.stock_quantity || 0,
+      low_stock_threshold: item.low_stock_threshold || 10,
     });
     setDialogOpen(true);
   };
@@ -172,6 +189,9 @@ export default function ConcessionManagement() {
       price: 0,
       category: 'snacks',
       image_url: '',
+      track_inventory: false,
+      stock_quantity: 0,
+      low_stock_threshold: 10,
     });
     setDialogOpen(true);
   };
@@ -285,6 +305,33 @@ export default function ConcessionManagement() {
                   <Input {...register('image_url')} placeholder="https://..." />
                 </div>
 
+                {/* Inventory Tracking */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Track Inventory</Label>
+                      <p className="text-xs text-muted-foreground">Enable to monitor stock levels</p>
+                    </div>
+                    <Switch
+                      checked={trackInventory}
+                      onCheckedChange={(checked) => setValue('track_inventory', checked)}
+                    />
+                  </div>
+
+                  {trackInventory && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Current Stock</Label>
+                        <Input type="number" {...register('stock_quantity')} placeholder="0" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Low Stock Alert</Label>
+                        <Input type="number" {...register('low_stock_threshold')} placeholder="10" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
@@ -326,13 +373,17 @@ export default function ConcessionManagement() {
                           <TableHead>Item</TableHead>
                           <TableHead>Description</TableHead>
                           <TableHead>Price</TableHead>
+                          <TableHead>Stock</TableHead>
                           <TableHead>Available</TableHead>
                           <TableHead className="w-[100px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {categoryItems?.map((item) => (
-                          <TableRow key={item.id}>
+                        {categoryItems?.map((item) => {
+                          const isLowStock = item.track_inventory && item.stock_quantity !== null && item.stock_quantity <= item.low_stock_threshold;
+                          const isOutOfStock = item.track_inventory && item.stock_quantity !== null && item.stock_quantity === 0;
+                          return (
+                          <TableRow key={item.id} className={isOutOfStock ? 'opacity-60' : ''}>
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 {item.image_url ? (
@@ -354,6 +405,24 @@ export default function ConcessionManagement() {
                             </TableCell>
                             <TableCell>
                               <Badge variant="outline">${item.price.toFixed(2)}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {item.track_inventory ? (
+                                <div className="flex items-center gap-2">
+                                  {isOutOfStock ? (
+                                    <Badge variant="destructive">Out of Stock</Badge>
+                                  ) : isLowStock ? (
+                                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                                      <AlertTriangle className="h-3 w-3 mr-1" />
+                                      Low: {item.stock_quantity}
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline">{item.stock_quantity} in stock</Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">Not tracked</span>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Switch
@@ -381,7 +450,8 @@ export default function ConcessionManagement() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </CardContent>

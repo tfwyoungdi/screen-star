@@ -74,6 +74,9 @@ interface ComboDeal {
   description: string | null;
   original_price: number;
   combo_price: number;
+  available_from: string | null;
+  available_until: string | null;
+  available_days: number[] | null;
   combo_deal_items: Array<{
     quantity: number;
     concession_items: { name: string };
@@ -386,6 +389,18 @@ export default function BookingFlow() {
   const getComboQuantity = (comboId: string) => {
     return selectedCombos.find(c => c.combo.id === comboId)?.quantity || 0;
   };
+
+  // Filter combos by current time/day
+  const availableCombos = combos.filter(combo => {
+    const now = new Date();
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const currentDay = now.getDay();
+
+    if (combo.available_from && currentTime < combo.available_from) return false;
+    if (combo.available_until && currentTime > combo.available_until) return false;
+    if (combo.available_days?.length > 0 && !combo.available_days.includes(currentDay)) return false;
+    return true;
+  });
 
   const ticketsSubtotal = selectedSeats.reduce((sum, s) => sum + s.price, 0);
   const concessionsSubtotal = selectedConcessions.reduce((sum, c) => sum + (c.item.price * c.quantity), 0);
@@ -861,13 +876,13 @@ export default function BookingFlow() {
                   ))}
 
                   {/* Combo Deals Section */}
-                  {combos.length > 0 && (
+                  {availableCombos.length > 0 && (
                     <div className="mb-6">
                       <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
                         🎉 Combo Deals - Save More!
                       </h3>
                       <div className="grid gap-3">
-                        {combos.map((combo) => {
+                        {availableCombos.map((combo) => {
                           const quantity = getComboQuantity(combo.id);
                           return (
                             <div

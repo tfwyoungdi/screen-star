@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Pencil, Trash2, Package, X } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Package, X, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,9 +21,22 @@ const comboSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   combo_price: z.coerce.number().min(0.01, 'Price must be greater than 0'),
+  available_from: z.string().optional(),
+  available_until: z.string().optional(),
+  available_days: z.array(z.number()).optional(),
 });
 
 type ComboFormData = z.infer<typeof comboSchema>;
+
+const DAYS_OF_WEEK = [
+  { value: 0, label: 'Sun' },
+  { value: 1, label: 'Mon' },
+  { value: 2, label: 'Tue' },
+  { value: 3, label: 'Wed' },
+  { value: 4, label: 'Thu' },
+  { value: 5, label: 'Fri' },
+  { value: 6, label: 'Sat' },
+];
 
 interface ComboItem {
   concession_item_id: string;
@@ -39,12 +52,15 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
   const [editingCombo, setEditingCombo] = useState<any | null>(null);
   const [comboItems, setComboItems] = useState<ComboItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string>('');
+  const [timeRestricted, setTimeRestricted] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const queryClient = useQueryClient();
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ComboFormData>({
     resolver: zodResolver(comboSchema),
@@ -134,6 +150,15 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
 
     try {
       const originalPrice = calculateOriginalPrice();
+      const timeData = timeRestricted ? {
+        available_from: data.available_from || null,
+        available_until: data.available_until || null,
+        available_days: selectedDays.length > 0 ? selectedDays : null,
+      } : {
+        available_from: null,
+        available_until: null,
+        available_days: null,
+      };
 
       if (editingCombo) {
         // Update combo
@@ -144,6 +169,7 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
             description: data.description || null,
             original_price: originalPrice,
             combo_price: data.combo_price,
+            ...timeData,
           })
           .eq('id', editingCombo.id);
 
@@ -177,6 +203,7 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
             description: data.description || null,
             original_price: originalPrice,
             combo_price: data.combo_price,
+            ...timeData,
           })
           .select()
           .single();
@@ -241,10 +268,15 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
         quantity: ci.quantity,
       }))
     );
+    const hasTimeRestriction = combo.available_from || combo.available_until || combo.available_days?.length > 0;
+    setTimeRestricted(hasTimeRestriction);
+    setSelectedDays(combo.available_days || []);
     reset({
       name: combo.name,
       description: combo.description || '',
       combo_price: combo.combo_price,
+      available_from: combo.available_from || '',
+      available_until: combo.available_until || '',
     });
     setDialogOpen(true);
   };
@@ -253,14 +285,22 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
     setDialogOpen(false);
     setEditingCombo(null);
     setComboItems([]);
-    reset({ name: '', description: '', combo_price: 0 });
+    setTimeRestricted(false);
+    setSelectedDays([]);
+    reset({ name: '', description: '', combo_price: 0, available_from: '', available_until: '' });
   };
 
   const openAddDialog = () => {
     setEditingCombo(null);
     setComboItems([]);
-    reset({ name: '', description: '', combo_price: 0 });
+    setTimeRestricted(false);
+    setSelectedDays([]);
+    reset({ name: '', description: '', combo_price: 0, available_from: '', available_until: '' });
     setDialogOpen(true);
+  };
+
+  const toggleDay = (day: number) => {
+    setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
   if (isLoading) {
@@ -367,6 +407,51 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
                 )}
               </div>
 
+              {/* Time-Based Availability */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Time-Limited Deal
+                    </Label>
+                    <p className="text-xs text-muted-foreground">Show only during specific hours/days</p>
+                  </div>
+                  <Switch checked={timeRestricted} onCheckedChange={setTimeRestricted} />
+                </div>
+
+                {timeRestricted && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Available From</Label>
+                        <Input type="time" {...register('available_from')} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Available Until</Label>
+                        <Input type="time" {...register('available_until')} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Available Days (leave empty for all days)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {DAYS_OF_WEEK.map(day => (
+                          <Button
+                            key={day.value}
+                            type="button"
+                            variant={selectedDays.includes(day.value) ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => toggleDay(day.value)}
+                          >
+                            {day.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Button type="submit" className="w-full" disabled={isSubmitting || comboItems.length < 2}>
                 {isSubmitting ? (
                   <>
@@ -413,6 +498,24 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
                           <div className="font-medium">{combo.name}</div>
                           {combo.description && (
                             <div className="text-xs text-muted-foreground">{combo.description}</div>
+                          )}
+                          {(combo.available_from || combo.available_until || combo.available_days?.length > 0) && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Clock className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">
+                                {combo.available_from && combo.available_until 
+                                  ? `${combo.available_from.slice(0, 5)} - ${combo.available_until.slice(0, 5)}`
+                                  : combo.available_from 
+                                    ? `From ${combo.available_from.slice(0, 5)}`
+                                    : combo.available_until 
+                                      ? `Until ${combo.available_until.slice(0, 5)}`
+                                      : ''
+                                }
+                                {combo.available_days?.length > 0 && 
+                                  ` (${combo.available_days.map((d: number) => DAYS_OF_WEEK.find(day => day.value === d)?.label).join(', ')})`
+                                }
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
