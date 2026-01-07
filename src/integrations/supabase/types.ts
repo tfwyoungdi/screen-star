@@ -66,8 +66,10 @@ export type Database = {
           customer_email: string
           customer_name: string
           customer_phone: string | null
+          discount_amount: number | null
           id: string
           organization_id: string
+          promo_code_id: string | null
           showtime_id: string
           status: string
           total_amount: number
@@ -78,8 +80,10 @@ export type Database = {
           customer_email: string
           customer_name: string
           customer_phone?: string | null
+          discount_amount?: number | null
           id?: string
           organization_id: string
+          promo_code_id?: string | null
           showtime_id: string
           status?: string
           total_amount: number
@@ -90,8 +94,10 @@ export type Database = {
           customer_email?: string
           customer_name?: string
           customer_phone?: string | null
+          discount_amount?: number | null
           id?: string
           organization_id?: string
+          promo_code_id?: string | null
           showtime_id?: string
           status?: string
           total_amount?: number
@@ -102,6 +108,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
             referencedColumns: ["id"]
           },
           {
@@ -165,41 +178,77 @@ export type Database = {
       }
       organizations: {
         Row: {
+          about_text: string | null
+          address: string | null
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           custom_domain: string | null
           id: string
           is_active: boolean | null
           logo_url: string | null
           name: string
+          payment_gateway: string | null
+          payment_gateway_configured: boolean | null
+          payment_gateway_public_key: string | null
           primary_color: string | null
           secondary_color: string | null
+          seo_description: string | null
+          seo_title: string | null
           slug: string
+          social_facebook: string | null
+          social_instagram: string | null
+          social_twitter: string | null
           subscription_plan: string | null
           updated_at: string
         }
         Insert: {
+          about_text?: string | null
+          address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           custom_domain?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
           name: string
+          payment_gateway?: string | null
+          payment_gateway_configured?: boolean | null
+          payment_gateway_public_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           slug: string
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_twitter?: string | null
           subscription_plan?: string | null
           updated_at?: string
         }
         Update: {
+          about_text?: string | null
+          address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           custom_domain?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
           name?: string
+          payment_gateway?: string | null
+          payment_gateway_configured?: boolean | null
+          payment_gateway_public_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           slug?: string
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_twitter?: string | null
           subscription_plan?: string | null
           updated_at?: string
         }
@@ -239,6 +288,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          min_purchase_amount: number | null
+          organization_id: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_purchase_amount?: number | null
+          organization_id: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_purchase_amount?: number | null
+          organization_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_codes_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
