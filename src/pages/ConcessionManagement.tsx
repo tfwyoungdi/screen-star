@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, AlertTriangle, Upload, X } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, AlertTriangle, Upload, X, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,7 @@ import { ConcessionAnalytics } from '@/components/concessions/ConcessionAnalytic
 import { ComboDealsManager } from '@/components/concessions/ComboDealsManager';
 import { InventoryHistory } from '@/components/concessions/InventoryHistory';
 import { BulkRestockDialog } from '@/components/concessions/BulkRestockDialog';
+import { LowStockAlertSettings } from '@/components/concessions/LowStockAlertSettings';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -297,6 +298,10 @@ export default function ConcessionManagement() {
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Alerts
             </TabsTrigger>
           </TabsList>
 
@@ -596,6 +601,12 @@ export default function ConcessionManagement() {
           <TabsContent value="analytics">
             {profile?.organization_id && (
               <ConcessionAnalytics organizationId={profile.organization_id} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="alerts">
+            {profile?.organization_id && (
+              <LowStockAlertSettings organizationId={profile.organization_id} />
             )}
           </TabsContent>
         </Tabs>
