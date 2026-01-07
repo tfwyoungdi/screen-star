@@ -68,6 +68,23 @@ interface SelectedConcession {
   quantity: number;
 }
 
+interface ComboDeal {
+  id: string;
+  name: string;
+  description: string | null;
+  original_price: number;
+  combo_price: number;
+  combo_deal_items: Array<{
+    quantity: number;
+    concession_items: { name: string };
+  }>;
+}
+
+interface SelectedCombo {
+  combo: ComboDeal;
+  quantity: number;
+}
+
 export default function BookingFlow() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
@@ -97,6 +114,8 @@ export default function BookingFlow() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [concessionItems, setConcessionItems] = useState<ConcessionItem[]>([]);
   const [selectedConcessions, setSelectedConcessions] = useState<SelectedConcession[]>([]);
+  const [combos, setCombos] = useState<ComboDeal[]>([]);
+  const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
 
   // Handle payment callback
   useEffect(() => {
@@ -250,6 +269,21 @@ export default function BookingFlow() {
         .order('name');
 
       setConcessionItems(concessions || []);
+
+      // Fetch combo deals
+      const { data: comboDeals } = await supabase
+        .from('combo_deals')
+        .select(`
+          *,
+          combo_deal_items (
+            quantity,
+            concession_items (name)
+          )
+        `)
+        .eq('organization_id', cinemaData.id)
+        .eq('is_active', true);
+
+      setCombos(comboDeals || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -328,9 +362,35 @@ export default function BookingFlow() {
     return selectedConcessions.find(c => c.item.id === itemId)?.quantity || 0;
   };
 
+  // Combo functions
+  const addCombo = (combo: ComboDeal) => {
+    setSelectedCombos(prev => {
+      const existing = prev.find(c => c.combo.id === combo.id);
+      if (existing) {
+        return prev.map(c => c.combo.id === combo.id ? { ...c, quantity: c.quantity + 1 } : c);
+      }
+      return [...prev, { combo, quantity: 1 }];
+    });
+  };
+
+  const removeCombo = (comboId: string) => {
+    setSelectedCombos(prev => {
+      const existing = prev.find(c => c.combo.id === comboId);
+      if (existing && existing.quantity > 1) {
+        return prev.map(c => c.combo.id === comboId ? { ...c, quantity: c.quantity - 1 } : c);
+      }
+      return prev.filter(c => c.combo.id !== comboId);
+    });
+  };
+
+  const getComboQuantity = (comboId: string) => {
+    return selectedCombos.find(c => c.combo.id === comboId)?.quantity || 0;
+  };
+
   const ticketsSubtotal = selectedSeats.reduce((sum, s) => sum + s.price, 0);
   const concessionsSubtotal = selectedConcessions.reduce((sum, c) => sum + (c.item.price * c.quantity), 0);
-  const subtotal = ticketsSubtotal + concessionsSubtotal;
+  const combosSubtotal = selectedCombos.reduce((sum, c) => sum + (c.combo.combo_price * c.quantity), 0);
+  const subtotal = ticketsSubtotal + concessionsSubtotal + combosSubtotal;
   
   const calculateDiscount = () => {
     if (!appliedPromo) return 0;
@@ -800,6 +860,55 @@ export default function BookingFlow() {
                     </div>
                   ))}
 
+                  {/* Combo Deals Section */}
+                  {combos.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                        🎉 Combo Deals - Save More!
+                      </h3>
+                      <div className="grid gap-3">
+                        {combos.map((combo) => {
+                          const quantity = getComboQuantity(combo.id);
+                          return (
+                            <div
+                              key={combo.id}
+                              className="flex items-center justify-between p-3 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
+                            >
+                              <div>
+                                <p className="font-medium">{combo.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {combo.combo_deal_items?.map(i => `${i.quantity}x ${i.concession_items?.name}`).join(' + ')}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs line-through text-muted-foreground">${combo.original_price.toFixed(2)}</span>
+                                  <span className="font-semibold" style={{ color: cinema.primary_color }}>${combo.combo_price.toFixed(2)}</span>
+                                  <Badge variant="secondary" className="text-xs">Save ${(combo.original_price - combo.combo_price).toFixed(2)}</Badge>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {quantity > 0 ? (
+                                  <>
+                                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => removeCombo(combo.id)}>
+                                      <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <span className="w-8 text-center font-medium">{quantity}</span>
+                                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => addCombo(combo)}>
+                                      <Plus className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button variant="outline" size="sm" onClick={() => addCombo(combo)}>
+                                    <Plus className="h-4 w-4 mr-1" />Add
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex gap-4 pt-6 border-t mt-6">
                     <Button variant="outline" onClick={() => setStep('seats')}>
                       Back
@@ -810,7 +919,7 @@ export default function BookingFlow() {
                       style={{ backgroundColor: cinema.primary_color }}
                     >
                       Continue to Details
-                      {concessionsSubtotal > 0 && ` (+$${concessionsSubtotal.toFixed(2)})`}
+                      {(concessionsSubtotal + combosSubtotal) > 0 && ` (+$${(concessionsSubtotal + combosSubtotal).toFixed(2)})`}
                     </Button>
                   </div>
                 </CardContent>

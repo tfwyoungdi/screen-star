@@ -59,6 +59,48 @@ export type Database = {
           },
         ]
       }
+      booking_combos: {
+        Row: {
+          booking_id: string
+          combo_deal_id: string
+          created_at: string
+          id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          booking_id: string
+          combo_deal_id: string
+          created_at?: string
+          id?: string
+          quantity?: number
+          unit_price: number
+        }
+        Update: {
+          booking_id?: string
+          combo_deal_id?: string
+          created_at?: string
+          id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_combos_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_combos_combo_deal_id_fkey"
+            columns: ["combo_deal_id"]
+            isOneToOne: false
+            referencedRelation: "combo_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_concessions: {
         Row: {
           booking_id: string
@@ -174,6 +216,86 @@ export type Database = {
             columns: ["showtime_id"]
             isOneToOne: false
             referencedRelation: "showtimes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      combo_deal_items: {
+        Row: {
+          combo_deal_id: string
+          concession_item_id: string
+          id: string
+          quantity: number
+        }
+        Insert: {
+          combo_deal_id: string
+          concession_item_id: string
+          id?: string
+          quantity?: number
+        }
+        Update: {
+          combo_deal_id?: string
+          concession_item_id?: string
+          id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combo_deal_items_combo_deal_id_fkey"
+            columns: ["combo_deal_id"]
+            isOneToOne: false
+            referencedRelation: "combo_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_deal_items_concession_item_id_fkey"
+            columns: ["concession_item_id"]
+            isOneToOne: false
+            referencedRelation: "concession_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      combo_deals: {
+        Row: {
+          combo_price: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          original_price: number
+          updated_at: string
+        }
+        Insert: {
+          combo_price: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          original_price: number
+          updated_at?: string
+        }
+        Update: {
+          combo_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          original_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combo_deals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
