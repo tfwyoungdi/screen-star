@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const redirectUrl = `${window.location.origin}/dashboard`;
 
-      // 1. Generate unique slug first (this works without auth)
+      // Generate unique slug first (this works without auth)
       const { data: slugData, error: slugError } = await supabase.rpc('generate_unique_slug', {
         cinema_name: cinemaName,
       });
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (slugError) throw slugError;
       const slug = slugData as string;
 
-      // 2. Create the user account with metadata including org info
+      // Create user account - the database trigger handles org, profile, and role creation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -73,39 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('User creation failed');
-
-      // 3. Wait briefly for the session to be established
-      // Then create org, profile, and role
-      if (authData.session) {
-        // User is already authenticated (email confirmation disabled)
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .insert({
-            name: cinemaName,
-            slug: slug,
-          })
-          .select()
-          .single();
-
-        if (orgError) throw orgError;
-
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
-          organization_id: orgData.id,
-          full_name: fullName,
-          email: email,
-        });
-
-        if (profileError) throw profileError;
-
-        const { error: roleError } = await supabase.from('user_roles').insert({
-          user_id: authData.user.id,
-          organization_id: orgData.id,
-          role: 'cinema_admin',
-        });
-
-        if (roleError) throw roleError;
-      }
 
       return { error: null, organizationSlug: slug };
     } catch (error) {
