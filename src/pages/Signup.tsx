@@ -54,6 +54,8 @@ export default function Signup() {
         setError('An account with this email already exists. Please sign in instead.');
       } else if (error.message.includes('duplicate key')) {
         setError('A cinema with this name already exists. Please choose a different name.');
+      } else if (error.message.includes('security purposes') || error.message.includes('after') && error.message.includes('seconds')) {
+        setError('Please wait a moment before trying again. This is a security measure.');
       } else {
         setError(error.message);
       }
