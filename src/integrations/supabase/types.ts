@@ -138,6 +138,7 @@ export type Database = {
           poster_url: string | null
           rating: string | null
           title: string
+          trailer_url: string | null
           updated_at: string
         }
         Insert: {
@@ -151,6 +152,7 @@ export type Database = {
           poster_url?: string | null
           rating?: string | null
           title: string
+          trailer_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -164,6 +166,7 @@ export type Database = {
           poster_url?: string | null
           rating?: string | null
           title?: string
+          trailer_url?: string | null
           updated_at?: string
         }
         Relationships: [
