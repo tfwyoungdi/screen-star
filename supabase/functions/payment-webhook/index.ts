@@ -86,14 +86,23 @@ function verifyFlutterwaveHash(hash: string): boolean {
 async function updateBookingStatus(bookingReference: string, status: string, paymentDetails: Record<string, any>) {
   console.log(`Updating booking ${bookingReference} to status: ${status}`);
   
-  const { error } = await supabase
+  const { data: booking, error } = await supabase
     .from("bookings")
     .update({
       status: status,
       payment_reference: paymentDetails.reference || paymentDetails.id,
       updated_at: new Date().toISOString(),
     })
-    .eq("booking_reference", bookingReference);
+    .eq("booking_reference", bookingReference)
+    .select(`
+      *,
+      showtime:showtimes(
+        start_time,
+        screen:screens(name),
+        movie:movies(title)
+      )
+    `)
+    .single();
 
   if (error) {
     console.error("Failed to update booking:", error);
@@ -101,6 +110,72 @@ async function updateBookingStatus(bookingReference: string, status: string, pay
   }
   
   console.log(`Booking ${bookingReference} updated successfully`);
+
+  // Send confirmation email
+  if (status === "paid" && booking) {
+    await sendConfirmationEmail(booking);
+  }
+}
+
+async function sendConfirmationEmail(booking: any) {
+  try {
+    console.log(`Sending confirmation email for booking ${booking.booking_reference}`);
+
+    // Get organization name
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", booking.organization_id)
+      .single();
+
+    // Get booked seats
+    const { data: bookedSeats } = await supabase
+      .from("booked_seats")
+      .select("seat_label")
+      .eq("booking_id", booking.id);
+
+    const seats = bookedSeats?.map(s => s.seat_label) || [];
+    const showtime = new Date(booking.showtime?.start_time).toLocaleString();
+    const qrCodeData = JSON.stringify({
+      ref: booking.booking_reference,
+      showtime: booking.showtime_id,
+    });
+
+    const emailPayload = {
+      customerName: booking.customer_name,
+      customerEmail: booking.customer_email,
+      cinemaName: org?.name || "Cinema",
+      movieTitle: booking.showtime?.movie?.title || "Movie",
+      showtime: showtime,
+      screenName: booking.showtime?.screen?.name || "Screen",
+      seats: seats,
+      totalAmount: booking.total_amount,
+      bookingReference: booking.booking_reference,
+      qrCodeData: qrCodeData,
+    };
+
+    const response = await fetch(
+      `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-booking-confirmation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+        },
+        body: JSON.stringify(emailPayload),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("Failed to send confirmation email:", error);
+    } else {
+      console.log("Confirmation email sent successfully");
+    }
+  } catch (error) {
+    console.error("Error sending confirmation email:", error);
+    // Don't throw - email failure shouldn't fail the webhook
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
