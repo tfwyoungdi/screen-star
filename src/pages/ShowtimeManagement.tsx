@@ -336,17 +336,24 @@ export default function ShowtimeManagement() {
                 Bulk Schedule
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Bulk Schedule Showtimes</DialogTitle>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogHeader className="pb-4 border-b">
+                <DialogTitle className="flex items-center gap-2">
+                  <CalendarPlus className="h-5 w-5 text-primary" />
+                  Schedule Showtimes
+                </DialogTitle>
                 <DialogDescription>
-                  Create multiple showtimes at once for a date range
+                  Create recurring showtimes for a movie across multiple days
                 </DialogDescription>
               </DialogHeader>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
+                {/* Movie Selection */}
                 <div className="space-y-2">
-                  <Label>Movie *</Label>
+                  <Label className="flex items-center gap-2">
+                    <Film className="h-4 w-4 text-muted-foreground" />
+                    Movie
+                  </Label>
                   <Select onValueChange={(value) => setValue('movie_id', value)}>
                     <SelectTrigger className={errors.movie_id ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Select a movie" />
@@ -354,7 +361,10 @@ export default function ShowtimeManagement() {
                     <SelectContent>
                       {movies?.map((movie) => (
                         <SelectItem key={movie.id} value={movie.id}>
-                          {movie.title} ({movie.duration_minutes} min)
+                          <div className="flex items-center justify-between w-full gap-4">
+                            <span>{movie.title}</span>
+                            <Badge variant="secondary" className="text-xs">{movie.duration_minutes} min</Badge>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -362,8 +372,12 @@ export default function ShowtimeManagement() {
                   {errors.movie_id && <p className="text-sm text-destructive">{errors.movie_id.message}</p>}
                 </div>
 
+                {/* Screen Selection */}
                 <div className="space-y-2">
-                  <Label>Screen *</Label>
+                  <Label className="flex items-center gap-2">
+                    <Monitor className="h-4 w-4 text-muted-foreground" />
+                    Screen
+                  </Label>
                   <Select onValueChange={(value) => setValue('screen_id', value)}>
                     <SelectTrigger className={errors.screen_id ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Select a screen" />
@@ -379,43 +393,52 @@ export default function ShowtimeManagement() {
                   {errors.screen_id && <p className="text-sm text-destructive">{errors.screen_id.message}</p>}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_date">Start Date *</Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      min={format(new Date(), 'yyyy-MM-dd')}
-                      {...register('start_date')}
-                      className={errors.start_date ? 'border-destructive' : ''}
-                    />
-                    {errors.start_date && <p className="text-sm text-destructive">{errors.start_date.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="end_date">End Date *</Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      min={format(new Date(), 'yyyy-MM-dd')}
-                      {...register('end_date')}
-                      className={errors.end_date ? 'border-destructive' : ''}
-                    />
-                    {errors.end_date && <p className="text-sm text-destructive">{errors.end_date.message}</p>}
+                {/* Date Range */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    Date Range
+                  </Label>
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="start_date" className="text-xs text-muted-foreground">From</Label>
+                      <Input
+                        id="start_date"
+                        type="date"
+                        min={format(new Date(), 'yyyy-MM-dd')}
+                        {...register('start_date')}
+                        className={errors.start_date ? 'border-destructive' : ''}
+                      />
+                      {errors.start_date && <p className="text-sm text-destructive">{errors.start_date.message}</p>}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="end_date" className="text-xs text-muted-foreground">To</Label>
+                      <Input
+                        id="end_date"
+                        type="date"
+                        min={format(new Date(), 'yyyy-MM-dd')}
+                        {...register('end_date')}
+                        className={errors.end_date ? 'border-destructive' : ''}
+                      />
+                      {errors.end_date && <p className="text-sm text-destructive">{errors.end_date.message}</p>}
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Showtimes *</Label>
-                  <p className="text-xs text-muted-foreground">Select times for daily screenings</p>
-                  <div className="grid grid-cols-3 gap-2">
+                {/* Showtimes */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    Daily Showtimes
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
                     {COMMON_TIMES.map((time) => (
                       <div
                         key={time.value}
-                        className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
+                        className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
                           selectedTimes.includes(time.value)
-                            ? 'border-primary bg-primary/10'
-                            : 'border-input hover:bg-accent'
+                            ? 'border-primary bg-primary/10 shadow-sm'
+                            : 'border-border hover:border-primary/50 hover:bg-accent/50'
                         }`}
                         onClick={() => toggleTime(time.value)}
                       >
@@ -423,30 +446,39 @@ export default function ShowtimeManagement() {
                           checked={selectedTimes.includes(time.value)}
                           onCheckedChange={() => toggleTime(time.value)}
                         />
-                        <span className="text-sm">{time.label}</span>
+                        <span className="text-sm font-medium">{time.label}</span>
                       </div>
                     ))}
                   </div>
                   
-                  <div className="flex gap-2 mt-2">
+                  {/* Custom Time */}
+                  <div className="flex gap-2">
                     <Input
                       type="time"
                       value={customTime}
                       onChange={(e) => setCustomTime(e.target.value)}
                       className="flex-1"
-                      placeholder="Add custom time"
+                      placeholder="Custom time"
                     />
-                    <Button type="button" variant="outline" size="sm" onClick={addCustomTime}>
-                      <Plus className="h-4 w-4" />
+                    <Button type="button" variant="outline" onClick={addCustomTime}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add
                     </Button>
                   </div>
 
+                  {/* Custom Times Display */}
                   {selectedTimes.filter(t => !COMMON_TIMES.find(ct => ct.value === t)).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap gap-2">
                       {selectedTimes.filter(t => !COMMON_TIMES.find(ct => ct.value === t)).map(time => (
-                        <Badge key={time} variant="secondary" className="gap-1">
+                        <Badge key={time} variant="outline" className="gap-1 py-1">
                           {time}
-                          <button type="button" onClick={() => toggleTime(time)} className="ml-1 hover:text-destructive">×</button>
+                          <button 
+                            type="button" 
+                            onClick={() => toggleTime(time)} 
+                            className="ml-1 text-muted-foreground hover:text-destructive"
+                          >
+                            ×
+                          </button>
                         </Badge>
                       ))}
                     </div>
@@ -455,36 +487,48 @@ export default function ShowtimeManagement() {
                   {errors.times && <p className="text-sm text-destructive">{errors.times.message}</p>}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Standard Price *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      {...register('price')}
-                      className={errors.price ? 'border-destructive' : ''}
-                    />
-                    {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="vip_price">VIP Price</Label>
-                    <Input
-                      id="vip_price"
-                      type="number"
-                      step="0.01"
-                      {...register('vip_price')}
-                    />
+                {/* Pricing */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Ticket Pricing</Label>
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="price" className="text-xs text-muted-foreground">Standard Price</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input
+                          id="price"
+                          type="number"
+                          step="0.01"
+                          {...register('price')}
+                          className={`pl-7 ${errors.price ? 'border-destructive' : ''}`}
+                        />
+                      </div>
+                      {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="vip_price" className="text-xs text-muted-foreground">VIP Price (optional)</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input
+                          id="vip_price"
+                          type="number"
+                          step="0.01"
+                          {...register('vip_price')}
+                          className="pl-7"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
+                {/* Preview */}
                 {selectedTimes.length > 0 && watch('start_date') && watch('end_date') && (
-                  <div className="bg-muted/50 rounded-md p-3 text-sm">
-                    <p className="font-medium">Preview:</p>
-                    <p className="text-muted-foreground">
-                      This will create showtimes for <strong>{selectedTimes.length} time(s)</strong> daily 
-                      from <strong>{watch('start_date')}</strong> to <strong>{watch('end_date')}</strong>
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="text-sm font-medium mb-1">Summary</p>
+                    <p className="text-sm text-muted-foreground">
+                      <strong>{selectedTimes.length}</strong> showtime{selectedTimes.length !== 1 ? 's' : ''} daily 
+                      from <strong>{format(new Date(watch('start_date')), 'MMM d')}</strong> to{' '}
+                      <strong>{format(new Date(watch('end_date')), 'MMM d, yyyy')}</strong>
                     </p>
                   </div>
                 )}
@@ -493,44 +537,42 @@ export default function ShowtimeManagement() {
                 {detectedConflicts.length > 0 && (
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Scheduling Conflicts Detected</AlertTitle>
+                    <AlertTitle>Scheduling Conflicts</AlertTitle>
                     <AlertDescription>
-                      <p className="mb-2">
-                        {detectedConflicts.length} showtime(s) will overlap with existing screenings on this screen:
+                      <p className="mb-2 text-sm">
+                        {detectedConflicts.length} overlap{detectedConflicts.length !== 1 ? 's' : ''} detected:
                       </p>
-                      <ul className="text-xs space-y-1 max-h-32 overflow-y-auto">
-                        {detectedConflicts.slice(0, 5).map((conflict, i) => (
+                      <ul className="text-xs space-y-1 max-h-24 overflow-y-auto">
+                        {detectedConflicts.slice(0, 3).map((conflict, i) => (
                           <li key={i} className="flex items-start gap-1">
                             <span>•</span>
                             <span>
-                              {format(conflict.newStart, 'MMM d, h:mm a')} conflicts with "{conflict.existingMovie}" 
-                              ({format(conflict.existingStart, 'h:mm a')} - {format(conflict.existingEnd, 'h:mm a')})
+                              {format(conflict.newStart, 'MMM d, h:mm a')} → "{conflict.existingMovie}"
                             </span>
                           </li>
                         ))}
-                        {detectedConflicts.length > 5 && (
+                        {detectedConflicts.length > 3 && (
                           <li className="text-muted-foreground">
-                            ...and {detectedConflicts.length - 5} more conflicts
+                            +{detectedConflicts.length - 3} more
                           </li>
                         )}
                       </ul>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        You can still proceed, but overlapping showtimes may cause scheduling issues.
-                      </p>
                     </AlertDescription>
                   </Alert>
                 )}
 
+                {/* Submit Button */}
                 <Button 
                   type="submit" 
                   className="w-full" 
+                  size="lg"
                   disabled={isSubmitting}
                   variant={detectedConflicts.length > 0 ? 'destructive' : 'default'}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
+                      Creating Showtimes...
                     </>
                   ) : detectedConflicts.length > 0 ? (
                     <>
