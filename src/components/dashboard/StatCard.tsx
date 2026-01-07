@@ -1,6 +1,4 @@
-import { ReactNode } from 'react';
 import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface StatCardProps {
@@ -12,8 +10,41 @@ interface StatCardProps {
     value: number;
     label: string;
   };
-  variant?: 'default' | 'primary' | 'success' | 'warning';
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'info';
 }
+
+const variantStyles = {
+  default: {
+    iconBg: 'bg-secondary',
+    iconColor: 'text-muted-foreground',
+    valueColor: 'text-foreground',
+    gradient: 'from-secondary/50 to-transparent',
+  },
+  primary: {
+    iconBg: 'bg-primary/10',
+    iconColor: 'text-primary',
+    valueColor: 'text-primary',
+    gradient: 'from-primary/10 to-transparent',
+  },
+  success: {
+    iconBg: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-600 dark:text-emerald-400',
+    valueColor: 'text-emerald-600 dark:text-emerald-400',
+    gradient: 'from-emerald-500/10 to-transparent',
+  },
+  warning: {
+    iconBg: 'bg-amber-500/10',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    valueColor: 'text-amber-600 dark:text-amber-400',
+    gradient: 'from-amber-500/10 to-transparent',
+  },
+  info: {
+    iconBg: 'bg-blue-500/10',
+    iconColor: 'text-blue-600 dark:text-blue-400',
+    valueColor: 'text-blue-600 dark:text-blue-400',
+    gradient: 'from-blue-500/10 to-transparent',
+  },
+};
 
 export function StatCard({
   title,
@@ -24,55 +55,32 @@ export function StatCard({
   variant = 'default',
 }: StatCardProps) {
   const isPositive = trend && trend.value >= 0;
+  const styles = variantStyles[variant];
 
   return (
-    <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 hover:border-primary/30">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p
-              className={cn(
-                'text-3xl font-bold tracking-tight',
-                variant === 'primary' && 'text-primary',
-                variant === 'success' && 'text-emerald-500',
-                variant === 'warning' && 'text-amber-500'
-              )}
-            >
-              {value}
-            </p>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
-            )}
+    <div className="group relative overflow-hidden rounded-2xl bg-card border border-border p-6 transition-all duration-300 hover:shadow-lg hover:border-primary/20 hover:-translate-y-0.5">
+      {/* Background gradient */}
+      <div className={cn(
+        'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300',
+        styles.gradient
+      )} />
+      
+      <div className="relative">
+        <div className="flex items-start justify-between mb-4">
+          <div className={cn(
+            'p-3 rounded-xl transition-transform duration-300 group-hover:scale-110',
+            styles.iconBg
+          )}>
+            <Icon className={cn('h-5 w-5', styles.iconColor)} />
           </div>
-          <div
-            className={cn(
-              'p-3 rounded-xl transition-colors',
-              variant === 'default' && 'bg-muted/50 group-hover:bg-muted',
-              variant === 'primary' && 'bg-primary/10 group-hover:bg-primary/20',
-              variant === 'success' && 'bg-emerald-500/10 group-hover:bg-emerald-500/20',
-              variant === 'warning' && 'bg-amber-500/10 group-hover:bg-amber-500/20'
-            )}
-          >
-            <Icon
-              className={cn(
-                'h-5 w-5',
-                variant === 'default' && 'text-muted-foreground',
-                variant === 'primary' && 'text-primary',
-                variant === 'success' && 'text-emerald-500',
-                variant === 'warning' && 'text-amber-500'
-              )}
-            />
-          </div>
-        </div>
-        {trend && (
-          <div className="mt-4 flex items-center gap-1.5">
+          
+          {trend && (
             <div
               className={cn(
-                'flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-md',
+                'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
                 isPositive
-                  ? 'text-emerald-500 bg-emerald-500/10'
-                  : 'text-red-500 bg-red-500/10'
+                  ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+                  : 'text-red-600 dark:text-red-400 bg-red-500/10'
               )}
             >
               {isPositive ? (
@@ -82,20 +90,22 @@ export function StatCard({
               )}
               <span>{Math.abs(trend.value)}%</span>
             </div>
-            <span className="text-xs text-muted-foreground">{trend.label}</span>
-          </div>
-        )}
-      </CardContent>
-      {/* Decorative gradient */}
-      <div
-        className={cn(
-          'absolute bottom-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity',
-          variant === 'default' && 'bg-gradient-to-r from-muted to-muted-foreground/30',
-          variant === 'primary' && 'bg-gradient-to-r from-primary/50 to-primary',
-          variant === 'success' && 'bg-gradient-to-r from-emerald-500/50 to-emerald-500',
-          variant === 'warning' && 'bg-gradient-to-r from-amber-500/50 to-amber-500'
-        )}
-      />
-    </Card>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className={cn('text-3xl font-bold tracking-tight', styles.valueColor)}>
+            {value}
+          </p>
+          {subtitle && (
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
+          )}
+          {trend && (
+            <p className="text-xs text-muted-foreground mt-2">{trend.label}</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

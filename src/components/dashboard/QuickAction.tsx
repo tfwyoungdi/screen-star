@@ -1,12 +1,13 @@
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ChevronRight } from 'lucide-react';
 
 interface QuickActionProps {
   title: string;
   description: string;
   icon: LucideIcon;
   onClick: () => void;
-  variant?: 'default' | 'primary' | 'accent';
+  variant?: 'default' | 'primary' | 'gradient';
 }
 
 export function QuickAction({
@@ -20,54 +21,58 @@ export function QuickAction({
     <button
       onClick={onClick}
       className={cn(
-        'group relative w-full p-5 rounded-xl text-left transition-all duration-300',
-        'border bg-card hover:shadow-lg',
-        'hover:border-primary/40 hover:-translate-y-0.5',
-        'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background'
+        'group relative w-full p-4 rounded-xl text-left transition-all duration-300',
+        'border hover:shadow-md hover:-translate-y-0.5',
+        'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background',
+        variant === 'gradient' 
+          ? 'bg-gradient-to-br from-primary to-primary/80 border-primary/50 text-primary-foreground'
+          : 'bg-card border-border hover:border-primary/30'
       )}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-center gap-4">
         <div
           className={cn(
-            'p-3 rounded-xl transition-all duration-300',
-            variant === 'default' && 'bg-muted group-hover:bg-primary/10',
-            variant === 'primary' && 'bg-primary/10 group-hover:bg-primary/20',
-            variant === 'accent' && 'bg-accent/10 group-hover:bg-accent/20'
+            'p-2.5 rounded-xl transition-all duration-300 group-hover:scale-110',
+            variant === 'gradient'
+              ? 'bg-primary-foreground/20'
+              : variant === 'primary'
+                ? 'bg-primary/10 group-hover:bg-primary/20'
+                : 'bg-secondary group-hover:bg-primary/10'
           )}
         >
           <Icon
             className={cn(
               'h-5 w-5 transition-colors',
-              variant === 'default' && 'text-muted-foreground group-hover:text-primary',
-              variant === 'primary' && 'text-primary',
-              variant === 'accent' && 'text-accent'
+              variant === 'gradient'
+                ? 'text-primary-foreground'
+                : variant === 'primary'
+                  ? 'text-primary'
+                  : 'text-muted-foreground group-hover:text-primary'
             )}
           />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+          <h3 className={cn(
+            'font-semibold transition-colors text-sm',
+            variant === 'gradient' 
+              ? 'text-primary-foreground' 
+              : 'text-foreground group-hover:text-primary'
+          )}>
             {title}
           </h3>
-          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+          <p className={cn(
+            'text-xs mt-0.5 line-clamp-1',
+            variant === 'gradient'
+              ? 'text-primary-foreground/80'
+              : 'text-muted-foreground'
+          )}>
             {description}
           </p>
         </div>
-      </div>
-      {/* Arrow indicator */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-1">
-        <svg
-          className="h-5 w-5 text-primary"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
+        <ChevronRight className={cn(
+          'h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300',
+          variant === 'gradient' ? 'text-primary-foreground' : 'text-primary'
+        )} />
       </div>
     </button>
   );
