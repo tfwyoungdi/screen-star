@@ -127,8 +127,8 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
   }
 
   return (
-    <section className="relative h-screen min-h-[700px] overflow-hidden" style={{ backgroundColor: '#0a0a12' }}>
-      {/* Background Movie Poster */}
+    <section className="relative h-[800px] overflow-hidden" style={{ backgroundColor: '#0a0a12' }}>
+      {/* Background Movie Poster - Fixed size container */}
       {featuredMovies.map((movie, index) => (
         <div
           key={movie.id}
@@ -136,11 +136,14 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             index === currentIndex ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <img
-            src={movie.poster_url!}
-            alt={movie.title}
-            className="absolute inset-0 w-full h-full object-cover object-top scale-105"
-          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img
+              src={movie.poster_url!}
+              alt={movie.title}
+              className="w-full h-full object-cover object-center"
+              style={{ objectPosition: 'center 20%' }}
+            />
+          </div>
           {/* Gradient Overlays - matching the reference */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a12] via-[#0a0a12]/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a12]/90 via-transparent to-[#0a0a12]/70" />
