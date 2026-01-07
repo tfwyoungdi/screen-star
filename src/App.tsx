@@ -13,8 +13,12 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import CinemaSettings from "./pages/CinemaSettings";
 import StaffManagement from "./pages/StaffManagement";
+import MovieManagement from "./pages/MovieManagement";
+import ScreenManagement from "./pages/ScreenManagement";
+import ShowtimeManagement from "./pages/ShowtimeManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import PublicCinema from "./pages/PublicCinema";
+import BookingFlow from "./pages/BookingFlow";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,11 +38,36 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/accept-invitation" element={<AcceptInvitation />} />
             <Route path="/cinema/:slug" element={<PublicCinema />} />
+            <Route path="/cinema/:slug/book" element={<BookingFlow />} />
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/movies"
+              element={
+                <ProtectedRoute allowedRoles={['cinema_admin']}>
+                  <MovieManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/screens"
+              element={
+                <ProtectedRoute allowedRoles={['cinema_admin']}>
+                  <ScreenManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/showtimes"
+              element={
+                <ProtectedRoute allowedRoles={['cinema_admin']}>
+                  <ShowtimeManagement />
                 </ProtectedRoute>
               }
             />

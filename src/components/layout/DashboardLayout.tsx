@@ -25,11 +25,16 @@ import {
   Settings,
   Globe,
   Menu,
+  Monitor,
+  Calendar,
 } from 'lucide-react';
 
 const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Staff Management', url: '/staff', icon: Users },
+  { title: 'Movies', url: '/movies', icon: Film },
+  { title: 'Screens', url: '/screens', icon: Monitor },
+  { title: 'Showtimes', url: '/showtimes', icon: Calendar },
+  { title: 'Staff', url: '/staff', icon: Users },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
