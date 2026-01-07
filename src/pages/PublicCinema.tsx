@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar, Play, X } from 'lucide-react';
 
 interface CinemaData {
   id: string;
@@ -15,6 +16,13 @@ interface CinemaData {
   logo_url: string | null;
   primary_color: string;
   secondary_color: string;
+  about_text: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  address: string | null;
+  social_facebook: string | null;
+  social_instagram: string | null;
+  social_twitter: string | null;
 }
 
 interface MovieWithShowtimes {
@@ -25,6 +33,7 @@ interface MovieWithShowtimes {
   poster_url: string | null;
   genre: string | null;
   rating: string | null;
+  trailer_url: string | null;
   showtimes: {
     id: string;
     start_time: string;
@@ -32,6 +41,27 @@ interface MovieWithShowtimes {
     screens: { name: string };
   }[];
 }
+
+const extractVideoId = (url: string): { type: 'youtube' | 'vimeo' | null; id: string | null } => {
+  const ytRegex = /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+  const ytMatch = url.match(ytRegex);
+  if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+
+  const vimeoRegex = /(?:vimeo\.com\/)(\d+)/;
+  const vimeoMatch = url.match(vimeoRegex);
+  if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
+
+  return { type: null, id: null };
+};
+
+const getTrailerEmbed = (url: string | null): string | null => {
+  if (!url) return null;
+  const { type, id } = extractVideoId(url);
+  if (!type || !id) return null;
+  if (type === 'youtube') return `https://www.youtube.com/embed/${id}?autoplay=1`;
+  if (type === 'vimeo') return `https://player.vimeo.com/video/${id}?autoplay=1`;
+  return null;
+};
 
 export default function PublicCinema() {
   const { slug } = useParams<{ slug: string }>();
@@ -48,10 +78,10 @@ export default function PublicCinema() {
 
   const fetchCinemaData = async () => {
     try {
-      // Fetch cinema
+      // Fetch cinema with extended info
       const { data: cinemaData, error: cinemaError } = await supabase
         .from('organizations')
-        .select('id, name, slug, logo_url, primary_color, secondary_color')
+        .select('id, name, slug, logo_url, primary_color, secondary_color, about_text, contact_email, contact_phone, address, social_facebook, social_instagram, social_twitter')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
@@ -69,7 +99,7 @@ export default function PublicCinema() {
       // Fetch movies with upcoming showtimes
       const { data: moviesData } = await supabase
         .from('movies')
-        .select('id, title, description, duration_minutes, poster_url, genre, rating')
+        .select('id, title, description, duration_minutes, poster_url, genre, rating, trailer_url')
         .eq('organization_id', cinemaData.id)
         .eq('is_active', true);
 
@@ -212,7 +242,7 @@ export default function PublicCinema() {
               {movies.map((movie) => (
                 <Card key={movie.id} className="overflow-hidden flex flex-col">
                   <div
-                    className="h-48 flex items-center justify-center relative"
+                    className="h-48 flex items-center justify-center relative group"
                     style={{ backgroundColor: `${cinema?.secondary_color}80` }}
                   >
                     {movie.poster_url ? (
@@ -229,9 +259,63 @@ export default function PublicCinema() {
                         {movie.rating}
                       </Badge>
                     )}
+                    
+                    {/* Trailer Play Button */}
+                    {movie.trailer_url && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div 
+                              className="w-16 h-16 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: cinema?.primary_color }}
+                            >
+                              <Play className="h-8 w-8 text-white ml-1" fill="white" />
+                            </div>
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+                          <DialogHeader className="p-4 pb-0">
+                            <DialogTitle>{movie.title} - Trailer</DialogTitle>
+                          </DialogHeader>
+                          <div className="aspect-video">
+                            <iframe
+                              src={getTrailerEmbed(movie.trailer_url)!}
+                              className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </div>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{movie.title}</CardTitle>
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg">{movie.title}</CardTitle>
+                      {movie.trailer_url && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="gap-1 text-xs">
+                              <Play className="h-3 w-3" />
+                              Trailer
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl p-0 overflow-hidden">
+                            <DialogHeader className="p-4 pb-0">
+                              <DialogTitle>{movie.title} - Trailer</DialogTitle>
+                            </DialogHeader>
+                            <div className="aspect-video">
+                              <iframe
+                                src={getTrailerEmbed(movie.trailer_url)!}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
                     <CardDescription className="flex items-center gap-4">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -295,6 +379,11 @@ export default function PublicCinema() {
       <section id="about" className="py-16" style={{ backgroundColor: 'hsl(var(--card))' }}>
         <div className="container mx-auto px-4">
           <h3 className="text-2xl font-bold text-foreground mb-8">About Us</h3>
+          
+          {cinema?.about_text && (
+            <p className="text-muted-foreground mb-8 max-w-3xl">{cinema.about_text}</p>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card>
               <CardContent className="pt-6 text-center">
@@ -341,6 +430,34 @@ export default function PublicCinema() {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Contact Info */}
+          {(cinema?.contact_email || cinema?.contact_phone || cinema?.address) && (
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {cinema?.contact_email && (
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5" style={{ color: cinema?.primary_color }} />
+                  <a href={`mailto:${cinema.contact_email}`} className="text-foreground hover:underline">
+                    {cinema.contact_email}
+                  </a>
+                </div>
+              )}
+              {cinema?.contact_phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="h-5 w-5" style={{ color: cinema?.primary_color }} />
+                  <a href={`tel:${cinema.contact_phone}`} className="text-foreground hover:underline">
+                    {cinema.contact_phone}
+                  </a>
+                </div>
+              )}
+              {cinema?.address && (
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5" style={{ color: cinema?.primary_color }} />
+                  <span className="text-foreground">{cinema.address}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

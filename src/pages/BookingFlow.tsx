@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X } from 'lucide-react';
+import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -58,8 +58,10 @@ export default function BookingFlow() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const showtimeId = searchParams.get('showtime');
+  const paymentStatus = searchParams.get('status');
+  const paymentRef = searchParams.get('ref');
 
-  const [step, setStep] = useState<'seats' | 'details' | 'confirmation'>('seats');
+  const [step, setStep] = useState<'seats' | 'details' | 'payment' | 'confirmation'>('seats');
   const [showtime, setShowtime] = useState<Showtime | null>(null);
   const [seatLayouts, setSeatLayouts] = useState<any[]>([]);
   const [bookedSeats, setBookedSeats] = useState<any[]>([]);
@@ -67,7 +69,9 @@ export default function BookingFlow() {
   const [cinema, setCinema] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [bookingRef, setBookingRef] = useState<string | null>(null);
+  const [pendingBookingRef, setPendingBookingRef] = useState<string | null>(null);
   const [bookingData, setBookingData] = useState<BookingData>({
     customer_name: '',
     customer_email: '',
@@ -77,6 +81,45 @@ export default function BookingFlow() {
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
+
+  // Handle payment callback
+  useEffect(() => {
+    if (paymentStatus && paymentRef) {
+      handlePaymentCallback();
+    }
+  }, [paymentStatus, paymentRef]);
+
+  const handlePaymentCallback = async () => {
+    if (!paymentRef || !cinema) return;
+    
+    setLoading(true);
+    try {
+      // Verify payment
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: {
+          bookingReference: paymentRef,
+          paymentReference: searchParams.get('transaction_id') || searchParams.get('reference'),
+          gateway: cinema.payment_gateway,
+          transactionId: searchParams.get('transaction_id'),
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.verified) {
+        setBookingRef(paymentRef);
+        setStep('confirmation');
+        toast.success('Payment successful! Your booking is confirmed.');
+      } else {
+        toast.error('Payment verification failed. Please contact support.');
+      }
+    } catch (error) {
+      console.error('Payment verification error:', error);
+      toast.error('Failed to verify payment');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchBookedSeats = useCallback(async () => {
     if (!showtimeId) return;
@@ -634,13 +677,146 @@ export default function BookingFlow() {
                     <Button variant="outline" onClick={() => setStep('seats')}>
                       Back
                     </Button>
+                    {cinema.payment_gateway && cinema.payment_gateway !== 'none' && cinema.payment_gateway_configured ? (
+                      <Button
+                        className="flex-1"
+                        onClick={() => setStep('payment')}
+                        disabled={!bookingData.customer_name || !bookingData.customer_email}
+                        style={{ backgroundColor: cinema.primary_color }}
+                      >
+                        Continue to Payment - ${totalAmount.toFixed(2)}
+                      </Button>
+                    ) : (
+                      <Button
+                        className="flex-1"
+                        onClick={handleBooking}
+                        disabled={!bookingData.customer_name || !bookingData.customer_email || submitting}
+                        style={{ backgroundColor: cinema.primary_color }}
+                      >
+                        {submitting ? 'Processing...' : `Confirm Booking - $${totalAmount.toFixed(2)}`}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {step === 'payment' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Payment
+                  </CardTitle>
+                  <CardDescription>Complete your payment to confirm the booking</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <div className="flex justify-between mb-2">
+                      <span>Tickets ({selectedSeats.length})</span>
+                      <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between mb-2 text-green-600">
+                        <span>Discount</span>
+                        <span>-${discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                      <span>Total</span>
+                      <span style={{ color: cinema.primary_color }}>${totalAmount.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <Alert>
+                    <CreditCard className="h-4 w-4" />
+                    <AlertDescription>
+                      You will be redirected to {cinema.payment_gateway === 'stripe' ? 'Stripe' : cinema.payment_gateway === 'flutterwave' ? 'Flutterwave' : 'Paystack'} to complete your payment securely.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="flex gap-4">
+                    <Button variant="outline" onClick={() => setStep('details')}>
+                      Back
+                    </Button>
                     <Button
                       className="flex-1"
-                      onClick={handleBooking}
-                      disabled={!bookingData.customer_name || !bookingData.customer_email || submitting}
+                      onClick={async () => {
+                        setProcessingPayment(true);
+                        try {
+                          // Create pending booking first
+                          const { data: refData } = await supabase.rpc('generate_booking_reference');
+                          const bookingReference = refData as string;
+                          
+                          const { data: booking, error: bookingError } = await supabase
+                            .from('bookings')
+                            .insert({
+                              organization_id: cinema.id,
+                              showtime_id: showtime!.id,
+                              customer_name: bookingData.customer_name,
+                              customer_email: bookingData.customer_email,
+                              customer_phone: bookingData.customer_phone || null,
+                              total_amount: totalAmount,
+                              discount_amount: discountAmount,
+                              promo_code_id: appliedPromo?.id || null,
+                              booking_reference: bookingReference,
+                              status: 'pending',
+                            })
+                            .select()
+                            .single();
+
+                          if (bookingError) throw bookingError;
+
+                          // Book the seats
+                          const seatsToBook = selectedSeats.map(seat => ({
+                            booking_id: booking.id,
+                            showtime_id: showtime!.id,
+                            row_label: seat.row_label,
+                            seat_number: seat.seat_number,
+                            seat_type: seat.seat_type,
+                            price: seat.price,
+                          }));
+
+                          await supabase.from('booked_seats').insert(seatsToBook);
+
+                          // Initialize payment
+                          const { data: paymentData, error: paymentError } = await supabase.functions.invoke('process-payment', {
+                            body: {
+                              bookingReference,
+                              amount: totalAmount,
+                              currency: 'USD',
+                              customerEmail: bookingData.customer_email,
+                              customerName: bookingData.customer_name,
+                              gateway: cinema.payment_gateway,
+                              publicKey: cinema.payment_gateway_public_key,
+                              returnUrl: `${window.location.origin}/cinema/${slug}/book?showtime=${showtimeId}`,
+                            },
+                          });
+
+                          if (paymentError) throw paymentError;
+
+                          if (paymentData.paymentUrl) {
+                            window.location.href = paymentData.paymentUrl;
+                          } else {
+                            throw new Error('No payment URL received');
+                          }
+                        } catch (error: any) {
+                          console.error('Payment error:', error);
+                          toast.error(error.message || 'Failed to process payment');
+                          setProcessingPayment(false);
+                        }
+                      }}
+                      disabled={processingPayment}
                       style={{ backgroundColor: cinema.primary_color }}
                     >
-                      {submitting ? 'Processing...' : `Confirm Booking - $${totalAmount.toFixed(2)}`}
+                      {processingPayment ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Redirecting to payment...
+                        </>
+                      ) : (
+                        `Pay $${totalAmount.toFixed(2)}`
+                      )}
                     </Button>
                   </div>
                 </CardContent>
