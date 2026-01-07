@@ -179,6 +179,18 @@ export type Database = {
     }
     Functions: {
       generate_unique_slug: { Args: { cinema_name: string }; Returns: string }
+      get_invitation_by_token: {
+        Args: { invitation_token: string }
+        Returns: {
+          accepted_at: string
+          email: string
+          expires_at: string
+          id: string
+          organization_id: string
+          organization_name: string
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
