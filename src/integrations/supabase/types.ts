@@ -421,6 +421,41 @@ export type Database = {
           },
         ]
       }
+      low_stock_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          notified_email: string | null
+          organization_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items: Json
+          notified_email?: string | null
+          organization_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          notified_email?: string | null
+          organization_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "low_stock_notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movies: {
         Row: {
           created_at: string
