@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format, addDays, addMinutes } from 'date-fns';
-import { Loader2, Plus, Calendar, Clock, Trash2, Film, Monitor, CalendarPlus, AlertTriangle, CalendarDays, List, Pencil } from 'lucide-react';
+import { Loader2, Plus, Calendar, Clock, Trash2, Film, Monitor, CalendarPlus, AlertTriangle, CalendarDays, List, Pencil, Ticket, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -144,37 +144,53 @@ export default function ShowtimeManagement() {
     return timeFilter === 'upcoming' ? dateA - dateB : dateB - dateA;
   });
 
-  // Fetch booking counts for all showtimes
-  const { data: bookingCounts } = useQuery({
-    queryKey: ['showtime-booking-counts', profile?.organization_id],
+  // Fetch booking counts and revenue for all showtimes
+  const { data: bookingStats } = useQuery({
+    queryKey: ['showtime-booking-stats', profile?.organization_id, allShowtimes?.length],
     queryFn: async () => {
-      if (!profile?.organization_id || !showtimes?.length) return [];
+      if (!profile?.organization_id || !allShowtimes?.length) return {};
       
-      const showtimeIds = showtimes.map(s => s.id);
+      const showtimeIds = allShowtimes.map(s => s.id);
       
-      // Get booked seats count per showtime
-      const { data: bookedSeats, error } = await supabase
+      // Get booked seats with prices per showtime
+      const { data: bookedSeats, error: seatsError } = await supabase
         .from('booked_seats')
-        .select('showtime_id')
+        .select('showtime_id, price')
         .in('showtime_id', showtimeIds);
 
-      if (error) throw error;
+      if (seatsError) throw seatsError;
 
-      // Count seats per showtime
-      const countsMap: Record<string, number> = {};
-      bookedSeats?.forEach(seat => {
-        countsMap[seat.showtime_id] = (countsMap[seat.showtime_id] || 0) + 1;
+      // Build stats map: count and revenue per showtime
+      const statsMap: Record<string, { count: number; revenue: number; capacity: number }> = {};
+      
+      // Initialize with capacity from showtimes
+      allShowtimes.forEach(showtime => {
+        statsMap[showtime.id] = {
+          count: 0,
+          revenue: 0,
+          capacity: (showtime.screens?.rows || 10) * (showtime.screens?.columns || 10),
+        };
       });
 
-      // Build the result with capacity info
-      return showtimes.map(showtime => ({
-        showtime_id: showtime.id,
-        count: countsMap[showtime.id] || 0,
-        capacity: (showtime.screens?.rows || 10) * (showtime.screens?.columns || 10),
-      }));
+      // Aggregate booking data
+      bookedSeats?.forEach(seat => {
+        if (statsMap[seat.showtime_id]) {
+          statsMap[seat.showtime_id].count++;
+          statsMap[seat.showtime_id].revenue += Number(seat.price) || 0;
+        }
+      });
+
+      return statsMap;
     },
-    enabled: !!profile?.organization_id && !!showtimes?.length,
+    enabled: !!profile?.organization_id && !!allShowtimes?.length,
   });
+
+  // For calendar view compatibility
+  const bookingCounts = showtimes?.map(s => ({
+    showtime_id: s.id,
+    count: bookingStats?.[s.id]?.count || 0,
+    capacity: bookingStats?.[s.id]?.capacity || 100,
+  }));
 
   const toggleTime = (time: string) => {
     const newTimes = selectedTimes.includes(time)
@@ -732,66 +748,84 @@ export default function ShowtimeManagement() {
                         <TableHead>Screen</TableHead>
                         <TableHead>Time</TableHead>
                         <TableHead>Pricing</TableHead>
+                        {timeFilter === 'past' && <TableHead>Sales</TableHead>}
                         <TableHead>Status</TableHead>
                         <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {dateShowtimes?.map((showtime) => (
-                        <TableRow key={showtime.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Film className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{showtime.movies?.title}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Monitor className="h-4 w-4 text-muted-foreground" />
-                              {showtime.screens?.name}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {format(new Date(showtime.start_time), 'h:mm a')}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Badge variant="outline">${showtime.price}</Badge>
-                              {showtime.vip_price && (
-                                <Badge variant="secondary">VIP: ${showtime.vip_price}</Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Switch
-                              checked={showtime.is_active}
-                              onCheckedChange={() => toggleShowtimeActive(showtime)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEditShowtime(showtime)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => deleteShowtime(showtime.id)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {dateShowtimes?.map((showtime) => {
+                        const stats = bookingStats?.[showtime.id];
+                        return (
+                          <TableRow key={showtime.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Film className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{showtime.movies?.title}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Monitor className="h-4 w-4 text-muted-foreground" />
+                                {showtime.screens?.name}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {format(new Date(showtime.start_time), 'h:mm a')}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Badge variant="outline">${showtime.price}</Badge>
+                                {showtime.vip_price && (
+                                  <Badge variant="secondary">VIP: ${showtime.vip_price}</Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            {timeFilter === 'past' && (
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  <Badge variant="secondary" className="w-fit gap-1">
+                                    <Ticket className="h-3 w-3" />
+                                    {stats?.count || 0} / {stats?.capacity || 0} tickets
+                                  </Badge>
+                                  <Badge variant="outline" className="w-fit gap-1 text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-400">
+                                    <DollarSign className="h-3 w-3" />
+                                    ${(stats?.revenue || 0).toFixed(0)} earned
+                                  </Badge>
+                                </div>
+                              </TableCell>
+                            )}
+                            <TableCell>
+                              <Switch
+                                checked={showtime.is_active}
+                                onCheckedChange={() => toggleShowtimeActive(showtime)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEditShowtime(showtime)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => deleteShowtime(showtime.id)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </CardContent>
