@@ -33,6 +33,7 @@ import {
   Tag,
   Clapperboard,
   ExternalLink,
+  Popcorn,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +42,7 @@ const navItems = [
   { title: 'Movies', url: '/movies', icon: Film },
   { title: 'Screens', url: '/screens', icon: Monitor },
   { title: 'Showtimes', url: '/showtimes', icon: Calendar },
+  { title: 'Concessions', url: '/concessions', icon: Popcorn },
   { title: 'Promos', url: '/promos', icon: Tag },
   { title: 'Sales', url: '/sales', icon: BarChart3 },
   { title: 'Customers', url: '/customers', icon: Users },

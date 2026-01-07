@@ -25,6 +25,7 @@ import PublicCinema from "./pages/PublicCinema";
 import BookingFlow from "./pages/BookingFlow";
 import CustomerManagement from "./pages/CustomerManagement";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import ConcessionManagement from "./pages/ConcessionManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -115,6 +116,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['cinema_admin']}>
                     <PromoCodeManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/concessions"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin']}>
+                    <ConcessionManagement />
                   </ProtectedRoute>
                 }
               />

@@ -59,6 +59,48 @@ export type Database = {
           },
         ]
       }
+      booking_concessions: {
+        Row: {
+          booking_id: string
+          concession_item_id: string
+          created_at: string
+          id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          booking_id: string
+          concession_item_id: string
+          created_at?: string
+          id?: string
+          quantity?: number
+          unit_price: number
+        }
+        Update: {
+          booking_id?: string
+          concession_item_id?: string
+          created_at?: string
+          id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_concessions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_concessions_concession_item_id_fkey"
+            columns: ["concession_item_id"]
+            isOneToOne: false
+            referencedRelation: "concession_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booking_reference: string
@@ -132,6 +174,53 @@ export type Database = {
             columns: ["showtime_id"]
             isOneToOne: false
             referencedRelation: "showtimes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concession_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean
+          name: string
+          organization_id: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name: string
+          organization_id: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name?: string
+          organization_id?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concession_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
