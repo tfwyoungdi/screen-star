@@ -217,185 +217,113 @@ export default function PublicCinema() {
       />
 
       {/* Now Showing */}
-      <section id="movies" className="py-16 bg-background">
+      <section id="movies" className="py-12 md:py-16" style={{ backgroundColor: '#0a0a0f' }}>
         <div className="container mx-auto px-4">
-          <h3 className="text-2xl font-bold text-foreground mb-8 flex items-center gap-2">
-            <Film className="h-6 w-6" style={{ color: cinema?.primary_color }} />
-            Now Showing
-          </h3>
+          {/* Header with title and date tabs */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 mb-8">
+            <h3 className="text-2xl md:text-3xl font-bold text-white whitespace-nowrap">
+              Now Showing
+            </h3>
+            
+            {/* Date Tabs */}
+            {(() => {
+              const today = startOfDay(new Date());
+              const dates = Array.from({ length: 5 }, (_, i) => addDays(today, i));
+              
+              return (
+                <div className="flex items-center gap-1 md:gap-2 overflow-x-auto pb-2 md:pb-0">
+                  {dates.map((date, index) => (
+                    <button
+                      key={date.toISOString()}
+                      className={`px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium whitespace-nowrap rounded-sm transition-colors ${
+                        index === 0
+                          ? 'border-b-2'
+                          : 'text-white/60 hover:text-white'
+                      }`}
+                      style={index === 0 ? { 
+                        color: cinema?.primary_color || '#D4AF37',
+                        borderColor: cinema?.primary_color || '#D4AF37'
+                      } : undefined}
+                    >
+                      {format(date, 'MMM do')}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
 
-          {movies.length > 0 ? (
-            <div className="space-y-8">
-              {movies.map((movie) => {
-                // Group showtimes by date
-                const showtimesByDate = movie.showtimes.reduce((acc, showtime) => {
-                  const dateKey = format(new Date(showtime.start_time), 'yyyy-MM-dd');
-                  if (!acc[dateKey]) {
-                    acc[dateKey] = [];
-                  }
-                  acc[dateKey].push(showtime);
-                  return acc;
-                }, {} as Record<string, Showtime[]>);
-
-                const dates = Object.keys(showtimesByDate).sort();
-                const today = startOfDay(new Date());
-
-                return (
-                  <Card key={movie.id} className="overflow-hidden">
-                    <div className="flex flex-col md:flex-row">
-                      {/* Movie Poster */}
-                      <div
-                        className="w-full md:w-48 h-64 md:h-auto flex-shrink-0 flex items-center justify-center relative group"
-                        style={{ backgroundColor: `${cinema?.secondary_color}80` }}
-                      >
-                        {movie.poster_url ? (
-                          <img
-                            src={movie.poster_url}
-                            alt={movie.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Film className="h-16 w-16 text-muted-foreground" />
-                        )}
-                        {movie.rating && (
-                          <Badge className="absolute top-2 right-2" variant="secondary">
-                            {movie.rating}
-                          </Badge>
-                        )}
-                        
-                        {/* Trailer Play Button */}
-                        {movie.trailer_url && (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <button className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div 
-                                  className="w-14 h-14 rounded-full flex items-center justify-center"
-                                  style={{ backgroundColor: cinema?.primary_color }}
-                                >
-                                  <Play className="h-6 w-6 text-white ml-1" fill="white" />
-                                </div>
-                              </button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl p-0 overflow-hidden">
-                              <DialogHeader className="p-4 pb-0">
-                                <DialogTitle>{movie.title} - Trailer</DialogTitle>
-                              </DialogHeader>
-                              <div className="aspect-video">
-                                <iframe
-                                  src={getTrailerEmbed(movie.trailer_url)!}
-                                  className="w-full h-full"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                />
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        )}
-                      </div>
-
-                      {/* Movie Info & Showtimes */}
-                      <div className="flex-1 p-6">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h4 className="text-xl font-bold">{movie.title}</h4>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {movie.duration_minutes} min
-                              </span>
-                              {movie.genre && <span>{movie.genre}</span>}
-                            </div>
-                          </div>
-                          {movie.trailer_url && (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="gap-1">
-                                  <Play className="h-3 w-3" />
-                                  Trailer
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl p-0 overflow-hidden">
-                                <DialogHeader className="p-4 pb-0">
-                                  <DialogTitle>{movie.title} - Trailer</DialogTitle>
-                                </DialogHeader>
-                                <div className="aspect-video">
-                                  <iframe
-                                    src={getTrailerEmbed(movie.trailer_url)!}
-                                    className="w-full h-full"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                  />
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          )}
+          {/* Movies Grid */}
+          {allMovies.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+                {allMovies.map((movie) => (
+                  <Link
+                    key={movie.id}
+                    to={`/cinema/${slug}#movies`}
+                    className="group"
+                  >
+                    <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 mb-2 md:mb-3">
+                      {movie.poster_url ? (
+                        <img
+                          src={movie.poster_url}
+                          alt={movie.title}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Film className="h-12 w-12 text-gray-600" />
                         </div>
-
-                        {movie.description && (
-                          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                            {movie.description}
-                          </p>
-                        )}
-
-                        {/* Showtimes grouped by date */}
-                        {dates.length > 0 && (
-                          <Tabs defaultValue={dates[0]} className="w-full">
-                            <TabsList className="mb-3 flex-wrap h-auto gap-1">
-                              {dates.slice(0, 7).map((date) => {
-                                const dateObj = new Date(date);
-                                const isToday = isSameDay(dateObj, today);
-                                const isTomorrow = isSameDay(dateObj, addDays(today, 1));
-                                
-                                return (
-                                  <TabsTrigger key={date} value={date} className="text-xs px-3 py-1.5">
-                                    {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : format(dateObj, 'EEE, MMM d')}
-                                  </TabsTrigger>
-                                );
-                              })}
-                            </TabsList>
-                            {dates.slice(0, 7).map((date) => (
-                              <TabsContent key={date} value={date} className="mt-0">
-                                <div className="flex flex-wrap gap-2">
-                                  {showtimesByDate[date].map((showtime) => (
-                                    <Link
-                                      key={showtime.id}
-                                      to={`/cinema/${slug}/book?showtime=${showtime.id}`}
-                                    >
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-sm hover:border-primary"
-                                        style={{ 
-                                          '--tw-ring-color': cinema?.primary_color 
-                                        } as React.CSSProperties}
-                                      >
-                                        {format(new Date(showtime.start_time), 'h:mm a')}
-                                        <span className="ml-2 text-xs text-muted-foreground">
-                                          ${showtime.price}
-                                        </span>
-                                      </Button>
-                                    </Link>
-                                  ))}
-                                </div>
-                              </TabsContent>
-                            ))}
-                          </Tabs>
-                        )}
-                      </div>
+                      )}
+                      
+                      {/* Hover overlay with play button */}
+                      {movie.trailer_url && (
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div 
+                            className="w-12 h-12 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: cinema?.primary_color || '#D4AF37' }}
+                          >
+                            <Play className="h-5 w-5 text-black ml-0.5" fill="black" />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </Card>
-                );
-              })}
-            </div>
+                    
+                    {/* Movie Title */}
+                    <h4 className="text-white font-medium text-sm md:text-base leading-tight mb-1 line-clamp-2 group-hover:text-opacity-80 transition-colors">
+                      {movie.title}
+                    </h4>
+                    
+                    {/* Rating and Votes */}
+                    <div className="flex items-center gap-2 text-xs text-white/60">
+                      <span className="flex items-center gap-1">
+                        <span style={{ color: cinema?.primary_color || '#D4AF37' }}>★</span>
+                        <span>{movie.rating || '8.0'}/10</span>
+                      </span>
+                      <span className="text-white/40">•</span>
+                      <span>567k Votes</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              
+              {/* See All Link */}
+              <div className="flex justify-end mt-6">
+                <button 
+                  className="text-sm font-medium hover:underline"
+                  style={{ color: cinema?.primary_color || '#D4AF37' }}
+                >
+                  See All
+                </button>
+              </div>
+            </>
           ) : (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Film className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  No movies are currently scheduled. Check back soon!
-                </p>
-              </CardContent>
-            </Card>
+            <div className="text-center py-12">
+              <Film className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400">
+                No movies are currently scheduled. Check back soon!
+              </p>
+            </div>
           )}
         </div>
       </section>
