@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Pencil, Trash2, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, AlertTriangle, Upload, X, Bell } from 'lucide-react';
+import { Loader2, Plus, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, Upload, X, Bell, Crop } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -21,9 +22,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ConcessionAnalytics } from '@/components/concessions/ConcessionAnalytics';
 import { ComboDealsManager } from '@/components/concessions/ComboDealsManager';
-import { InventoryHistory } from '@/components/concessions/InventoryHistory';
 import { BulkRestockDialog } from '@/components/concessions/BulkRestockDialog';
 import { LowStockAlertSettings } from '@/components/concessions/LowStockAlertSettings';
+import { DraggableConcessionRow } from '@/components/concessions/DraggableConcessionRow';
+import { ImageCropper } from '@/components/concessions/ImageCropper';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -52,8 +54,18 @@ export default function ConcessionManagement() {
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const {
     register,
@@ -81,6 +93,7 @@ export default function ConcessionManagement() {
         .from('concession_items')
         .select('*')
         .eq('organization_id', profile.organization_id)
+        .order('display_order', { ascending: true })
         .order('category', { ascending: true })
         .order('name', { ascending: true });
 
@@ -92,7 +105,7 @@ export default function ConcessionManagement() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !profile?.organization_id) return;
+    if (!file) return;
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -106,14 +119,27 @@ export default function ConcessionManagement() {
       return;
     }
 
+    // Read file as data URL and open cropper
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToCrop(reader.result as string);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!profile?.organization_id) return;
+
+    setCropperOpen(false);
     setUploadingImage(true);
+    
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${profile.organization_id}/${Date.now()}.${fileExt}`;
+      const fileName = `${profile.organization_id}/${Date.now()}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('concession-images')
-        .upload(fileName, file);
+        .upload(fileName, croppedBlob, { contentType: 'image/jpeg' });
 
       if (uploadError) throw uploadError;
 
@@ -129,6 +155,7 @@ export default function ConcessionManagement() {
       toast.error('Failed to upload image');
     } finally {
       setUploadingImage(false);
+      setImageToCrop(null);
     }
   };
 
@@ -265,6 +292,46 @@ export default function ConcessionManagement() {
     const cat = CATEGORIES.find(c => c.value === category);
     return cat?.label || category;
   };
+
+  // Handle drag end for reordering
+  const handleDragEnd = useCallback(async (event: DragEndEvent, categoryItems: any[]) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = categoryItems.findIndex((item) => item.id === active.id);
+    const newIndex = categoryItems.findIndex((item) => item.id === over.id);
+
+    const reorderedItems = arrayMove(categoryItems, oldIndex, newIndex);
+
+    // Optimistic update
+    queryClient.setQueryData(['concession-items', profile?.organization_id], (old: any) => {
+      if (!old) return old;
+      const updated = [...old];
+      reorderedItems.forEach((item, index) => {
+        const idx = updated.findIndex((i: any) => i.id === item.id);
+        if (idx !== -1) {
+          updated[idx] = { ...updated[idx], display_order: index };
+        }
+      });
+      return updated;
+    });
+
+    // Persist to database
+    try {
+      await Promise.all(
+        reorderedItems.map((item, index) =>
+          supabase
+            .from('concession_items')
+            .update({ display_order: index })
+            .eq('id', item.id)
+        )
+      );
+    } catch (error) {
+      console.error('Error saving order:', error);
+      toast.error('Failed to save order');
+      queryClient.invalidateQueries({ queryKey: ['concession-items'] });
+    }
+  }, [profile?.organization_id, queryClient]);
 
   // Group items by category
   const groupedItems = items?.reduce((acc, item) => {
@@ -473,6 +540,7 @@ export default function ConcessionManagement() {
           <div className="space-y-6">
             {Object.entries(groupedItems || {}).map(([category, categoryItems]) => {
               const CategoryIcon = getCategoryIcon(category);
+              const itemIds = categoryItems?.map((item: any) => item.id) || [];
               return (
                 <Card key={category}>
                   <CardHeader className="pb-3">
@@ -480,99 +548,42 @@ export default function ConcessionManagement() {
                       <CategoryIcon className="h-5 w-5 text-primary" />
                       {getCategoryLabel(category)}
                     </CardTitle>
-                    <CardDescription>{categoryItems?.length} item(s)</CardDescription>
+                    <CardDescription>{categoryItems?.length} item(s) - Drag to reorder</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Stock</TableHead>
-                          <TableHead>Available</TableHead>
-                          <TableHead className="w-[100px]">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {categoryItems?.map((item) => {
-                          const isLowStock = item.track_inventory && item.stock_quantity !== null && item.stock_quantity <= item.low_stock_threshold;
-                          const isOutOfStock = item.track_inventory && item.stock_quantity !== null && item.stock_quantity === 0;
-                          return (
-                          <TableRow key={item.id} className={isOutOfStock ? 'opacity-60' : ''}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                {item.image_url ? (
-                                  <img 
-                                    src={item.image_url} 
-                                    alt={item.name}
-                                    className="w-10 h-10 rounded object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                                    <CategoryIcon className="h-5 w-5 text-muted-foreground" />
-                                  </div>
-                                )}
-                                <span className="font-medium">{item.name}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                              {item.description || '-'}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">${item.price.toFixed(2)}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              {item.track_inventory ? (
-                                <div className="flex items-center gap-2">
-                                  {isOutOfStock ? (
-                                    <Badge variant="destructive">Out of Stock</Badge>
-                                  ) : isLowStock ? (
-                                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                                      <AlertTriangle className="h-3 w-3 mr-1" />
-                                      Low: {item.stock_quantity}
-                                    </Badge>
-                                  ) : (
-                                    <Badge variant="outline">{item.stock_quantity} in stock</Badge>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">Not tracked</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Switch
-                                checked={item.is_available}
-                                onCheckedChange={() => toggleAvailability(item)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                {item.track_inventory && (
-                                  <InventoryHistory itemId={item.id} itemName={item.name} />
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => openEditDialog(item)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteItem(item.id)}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={(event) => handleDragEnd(event, categoryItems || [])}
+                    >
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-8"></TableHead>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Stock</TableHead>
+                            <TableHead>Available</TableHead>
+                            <TableHead className="w-[100px]">Actions</TableHead>
                           </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+                            {categoryItems?.map((item: any) => (
+                              <DraggableConcessionRow
+                                key={item.id}
+                                item={item}
+                                getCategoryIcon={getCategoryIcon}
+                                onEdit={openEditDialog}
+                                onDelete={deleteItem}
+                                onToggleAvailability={toggleAvailability}
+                              />
+                            ))}
+                          </SortableContext>
+                        </TableBody>
+                      </Table>
+                    </DndContext>
                   </CardContent>
                 </Card>
               );
@@ -610,6 +621,23 @@ export default function ConcessionManagement() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Image Cropper Modal */}
+        {imageToCrop && (
+          <ImageCropper
+            imageSrc={imageToCrop}
+            open={cropperOpen}
+            onClose={() => {
+              setCropperOpen(false);
+              setImageToCrop(null);
+              if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+              }
+            }}
+            onCropComplete={handleCropComplete}
+            aspect={1}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
