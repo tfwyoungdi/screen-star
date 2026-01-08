@@ -74,6 +74,20 @@ export default function PublicCinema() {
   const [allMovies, setAllMovies] = useState<MovieWithShowtimes[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [selectedDateIndex, setSelectedDateIndex] = useState(0);
+
+  // Get date range for tabs
+  const today = startOfDay(new Date());
+  const dateOptions = Array.from({ length: 7 }, (_, i) => addDays(today, i));
+  const selectedDate = dateOptions[selectedDateIndex];
+
+  // Filter movies by selected date
+  const filteredMovies = movies.map(movie => ({
+    ...movie,
+    showtimes: movie.showtimes.filter(st => 
+      isSameDay(new Date(st.start_time), selectedDate)
+    )
+  })).filter(movie => movie.showtimes.length > 0);
 
   // Track page view
   const trackPageView = async (orgId: string) => {
@@ -136,7 +150,7 @@ export default function PublicCinema() {
         // Store all movies for hero display
         setAllMovies(moviesData.map(m => ({ ...m, showtimes: [] })));
         
-        // Fetch showtimes for each movie
+        // Fetch ALL showtimes for each movie (for date filtering)
         const moviesWithShowtimes = await Promise.all(
           moviesData.map(async (movie) => {
             const { data: showtimes } = await supabase
@@ -145,8 +159,7 @@ export default function PublicCinema() {
               .eq('movie_id', movie.id)
               .eq('is_active', true)
               .gte('start_time', new Date().toISOString())
-              .order('start_time')
-              .limit(6);
+              .order('start_time');
 
             return {
               ...movie,
@@ -155,7 +168,7 @@ export default function PublicCinema() {
           })
         );
 
-        // Only include movies with upcoming showtimes for the listing
+        // Include all movies with upcoming showtimes
         setMovies(moviesWithShowtimes.filter(m => m.showtimes.length > 0));
       }
     } catch (error) {
@@ -220,118 +233,119 @@ export default function PublicCinema() {
       <section id="movies" className="py-12 md:py-16" style={{ backgroundColor: '#0a0a0f' }}>
         <div className="container mx-auto px-4">
           {/* Header with title and date tabs */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 mb-8">
-            <h3 className="text-2xl md:text-3xl font-bold text-white whitespace-nowrap">
+          <div className="flex flex-col gap-6 mb-10">
+            <h3 className="text-2xl md:text-3xl font-bold text-white">
               Now Showing
             </h3>
             
-            {/* Date Tabs */}
-            {(() => {
-              const today = startOfDay(new Date());
-              const dates = Array.from({ length: 5 }, (_, i) => addDays(today, i));
-              
-              return (
-                <div className="flex items-center gap-1 md:gap-2 overflow-x-auto pb-2 md:pb-0">
-                  {dates.map((date, index) => (
-                    <button
-                      key={date.toISOString()}
-                      className={`px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium whitespace-nowrap rounded-sm transition-colors ${
-                        index === 0
-                          ? 'border-b-2'
-                          : 'text-white/60 hover:text-white'
-                      }`}
-                      style={index === 0 ? { 
-                        color: cinema?.primary_color || '#D4AF37',
-                        borderColor: cinema?.primary_color || '#D4AF37'
-                      } : undefined}
-                    >
-                      {format(date, 'MMM do')}
-                    </button>
-                  ))}
-                </div>
-              );
-            })()}
+            {/* Date Tabs - Clickable */}
+            <div className="flex items-center gap-2 md:gap-3 overflow-x-auto pb-2">
+              {dateOptions.map((date, index) => (
+                <button
+                  key={date.toISOString()}
+                  onClick={() => setSelectedDateIndex(index)}
+                  className={`px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium whitespace-nowrap rounded-lg transition-all ${
+                    selectedDateIndex === index
+                      ? 'text-black'
+                      : 'text-white/60 hover:text-white bg-white/5 hover:bg-white/10'
+                  }`}
+                  style={selectedDateIndex === index ? { 
+                    backgroundColor: cinema?.primary_color || '#D4AF37',
+                  } : undefined}
+                >
+                  <span className="block text-xs opacity-70">
+                    {index === 0 ? 'Today' : index === 1 ? 'Tomorrow' : format(date, 'EEE')}
+                  </span>
+                  <span className="block">{format(date, 'MMM d')}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Movies Grid */}
-          {movies.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                {movies.map((movie) => (
-                  <div key={movie.id} className="flex gap-3">
-                    {/* Movie Poster */}
-                    <div className="relative w-32 md:w-40 lg:w-48 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 group">
-                      {movie.poster_url ? (
-                        <img
-                          src={movie.poster_url}
-                          alt={movie.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Film className="h-8 w-8 text-gray-600" />
-                        </div>
-                      )}
-                      
-                      {/* Hover overlay with play button */}
-                      {movie.trailer_url && (
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <div 
-                            className="w-10 h-10 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: cinema?.primary_color || '#D4AF37' }}
-                          >
-                            <Play className="h-4 w-4 text-black ml-0.5" fill="black" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Movie Info & Showtimes */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-medium text-sm md:text-base leading-tight mb-2 line-clamp-2">
-                        {movie.title}
-                      </h4>
-                      
-                      {/* Showtimes */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {movie.showtimes.slice(0, 4).map((showtime) => (
-                          <Link
-                            key={showtime.id}
-                            to={`/cinema/${slug}/book?showtime=${showtime.id}`}
-                          >
-                            <button
-                              className="px-2 py-1 text-xs font-medium rounded border border-white/20 text-white/80 hover:border-white/40 hover:text-white transition-colors"
-                            >
-                              {format(new Date(showtime.start_time), 'h:mm a')}
-                            </button>
-                          </Link>
-                        ))}
-                        {movie.showtimes.length > 4 && (
-                          <span className="px-2 py-1 text-xs text-white/50">
-                            +{movie.showtimes.length - 4} more
-                          </span>
-                        )}
+          {/* Movies Grid - Large Poster Cards */}
+          {filteredMovies.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+              {filteredMovies.map((movie) => (
+                <div key={movie.id} className="flex flex-col">
+                  {/* Large Movie Poster */}
+                  <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gray-800 group mb-3">
+                    {movie.poster_url ? (
+                      <img
+                        src={movie.poster_url}
+                        alt={movie.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Film className="h-12 w-12 text-gray-600" />
                       </div>
-                    </div>
+                    )}
+                    
+                    {/* Hover overlay with play button */}
+                    {movie.trailer_url && (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div 
+                          className="w-14 h-14 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: cinema?.primary_color || '#D4AF37' }}
+                        >
+                          <Play className="h-6 w-6 text-black ml-0.5" fill="black" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Rating badge */}
+                    {movie.rating && (
+                      <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/70 rounded text-xs text-white font-medium">
+                        {movie.rating}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-              
-              {/* See All Link */}
-              <div className="flex justify-end mt-6">
-                <button 
-                  className="text-sm font-medium hover:underline"
-                  style={{ color: cinema?.primary_color || '#D4AF37' }}
-                >
-                  See All
-                </button>
-              </div>
-            </>
+                  
+                  {/* Movie Title - Full display */}
+                  <h4 className="text-white font-semibold text-sm md:text-base leading-snug mb-2">
+                    {movie.title}
+                  </h4>
+
+                  {/* Duration */}
+                  <p className="text-white/50 text-xs mb-3 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {movie.duration_minutes} min
+                  </p>
+                  
+                  {/* Showtimes - Horizontal scrollable */}
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    {movie.showtimes.map((showtime) => (
+                      <Link
+                        key={showtime.id}
+                        to={`/cinema/${slug}/book?showtime=${showtime.id}`}
+                      >
+                        <button
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg border border-white/20 text-white/80 hover:text-black transition-colors whitespace-nowrap flex-shrink-0"
+                          style={{ 
+                            '--hover-bg': cinema?.primary_color || '#D4AF37' 
+                          } as React.CSSProperties}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
+                            e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                          }}
+                        >
+                          {format(new Date(showtime.start_time), 'h:mm a')}
+                        </button>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="text-center py-12">
-              <Film className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <Calendar className="h-16 w-16 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400">
-                No movies are currently scheduled. Check back soon!
+                No movies scheduled for {format(selectedDate, 'MMMM d')}. Try another date!
               </p>
             </div>
           )}
