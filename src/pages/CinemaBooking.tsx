@@ -273,6 +273,66 @@ export default function CinemaBooking() {
     };
   }, [selectedShowtime?.id]);
 
+  // Real-time subscription for showtime updates (price changes, etc.)
+  useEffect(() => {
+    if (!cinema?.id) return;
+
+    const showtimesChannel = supabase
+      .channel('showtimes-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'showtimes',
+          filter: `organization_id=eq.${cinema.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Showtime;
+            setShowtimes((prev) =>
+              prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s))
+            );
+            // Update selected showtime if it was changed
+            if (selectedShowtime?.id === updated.id) {
+              setSelectedShowtime((prev) => prev ? { ...prev, ...updated } : prev);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setShowtimes((prev) => prev.filter((s) => s.id !== payload.old.id));
+            if (selectedShowtime?.id === payload.old.id) {
+              setSelectedShowtime(null);
+              toast.warning('This showtime is no longer available');
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to seat_layouts changes (screen updates)
+    const seatsChannel = supabase
+      .channel('seat-layouts-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'seat_layouts',
+        },
+        () => {
+          // Refetch seat layouts if selected showtime exists
+          if (selectedShowtime) {
+            fetchSeatsForShowtime(selectedShowtime);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(showtimesChannel);
+      supabase.removeChannel(seatsChannel);
+    };
+  }, [cinema?.id, selectedShowtime?.id]);
+
   const isSeatBooked = (row: string, num: number) => {
     return bookedSeats.some(s => s.row_label === row && s.seat_number === num);
   };
@@ -464,6 +524,7 @@ export default function CinemaBooking() {
                 const availability = showtimeAvailability[showtime.id];
                 const available = availability ? availability.total - availability.booked : null;
                 const isSoldOut = availability && available === 0;
+                const hasVipPrice = showtime.vip_price && showtime.vip_price !== showtime.price;
                 
                 return (
                   <button
@@ -471,7 +532,7 @@ export default function CinemaBooking() {
                     onClick={() => !isSoldOut && handleShowtimeSelect(showtime)}
                     disabled={isSoldOut}
                     className={cn(
-                      "px-4 py-3 rounded-lg transition-all flex flex-col items-center min-w-[80px]",
+                      "px-4 py-3 rounded-lg transition-all flex flex-col items-center min-w-[100px]",
                       isSoldOut
                         ? "bg-white/5 text-white/30 cursor-not-allowed"
                         : isSelected 
@@ -483,15 +544,24 @@ export default function CinemaBooking() {
                     <span className="text-lg font-bold">
                       {format(new Date(showtime.start_time), 'HH:mm')}
                     </span>
-                    <span className="text-xs opacity-70">
+                    <span className="text-xs opacity-70 mb-1">
                       {showtime.screens.name}
                     </span>
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <span className="opacity-80">${showtime.price}</span>
+                      {hasVipPrice && (
+                        <>
+                          <span className="opacity-40">|</span>
+                          <span className="text-amber-400">${showtime.vip_price}</span>
+                        </>
+                      )}
+                    </div>
                     {availability && (
                       <span className={cn(
-                        "text-[10px] mt-1",
+                        "text-[10px] mt-0.5",
                         isSoldOut ? "text-red-400" : available && available <= 10 ? "text-yellow-400" : "opacity-60"
                       )}>
-                        {isSoldOut ? 'Sold Out' : `${available}/${availability.total}`}
+                        {isSoldOut ? 'Sold Out' : `${available} left`}
                       </span>
                     )}
                   </button>
@@ -642,8 +712,44 @@ export default function CinemaBooking() {
           </div>
         )}
 
-        {/* Add to Cart Button */}
-        <div className="mt-auto pt-4">
+        {/* Pricing Breakdown & Add to Cart Button */}
+        <div className="mt-auto pt-4 space-y-3">
+          {selectedSeats.length > 0 && (
+            <div className="bg-white/5 rounded-lg p-3 space-y-2">
+              {(() => {
+                const regularSeats = selectedSeats.filter(s => s.seat_type !== 'vip');
+                const vipSeats = selectedSeats.filter(s => s.seat_type === 'vip');
+                const regularTotal = regularSeats.reduce((sum, s) => sum + s.price, 0);
+                const vipTotal = vipSeats.reduce((sum, s) => sum + s.price, 0);
+                
+                return (
+                  <>
+                    {regularSeats.length > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/60">
+                          Regular × {regularSeats.length}
+                        </span>
+                        <span className="text-white">${regularTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {vipSeats.length > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-amber-400">
+                          VIP × {vipSeats.length}
+                        </span>
+                        <span className="text-amber-400">${vipTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-white/10 pt-2 flex justify-between font-semibold">
+                      <span className="text-white">Total</span>
+                      <span className="text-white">${totalAmount.toFixed(2)}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+          
           <Button
             onClick={handleAddToCart}
             disabled={selectedSeats.length === 0}
