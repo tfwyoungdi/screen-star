@@ -69,6 +69,7 @@ export default function CinemaBooking() {
   const [loading, setLoading] = useState(true);
   const [seatCount, setSeatCount] = useState(2);
   const [showtimeAvailability, setShowtimeAvailability] = useState<Record<string, { booked: number; total: number }>>({});
+  const [seatTypeFilter, setSeatTypeFilter] = useState<'all' | 'regular' | 'vip'>('all');
 
   // Generate dates for the date picker (5 days)
   const dateRange = useMemo(() => {
@@ -541,6 +542,25 @@ export default function CinemaBooking() {
         {/* Seat Map */}
         {selectedShowtime && seatLayouts.length > 0 && (
           <div className="flex-1 flex flex-col">
+            {/* Seat Type Filter */}
+            <div className="flex justify-center gap-2 mb-4">
+              {(['all', 'regular', 'vip'] as const).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setSeatTypeFilter(filter)}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full text-xs font-medium transition-all",
+                    seatTypeFilter === filter
+                      ? "text-white"
+                      : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                  )}
+                  style={seatTypeFilter === filter ? { backgroundColor: primaryColor } : undefined}
+                >
+                  {filter === 'all' ? 'All Seats' : filter === 'regular' ? 'Regular' : 'VIP'}
+                </button>
+              ))}
+            </div>
+
             {/* Screen indicator */}
             <div className="text-center mb-4">
               <div className="text-white/40 text-xs mb-2">Screen</div>
@@ -569,18 +589,21 @@ export default function CinemaBooking() {
                         const isSelected = isSeatSelected(seat.row_label, seat.seat_number);
                         const isUnavailable = !seat.is_available || seat.seat_type === 'unavailable';
                         const isVip = seat.seat_type === 'vip';
+                        const isFiltered = seatTypeFilter !== 'all' && 
+                          ((seatTypeFilter === 'vip' && !isVip) || (seatTypeFilter === 'regular' && isVip));
 
                         return (
                           <button
                             key={`${seat.row_label}${seat.seat_number}`}
-                            onClick={() => toggleSeat(seat)}
-                            disabled={isBooked || isUnavailable}
+                            onClick={() => !isFiltered && toggleSeat(seat)}
+                            disabled={isBooked || isUnavailable || isFiltered}
                             className={cn(
                               "w-5 h-5 lg:w-6 lg:h-6 rounded-full transition-all",
                               isUnavailable && "opacity-0 cursor-default",
-                              isBooked && "bg-white/20 cursor-not-allowed",
-                              !isBooked && !isUnavailable && !isSelected && isVip && "bg-amber-400 hover:bg-amber-300 cursor-pointer ring-1 ring-amber-500/50",
-                              !isBooked && !isUnavailable && !isSelected && !isVip && "bg-white/80 hover:bg-white cursor-pointer",
+                              isFiltered && !isUnavailable && "opacity-20 cursor-not-allowed",
+                              isBooked && !isFiltered && "bg-white/20 cursor-not-allowed",
+                              !isBooked && !isUnavailable && !isSelected && !isFiltered && isVip && "bg-amber-400 hover:bg-amber-300 cursor-pointer ring-1 ring-amber-500/50",
+                              !isBooked && !isUnavailable && !isSelected && !isFiltered && !isVip && "bg-white/80 hover:bg-white cursor-pointer",
                               isSelected && "cursor-pointer"
                             )}
                             style={isSelected ? { backgroundColor: primaryColor } : undefined}
