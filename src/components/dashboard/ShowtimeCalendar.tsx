@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isBefore, startOfDay, setHours, setMinutes } from 'date-fns';
-import { ChevronLeft, ChevronRight, Clock, Users, GripVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { cn } from '@/lib/utils';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
@@ -70,77 +70,47 @@ function DraggableShowtime({
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            ref={setNodeRef}
-            style={style}
-            className={cn(
-              "w-full text-left p-1 rounded text-xs border transition-all group",
-              !showtime.is_active && "opacity-50",
-              isDragging && "opacity-50 ring-2 ring-primary",
-              screenColor
-            )}
-          >
-            <div className="flex items-center gap-1">
-              {/* Drag handle */}
-              <div
-                {...attributes}
-                {...listeners}
-                className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity touch-none"
-              >
-                <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
-              </div>
-              {/* Clickable area */}
-              <button
-                onClick={onClick}
-                className="flex-1 text-left min-w-0"
-              >
-                <div className="flex items-center gap-1 truncate">
-                  <Clock className="h-3 w-3 flex-shrink-0" />
-                  <span className="font-medium">{format(new Date(showtime.start_time), 'h:mm a')}</span>
-                  {bookingInfo && (
-                    <div className="flex items-center gap-0.5 ml-auto">
-                      <div className={cn("w-1.5 h-1.5 rounded-full", getOccupancyColor())} />
-                      <span className="text-[9px] opacity-70">{bookingInfo.count}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="truncate text-[10px] opacity-80">
-                  {showtime.movies?.title}
-                </div>
-              </button>
-            </div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="max-w-xs">
-          <div className="space-y-1">
-            <p className="font-medium">{showtime.movies?.title}</p>
-            <p className="text-xs text-muted-foreground">
-              {format(new Date(showtime.start_time), 'EEEE, MMM d • h:mm a')}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {showtime.screens?.name} • ${showtime.price}
-            </p>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "w-full text-left p-1 rounded text-xs border transition-all group",
+        !showtime.is_active && "opacity-50",
+        isDragging && "opacity-50 ring-2 ring-primary",
+        screenColor
+      )}
+      title={`${showtime.movies?.title} - ${format(new Date(showtime.start_time), 'EEEE, MMM d • h:mm a')} - ${showtime.screens?.name} • $${showtime.price}${bookingInfo ? ` - ${bookingInfo.count}/${bookingInfo.capacity} seats (${occupancyPercent}%)` : ''}`}
+    >
+      <div className="flex items-center gap-1">
+        {/* Drag handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity touch-none"
+        >
+          <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+        </div>
+        {/* Clickable area */}
+        <button
+          onClick={onClick}
+          className="flex-1 text-left min-w-0"
+        >
+          <div className="flex items-center gap-1 truncate">
+            <Clock className="h-3 w-3 flex-shrink-0" />
+            <span className="font-medium">{format(new Date(showtime.start_time), 'h:mm a')}</span>
             {bookingInfo && (
-              <div className="flex items-center gap-2 pt-1 border-t">
-                <Users className="h-3 w-3" />
-                <span className="text-xs">
-                  {bookingInfo.count}/{bookingInfo.capacity} seats ({occupancyPercent}%)
-                </span>
-                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className={cn("h-full transition-all", getOccupancyColor())}
-                    style={{ width: `${occupancyPercent}%` }}
-                  />
-                </div>
+              <div className="flex items-center gap-0.5 ml-auto">
+                <div className={cn("w-1.5 h-1.5 rounded-full", getOccupancyColor())} />
+                <span className="text-[9px] opacity-70">{bookingInfo.count}</span>
               </div>
             )}
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+          <div className="truncate text-[10px] opacity-80">
+            {showtime.movies?.title}
+          </div>
+        </button>
+      </div>
+    </div>
   );
 }
 
