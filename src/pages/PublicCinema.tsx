@@ -415,152 +415,196 @@ export default function PublicCinema() {
             </div>
           </div>
 
-          {/* Movies List - Responsive Hybrid Layout */}
+          {/* Movies List - Cinema Theme Design */}
           {filteredMovies.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
               {filteredMovies.map((movie) => (
                 <div 
                   key={movie.id} 
-                  className="flex flex-row rounded-xl bg-white/5 hover:bg-white/10 transition-colors overflow-hidden"
+                  className="group relative"
                 >
-                  {/* Movie Poster - Left Side */}
-                  <div 
-                    className="relative w-28 sm:w-32 md:w-36 flex-shrink-0 bg-gray-800 cursor-pointer group"
-                    onClick={() => setSelectedMovie(movie)}
-                  >
-                    {movie.poster_url ? (
-                      <img
-                        src={movie.poster_url}
-                        alt={movie.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center aspect-[2/3]">
-                        <Film className="h-10 w-10 text-gray-600" />
-                      </div>
-                    )}
-                    
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Play className="h-8 w-8 text-white" />
-                    </div>
+                  {/* Film strip decoration on sides */}
+                  <div className="absolute -left-2 top-0 bottom-0 w-3 hidden lg:flex flex-col justify-between py-2 opacity-20 group-hover:opacity-40 transition-opacity">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="w-2 h-3 bg-white rounded-sm" />
+                    ))}
                   </div>
                   
-                  {/* Movie Info & Showtimes - Right Side */}
-                  <div className="flex-1 p-3 sm:p-4 flex flex-col gap-2 min-w-0">
-                    {/* Title & Rating Row */}
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 
-                        className="text-white font-bold text-sm sm:text-base md:text-lg leading-tight cursor-pointer hover:underline line-clamp-2"
-                        onClick={() => setSelectedMovie(movie)}
-                      >
-                        {movie.title}
-                      </h4>
-                      {movie.rating && (
-                        <span className="flex-shrink-0 px-2 py-0.5 bg-white/10 rounded text-xs text-white/80 font-medium">
-                          {movie.rating}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Meta info - Duration & Genre */}
-                    <div className="flex items-center gap-2 text-white/50 text-xs">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {movie.duration_minutes} min
-                      </span>
-                      {movie.genre && (
-                        <Badge variant="outline" className="text-white/60 border-white/20 text-xs px-1.5 py-0">
-                          {movie.genre}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    {movie.description && (
-                      <p className="text-white/50 text-xs sm:text-sm line-clamp-2 leading-relaxed">
-                        {movie.description}
-                      </p>
-                    )}
+                  {/* Main card */}
+                  <div 
+                    className="relative flex flex-row rounded-xl overflow-hidden transition-all duration-300 group-hover:translate-y-[-4px] group-hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)]"
+                    style={{
+                      background: 'linear-gradient(145deg, rgba(30,30,35,0.95) 0%, rgba(15,15,18,0.98) 100%)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                    }}
+                  >
+                    {/* Spotlight gradient overlay */}
+                    <div 
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                      style={{
+                        background: `radial-gradient(ellipse at top left, ${cinema?.primary_color || '#D4AF37'}15 0%, transparent 50%)`,
+                      }}
+                    />
                     
-                    {/* Showtimes grouped by screen */}
-                    <div className="flex flex-col gap-2 mt-auto pt-2">
-                      {(() => {
-                        // Group showtimes by screen
-                        const groupedByScreen = movie.showtimes.reduce((acc, st) => {
-                          const screenName = st.screens?.name || 'Screen';
-                          if (!acc[screenName]) acc[screenName] = [];
-                          acc[screenName].push(st);
-                          return acc;
-                        }, {} as Record<string, Showtime[]>);
+                    {/* Movie Poster - Left Side */}
+                    <div 
+                      className="relative w-28 sm:w-32 md:w-36 flex-shrink-0 cursor-pointer overflow-hidden"
+                      onClick={() => setSelectedMovie(movie)}
+                    >
+                      {movie.poster_url ? (
+                        <img
+                          src={movie.poster_url}
+                          alt={movie.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center aspect-[2/3] bg-gradient-to-br from-gray-800 to-gray-900">
+                          <Film className="h-10 w-10 text-gray-600" />
+                        </div>
+                      )}
+                      
+                      {/* Poster gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/40" />
+                      
+                      {/* Play button on hover */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px]">
+                        <div 
+                          className="w-12 h-12 rounded-full flex items-center justify-center transform scale-75 group-hover:scale-100 transition-transform duration-300"
+                          style={{ backgroundColor: cinema?.primary_color || '#D4AF37' }}
+                        >
+                          <Play className="h-5 w-5 text-black ml-0.5" fill="currentColor" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Movie Info & Showtimes - Right Side */}
+                    <div className="relative flex-1 p-4 sm:p-5 flex flex-col gap-2.5 min-w-0">
+                      {/* Title & Rating Row */}
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 
+                          className="text-white font-bold text-base sm:text-lg leading-tight cursor-pointer line-clamp-2 group-hover:text-white/90 transition-colors"
+                          onClick={() => setSelectedMovie(movie)}
+                          style={{ textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}
+                        >
+                          {movie.title}
+                        </h4>
+                        {movie.rating && (
+                          <span 
+                            className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-bold tracking-wide"
+                            style={{ 
+                              backgroundColor: `${cinema?.primary_color || '#D4AF37'}20`,
+                              color: cinema?.primary_color || '#D4AF37',
+                              border: `1px solid ${cinema?.primary_color || '#D4AF37'}40`,
+                            }}
+                          >
+                            {movie.rating}
+                          </span>
+                        )}
+                      </div>
 
-                        const screenEntries = Object.entries(groupedByScreen);
-                        
-                        return screenEntries.map(([screenName, showtimes]) => {
-                          const displayShowtimes = showtimes.slice(0, 4);
-                          const remainingCount = showtimes.length - 4;
+                      {/* Meta info - Duration & Genre */}
+                      <div className="flex items-center gap-3 text-white/50 text-xs">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          {movie.duration_minutes} min
+                        </span>
+                        {movie.genre && (
+                          <span className="px-2 py-0.5 rounded-full text-white/60 bg-white/5 border border-white/10">
+                            {movie.genre}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      {movie.description && (
+                        <p className="text-white/40 text-sm line-clamp-2 leading-relaxed">
+                          {movie.description}
+                        </p>
+                      )}
+                      
+                      {/* Divider */}
+                      <div className="h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent my-1" />
+                      
+                      {/* Showtimes grouped by screen */}
+                      <div className="flex flex-col gap-2.5 mt-auto">
+                        {(() => {
+                          // Group showtimes by screen
+                          const groupedByScreen = movie.showtimes.reduce((acc, st) => {
+                            const screenName = st.screens?.name || 'Screen';
+                            if (!acc[screenName]) acc[screenName] = [];
+                            acc[screenName].push(st);
+                            return acc;
+                          }, {} as Record<string, Showtime[]>);
+
+                          const screenEntries = Object.entries(groupedByScreen);
                           
-                          return (
-                            <div key={screenName} className="flex flex-col gap-1">
-                              <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
-                                {screenName}
-                              </span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {displayShowtimes.map((showtime) => {
-                                  const availability = getAvailabilityStatus(showtime.bookedCount, showtime.capacity);
-                                  const isSoldOut = availability?.label === 'Sold Out';
-                                  
-                                  return (
-                                    <Link
-                                      key={showtime.id}
-                                      to={isSoldOut ? '#' : `/cinema/${slug}/book?showtime=${showtime.id}`}
-                                      onClick={(e) => isSoldOut && e.preventDefault()}
-                                    >
-                                      <button
-                                        className={`relative px-2.5 py-1.5 text-xs font-medium rounded border transition-all ${
-                                          isSoldOut 
-                                            ? 'border-white/10 text-white/30 cursor-not-allowed' 
-                                            : 'border-white/20 text-white/80 hover:text-black'
-                                        }`}
-                                        disabled={isSoldOut}
-                                        onMouseEnter={(e) => {
-                                          if (!isSoldOut) {
-                                            e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
-                                            e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
-                                          }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                          if (!isSoldOut) {
-                                            e.currentTarget.style.backgroundColor = 'transparent';
-                                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                                          }
-                                        }}
+                          return screenEntries.map(([screenName, showtimes]) => {
+                            const displayShowtimes = showtimes.slice(0, 4);
+                            const remainingCount = showtimes.length - 4;
+                            
+                            return (
+                              <div key={screenName} className="flex flex-col gap-1.5">
+                                <span className="text-white/30 text-[10px] font-semibold uppercase tracking-widest flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cinema?.primary_color || '#D4AF37' }} />
+                                  {screenName}
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                  {displayShowtimes.map((showtime) => {
+                                    const availability = getAvailabilityStatus(showtime.bookedCount, showtime.capacity);
+                                    const isSoldOut = availability?.label === 'Sold Out';
+                                    
+                                    return (
+                                      <Link
+                                        key={showtime.id}
+                                        to={isSoldOut ? '#' : `/cinema/${slug}/book?showtime=${showtime.id}`}
+                                        onClick={(e) => isSoldOut && e.preventDefault()}
                                       >
-                                        {format(new Date(showtime.start_time), 'h:mm a')}
-                                        {availability && (
-                                          <span 
-                                            className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
-                                            style={{ backgroundColor: availability.color }}
-                                            title={availability.label}
-                                          />
-                                        )}
-                                      </button>
-                                    </Link>
-                                  );
-                                })}
-                                {remainingCount > 0 && (
-                                  <button
-                                    onClick={() => setSelectedMovie(movie)}
-                                    className="px-2 py-1 text-xs font-medium text-white/50 hover:text-white"
-                                  >
-                                    +{remainingCount} more
-                                  </button>
-                                )}
+                                        <button
+                                          className={`relative px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                                            isSoldOut 
+                                              ? 'bg-white/5 text-white/25 cursor-not-allowed border border-white/5' 
+                                              : 'bg-white/5 text-white/90 border border-white/10 hover:border-transparent hover:text-black hover:shadow-lg'
+                                          }`}
+                                          disabled={isSoldOut}
+                                          onMouseEnter={(e) => {
+                                            if (!isSoldOut) {
+                                              e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
+                                              e.currentTarget.style.boxShadow = `0 4px 20px ${cinema?.primary_color || '#D4AF37'}40`;
+                                            }
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            if (!isSoldOut) {
+                                              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                                              e.currentTarget.style.boxShadow = 'none';
+                                            }
+                                          }}
+                                        >
+                                          {format(new Date(showtime.start_time), 'h:mm a')}
+                                          {availability && (
+                                            <span 
+                                              className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-gray-900"
+                                              style={{ backgroundColor: availability.color }}
+                                              title={availability.label}
+                                            />
+                                          )}
+                                        </button>
+                                      </Link>
+                                    );
+                                  })}
+                                  {remainingCount > 0 && (
+                                    <button
+                                      onClick={() => setSelectedMovie(movie)}
+                                      className="px-3 py-2 text-xs font-medium text-white/40 hover:text-white/70 transition-colors"
+                                    >
+                                      +{remainingCount} more
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        });
-                      })()}
+                            );
+                          });
+                        })()}
+                      </div>
                     </div>
                   </div>
                 </div>
