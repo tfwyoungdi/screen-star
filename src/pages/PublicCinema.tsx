@@ -8,7 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar, Play, X } from 'lucide-react';
+import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar, Play, X, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { CinemaHero } from '@/components/public/CinemaHero';
 
 interface CinemaData {
@@ -77,6 +78,7 @@ export default function PublicCinema() {
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<MovieWithShowtimes | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showTrailer, setShowTrailer] = useState(false);
 
   // Get date range for tabs
@@ -87,7 +89,7 @@ export default function PublicCinema() {
   // Get unique genres from all movies
   const genres = [...new Set(movies.map(m => m.genre).filter(Boolean))] as string[];
 
-  // Filter movies by selected date and genre
+  // Filter movies by selected date, genre, and search query
   const filteredMovies = movies
     .map(movie => ({
       ...movie,
@@ -96,7 +98,8 @@ export default function PublicCinema() {
       )
     }))
     .filter(movie => movie.showtimes.length > 0)
-    .filter(movie => !selectedGenre || movie.genre === selectedGenre);
+    .filter(movie => !selectedGenre || movie.genre === selectedGenre)
+    .filter(movie => !searchQuery || movie.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   // Track page view
   const trackPageView = async (orgId: string) => {
@@ -241,11 +244,25 @@ export default function PublicCinema() {
       {/* Now Showing */}
       <section id="movies" className="py-12 md:py-16" style={{ backgroundColor: '#0a0a0f' }}>
         <div className="container mx-auto px-4">
-          {/* Header with title and date tabs */}
+          {/* Header with title, search bar, and date tabs */}
           <div className="flex flex-col gap-6 mb-10">
-            <h3 className="text-2xl md:text-3xl font-bold text-white">
-              Now Showing
-            </h3>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <h3 className="text-2xl md:text-3xl font-bold text-white">
+                Now Showing
+              </h3>
+              
+              {/* Search Bar */}
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                <Input
+                  type="text"
+                  placeholder="Search movies..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40"
+                />
+              </div>
+            </div>
             
             {/* Date Tabs + Genre Filters */}
             <div className="flex flex-col gap-4">
@@ -309,9 +326,9 @@ export default function PublicCinema() {
             </div>
           </div>
 
-          {/* Movies List - Horizontal Layout with Poster + Showtimes */}
+          {/* Movies List - 2 Column Grid Layout with Poster + Showtimes */}
           {filteredMovies.length > 0 ? (
-            <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredMovies.map((movie) => (
                 <div 
                   key={movie.id} 
