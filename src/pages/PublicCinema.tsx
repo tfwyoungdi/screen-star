@@ -415,17 +415,17 @@ export default function PublicCinema() {
             </div>
           </div>
 
-          {/* Movies List - 5 Column Grid Layout */}
+          {/* Movies List - Responsive Hybrid Layout */}
           {filteredMovies.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
               {filteredMovies.map((movie) => (
                 <div 
                   key={movie.id} 
-                  className="flex flex-col rounded-xl bg-white/5 hover:bg-white/10 transition-colors overflow-hidden"
+                  className="flex flex-row rounded-xl bg-white/5 hover:bg-white/10 transition-colors overflow-hidden"
                 >
-                  {/* Movie Poster - Clickable */}
+                  {/* Movie Poster - Left Side */}
                   <div 
-                    className="relative w-full aspect-[2/3] bg-gray-800 cursor-pointer group"
+                    className="relative w-28 sm:w-32 md:w-36 flex-shrink-0 bg-gray-800 cursor-pointer group"
                     onClick={() => setSelectedMovie(movie)}
                   >
                     {movie.poster_url ? (
@@ -435,46 +435,39 @@ export default function PublicCinema() {
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-full h-full flex items-center justify-center aspect-[2/3]">
                         <Film className="h-10 w-10 text-gray-600" />
                       </div>
                     )}
                     
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-white text-xs font-medium">View Details</span>
+                      <Play className="h-8 w-8 text-white" />
                     </div>
-
-                    {/* Rating badge */}
-                    {movie.rating && (
-                      <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/70 rounded text-xs text-white font-medium">
-                        {movie.rating}
-                      </div>
-                    )}
                   </div>
                   
-                  {/* Movie Info & Showtimes */}
-                  <div className="p-3 flex flex-col gap-2">
-                    {/* Title */}
-                    <h4 
-                      className="text-white font-bold text-sm md:text-base leading-tight cursor-pointer hover:underline line-clamp-2"
-                      onClick={() => setSelectedMovie(movie)}
-                    >
-                      {movie.title}
-                    </h4>
+                  {/* Movie Info & Showtimes - Right Side */}
+                  <div className="flex-1 p-3 sm:p-4 flex flex-col gap-2 min-w-0">
+                    {/* Title & Rating Row */}
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 
+                        className="text-white font-bold text-sm sm:text-base md:text-lg leading-tight cursor-pointer hover:underline line-clamp-2"
+                        onClick={() => setSelectedMovie(movie)}
+                      >
+                        {movie.title}
+                      </h4>
+                      {movie.rating && (
+                        <span className="flex-shrink-0 px-2 py-0.5 bg-white/10 rounded text-xs text-white/80 font-medium">
+                          {movie.rating}
+                        </span>
+                      )}
+                    </div>
 
-                    {/* Description */}
-                    {movie.description && (
-                      <p className="text-white/50 text-xs line-clamp-2 leading-relaxed">
-                        {movie.description}
-                      </p>
-                    )}
-
-                    {/* Meta info */}
+                    {/* Meta info - Duration & Genre */}
                     <div className="flex items-center gap-2 text-white/50 text-xs">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {movie.duration_minutes}m
+                        {movie.duration_minutes} min
                       </span>
                       {movie.genre && (
                         <Badge variant="outline" className="text-white/60 border-white/20 text-xs px-1.5 py-0">
@@ -482,9 +475,16 @@ export default function PublicCinema() {
                         </Badge>
                       )}
                     </div>
+
+                    {/* Description */}
+                    {movie.description && (
+                      <p className="text-white/50 text-xs sm:text-sm line-clamp-2 leading-relaxed">
+                        {movie.description}
+                      </p>
+                    )}
                     
                     {/* Showtimes grouped by screen */}
-                    <div className="flex flex-col gap-2 mt-1">
+                    <div className="flex flex-col gap-2 mt-auto pt-2">
                       {(() => {
                         // Group showtimes by screen
                         const groupedByScreen = movie.showtimes.reduce((acc, st) => {
@@ -497,8 +497,8 @@ export default function PublicCinema() {
                         const screenEntries = Object.entries(groupedByScreen);
                         
                         return screenEntries.map(([screenName, showtimes]) => {
-                          const displayShowtimes = showtimes.slice(0, 5);
-                          const remainingCount = showtimes.length - 5;
+                          const displayShowtimes = showtimes.slice(0, 4);
+                          const remainingCount = showtimes.length - 4;
                           
                           return (
                             <div key={screenName} className="flex flex-col gap-1">
@@ -517,7 +517,7 @@ export default function PublicCinema() {
                                       onClick={(e) => isSoldOut && e.preventDefault()}
                                     >
                                       <button
-                                        className={`relative px-2 py-1 text-xs font-medium rounded border transition-all ${
+                                        className={`relative px-2.5 py-1.5 text-xs font-medium rounded border transition-all ${
                                           isSoldOut 
                                             ? 'border-white/10 text-white/30 cursor-not-allowed' 
                                             : 'border-white/20 text-white/80 hover:text-black'
