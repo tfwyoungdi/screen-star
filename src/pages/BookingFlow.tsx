@@ -94,6 +94,7 @@ export default function BookingFlow() {
   const showtimeId = searchParams.get('showtime');
   const paymentStatus = searchParams.get('status');
   const paymentRef = searchParams.get('ref');
+  const fromBooking = searchParams.get('fromBooking') === 'true';
 
   const [step, setStep] = useState<'seats' | 'snacks' | 'details' | 'payment' | 'confirmation'>('seats');
   const [showtime, setShowtime] = useState<Showtime | null>(null);
@@ -119,6 +120,23 @@ export default function BookingFlow() {
   const [selectedConcessions, setSelectedConcessions] = useState<SelectedConcession[]>([]);
   const [combos, setCombos] = useState<ComboDeal[]>([]);
   const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
+
+  // Load pre-selected seats from CinemaBooking page
+  useEffect(() => {
+    if (fromBooking) {
+      const storedSeats = sessionStorage.getItem('selectedSeats');
+      if (storedSeats) {
+        try {
+          const seats = JSON.parse(storedSeats) as SelectedSeat[];
+          setSelectedSeats(seats);
+          setStep('snacks'); // Skip to snacks since seats are already selected
+          sessionStorage.removeItem('selectedSeats'); // Clean up
+        } catch (e) {
+          console.error('Error parsing stored seats:', e);
+        }
+      }
+    }
+  }, [fromBooking]);
 
   // Handle payment callback
   useEffect(() => {
