@@ -96,8 +96,7 @@ export default function PublicCinema() {
 
   // Get date range for tabs
   const today = startOfDay(new Date());
-  const dateOptions = Array.from({ length: 7 }, (_, i) => addDays(today, i));
-  const selectedDate = dateOptions[selectedDateIndex];
+  const allDateOptions = Array.from({ length: 7 }, (_, i) => addDays(today, i));
 
   // Fetch cinema data with React Query for auto-refresh
   const { data: cinema, isLoading: cinemaLoading, isError: cinemaError } = useQuery({
@@ -240,6 +239,19 @@ export default function PublicCinema() {
   // Get unique genres from all movies
   const genres = [...new Set(movies.map(m => m.genre).filter(Boolean))] as string[];
 
+  // Filter dateOptions to only show dates with showtimes
+  const dateOptions = useMemo(() => {
+    return allDateOptions.filter(date => 
+      movies.some(movie => 
+        movie.showtimes.some(st => isSameDay(new Date(st.start_time), date))
+      )
+    );
+  }, [movies, allDateOptions]);
+
+  // Ensure selectedDateIndex is valid
+  const safeSelectedDateIndex = Math.min(selectedDateIndex, Math.max(0, dateOptions.length - 1));
+  const selectedDate = dateOptions[safeSelectedDateIndex] || today;
+
   // Filter movies by selected date, genre, and search query
   const filteredMovies = movies
     .map(movie => ({
@@ -358,25 +370,29 @@ export default function PublicCinema() {
             <div className="flex flex-col gap-4">
               {/* Date Tabs */}
               <div className="flex items-center gap-2 md:gap-3 overflow-x-auto pb-2">
-                {dateOptions.map((date, index) => (
-                  <button
-                    key={date.toISOString()}
-                    onClick={() => setSelectedDateIndex(index)}
-                    className={`px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium whitespace-nowrap rounded-lg transition-all ${
-                      selectedDateIndex === index
-                        ? 'text-black'
-                        : 'text-white/60 hover:text-white bg-white/5 hover:bg-white/10'
-                    }`}
-                    style={selectedDateIndex === index ? { 
-                      backgroundColor: cinema?.primary_color || '#D4AF37',
-                    } : undefined}
-                  >
-                    <span className="block text-xs opacity-70">
-                      {index === 0 ? 'Today' : index === 1 ? 'Tomorrow' : format(date, 'EEE')}
-                    </span>
-                    <span className="block">{format(date, 'MMM d')}</span>
-                  </button>
-                ))}
+                {dateOptions.map((date, index) => {
+                  const isToday = isSameDay(date, today);
+                  const isTomorrow = isSameDay(date, addDays(today, 1));
+                  return (
+                    <button
+                      key={date.toISOString()}
+                      onClick={() => setSelectedDateIndex(index)}
+                      className={`px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium whitespace-nowrap rounded-lg transition-all ${
+                        safeSelectedDateIndex === index
+                          ? 'text-black'
+                          : 'text-white/60 hover:text-white bg-white/5 hover:bg-white/10'
+                      }`}
+                      style={safeSelectedDateIndex === index ? { 
+                        backgroundColor: cinema?.primary_color || '#D4AF37',
+                      } : undefined}
+                    >
+                      <span className="block text-xs opacity-70">
+                        {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : format(date, 'EEE')}
+                      </span>
+                      <span className="block">{format(date, 'MMM d')}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Genre Filter Chips */}
