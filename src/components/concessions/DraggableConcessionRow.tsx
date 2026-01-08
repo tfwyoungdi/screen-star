@@ -5,6 +5,7 @@ import { TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { InventoryHistory } from './InventoryHistory';
 
 interface DraggableConcessionRowProps {
@@ -13,6 +14,9 @@ interface DraggableConcessionRowProps {
   onEdit: (item: any) => void;
   onDelete: (id: string) => void;
   onToggleAvailability: (item: any) => void;
+  isSelected?: boolean;
+  onSelectionChange?: (id: string, selected: boolean) => void;
+  showSelection?: boolean;
 }
 
 export function DraggableConcessionRow({
@@ -21,6 +25,9 @@ export function DraggableConcessionRow({
   onEdit,
   onDelete,
   onToggleAvailability,
+  isSelected = false,
+  onSelectionChange,
+  showSelection = false,
 }: DraggableConcessionRowProps) {
   const {
     attributes,
@@ -47,6 +54,14 @@ export function DraggableConcessionRow({
       style={style}
       className={isOutOfStock ? 'opacity-60' : ''}
     >
+      {showSelection && (
+        <TableCell className="w-10">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(checked) => onSelectionChange?.(item.id, !!checked)}
+          />
+        </TableCell>
+      )}
       <TableCell className="w-8">
         <button
           {...attributes}

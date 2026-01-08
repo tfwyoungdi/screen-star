@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, Upload, X, Bell, Crop } from 'lucide-react';
+import { Loader2, Plus, Coffee, Popcorn, IceCream, Cookie, BarChart3, Package, Upload, X, Bell, Crop, Pencil, CheckSquare } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -26,6 +27,7 @@ import { BulkRestockDialog } from '@/components/concessions/BulkRestockDialog';
 import { LowStockAlertSettings } from '@/components/concessions/LowStockAlertSettings';
 import { DraggableConcessionRow } from '@/components/concessions/DraggableConcessionRow';
 import { ImageCropper } from '@/components/concessions/ImageCropper';
+import { BatchEditDialog } from '@/components/concessions/BatchEditDialog';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -56,6 +58,9 @@ export default function ConcessionManagement() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [batchEditMode, setBatchEditMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [batchEditDialogOpen, setBatchEditDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -333,6 +338,44 @@ export default function ConcessionManagement() {
     }
   }, [profile?.organization_id, queryClient]);
 
+  // Handle item selection
+  const handleSelectionChange = (id: string, selected: boolean) => {
+    setSelectedItems((prev) => {
+      const next = new Set(prev);
+      if (selected) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllInCategory = (categoryItems: any[], selected: boolean) => {
+    setSelectedItems((prev) => {
+      const next = new Set(prev);
+      categoryItems.forEach((item) => {
+        if (selected) {
+          next.add(item.id);
+        } else {
+          next.delete(item.id);
+        }
+      });
+      return next;
+    });
+  };
+
+  const toggleBatchEditMode = () => {
+    if (batchEditMode) {
+      setSelectedItems(new Set());
+    }
+    setBatchEditMode(!batchEditMode);
+  };
+
+  const getSelectedItemsData = () => {
+    return items?.filter((item) => selectedItems.has(item.id)) || [];
+  };
+
   // Group items by category
   const groupedItems = items?.reduce((acc, item) => {
     if (!acc[item.category]) {
@@ -373,18 +416,38 @@ export default function ConcessionManagement() {
           </TabsList>
 
           <TabsContent value="menu" className="space-y-6">
-            <div className="flex justify-end gap-2">
-              {profile?.organization_id && items && (
-                <BulkRestockDialog 
-                  items={items} 
-                  organizationId={profile.organization_id} 
-                />
-              )}
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={openAddDialog}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Item
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={batchEditMode ? "default" : "outline"}
+                  onClick={toggleBatchEditMode}
+                  size="sm"
+                >
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                  {batchEditMode ? 'Exit Selection' : 'Batch Edit'}
+                </Button>
+                {batchEditMode && selectedItems.size > 0 && (
+                  <Button
+                    onClick={() => setBatchEditDialogOpen(true)}
+                    size="sm"
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit {selectedItems.size} Item(s)
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {profile?.organization_id && items && (
+                  <BulkRestockDialog 
+                    items={items} 
+                    organizationId={profile.organization_id} 
+                  />
+                )}
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={openAddDialog}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Item
                   </Button>
                 </DialogTrigger>
             <DialogContent className="max-h-[85vh] overflow-y-auto">
@@ -530,7 +593,8 @@ export default function ConcessionManagement() {
               </form>
             </DialogContent>
           </Dialog>
-        </div>
+              </div>
+            </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[200px]">
@@ -541,6 +605,8 @@ export default function ConcessionManagement() {
             {Object.entries(groupedItems || {}).map(([category, categoryItems]) => {
               const CategoryIcon = getCategoryIcon(category);
               const itemIds = categoryItems?.map((item: any) => item.id) || [];
+              const allSelected = categoryItems?.every((item: any) => selectedItems.has(item.id)) || false;
+              const someSelected = categoryItems?.some((item: any) => selectedItems.has(item.id)) || false;
               return (
                 <Card key={category}>
                   <CardHeader className="pb-3">
@@ -559,6 +625,19 @@ export default function ConcessionManagement() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            {batchEditMode && (
+                              <TableHead className="w-10">
+                                <Checkbox
+                                  checked={allSelected}
+                                  ref={(el) => {
+                                    if (el) {
+                                      (el as HTMLButtonElement).dataset.state = someSelected && !allSelected ? 'indeterminate' : (allSelected ? 'checked' : 'unchecked');
+                                    }
+                                  }}
+                                  onCheckedChange={(checked) => handleSelectAllInCategory(categoryItems || [], !!checked)}
+                                />
+                              </TableHead>
+                            )}
                             <TableHead className="w-8"></TableHead>
                             <TableHead>Item</TableHead>
                             <TableHead>Description</TableHead>
@@ -578,6 +657,9 @@ export default function ConcessionManagement() {
                                 onEdit={openEditDialog}
                                 onDelete={deleteItem}
                                 onToggleAvailability={toggleAvailability}
+                                showSelection={batchEditMode}
+                                isSelected={selectedItems.has(item.id)}
+                                onSelectionChange={handleSelectionChange}
                               />
                             ))}
                           </SortableContext>
@@ -636,6 +718,20 @@ export default function ConcessionManagement() {
             }}
             onCropComplete={handleCropComplete}
             aspect={1}
+          />
+        )}
+
+        {/* Batch Edit Dialog */}
+        {profile?.organization_id && (
+          <BatchEditDialog
+            open={batchEditDialogOpen}
+            onClose={() => {
+              setBatchEditDialogOpen(false);
+              setSelectedItems(new Set());
+              setBatchEditMode(false);
+            }}
+            selectedItems={getSelectedItemsData()}
+            organizationId={profile.organization_id}
           />
         )}
       </div>
