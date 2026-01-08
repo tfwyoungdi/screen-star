@@ -417,7 +417,7 @@ export default function PublicCinema() {
                     
                     {/* Showtimes - Horizontal scroll */}
                     <div className="flex flex-wrap gap-1.5 mt-1">
-                      {movie.showtimes.slice(0, 4).map((showtime) => (
+                      {movie.showtimes.slice(0, 5).map((showtime) => (
                         <Link
                           key={showtime.id}
                           to={`/cinema/${slug}/book?showtime=${showtime.id}`}
@@ -437,12 +437,12 @@ export default function PublicCinema() {
                           </button>
                         </Link>
                       ))}
-                      {movie.showtimes.length > 4 && (
+                      {movie.showtimes.length > 5 && (
                         <button
                           onClick={() => setSelectedMovie(movie)}
                           className="px-2 py-1 text-xs font-medium text-white/50 hover:text-white"
                         >
-                          +{movie.showtimes.length - 4} more
+                          +{movie.showtimes.length - 5} more
                         </button>
                       )}
                     </div>
