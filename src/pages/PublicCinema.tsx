@@ -413,22 +413,6 @@ export default function PublicCinema() {
                 </div>
               )}
             </div>
-
-            {/* Availability Legend */}
-            <div className="flex items-center gap-4 text-xs text-white/50">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#eab308' }} />
-                Filling Fast
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#f97316' }} />
-                Almost Full
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ef4444' }} />
-                Sold Out
-              </span>
-            </div>
           </div>
 
           {/* Movies List - 5 Column Grid Layout */}
