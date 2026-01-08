@@ -682,6 +682,15 @@ export default function CinemaBooking() {
                     .filter(s => s.row_label === rowLabel)
                     .sort((a, b) => a.seat_number - b.seat_number);
 
+                  // Check if this entire row should be hidden based on filter
+                  const hasVipInRow = rowSeats.some(s => s.seat_type === 'vip');
+                  const hasRegularInRow = rowSeats.some(s => s.seat_type === 'standard');
+                  const shouldHideRow = 
+                    (seatTypeFilter === 'vip' && !hasVipInRow) ||
+                    (seatTypeFilter === 'regular' && !hasRegularInRow);
+
+                  if (shouldHideRow) return null;
+
                   return (
                     <div key={rowLabel} className="flex items-center gap-1.5">
                       {rowSeats.map((seat) => {
@@ -689,9 +698,7 @@ export default function CinemaBooking() {
                         const isSelected = isSeatSelected(seat.row_label, seat.seat_number);
                         const isUnavailable = !seat.is_available || seat.seat_type === 'unavailable';
                         const isVip = seat.seat_type === 'vip';
-                        const isFilteredOut = seatTypeFilter !== 'all' && 
-                          ((seatTypeFilter === 'vip' && !isVip) || (seatTypeFilter === 'regular' && isVip));
-                        const isClickable = !isBooked && !isUnavailable && !isFilteredOut;
+                        const isClickable = !isBooked && !isUnavailable;
 
                         return (
                           <button
@@ -702,15 +709,13 @@ export default function CinemaBooking() {
                               "w-5 h-5 lg:w-6 lg:h-6 rounded-full transition-all",
                               // Hidden seats
                               isUnavailable && "opacity-0 cursor-default",
-                              // Filtered out seats (dimmed but visible)
-                              !isUnavailable && isFilteredOut && "opacity-20 cursor-not-allowed",
-                              // Booked seats (not filtered out)
-                              !isUnavailable && !isFilteredOut && isBooked && "bg-white/20 cursor-not-allowed",
-                              // Available VIP seats (not filtered, not selected)
-                              !isUnavailable && !isFilteredOut && !isBooked && !isSelected && isVip && 
+                              // Booked seats
+                              !isUnavailable && isBooked && "bg-white/20 cursor-not-allowed",
+                              // Available VIP seats (not selected)
+                              !isUnavailable && !isBooked && !isSelected && isVip && 
                                 "bg-amber-400 hover:bg-amber-300 cursor-pointer ring-1 ring-amber-500/50",
-                              // Available regular seats (not filtered, not selected)
-                              !isUnavailable && !isFilteredOut && !isBooked && !isSelected && !isVip && 
+                              // Available regular seats (not selected)
+                              !isUnavailable && !isBooked && !isSelected && !isVip && 
                                 "bg-white/80 hover:bg-white cursor-pointer",
                               // Selected seats
                               isSelected && "cursor-pointer"
