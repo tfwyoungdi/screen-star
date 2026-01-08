@@ -33,7 +33,9 @@ interface Showtime {
   id: string;
   start_time: string;
   price: number;
-  screens: { name: string };
+  screens: { name: string; rows: number; columns: number };
+  bookedCount: number;
+  capacity: number;
 }
 
 interface MovieWithShowtimes {
@@ -67,6 +69,19 @@ const getTrailerEmbed = (url: string | null): string | null => {
   if (type === 'youtube') return `https://www.youtube.com/embed/${id}?autoplay=1`;
   if (type === 'vimeo') return `https://player.vimeo.com/video/${id}?autoplay=1`;
   return null;
+};
+
+const getAvailabilityStatus = (bookedCount: number, capacity: number): { label: string; color: string } | null => {
+  const occupancyPercent = (bookedCount / capacity) * 100;
+  
+  if (occupancyPercent >= 95) {
+    return { label: 'Sold Out', color: '#ef4444' }; // red
+  } else if (occupancyPercent >= 80) {
+    return { label: 'Almost Full', color: '#f97316' }; // orange
+  } else if (occupancyPercent >= 50) {
+    return { label: 'Filling Fast', color: '#eab308' }; // yellow
+  }
+  return null; // plenty of seats available
 };
 
 export default function PublicCinema() {
@@ -115,20 +130,42 @@ export default function PublicCinema() {
 
       if (!moviesResult || moviesResult.length === 0) return [];
 
-      // Fetch ALL showtimes for each movie
+      // Fetch ALL showtimes for each movie with screen capacity
       const moviesWithShowtimes = await Promise.all(
         moviesResult.map(async (movie) => {
           const { data: showtimes } = await supabase
             .from('showtimes')
-            .select('id, start_time, price, screens (name)')
+            .select('id, start_time, price, screens (name, rows, columns)')
             .eq('movie_id', movie.id)
             .eq('is_active', true)
             .gte('start_time', new Date().toISOString())
             .order('start_time');
 
+          if (!showtimes || showtimes.length === 0) {
+            return { ...movie, showtimes: [] };
+          }
+
+          // Fetch booked seats count for each showtime
+          const showtimeIds = showtimes.map(st => st.id);
+          const { data: bookedSeats } = await supabase
+            .from('booked_seats')
+            .select('showtime_id')
+            .in('showtime_id', showtimeIds);
+
+          const bookedCountMap = (bookedSeats || []).reduce((acc, seat) => {
+            acc[seat.showtime_id] = (acc[seat.showtime_id] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+
+          const showtimesWithAvailability = showtimes.map(st => ({
+            ...st,
+            bookedCount: bookedCountMap[st.id] || 0,
+            capacity: (st.screens?.rows || 10) * (st.screens?.columns || 12),
+          }));
+
           return {
             ...movie,
-            showtimes: showtimes || [],
+            showtimes: showtimesWithAvailability,
           };
         })
       );
@@ -352,6 +389,22 @@ export default function PublicCinema() {
                 </div>
               )}
             </div>
+
+            {/* Availability Legend */}
+            <div className="flex items-center gap-4 text-xs text-white/50">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#eab308' }} />
+                Filling Fast
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#f97316' }} />
+                Almost Full
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ef4444' }} />
+                Sold Out
+              </span>
+            </div>
           </div>
 
           {/* Movies List - 5 Column Grid Layout */}
@@ -402,6 +455,13 @@ export default function PublicCinema() {
                       {movie.title}
                     </h4>
 
+                    {/* Description */}
+                    {movie.description && (
+                      <p className="text-white/50 text-xs line-clamp-2 leading-relaxed">
+                        {movie.description}
+                      </p>
+                    )}
+
                     {/* Meta info */}
                     <div className="flex items-center gap-2 text-white/50 text-xs">
                       <span className="flex items-center gap-1">
@@ -438,26 +498,48 @@ export default function PublicCinema() {
                                 {screenName}
                               </span>
                               <div className="flex flex-wrap gap-1.5">
-                                {displayShowtimes.map((showtime) => (
-                                  <Link
-                                    key={showtime.id}
-                                    to={`/cinema/${slug}/book?showtime=${showtime.id}`}
-                                  >
-                                    <button
-                                      className="px-2 py-1 text-xs font-medium rounded border border-white/20 text-white/80 hover:text-black transition-all"
-                                      onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
-                                        e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'transparent';
-                                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                                      }}
+                                {displayShowtimes.map((showtime) => {
+                                  const availability = getAvailabilityStatus(showtime.bookedCount, showtime.capacity);
+                                  const isSoldOut = availability?.label === 'Sold Out';
+                                  
+                                  return (
+                                    <Link
+                                      key={showtime.id}
+                                      to={isSoldOut ? '#' : `/cinema/${slug}/book?showtime=${showtime.id}`}
+                                      onClick={(e) => isSoldOut && e.preventDefault()}
                                     >
-                                      {format(new Date(showtime.start_time), 'h:mm a')}
-                                    </button>
-                                  </Link>
-                                ))}
+                                      <button
+                                        className={`relative px-2 py-1 text-xs font-medium rounded border transition-all ${
+                                          isSoldOut 
+                                            ? 'border-white/10 text-white/30 cursor-not-allowed' 
+                                            : 'border-white/20 text-white/80 hover:text-black'
+                                        }`}
+                                        disabled={isSoldOut}
+                                        onMouseEnter={(e) => {
+                                          if (!isSoldOut) {
+                                            e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
+                                            e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
+                                          }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          if (!isSoldOut) {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                                          }
+                                        }}
+                                      >
+                                        {format(new Date(showtime.start_time), 'h:mm a')}
+                                        {availability && (
+                                          <span 
+                                            className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+                                            style={{ backgroundColor: availability.color }}
+                                            title={availability.label}
+                                          />
+                                        )}
+                                      </button>
+                                    </Link>
+                                  );
+                                })}
                                 {remainingCount > 0 && (
                                   <button
                                     onClick={() => setSelectedMovie(movie)}
@@ -602,27 +684,55 @@ export default function PublicCinema() {
                                       {screenName}
                                     </span>
                                     <div className="flex flex-wrap gap-2">
-                                      {screenShowtimes.map((showtime) => (
-                                        <Link
-                                          key={showtime.id}
-                                          to={`/cinema/${slug}/book?showtime=${showtime.id}`}
-                                          onClick={() => setSelectedMovie(null)}
-                                        >
-                                          <button
-                                            className="px-4 py-2 text-sm font-medium rounded-lg border border-white/20 text-white/80 hover:text-black transition-all"
-                                            onMouseEnter={(e) => {
-                                              e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
-                                              e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                              e.currentTarget.style.backgroundColor = 'transparent';
-                                              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                                      {screenShowtimes.map((showtime) => {
+                                        const availability = getAvailabilityStatus(showtime.bookedCount, showtime.capacity);
+                                        const isSoldOut = availability?.label === 'Sold Out';
+                                        
+                                        return (
+                                          <Link
+                                            key={showtime.id}
+                                            to={isSoldOut ? '#' : `/cinema/${slug}/book?showtime=${showtime.id}`}
+                                            onClick={(e) => {
+                                              if (isSoldOut) {
+                                                e.preventDefault();
+                                              } else {
+                                                setSelectedMovie(null);
+                                              }
                                             }}
                                           >
-                                            {format(new Date(showtime.start_time), 'h:mm a')}
-                                          </button>
-                                        </Link>
-                                      ))}
+                                            <button
+                                              className={`relative px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                                                isSoldOut 
+                                                  ? 'border-white/10 text-white/30 cursor-not-allowed' 
+                                                  : 'border-white/20 text-white/80 hover:text-black'
+                                              }`}
+                                              disabled={isSoldOut}
+                                              onMouseEnter={(e) => {
+                                                if (!isSoldOut) {
+                                                  e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
+                                                  e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
+                                                }
+                                              }}
+                                              onMouseLeave={(e) => {
+                                                if (!isSoldOut) {
+                                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                                                }
+                                              }}
+                                            >
+                                              {format(new Date(showtime.start_time), 'h:mm a')}
+                                              {availability && (
+                                                <span 
+                                                  className="ml-2 text-xs"
+                                                  style={{ color: availability.color }}
+                                                >
+                                                  • {availability.label}
+                                                </span>
+                                              )}
+                                            </button>
+                                          </Link>
+                                        );
+                                      })}
                                     </div>
                                   </div>
                                 ))}
