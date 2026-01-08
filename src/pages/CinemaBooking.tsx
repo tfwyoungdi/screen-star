@@ -168,6 +168,54 @@ export default function CinemaBooking() {
     await fetchSeatsForShowtime(showtime);
   };
 
+  // Real-time subscription for seat availability updates
+  useEffect(() => {
+    if (!selectedShowtime) return;
+
+    const channel = supabase
+      .channel(`seats-${selectedShowtime.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'booked_seats',
+          filter: `showtime_id=eq.${selectedShowtime.id}`,
+        },
+        (payload) => {
+          const newSeat = payload.new as { row_label: string; seat_number: number };
+          
+          // Add the newly booked seat to the booked seats list
+          setBookedSeats((prev) => {
+            const alreadyExists = prev.some(
+              (s) => s.row_label === newSeat.row_label && s.seat_number === newSeat.seat_number
+            );
+            if (alreadyExists) return prev;
+            return [...prev, { row_label: newSeat.row_label, seat_number: newSeat.seat_number }];
+          });
+
+          // Remove the seat from selected seats if another user booked it
+          setSelectedSeats((prev) => {
+            const wasSelected = prev.some(
+              (s) => s.row_label === newSeat.row_label && s.seat_number === newSeat.seat_number
+            );
+            if (wasSelected) {
+              toast.warning(`Seat ${newSeat.row_label}${newSeat.seat_number} was just booked by another user`);
+              return prev.filter(
+                (s) => !(s.row_label === newSeat.row_label && s.seat_number === newSeat.seat_number)
+              );
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedShowtime?.id]);
+
   const isSeatBooked = (row: string, num: number) => {
     return bookedSeats.some(s => s.row_label === row && s.seat_number === num);
   };
