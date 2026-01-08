@@ -320,7 +320,7 @@ export default function ConcessionManagement() {
                     Add Item
                   </Button>
                 </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
                 <DialogDescription>
