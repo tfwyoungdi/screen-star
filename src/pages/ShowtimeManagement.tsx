@@ -76,6 +76,10 @@ export default function ShowtimeManagement() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [quickAddDate, setQuickAddDate] = useState<Date | null>(null);
   const [quickAddDialogOpen, setQuickAddDialogOpen] = useState(false);
+  const [quickAddMovieId, setQuickAddMovieId] = useState<string>('');
+  const [quickAddScreenId, setQuickAddScreenId] = useState<string>('');
+  const [quickAddPresetTime, setQuickAddPresetTime] = useState<string>('');
+  const [quickAddCustomTime, setQuickAddCustomTime] = useState<string>('');
   const queryClient = useQueryClient();
 
   const {
@@ -417,8 +421,54 @@ export default function ShowtimeManagement() {
 
   const handleAddShowtimeFromCalendar = (date: Date) => {
     setQuickAddDate(date);
+    setQuickAddMovieId('');
+    setQuickAddScreenId('');
+    setQuickAddPresetTime('');
+    setQuickAddCustomTime('');
     setQuickAddDialogOpen(true);
   };
+
+  // Check for conflicts in quick add dialog
+  const quickAddConflict = useMemo(() => {
+    if (!quickAddDate || !quickAddScreenId || !quickAddMovieId) return null;
+    
+    const time = quickAddCustomTime || quickAddPresetTime;
+    if (!time || !/^\d{1,2}:\d{2}$/.test(time)) return null;
+
+    const selectedMovie = movies?.find(m => m.id === quickAddMovieId);
+    if (!selectedMovie) return null;
+
+    const [hours, minutes] = time.split(':').map(Number);
+    const newStart = new Date(quickAddDate);
+    newStart.setHours(hours, minutes, 0, 0);
+    const newEnd = addMinutes(newStart, selectedMovie.duration_minutes + BUFFER_MINUTES);
+
+    // Find conflicts on the same screen for the same day
+    const dayShowtimes = allShowtimes?.filter(s => {
+      if (s.screen_id !== quickAddScreenId) return false;
+      const showtimeDate = new Date(s.start_time);
+      return showtimeDate.getFullYear() === quickAddDate.getFullYear() &&
+        showtimeDate.getMonth() === quickAddDate.getMonth() &&
+        showtimeDate.getDate() === quickAddDate.getDate();
+    }) || [];
+
+    for (const existing of dayShowtimes) {
+      const existingStart = new Date(existing.start_time);
+      const existingDuration = (existing.movies?.duration_minutes || 120) + BUFFER_MINUTES;
+      const existingEnd = addMinutes(existingStart, existingDuration);
+
+      // Check overlap
+      if (newStart < existingEnd && newEnd > existingStart) {
+        return {
+          existingMovie: existing.movies?.title || 'Unknown',
+          existingStart,
+          existingEnd,
+          screen: existing.screens?.name || 'Unknown',
+        };
+      }
+    }
+    return null;
+  }, [quickAddDate, quickAddScreenId, quickAddMovieId, quickAddPresetTime, quickAddCustomTime, allShowtimes, movies]);
 
   const handleQuickAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -1089,7 +1139,7 @@ export default function ShowtimeManagement() {
           <form onSubmit={handleQuickAddSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Movie *</Label>
-              <Select name="movie_id" required>
+              <Select name="movie_id" value={quickAddMovieId} onValueChange={setQuickAddMovieId} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Select movie" />
                 </SelectTrigger>
@@ -1105,7 +1155,7 @@ export default function ShowtimeManagement() {
 
             <div className="space-y-2">
               <Label>Screen *</Label>
-              <Select name="screen_id" required>
+              <Select name="screen_id" value={quickAddScreenId} onValueChange={setQuickAddScreenId} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Select screen" />
                 </SelectTrigger>
@@ -1122,7 +1172,14 @@ export default function ShowtimeManagement() {
             <div className="space-y-2">
               <Label>Time *</Label>
               <div className="flex gap-2">
-                <Select name="time">
+                <Select 
+                  name="time" 
+                  value={quickAddPresetTime} 
+                  onValueChange={(v) => {
+                    setQuickAddPresetTime(v);
+                    setQuickAddCustomTime(''); // Clear custom when preset is selected
+                  }}
+                >
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Select time" />
                   </SelectTrigger>
@@ -1140,10 +1197,26 @@ export default function ShowtimeManagement() {
                   type="time" 
                   className="w-[120px]"
                   placeholder="Custom"
+                  value={quickAddCustomTime}
+                  onChange={(e) => {
+                    setQuickAddCustomTime(e.target.value);
+                    setQuickAddPresetTime(''); // Clear preset when custom is entered
+                  }}
                 />
               </div>
               <p className="text-xs text-muted-foreground">Select from presets or enter a custom time</p>
             </div>
+
+            {/* Conflict Warning */}
+            {quickAddConflict && (
+              <Alert variant="destructive" className="py-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="text-sm">Time Conflict</AlertTitle>
+                <AlertDescription className="text-xs">
+                  Overlaps with "{quickAddConflict.existingMovie}" ({format(quickAddConflict.existingStart, 'h:mm a')} - {format(quickAddConflict.existingEnd, 'h:mm a')}) on {quickAddConflict.screen}
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -1160,8 +1233,12 @@ export default function ShowtimeManagement() {
               <Button type="button" variant="outline" className="flex-1" onClick={() => setQuickAddDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1">
-                Add Showtime
+              <Button 
+                type="submit" 
+                className="flex-1"
+                variant={quickAddConflict ? 'destructive' : 'default'}
+              >
+                {quickAddConflict ? 'Add Anyway' : 'Add Showtime'}
               </Button>
             </div>
           </form>
