@@ -29,7 +29,7 @@ const bulkShowtimeSchema = z.object({
   screen_id: z.string().min(1, 'Please select a screen'),
   start_date: z.string().min(1, 'Start date is required'),
   end_date: z.string().min(1, 'End date is required'),
-  times: z.array(z.string()).min(1, 'Select at least one showtime'),
+  time: z.string().min(1, 'Showtime is required'),
   price: z.coerce.number().min(0, 'Price must be positive'),
   vip_price: z.coerce.number().min(0).optional(),
 });
@@ -58,9 +58,7 @@ const BUFFER_MINUTES = 15; // Buffer between showtimes for cleaning/previews
 export default function ShowtimeManagement() {
   const { data: profile } = useUserProfile();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [customTime, setCustomTime] = useState('');
-  const [conflicts, setConflicts] = useState<ConflictInfo[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [timeFilter, setTimeFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [editingShowtime, setEditingShowtime] = useState<any | null>(null);
@@ -77,7 +75,7 @@ export default function ShowtimeManagement() {
   } = useForm<BulkShowtimeFormData>({
     resolver: zodResolver(bulkShowtimeSchema),
     defaultValues: {
-      times: [],
+      time: '',
     },
   });
 
@@ -192,21 +190,9 @@ export default function ShowtimeManagement() {
     capacity: bookingStats?.[s.id]?.capacity || 100,
   }));
 
-  const toggleTime = (time: string) => {
-    const newTimes = selectedTimes.includes(time)
-      ? selectedTimes.filter(t => t !== time)
-      : [...selectedTimes, time];
-    setSelectedTimes(newTimes);
-    setValue('times', newTimes, { shouldValidate: true });
-  };
-
-  const addCustomTime = () => {
-    if (customTime && !selectedTimes.includes(customTime)) {
-      const newTimes = [...selectedTimes, customTime];
-      setSelectedTimes(newTimes);
-      setValue('times', newTimes, { shouldValidate: true });
-      setCustomTime('');
-    }
+  const setTime = (time: string) => {
+    setCustomTime(time);
+    setValue('time', time, { shouldValidate: true });
   };
 
   // Check for conflicts when form values change
@@ -280,9 +266,9 @@ export default function ShowtimeManagement() {
       watchedScreenId,
       watchedStartDate,
       watchedEndDate,
-      selectedTimes
+      customTime ? [customTime] : []
     );
-  }, [watchedMovieId, watchedScreenId, watchedStartDate, watchedEndDate, selectedTimes, showtimes, movies]);
+  }, [watchedMovieId, watchedScreenId, watchedStartDate, watchedEndDate, customTime, showtimes, movies]);
 
   const onSubmit = async (data: BulkShowtimeFormData) => {
     if (!profile?.organization_id) return;
@@ -300,22 +286,20 @@ export default function ShowtimeManagement() {
       let currentDate = startDate;
 
       while (currentDate <= endDate) {
-        for (const time of data.times) {
-          const [hours, minutes] = time.split(':').map(Number);
-          const showtimeDate = new Date(currentDate);
-          showtimeDate.setHours(hours, minutes, 0, 0);
+        const [hours, minutes] = data.time.split(':').map(Number);
+        const showtimeDate = new Date(currentDate);
+        showtimeDate.setHours(hours, minutes, 0, 0);
 
-          // Only add future showtimes
-          if (showtimeDate > new Date()) {
-            showtimesToCreate.push({
-              organization_id: profile.organization_id,
-              movie_id: data.movie_id,
-              screen_id: data.screen_id,
-              start_time: showtimeDate.toISOString(),
-              price: data.price,
-              vip_price: data.vip_price || null,
-            });
-          }
+        // Only add future showtimes
+        if (showtimeDate > new Date()) {
+          showtimesToCreate.push({
+            organization_id: profile.organization_id,
+            movie_id: data.movie_id,
+            screen_id: data.screen_id,
+            start_time: showtimeDate.toISOString(),
+            price: data.price,
+            vip_price: data.vip_price || null,
+          });
         }
         currentDate = addDays(currentDate, 1);
       }
@@ -334,8 +318,7 @@ export default function ShowtimeManagement() {
       queryClient.invalidateQueries({ queryKey: ['showtimes'] });
       toast.success(`Created ${showtimesToCreate.length} showtimes successfully`);
       reset();
-      setSelectedTimes([]);
-      setConflicts([]);
+      setCustomTime('');
       setDialogOpen(false);
     } catch (error) {
       console.error('Error creating showtimes:', error);
@@ -438,8 +421,8 @@ export default function ShowtimeManagement() {
             </Tabs>
 
             <Button onClick={() => {
-              reset({ price: 10, vip_price: 15, times: [] });
-              setSelectedTimes([]);
+              reset({ price: 10, vip_price: 15, time: '' });
+              setCustomTime('');
               setDialogOpen(true);
             }}>
               <CalendarPlus className="mr-2 h-4 w-4" />
@@ -549,16 +532,12 @@ export default function ShowtimeManagement() {
                       type="time"
                       value={customTime}
                       onChange={(e) => {
-                        setCustomTime(e.target.value);
-                        if (e.target.value) {
-                          setSelectedTimes([e.target.value]);
-                          setValue('times', [e.target.value], { shouldValidate: true });
-                        }
+                        setTime(e.target.value);
                       }}
                       className="flex-1"
                     />
                   </div>
-                  {errors.times && <p className="text-sm text-destructive">{errors.times.message}</p>}
+                  {errors.time && <p className="text-sm text-destructive">{errors.time.message}</p>}
                 </div>
 
                 {/* Pricing */}
@@ -596,11 +575,11 @@ export default function ShowtimeManagement() {
                 </div>
 
                 {/* Preview */}
-                {selectedTimes.length > 0 && watch('start_date') && watch('end_date') && (
+                {customTime && watch('start_date') && watch('end_date') && (
                   <div className="rounded-lg border bg-muted/30 p-4">
                     <p className="text-sm font-medium mb-1">Summary</p>
                     <p className="text-sm text-muted-foreground">
-                      <strong>{selectedTimes.length}</strong> showtime{selectedTimes.length !== 1 ? 's' : ''} daily 
+                      Showtime at <strong>{customTime}</strong> daily 
                       from <strong>{format(new Date(watch('start_date')), 'MMM d')}</strong> to{' '}
                       <strong>{format(new Date(watch('end_date')), 'MMM d, yyyy')}</strong>
                     </p>
