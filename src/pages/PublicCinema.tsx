@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { format, isSameDay, addDays, startOfDay } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -86,6 +86,7 @@ const getAvailabilityStatus = (bookedCount: number, capacity: number): { label: 
 
 export default function PublicCinema() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
@@ -493,9 +494,13 @@ export default function PublicCinema() {
                     {/* Showtimes chips */}
                     {movie.showtimes.length > 0 && (
                       <div className="flex gap-1.5 mt-2 overflow-x-auto scrollbar-hide pb-1 -mx-0.5 px-0.5">
-                        {movie.showtimes.slice(0, 5).map((showtime) => (
-                          <span 
+                        {movie.showtimes.slice(0, 4).map((showtime) => (
+                          <button 
                             key={showtime.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cinema/${slug}/book/${showtime.id}`);
+                            }}
                             className="shrink-0 text-[11px] font-medium px-2 py-1 rounded-md transition-colors hover:opacity-80 cursor-pointer"
                             style={{ 
                               backgroundColor: `${cinema?.primary_color || '#D4AF37'}20`,
@@ -503,12 +508,18 @@ export default function PublicCinema() {
                             }}
                           >
                             {format(new Date(showtime.start_time), 'h:mm a')}
-                          </span>
+                          </button>
                         ))}
-                        {movie.showtimes.length > 5 && (
-                          <span className="shrink-0 text-[11px] text-white/40 px-2 py-1">
-                            +{movie.showtimes.length - 5}
-                          </span>
+                        {movie.showtimes.length > 4 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMovie(movie);
+                            }}
+                            className="shrink-0 text-[11px] text-white/50 px-2 py-1 hover:text-white/70 transition-colors"
+                          >
+                            +{movie.showtimes.length - 4} more
+                          </button>
                         )}
                       </div>
                     )}
