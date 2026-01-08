@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -437,17 +437,19 @@ export default function ShowtimeManagement() {
               </TabsList>
             </Tabs>
 
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => {
-                  reset({ price: 10, vip_price: 15, times: [] });
-                  setSelectedTimes([]);
-                }}>
-                  <CalendarPlus className="mr-2 h-4 w-4" />
-                  Bulk Schedule
-                </Button>
-              </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <Button onClick={() => {
+              reset({ price: 10, vip_price: 15, times: [] });
+              setSelectedTimes([]);
+              setDialogOpen(true);
+            }}>
+              <CalendarPlus className="mr-2 h-4 w-4" />
+              Bulk Schedule
+            </Button>
+          </div>
+        </div>
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader className="pb-4 border-b">
                 <DialogTitle className="flex items-center gap-2">
                   <CalendarPlus className="h-5 w-5 text-primary" />
@@ -696,9 +698,8 @@ export default function ShowtimeManagement() {
                 </Button>
               </form>
             </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+        </Dialog>
+
         {(!movies?.length || !screens?.length) && (
           <Card className="border-dashed">
             <CardContent className="py-8 text-center">

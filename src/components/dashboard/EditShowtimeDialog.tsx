@@ -1,4 +1,3 @@
-import { forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -58,8 +57,7 @@ interface EditShowtimeDialogProps {
   screens: Screen[];
 }
 
-export const EditShowtimeDialog = forwardRef<HTMLDivElement, EditShowtimeDialogProps>(
-  function EditShowtimeDialog({ open, onOpenChange, showtime, movies, screens }, ref) {
+export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, screens }: EditShowtimeDialogProps) {
   const queryClient = useQueryClient();
 
   const {
@@ -285,4 +283,4 @@ export const EditShowtimeDialog = forwardRef<HTMLDivElement, EditShowtimeDialogP
       </DialogContent>
     </Dialog>
   );
-});
+}
