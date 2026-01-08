@@ -493,8 +493,8 @@ export default function PublicCinema() {
                     </h4>
                     {/* Showtimes chips */}
                     {movie.showtimes.length > 0 && (
-                      <div className="flex gap-1.5 mt-2 overflow-x-auto scrollbar-hide pb-1 -mx-0.5 px-0.5">
-                        {movie.showtimes.slice(0, 4).map((showtime) => (
+                      <div className="flex gap-1.5 mt-2 overflow-hidden pb-1">
+                        {movie.showtimes.slice(0, movie.showtimes.length > 4 ? 3 : 4).map((showtime) => (
                           <button 
                             key={showtime.id}
                             onClick={(e) => {
@@ -516,9 +516,13 @@ export default function PublicCinema() {
                               e.stopPropagation();
                               setSelectedMovie(movie);
                             }}
-                            className="shrink-0 text-[11px] text-white/50 px-2 py-1 hover:text-white/70 transition-colors"
+                            className="shrink-0 text-[11px] font-medium px-2 py-1 rounded-md transition-colors hover:opacity-80"
+                            style={{ 
+                              backgroundColor: `${cinema?.primary_color || '#D4AF37'}20`,
+                              color: cinema?.primary_color || '#D4AF37'
+                            }}
                           >
-                            +{movie.showtimes.length - 4} more
+                            +{movie.showtimes.length - 3}
                           </button>
                         )}
                       </div>
