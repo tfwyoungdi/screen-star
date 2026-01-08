@@ -499,7 +499,7 @@ export default function PublicCinema() {
                             key={showtime.id}
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/cinema/${slug}/book/${showtime.id}`);
+                              navigate(`/cinema/${slug}/booking?movie=${movie.id}&showtime=${showtime.id}`);
                             }}
                             className="shrink-0 text-[11px] font-medium px-2 py-1 rounded-md transition-colors hover:opacity-80 cursor-pointer"
                             style={{ 
@@ -664,7 +664,7 @@ export default function PublicCinema() {
                                         return (
                                           <Link
                                             key={showtime.id}
-                                            to={isSoldOut ? '#' : `/cinema/${slug}/book?showtime=${showtime.id}`}
+                                            to={isSoldOut ? '#' : `/cinema/${slug}/booking?movie=${selectedMovie.id}&showtime=${showtime.id}`}
                                             onClick={(e) => {
                                               if (isSoldOut) {
                                                 e.preventDefault();
