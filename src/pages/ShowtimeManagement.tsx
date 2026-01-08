@@ -29,12 +29,21 @@ const bulkShowtimeSchema = z.object({
   screen_id: z.string().min(1, 'Please select a screen'),
   start_date: z.string().min(1, 'Start date is required'),
   end_date: z.string().min(1, 'End date is required'),
-  time: z.string().min(1, 'Showtime is required'),
   price: z.coerce.number().min(0, 'Price must be positive'),
   vip_price: z.coerce.number().min(0).optional(),
 });
 
 type BulkShowtimeFormData = z.infer<typeof bulkShowtimeSchema>;
+
+const DAYS_OF_WEEK = [
+  { value: 0, label: 'Sun' },
+  { value: 1, label: 'Mon' },
+  { value: 2, label: 'Tue' },
+  { value: 3, label: 'Wed' },
+  { value: 4, label: 'Thu' },
+  { value: 5, label: 'Fri' },
+  { value: 6, label: 'Sat' },
+];
 
 interface ConflictInfo {
   newStart: Date;
@@ -58,7 +67,9 @@ const BUFFER_MINUTES = 15; // Buffer between showtimes for cleaning/previews
 export default function ShowtimeManagement() {
   const { data: profile } = useUserProfile();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [customTime, setCustomTime] = useState('');
+  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+  const [customTimeInput, setCustomTimeInput] = useState('');
+  const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]); // All days selected by default
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [timeFilter, setTimeFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [editingShowtime, setEditingShowtime] = useState<any | null>(null);
@@ -74,9 +85,6 @@ export default function ShowtimeManagement() {
     formState: { errors, isSubmitting },
   } = useForm<BulkShowtimeFormData>({
     resolver: zodResolver(bulkShowtimeSchema),
-    defaultValues: {
-      time: '',
-    },
   });
 
   const { data: movies } = useQuery({
@@ -190,10 +198,28 @@ export default function ShowtimeManagement() {
     capacity: bookingStats?.[s.id]?.capacity || 100,
   }));
 
-  const setTime = (time: string) => {
-    setCustomTime(time);
-    setValue('time', time, { shouldValidate: true });
+  const addTime = (time: string) => {
+    if (time && !selectedTimes.includes(time)) {
+      setSelectedTimes([...selectedTimes, time].sort());
+    }
+    setCustomTimeInput('');
   };
+
+  const removeTime = (time: string) => {
+    setSelectedTimes(selectedTimes.filter(t => t !== time));
+  };
+
+  const toggleDay = (day: number) => {
+    if (selectedDays.includes(day)) {
+      setSelectedDays(selectedDays.filter(d => d !== day));
+    } else {
+      setSelectedDays([...selectedDays, day].sort());
+    }
+  };
+
+  const selectAllDays = () => setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
+  const selectWeekdays = () => setSelectedDays([1, 2, 3, 4, 5]);
+  const selectWeekends = () => setSelectedDays([0, 6]);
 
   // Check for conflicts when form values change
   const checkConflicts = (
@@ -266,12 +292,22 @@ export default function ShowtimeManagement() {
       watchedScreenId,
       watchedStartDate,
       watchedEndDate,
-      customTime ? [customTime] : []
+      selectedTimes
     );
-  }, [watchedMovieId, watchedScreenId, watchedStartDate, watchedEndDate, customTime, showtimes, movies]);
+  }, [watchedMovieId, watchedScreenId, watchedStartDate, watchedEndDate, selectedTimes, showtimes, movies]);
 
   const onSubmit = async (data: BulkShowtimeFormData) => {
     if (!profile?.organization_id) return;
+
+    if (selectedTimes.length === 0) {
+      toast.error('Please add at least one showtime');
+      return;
+    }
+
+    if (selectedDays.length === 0) {
+      toast.error('Please select at least one day of the week');
+      return;
+    }
 
     try {
       const startDate = new Date(data.start_date);
@@ -286,26 +322,33 @@ export default function ShowtimeManagement() {
       let currentDate = startDate;
 
       while (currentDate <= endDate) {
-        const [hours, minutes] = data.time.split(':').map(Number);
-        const showtimeDate = new Date(currentDate);
-        showtimeDate.setHours(hours, minutes, 0, 0);
+        const dayOfWeek = currentDate.getDay();
+        
+        // Only create showtimes for selected days
+        if (selectedDays.includes(dayOfWeek)) {
+          for (const time of selectedTimes) {
+            const [hours, minutes] = time.split(':').map(Number);
+            const showtimeDate = new Date(currentDate);
+            showtimeDate.setHours(hours, minutes, 0, 0);
 
-        // Only add future showtimes
-        if (showtimeDate > new Date()) {
-          showtimesToCreate.push({
-            organization_id: profile.organization_id,
-            movie_id: data.movie_id,
-            screen_id: data.screen_id,
-            start_time: showtimeDate.toISOString(),
-            price: data.price,
-            vip_price: data.vip_price || null,
-          });
+            // Only add future showtimes
+            if (showtimeDate > new Date()) {
+              showtimesToCreate.push({
+                organization_id: profile.organization_id,
+                movie_id: data.movie_id,
+                screen_id: data.screen_id,
+                start_time: showtimeDate.toISOString(),
+                price: data.price,
+                vip_price: data.vip_price || null,
+              });
+            }
+          }
         }
         currentDate = addDays(currentDate, 1);
       }
 
       if (showtimesToCreate.length === 0) {
-        toast.error('No valid showtimes to create. All times are in the past.');
+        toast.error('No valid showtimes to create. Check your date range, days, and times.');
         return;
       }
 
@@ -318,7 +361,8 @@ export default function ShowtimeManagement() {
       queryClient.invalidateQueries({ queryKey: ['showtimes'] });
       toast.success(`Created ${showtimesToCreate.length} showtimes successfully`);
       reset();
-      setCustomTime('');
+      setSelectedTimes([]);
+      setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
       setDialogOpen(false);
     } catch (error) {
       console.error('Error creating showtimes:', error);
@@ -421,8 +465,10 @@ export default function ShowtimeManagement() {
             </Tabs>
 
             <Button onClick={() => {
-              reset({ price: 10, vip_price: 15, time: '' });
-              setCustomTime('');
+              reset({ price: 10, vip_price: 15 });
+              setSelectedTimes([]);
+              setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
+              setCustomTimeInput('');
               setDialogOpen(true);
             }}>
               <CalendarPlus className="mr-2 h-4 w-4" />
@@ -521,23 +567,107 @@ export default function ShowtimeManagement() {
                   </div>
                 </div>
 
-                {/* Showtimes - Single Time Input */}
-                <div className="space-y-2">
+                {/* Days of Week Selection */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                    Days of Week
+                  </Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DAYS_OF_WEEK.map((day) => (
+                      <button
+                        key={day.value}
+                        type="button"
+                        onClick={() => toggleDay(day.value)}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                          selectedDays.includes(day.value)
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        }`}
+                      >
+                        {day.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={selectAllDays}>
+                      All
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={selectWeekdays}>
+                      Weekdays
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={selectWeekends}>
+                      Weekends
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Showtimes - Multiple Times */}
+                <div className="space-y-3">
                   <Label className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    Showtime
+                    Showtimes
                   </Label>
+                  
+                  {/* Quick time buttons */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {COMMON_TIMES.map((time) => (
+                      <button
+                        key={time.value}
+                        type="button"
+                        onClick={() => addTime(time.value)}
+                        disabled={selectedTimes.includes(time.value)}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                          selectedTimes.includes(time.value)
+                            ? 'bg-primary/20 text-primary cursor-not-allowed'
+                            : 'bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground'
+                        }`}
+                      >
+                        {time.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom time input */}
                   <div className="flex gap-2">
                     <Input
                       type="time"
-                      value={customTime}
-                      onChange={(e) => {
-                        setTime(e.target.value);
-                      }}
+                      value={customTimeInput}
+                      onChange={(e) => setCustomTimeInput(e.target.value)}
                       className="flex-1"
+                      placeholder="Add custom time"
                     />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => addTime(customTimeInput)}
+                      disabled={!customTimeInput || selectedTimes.includes(customTimeInput)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
-                  {errors.time && <p className="text-sm text-destructive">{errors.time.message}</p>}
+
+                  {/* Selected times */}
+                  {selectedTimes.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTimes.map((time) => (
+                        <Badge key={time} variant="secondary" className="gap-1 pr-1">
+                          {format(new Date(`2000-01-01T${time}`), 'h:mm a')}
+                          <button
+                            type="button"
+                            onClick={() => removeTime(time)}
+                            className="ml-1 hover:bg-destructive/20 rounded p-0.5"
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {selectedTimes.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Click times above or add custom times</p>
+                  )}
                 </div>
 
                 {/* Pricing */}
@@ -575,11 +705,15 @@ export default function ShowtimeManagement() {
                 </div>
 
                 {/* Preview */}
-                {customTime && watch('start_date') && watch('end_date') && (
+                {selectedTimes.length > 0 && watch('start_date') && watch('end_date') && selectedDays.length > 0 && (
                   <div className="rounded-lg border bg-muted/30 p-4">
                     <p className="text-sm font-medium mb-1">Summary</p>
                     <p className="text-sm text-muted-foreground">
-                      Showtime at <strong>{customTime}</strong> daily 
+                      <strong>{selectedTimes.length}</strong> showtime{selectedTimes.length !== 1 ? 's' : ''} per day
+                      ({selectedTimes.map(t => format(new Date(`2000-01-01T${t}`), 'h:mm a')).join(', ')})
+                      <br />
+                      on <strong>{selectedDays.map(d => DAYS_OF_WEEK.find(day => day.value === d)?.label).join(', ')}</strong>
+                      <br />
                       from <strong>{format(new Date(watch('start_date')), 'MMM d')}</strong> to{' '}
                       <strong>{format(new Date(watch('end_date')), 'MMM d, yyyy')}</strong>
                     </p>
