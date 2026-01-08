@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { format, isSameDay, addDays, startOfDay } from 'date-fns';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,6 +71,7 @@ const getTrailerEmbed = (url: string | null): string | null => {
 
 export default function PublicCinema() {
   const { slug } = useParams<{ slug: string }>();
+  const queryClient = useQueryClient();
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<MovieWithShowtimes | null>(null);
@@ -97,8 +98,7 @@ export default function PublicCinema() {
       return data as CinemaData | null;
     },
     enabled: !!slug,
-    staleTime: 30000, // Consider data stale after 30 seconds
-    refetchInterval: 60000, // Refetch every 60 seconds
+    staleTime: 60000,
   });
 
   // Fetch movies with showtimes
@@ -136,9 +136,34 @@ export default function PublicCinema() {
       return moviesWithShowtimes;
     },
     enabled: !!cinema?.id,
-    staleTime: 30000, // Consider data stale after 30 seconds
-    refetchInterval: 60000, // Refetch every 60 seconds to get latest showtimes
+    staleTime: 60000,
   });
+
+  // Real-time subscription for showtime changes
+  useEffect(() => {
+    if (!cinema?.id) return;
+
+    const channel = supabase
+      .channel('public-showtimes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'showtimes',
+          filter: `organization_id=eq.${cinema.id}`,
+        },
+        () => {
+          // Invalidate and refetch movies data when showtimes change
+          queryClient.invalidateQueries({ queryKey: ['public-movies', cinema.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [cinema?.id, queryClient]);
 
   const movies = useMemo(() => 
     (moviesData || []).filter(m => m.showtimes.length > 0),
