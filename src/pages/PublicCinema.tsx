@@ -439,7 +439,7 @@ export default function PublicCinema() {
                 <div 
                   key={movie.id} 
                   className="group relative cursor-pointer"
-                  onClick={() => setSelectedMovie(movie)}
+                  onClick={() => navigate(`/cinema/${slug}/booking?movie=${movie.id}`)}
                 >
                   {/* Poster Card */}
                   <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-gray-900">
@@ -457,15 +457,6 @@ export default function PublicCinema() {
                     
                     {/* Hover overlay with info */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-                      {/* Play button */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div 
-                          className="w-14 h-14 rounded-full flex items-center justify-center transform scale-0 group-hover:scale-100 transition-transform duration-300 shadow-xl"
-                          style={{ backgroundColor: cinema?.primary_color || '#D4AF37' }}
-                        >
-                          <Play className="h-6 w-6 text-black ml-1" fill="currentColor" />
-                        </div>
-                      </div>
                       
                       {/* Bottom info */}
                       <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
