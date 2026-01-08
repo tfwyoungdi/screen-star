@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sidebar,
   SidebarContent,
@@ -105,8 +104,7 @@ function SidebarContentWrapper() {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 py-4">
-        <SidebarContent>
+      <SidebarContent className="flex-1 py-4">
           <SidebarGroup>
             {!isCollapsed && (
               <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium px-4 mb-2">
@@ -215,8 +213,7 @@ function SidebarContentWrapper() {
               </SidebarGroupContent>
             </SidebarGroup>
           )}
-        </SidebarContent>
-      </ScrollArea>
+      </SidebarContent>
 
       {/* Logout Section */}
       <div className="p-3 border-t border-sidebar-border">
