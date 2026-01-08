@@ -203,8 +203,10 @@ export default function CinemaBooking() {
       toast.error('Please select at least one seat');
       return;
     }
+    // Store selected seats in sessionStorage for the booking flow
+    sessionStorage.setItem('selectedSeats', JSON.stringify(selectedSeats));
     // Navigate to the full booking flow with seats pre-selected
-    navigate(`/cinema/${slug}/book?showtime=${selectedShowtime.id}`);
+    navigate(`/cinema/${slug}/book?showtime=${selectedShowtime.id}&fromBooking=true`);
   };
 
   const navigateDate = (direction: 'prev' | 'next') => {
@@ -234,17 +236,25 @@ export default function CinemaBooking() {
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col lg:flex-row">
       {/* Left Panel - Movie Info */}
-      <div 
-        className="lg:w-1/2 relative overflow-hidden"
-        style={{
-          background: movie.poster_url 
-            ? `linear-gradient(to bottom, transparent 0%, rgba(26, 26, 46, 0.8) 60%, rgba(26, 26, 46, 1) 100%), url(${movie.poster_url})`
-            : `linear-gradient(135deg, ${primaryColor}40 0%, #1a1a2e 100%)`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1a1a2e]/70 to-[#1a1a2e]" />
+      <div className="lg:w-1/2 relative overflow-hidden min-h-[400px] lg:min-h-screen">
+        {/* Poster Image */}
+        {movie.poster_url && (
+          <img 
+            src={movie.poster_url} 
+            alt={movie.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        
+        {/* Gradient Overlay */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: movie.poster_url 
+              ? 'linear-gradient(to bottom, transparent 0%, rgba(26, 26, 46, 0.6) 50%, rgba(26, 26, 46, 1) 100%)'
+              : `linear-gradient(135deg, ${primaryColor}40 0%, #1a1a2e 100%)`
+          }}
+        />
         
         {/* Content */}
         <div className="relative z-10 p-6 lg:p-10 flex flex-col min-h-[400px] lg:min-h-screen justify-end">
