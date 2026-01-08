@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { format, isSameDay, addDays, startOfDay } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,11 +71,6 @@ const getTrailerEmbed = (url: string | null): string | null => {
 
 export default function PublicCinema() {
   const { slug } = useParams<{ slug: string }>();
-  const [cinema, setCinema] = useState<CinemaData | null>(null);
-  const [movies, setMovies] = useState<MovieWithShowtimes[]>([]);
-  const [allMovies, setAllMovies] = useState<MovieWithShowtimes[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<MovieWithShowtimes | null>(null);
@@ -85,6 +81,74 @@ export default function PublicCinema() {
   const today = startOfDay(new Date());
   const dateOptions = Array.from({ length: 7 }, (_, i) => addDays(today, i));
   const selectedDate = dateOptions[selectedDateIndex];
+
+  // Fetch cinema data with React Query for auto-refresh
+  const { data: cinema, isLoading: cinemaLoading, isError: cinemaError } = useQuery({
+    queryKey: ['public-cinema', slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name, slug, logo_url, primary_color, secondary_color, about_text, contact_email, contact_phone, address, social_facebook, social_instagram, social_twitter')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as CinemaData | null;
+    },
+    enabled: !!slug,
+    staleTime: 30000, // Consider data stale after 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds
+  });
+
+  // Fetch movies with showtimes
+  const { data: moviesData, isLoading: moviesLoading } = useQuery({
+    queryKey: ['public-movies', cinema?.id],
+    queryFn: async () => {
+      if (!cinema?.id) return [];
+      
+      const { data: moviesResult } = await supabase
+        .from('movies')
+        .select('id, title, description, duration_minutes, poster_url, genre, rating, trailer_url')
+        .eq('organization_id', cinema.id)
+        .eq('is_active', true);
+
+      if (!moviesResult || moviesResult.length === 0) return [];
+
+      // Fetch ALL showtimes for each movie
+      const moviesWithShowtimes = await Promise.all(
+        moviesResult.map(async (movie) => {
+          const { data: showtimes } = await supabase
+            .from('showtimes')
+            .select('id, start_time, price, screens (name)')
+            .eq('movie_id', movie.id)
+            .eq('is_active', true)
+            .gte('start_time', new Date().toISOString())
+            .order('start_time');
+
+          return {
+            ...movie,
+            showtimes: showtimes || [],
+          };
+        })
+      );
+
+      return moviesWithShowtimes;
+    },
+    enabled: !!cinema?.id,
+    staleTime: 30000, // Consider data stale after 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds to get latest showtimes
+  });
+
+  const movies = useMemo(() => 
+    (moviesData || []).filter(m => m.showtimes.length > 0),
+    [moviesData]
+  );
+
+  const allMovies = useMemo(() => 
+    (moviesData || []).map(m => ({ ...m, showtimes: [] })),
+    [moviesData]
+  );
 
   // Get unique genres from all movies
   const genres = [...new Set(movies.map(m => m.genre).filter(Boolean))] as string[];
@@ -101,95 +165,34 @@ export default function PublicCinema() {
     .filter(movie => !selectedGenre || movie.genre === selectedGenre)
     .filter(movie => !searchQuery || movie.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  // Track page view
-  const trackPageView = async (orgId: string) => {
-    try {
-      // Get or create a visitor ID for anonymous tracking
-      let visitorId = localStorage.getItem('visitor_id');
-      if (!visitorId) {
-        visitorId = crypto.randomUUID();
-        localStorage.setItem('visitor_id', visitorId);
-      }
-
-      await supabase.from('page_views').insert({
-        organization_id: orgId,
-        page_path: `/cinema/${slug}`,
-        visitor_id: visitorId,
-        user_agent: navigator.userAgent,
-        referrer: document.referrer || null,
-      });
-    } catch (error) {
-      // Silently fail - don't disrupt user experience for analytics
-      console.error('Failed to track page view:', error);
-    }
-  };
-
+  // Track page view on cinema load
   useEffect(() => {
-    if (slug) {
-      fetchCinemaData();
+    if (cinema?.id && slug) {
+      const trackPageView = async () => {
+        try {
+          let visitorId = localStorage.getItem('visitor_id');
+          if (!visitorId) {
+            visitorId = crypto.randomUUID();
+            localStorage.setItem('visitor_id', visitorId);
+          }
+
+          await supabase.from('page_views').insert({
+            organization_id: cinema.id,
+            page_path: `/cinema/${slug}`,
+            visitor_id: visitorId,
+            user_agent: navigator.userAgent,
+            referrer: document.referrer || null,
+          });
+        } catch (error) {
+          console.error('Failed to track page view:', error);
+        }
+      };
+      trackPageView();
     }
-  }, [slug]);
+  }, [cinema?.id, slug]);
 
-  const fetchCinemaData = async () => {
-    try {
-      // Fetch cinema with extended info
-      const { data: cinemaData, error: cinemaError } = await supabase
-        .from('organizations')
-        .select('id, name, slug, logo_url, primary_color, secondary_color, about_text, contact_email, contact_phone, address, social_facebook, social_instagram, social_twitter')
-        .eq('slug', slug)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (cinemaError) throw cinemaError;
-
-      if (!cinemaData) {
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
-
-      setCinema(cinemaData);
-      
-      // Track page view after confirming cinema exists
-      trackPageView(cinemaData.id);
-      const { data: moviesData } = await supabase
-        .from('movies')
-        .select('id, title, description, duration_minutes, poster_url, genre, rating, trailer_url')
-        .eq('organization_id', cinemaData.id)
-        .eq('is_active', true);
-
-      if (moviesData && moviesData.length > 0) {
-        // Store all movies for hero display
-        setAllMovies(moviesData.map(m => ({ ...m, showtimes: [] })));
-        
-        // Fetch ALL showtimes for each movie (for date filtering)
-        const moviesWithShowtimes = await Promise.all(
-          moviesData.map(async (movie) => {
-            const { data: showtimes } = await supabase
-              .from('showtimes')
-              .select('id, start_time, price, screens (name)')
-              .eq('movie_id', movie.id)
-              .eq('is_active', true)
-              .gte('start_time', new Date().toISOString())
-              .order('start_time');
-
-            return {
-              ...movie,
-              showtimes: showtimes || [],
-            };
-          })
-        );
-
-        // Include all movies with upcoming showtimes
-        setMovies(moviesWithShowtimes.filter(m => m.showtimes.length > 0));
-      }
-    } catch (error) {
-      console.error('Error fetching cinema:', error);
-      setNotFound(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = cinemaLoading || moviesLoading;
+  const notFound = cinemaError || (!cinemaLoading && !cinema);
 
   if (loading) {
     return (
