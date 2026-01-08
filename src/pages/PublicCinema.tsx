@@ -490,11 +490,24 @@ export default function PublicCinema() {
                     <h4 className="text-white font-medium text-sm leading-tight line-clamp-1 group-hover:text-white/80 transition-colors">
                       {movie.title}
                     </h4>
-                    {/* Next showtime */}
+                    {/* Showtimes indicator */}
                     {movie.showtimes[0] && (
-                      <p className="text-white/40 text-xs mt-1">
-                        Next: {format(new Date(movie.showtimes[0].start_time), 'h:mm a')}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <p className="text-white/50 text-xs">
+                          {format(new Date(movie.showtimes[0].start_time), 'h:mm a')}
+                        </p>
+                        {movie.showtimes.length > 1 && (
+                          <span 
+                            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                            style={{ 
+                              backgroundColor: `${cinema?.primary_color || '#D4AF37'}20`,
+                              color: cinema?.primary_color || '#D4AF37'
+                            }}
+                          >
+                            +{movie.showtimes.length - 1} more
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
