@@ -185,13 +185,37 @@ export default function PublicCinema() {
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'showtimes',
           filter: `organization_id=eq.${cinema.id}`,
         },
         () => {
-          // Invalidate and refetch movies data when showtimes change
+          queryClient.invalidateQueries({ queryKey: ['public-movies', cinema.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [cinema?.id, queryClient]);
+
+  // Real-time subscription for seat bookings (availability updates)
+  useEffect(() => {
+    if (!cinema?.id) return;
+
+    const channel = supabase
+      .channel('public-seat-bookings')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'booked_seats',
+        },
+        () => {
+          // Refetch movies data to update availability indicators
           queryClient.invalidateQueries({ queryKey: ['public-movies', cinema.id] });
         }
       )
