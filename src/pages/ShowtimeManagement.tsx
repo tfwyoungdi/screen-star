@@ -538,65 +538,26 @@ export default function ShowtimeManagement() {
                   </div>
                 </div>
 
-                {/* Showtimes */}
-                <div className="space-y-3">
+                {/* Showtimes - Single Time Input */}
+                <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    Daily Showtimes
+                    Showtime
                   </Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {COMMON_TIMES.map((time) => (
-                      <div
-                        key={time.value}
-                        className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
-                          selectedTimes.includes(time.value)
-                            ? 'border-primary bg-primary/10 shadow-sm'
-                            : 'border-border hover:border-primary/50 hover:bg-accent/50'
-                        }`}
-                        onClick={() => toggleTime(time.value)}
-                      >
-                        <Checkbox
-                          checked={selectedTimes.includes(time.value)}
-                          onCheckedChange={() => toggleTime(time.value)}
-                        />
-                        <span className="text-sm font-medium">{time.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Custom Time */}
                   <div className="flex gap-2">
                     <Input
                       type="time"
                       value={customTime}
-                      onChange={(e) => setCustomTime(e.target.value)}
+                      onChange={(e) => {
+                        setCustomTime(e.target.value);
+                        if (e.target.value) {
+                          setSelectedTimes([e.target.value]);
+                          setValue('times', [e.target.value], { shouldValidate: true });
+                        }
+                      }}
                       className="flex-1"
-                      placeholder="Custom time"
                     />
-                    <Button type="button" variant="outline" onClick={addCustomTime}>
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add
-                    </Button>
                   </div>
-
-                  {/* Custom Times Display */}
-                  {selectedTimes.filter(t => !COMMON_TIMES.find(ct => ct.value === t)).length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTimes.filter(t => !COMMON_TIMES.find(ct => ct.value === t)).map(time => (
-                        <Badge key={time} variant="outline" className="gap-1 py-1">
-                          {time}
-                          <button 
-                            type="button" 
-                            onClick={() => toggleTime(time)} 
-                            className="ml-1 text-muted-foreground hover:text-destructive"
-                          >
-                            ×
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-
                   {errors.times && <p className="text-sm text-destructive">{errors.times.message}</p>}
                 </div>
 
