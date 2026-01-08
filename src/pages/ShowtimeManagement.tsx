@@ -427,16 +427,28 @@ export default function ShowtimeManagement() {
     const formData = new FormData(e.currentTarget);
     const movieId = formData.get('movie_id') as string;
     const screenId = formData.get('screen_id') as string;
-    const time = formData.get('time') as string;
-    const price = parseFloat(formData.get('price') as string) || 10;
-    const vipPrice = parseFloat(formData.get('vip_price') as string) || null;
+    const presetTime = formData.get('time') as string;
+    const customTime = formData.get('custom_time') as string;
+    const time = customTime || presetTime; // Prefer custom time if provided
+    const price = Math.min(999, Math.max(0, parseFloat(formData.get('price') as string) || 10));
+    const vipPrice = Math.min(999, Math.max(0, parseFloat(formData.get('vip_price') as string))) || null;
 
-    if (!movieId || !screenId || !time) {
-      toast.error('Please fill in all required fields');
+    if (!movieId || !screenId) {
+      toast.error('Please select a movie and screen');
+      return;
+    }
+
+    if (!time || !/^\d{1,2}:\d{2}$/.test(time)) {
+      toast.error('Please select or enter a valid time');
       return;
     }
 
     const [hours, minutes] = time.split(':').map(Number);
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      toast.error('Invalid time format');
+      return;
+    }
+
     const showtimeDate = new Date(quickAddDate);
     showtimeDate.setHours(hours, minutes, 0, 0);
 
@@ -1026,8 +1038,11 @@ export default function ShowtimeManagement() {
       />
 
       {/* Quick Add Showtime Dialog */}
-      <Dialog open={quickAddDialogOpen} onOpenChange={setQuickAddDialogOpen}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={quickAddDialogOpen} onOpenChange={(open) => {
+        setQuickAddDialogOpen(open);
+        if (!open) setQuickAddDate(null);
+      }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-primary" />
@@ -1037,6 +1052,39 @@ export default function ShowtimeManagement() {
               {quickAddDate && format(quickAddDate, 'EEEE, MMMM d, yyyy')}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Existing showtimes for this day */}
+          {quickAddDate && allShowtimes && (() => {
+            const dayShowtimes = allShowtimes
+              .filter(s => {
+                const showtimeDate = new Date(s.start_time);
+                return quickAddDate && 
+                  showtimeDate.getFullYear() === quickAddDate.getFullYear() &&
+                  showtimeDate.getMonth() === quickAddDate.getMonth() &&
+                  showtimeDate.getDate() === quickAddDate.getDate();
+              })
+              .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+            
+            if (dayShowtimes.length === 0) return null;
+            
+            return (
+              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Existing showtimes ({dayShowtimes.length})
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {dayShowtimes.map(s => (
+                    <Badge key={s.id} variant="secondary" className="text-xs gap-1">
+                      <Clock className="h-3 w-3" />
+                      {format(new Date(s.start_time), 'h:mm a')}
+                      <span className="opacity-60">· {s.movies?.title?.substring(0, 15)}{(s.movies?.title?.length || 0) > 15 ? '...' : ''}</span>
+                      <span className="opacity-60">· {s.screens?.name}</span>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           <form onSubmit={handleQuickAddSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -1073,28 +1121,38 @@ export default function ShowtimeManagement() {
 
             <div className="space-y-2">
               <Label>Time *</Label>
-              <Select name="time" required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COMMON_TIMES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select name="time">
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMMON_TIMES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground self-center">or</span>
+                <Input 
+                  name="custom_time" 
+                  type="time" 
+                  className="w-[120px]"
+                  placeholder="Custom"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Select from presets or enter a custom time</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Price ($)</Label>
-                <Input name="price" type="number" step="0.01" defaultValue="10" />
+                <Input name="price" type="number" step="0.01" min="0" max="999" defaultValue="10" />
               </div>
               <div className="space-y-2">
                 <Label>VIP Price ($)</Label>
-                <Input name="vip_price" type="number" step="0.01" defaultValue="15" />
+                <Input name="vip_price" type="number" step="0.01" min="0" max="999" defaultValue="15" />
               </div>
             </div>
 
