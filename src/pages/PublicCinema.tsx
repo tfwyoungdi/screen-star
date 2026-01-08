@@ -260,7 +260,7 @@ export default function PublicCinema() {
                 {movies.map((movie) => (
                   <div key={movie.id} className="flex gap-3">
                     {/* Movie Poster */}
-                    <div className="relative w-24 md:w-28 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 group">
+                    <div className="relative w-32 md:w-40 lg:w-48 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 group">
                       {movie.poster_url ? (
                         <img
                           src={movie.poster_url}
