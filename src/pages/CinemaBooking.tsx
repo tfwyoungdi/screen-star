@@ -568,6 +568,7 @@ export default function CinemaBooking() {
                         const isBooked = isSeatBooked(seat.row_label, seat.seat_number);
                         const isSelected = isSeatSelected(seat.row_label, seat.seat_number);
                         const isUnavailable = !seat.is_available || seat.seat_type === 'unavailable';
+                        const isVip = seat.seat_type === 'vip';
 
                         return (
                           <button
@@ -578,11 +579,12 @@ export default function CinemaBooking() {
                               "w-5 h-5 lg:w-6 lg:h-6 rounded-full transition-all",
                               isUnavailable && "opacity-0 cursor-default",
                               isBooked && "bg-white/20 cursor-not-allowed",
-                              !isBooked && !isUnavailable && !isSelected && "bg-white/80 hover:bg-white cursor-pointer",
+                              !isBooked && !isUnavailable && !isSelected && isVip && "bg-amber-400 hover:bg-amber-300 cursor-pointer ring-1 ring-amber-500/50",
+                              !isBooked && !isUnavailable && !isSelected && !isVip && "bg-white/80 hover:bg-white cursor-pointer",
                               isSelected && "cursor-pointer"
                             )}
                             style={isSelected ? { backgroundColor: primaryColor } : undefined}
-                            title={`${seat.row_label}${seat.seat_number}`}
+                            title={`${seat.row_label}${seat.seat_number}${isVip ? ' (VIP)' : ''}`}
                           />
                         );
                       })}
@@ -593,10 +595,14 @@ export default function CinemaBooking() {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-center gap-6 py-4 text-xs">
+            <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-6 py-4 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-white/80" />
-                <span className="text-white/60">Available</span>
+                <span className="text-white/60">Regular</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-amber-400 ring-1 ring-amber-500/50" />
+                <span className="text-white/60">VIP</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-white/20" />
@@ -607,7 +613,7 @@ export default function CinemaBooking() {
                   className="w-3 h-3 rounded-full" 
                   style={{ backgroundColor: primaryColor }}
                 />
-                <span className="text-white/60">Your Selection</span>
+                <span className="text-white/60">Selected</span>
               </div>
             </div>
           </div>

@@ -20,6 +20,7 @@ const screenSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   rows: z.coerce.number().min(1).max(26, 'Max 26 rows (A-Z)'),
   columns: z.coerce.number().min(1).max(50, 'Max 50 seats per row'),
+  vipRows: z.coerce.number().min(0).max(26, 'Max 26 VIP rows'),
 });
 
 type ScreenFormData = z.infer<typeof screenSchema>;
@@ -90,7 +91,7 @@ export default function ScreenManagement() {
 
         // Regenerate seat layouts if dimensions changed
         if (editingScreen.rows !== data.rows || editingScreen.columns !== data.columns) {
-          await regenerateSeatLayouts(editingScreen.id, data.rows, data.columns);
+          await regenerateSeatLayouts(editingScreen.id, data.rows, data.columns, data.vipRows);
         }
 
         toast.success('Screen updated successfully');
@@ -108,8 +109,8 @@ export default function ScreenManagement() {
 
         if (error) throw error;
 
-        // Generate initial seat layouts
-        await generateSeatLayouts(newScreen.id, data.rows, data.columns);
+        // Generate initial seat layouts with VIP rows
+        await generateSeatLayouts(newScreen.id, data.rows, data.columns, data.vipRows);
 
         toast.success('Screen created successfully');
       }
@@ -124,17 +125,23 @@ export default function ScreenManagement() {
     }
   };
 
-  const generateSeatLayouts = async (screenId: string, rows: number, columns: number) => {
+  const generateSeatLayouts = async (screenId: string, rows: number, columns: number, vipRows: number = 0) => {
     const rowLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, rows);
     const seats = [];
 
-    for (const rowLabel of rowLabels) {
+    // VIP rows are the last N rows (closest to screen back)
+    const vipStartIndex = rows - vipRows;
+
+    for (let i = 0; i < rowLabels.length; i++) {
+      const rowLabel = rowLabels[i];
+      const isVipRow = i >= vipStartIndex;
+      
       for (let seatNum = 1; seatNum <= columns; seatNum++) {
         seats.push({
           screen_id: screenId,
           row_label: rowLabel,
           seat_number: seatNum,
-          seat_type: 'standard',
+          seat_type: isVipRow ? 'vip' : 'standard',
           is_available: true,
         });
       }
@@ -144,11 +151,11 @@ export default function ScreenManagement() {
     if (error) console.error('Error creating seat layouts:', error);
   };
 
-  const regenerateSeatLayouts = async (screenId: string, rows: number, columns: number) => {
+  const regenerateSeatLayouts = async (screenId: string, rows: number, columns: number, vipRows: number = 0) => {
     // Delete existing layouts
     await supabase.from('seat_layouts').delete().eq('screen_id', screenId);
     // Create new layouts
-    await generateSeatLayouts(screenId, rows, columns);
+    await generateSeatLayouts(screenId, rows, columns, vipRows);
   };
 
   const deleteScreen = async (id: string) => {
@@ -169,6 +176,7 @@ export default function ScreenManagement() {
       name: screen.name,
       rows: screen.rows,
       columns: screen.columns,
+      vipRows: 0, // Default, as we don't store this separately
     });
     setDialogOpen(true);
   };
@@ -221,7 +229,7 @@ export default function ScreenManagement() {
 
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditingScreen(null); reset({ name: '', rows: 10, columns: 12 }); }}>
+              <Button onClick={() => { setEditingScreen(null); reset({ name: '', rows: 10, columns: 12, vipRows: 2 }); }}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Screen
               </Button>
@@ -267,6 +275,18 @@ export default function ScreenManagement() {
                       className={errors.columns ? 'border-destructive' : ''}
                     />
                     {errors.columns && <p className="text-sm text-destructive">{errors.columns.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="vipRows">VIP Rows (back rows)</Label>
+                    <Input
+                      id="vipRows"
+                      type="number"
+                      {...register('vipRows')}
+                      className={errors.vipRows ? 'border-destructive' : ''}
+                    />
+                    {errors.vipRows && <p className="text-sm text-destructive">{errors.vipRows.message}</p>}
+                    <p className="text-xs text-muted-foreground">VIP rows are assigned from the back of the screen</p>
                   </div>
                 </div>
 
@@ -358,7 +378,7 @@ export default function ScreenManagement() {
                 <div className="text-center py-8">
                   <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">No screens configured yet</p>
-                  <Button className="mt-4" onClick={() => { setEditingScreen(null); reset({ name: '', rows: 10, columns: 12 }); setDialogOpen(true); }}>
+                  <Button className="mt-4" onClick={() => { setEditingScreen(null); reset({ name: '', rows: 10, columns: 12, vipRows: 2 }); setDialogOpen(true); }}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add Your First Screen
                   </Button>
