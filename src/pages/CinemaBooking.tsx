@@ -68,6 +68,7 @@ export default function CinemaBooking() {
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
   const [loading, setLoading] = useState(true);
   const [seatCount, setSeatCount] = useState(2);
+  const [showtimeAvailability, setShowtimeAvailability] = useState<Record<string, { booked: number; total: number }>>({});
 
   // Generate dates for the date picker (5 days)
   const dateRange = useMemo(() => {
@@ -129,6 +130,11 @@ export default function CinemaBooking() {
 
         setShowtimes(showtimesData || []);
 
+        // Fetch availability for all showtimes
+        if (showtimesData && showtimesData.length > 0) {
+          await fetchShowtimeAvailability(showtimesData);
+        }
+
         // If initialShowtimeId provided, select it
         if (initialShowtimeId && showtimesData) {
           const initialShowtime = showtimesData.find(s => s.id === initialShowtimeId);
@@ -144,6 +150,46 @@ export default function CinemaBooking() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchShowtimeAvailability = async (showtimesList: Showtime[]) => {
+    const availability: Record<string, { booked: number; total: number }> = {};
+    
+    // Get unique screen IDs
+    const screenIds = [...new Set(showtimesList.map(s => s.screen_id))];
+    
+    // Fetch total seats per screen
+    const { data: seatLayouts } = await supabase
+      .from('seat_layouts')
+      .select('screen_id, is_available')
+      .in('screen_id', screenIds);
+    
+    const totalSeatsPerScreen: Record<string, number> = {};
+    seatLayouts?.forEach(seat => {
+      if (seat.is_available) {
+        totalSeatsPerScreen[seat.screen_id] = (totalSeatsPerScreen[seat.screen_id] || 0) + 1;
+      }
+    });
+    
+    // Fetch booked seats count per showtime
+    const { data: bookedCounts } = await supabase
+      .from('booked_seats')
+      .select('showtime_id')
+      .in('showtime_id', showtimesList.map(s => s.id));
+    
+    const bookedPerShowtime: Record<string, number> = {};
+    bookedCounts?.forEach(seat => {
+      bookedPerShowtime[seat.showtime_id] = (bookedPerShowtime[seat.showtime_id] || 0) + 1;
+    });
+    
+    // Build availability map
+    showtimesList.forEach(showtime => {
+      const total = totalSeatsPerScreen[showtime.screen_id] || 0;
+      const booked = bookedPerShowtime[showtime.id] || 0;
+      availability[showtime.id] = { booked, total };
+    });
+    
+    setShowtimeAvailability(availability);
   };
 
   const fetchSeatsForShowtime = async (showtime: Showtime) => {
@@ -192,6 +238,16 @@ export default function CinemaBooking() {
             );
             if (alreadyExists) return prev;
             return [...prev, { row_label: newSeat.row_label, seat_number: newSeat.seat_number }];
+          });
+
+          // Update availability count for the current showtime
+          setShowtimeAvailability((prev) => {
+            const current = prev[selectedShowtime.id];
+            if (!current) return prev;
+            return {
+              ...prev,
+              [selectedShowtime.id]: { ...current, booked: current.booked + 1 }
+            };
           });
 
           // Remove the seat from selected seats if another user booked it
@@ -404,17 +460,24 @@ export default function CinemaBooking() {
             ) : (
               filteredShowtimes.map((showtime) => {
                 const isSelected = selectedShowtime?.id === showtime.id;
+                const availability = showtimeAvailability[showtime.id];
+                const available = availability ? availability.total - availability.booked : null;
+                const isSoldOut = availability && available === 0;
+                
                 return (
                   <button
                     key={showtime.id}
-                    onClick={() => handleShowtimeSelect(showtime)}
+                    onClick={() => !isSoldOut && handleShowtimeSelect(showtime)}
+                    disabled={isSoldOut}
                     className={cn(
                       "px-4 py-3 rounded-lg transition-all flex flex-col items-center min-w-[80px]",
-                      isSelected 
-                        ? "text-white" 
-                        : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                      isSoldOut
+                        ? "bg-white/5 text-white/30 cursor-not-allowed"
+                        : isSelected 
+                          ? "text-white" 
+                          : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                     )}
-                    style={isSelected ? { backgroundColor: primaryColor } : undefined}
+                    style={isSelected && !isSoldOut ? { backgroundColor: primaryColor } : undefined}
                   >
                     <span className="text-lg font-bold">
                       {format(new Date(showtime.start_time), 'HH:mm')}
@@ -422,6 +485,14 @@ export default function CinemaBooking() {
                     <span className="text-xs opacity-70">
                       {showtime.screens.name}
                     </span>
+                    {availability && (
+                      <span className={cn(
+                        "text-[10px] mt-1",
+                        isSoldOut ? "text-red-400" : available && available <= 10 ? "text-yellow-400" : "opacity-60"
+                      )}>
+                        {isSoldOut ? 'Sold Out' : `${available}/${availability.total}`}
+                      </span>
+                    )}
                   </button>
                 );
               })
