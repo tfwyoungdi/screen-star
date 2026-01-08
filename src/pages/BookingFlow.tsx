@@ -802,137 +802,83 @@ export default function BookingFlow() {
             )}
 
             {step === 'snacks' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Popcorn className="h-5 w-5" />
-                    Add Snacks & Drinks
-                  </CardTitle>
-                  <CardDescription>Enhance your movie experience (optional)</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {Object.entries(
-                    concessionItems.reduce((acc, item) => {
-                      if (!acc[item.category]) acc[item.category] = [];
-                      acc[item.category].push(item);
-                      return acc;
-                    }, {} as Record<string, ConcessionItem[]>)
-                  ).map(([category, items]) => (
-                    <div key={category} className="mb-6 last:mb-0">
-                      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3 capitalize">
-                        {category}
-                      </h3>
-                      <div className="grid gap-3">
-                        {items.map((item) => {
-                          const quantity = getConcessionQuantity(item.id);
-                          return (
-                            <div
-                              key={item.id}
-                              className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                {item.image_url ? (
-                                  <img
-                                    src={item.image_url}
-                                    alt={item.name}
-                                    className="w-12 h-12 rounded object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
-                                    <Popcorn className="h-6 w-6 text-muted-foreground" />
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="font-medium">{item.name}</p>
-                                  {item.description && (
-                                    <p className="text-sm text-muted-foreground line-clamp-1">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                  <p className="text-sm font-semibold" style={{ color: cinema.primary_color }}>
-                                    ${item.price.toFixed(2)}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {quantity > 0 ? (
-                                  <>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => removeConcession(item.id)}
-                                    >
-                                      <Minus className="h-4 w-4" />
-                                    </Button>
-                                    <span className="w-8 text-center font-medium">{quantity}</span>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => addConcession(item)}
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => addConcession(item)}
-                                  >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Add
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+              <div className="bg-[#1a1a2e] rounded-2xl overflow-hidden">
+                {/* Header */}
+                <div className="p-6 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: `${cinema.primary_color}20` }}
+                    >
+                      <Popcorn className="h-6 w-6" style={{ color: cinema.primary_color }} />
                     </div>
-                  ))}
+                    <div>
+                      <h2 className="text-xl font-bold text-white">Add Snacks & Drinks</h2>
+                      <p className="text-white/60 text-sm">Enhance your movie experience</p>
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Combo Deals Section */}
+                {/* Content */}
+                <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                  {/* Combo Deals - Show first for prominence */}
                   {availableCombos.length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
-                        🎉 Combo Deals - Save More!
+                    <div>
+                      <h3 className="text-white/60 text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span>🎉</span> Combo Deals - Save More!
                       </h3>
                       <div className="grid gap-3">
                         {availableCombos.map((combo) => {
                           const quantity = getComboQuantity(combo.id);
+                          const savingsAmount = combo.original_price - combo.combo_price;
                           return (
                             <div
                               key={combo.id}
-                              className="flex items-center justify-between p-3 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
+                              className="flex items-center justify-between p-4 rounded-xl transition-all"
+                              style={{ 
+                                backgroundColor: quantity > 0 ? `${cinema.primary_color}15` : 'rgba(255,255,255,0.05)',
+                                border: quantity > 0 ? `1px solid ${cinema.primary_color}40` : '1px solid rgba(255,255,255,0.1)'
+                              }}
                             >
-                              <div>
-                                <p className="font-medium">{combo.name}</p>
-                                <p className="text-xs text-muted-foreground">
+                              <div className="flex-1">
+                                <p className="font-semibold text-white">{combo.name}</p>
+                                <p className="text-white/50 text-xs mt-1">
                                   {combo.combo_deal_items?.map(i => `${i.quantity}x ${i.concession_items?.name}`).join(' + ')}
                                 </p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs line-through text-muted-foreground">${combo.original_price.toFixed(2)}</span>
-                                  <span className="font-semibold" style={{ color: cinema.primary_color }}>${combo.combo_price.toFixed(2)}</span>
-                                  <Badge variant="secondary" className="text-xs">Save ${(combo.original_price - combo.combo_price).toFixed(2)}</Badge>
+                                <div className="flex items-center gap-3 mt-2">
+                                  <span className="text-white/40 text-sm line-through">${combo.original_price.toFixed(2)}</span>
+                                  <span className="font-bold text-lg" style={{ color: cinema.primary_color }}>${combo.combo_price.toFixed(2)}</span>
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">
+                                    Save ${savingsAmount.toFixed(2)}
+                                  </span>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 ml-4">
                                 {quantity > 0 ? (
-                                  <>
-                                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => removeCombo(combo.id)}>
+                                  <div className="flex items-center gap-2 bg-white/10 rounded-full p-1">
+                                    <button
+                                      onClick={() => removeCombo(combo.id)}
+                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                    >
                                       <Minus className="h-4 w-4" />
-                                    </Button>
-                                    <span className="w-8 text-center font-medium">{quantity}</span>
-                                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => addCombo(combo)}>
+                                    </button>
+                                    <span className="w-6 text-center font-semibold text-white">{quantity}</span>
+                                    <button
+                                      onClick={() => addCombo(combo)}
+                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                    >
                                       <Plus className="h-4 w-4" />
-                                    </Button>
-                                  </>
+                                    </button>
+                                  </div>
                                 ) : (
-                                  <Button variant="outline" size="sm" onClick={() => addCombo(combo)}>
-                                    <Plus className="h-4 w-4 mr-1" />Add
-                                  </Button>
+                                  <button
+                                    onClick={() => addCombo(combo)}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all"
+                                    style={{ backgroundColor: cinema.primary_color, color: 'white' }}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    Add
+                                  </button>
                                 )}
                               </div>
                             </div>
@@ -942,21 +888,136 @@ export default function BookingFlow() {
                     </div>
                   )}
 
-                  <div className="flex gap-4 pt-6 border-t mt-6">
-                    <Button variant="outline" onClick={() => setStep('seats')}>
+                  {/* Individual Items by Category */}
+                  {Object.entries(
+                    concessionItems.reduce((acc, item) => {
+                      if (!acc[item.category]) acc[item.category] = [];
+                      acc[item.category].push(item);
+                      return acc;
+                    }, {} as Record<string, ConcessionItem[]>)
+                  ).map(([category, items]) => (
+                    <div key={category}>
+                      <h3 className="text-white/60 text-xs uppercase tracking-widest mb-4 capitalize">
+                        {category}
+                      </h3>
+                      <div className="grid gap-3">
+                        {items.map((item) => {
+                          const quantity = getConcessionQuantity(item.id);
+                          return (
+                            <div
+                              key={item.id}
+                              className="flex items-center gap-4 p-4 rounded-xl transition-all"
+                              style={{ 
+                                backgroundColor: quantity > 0 ? `${cinema.primary_color}10` : 'rgba(255,255,255,0.05)',
+                                border: quantity > 0 ? `1px solid ${cinema.primary_color}30` : '1px solid transparent'
+                              }}
+                            >
+                              {/* Image */}
+                              {item.image_url ? (
+                                <img
+                                  src={item.image_url}
+                                  alt={item.name}
+                                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div 
+                                  className="w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0"
+                                  style={{ backgroundColor: `${cinema.primary_color}20` }}
+                                >
+                                  <Popcorn className="h-6 w-6" style={{ color: cinema.primary_color }} />
+                                </div>
+                              )}
+                              
+                              {/* Details */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-white">{item.name}</p>
+                                {item.description && (
+                                  <p className="text-white/50 text-sm line-clamp-1 mt-0.5">{item.description}</p>
+                                )}
+                                <p className="font-semibold mt-1" style={{ color: cinema.primary_color }}>
+                                  ${item.price.toFixed(2)}
+                                </p>
+                              </div>
+                              
+                              {/* Quantity Controls */}
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {quantity > 0 ? (
+                                  <div className="flex items-center gap-2 bg-white/10 rounded-full p-1">
+                                    <button
+                                      onClick={() => removeConcession(item.id)}
+                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                    >
+                                      <Minus className="h-4 w-4" />
+                                    </button>
+                                    <span className="w-6 text-center font-semibold text-white">{quantity}</span>
+                                    <button
+                                      onClick={() => addConcession(item)}
+                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => addConcession(item)}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-white/80 text-sm font-medium hover:bg-white/10 hover:border-white/30 transition-all"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    Add
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Footer with Summary */}
+                <div className="p-6 border-t border-white/10 space-y-4">
+                  {/* Mini Order Summary */}
+                  {(selectedConcessions.length > 0 || selectedCombos.length > 0) && (
+                    <div className="bg-white/5 rounded-xl p-4 space-y-2">
+                      {selectedConcessions.map((c) => (
+                        <div key={c.item.id} className="flex justify-between text-sm">
+                          <span className="text-white/70">{c.item.name} × {c.quantity}</span>
+                          <span className="text-white">${(c.item.price * c.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                      {selectedCombos.map((c) => (
+                        <div key={c.combo.id} className="flex justify-between text-sm">
+                          <span className="text-white/70">{c.combo.name} × {c.quantity}</span>
+                          <span className="text-white">${(c.combo.combo_price * c.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                      <div className="border-t border-white/10 pt-2 flex justify-between font-semibold">
+                        <span className="text-white">Snacks Total</span>
+                        <span style={{ color: cinema.primary_color }}>${(concessionsSubtotal + combosSubtotal).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setStep('seats')}
+                      className="px-6 py-3 rounded-xl border border-white/20 text-white/80 font-medium hover:bg-white/10 transition-colors"
+                    >
                       Back
-                    </Button>
-                    <Button
-                      className="flex-1"
+                    </button>
+                    <button
                       onClick={() => setStep('details')}
+                      className="flex-1 py-3 rounded-xl font-semibold text-white transition-all"
                       style={{ backgroundColor: cinema.primary_color }}
                     >
                       Continue to Details
                       {(concessionsSubtotal + combosSubtotal) > 0 && ` (+$${(concessionsSubtotal + combosSubtotal).toFixed(2)})`}
-                    </Button>
+                    </button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {step === 'details' && (
