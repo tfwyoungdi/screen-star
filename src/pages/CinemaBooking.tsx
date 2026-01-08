@@ -80,9 +80,10 @@ export default function CinemaBooking() {
     return dates;
   }, []);
 
-  // Filter showtimes for selected date
+  // Filter showtimes for selected date (exclude those with null screens)
   const filteredShowtimes = useMemo(() => {
     return showtimes.filter(s => {
+      if (!s.screens) return false; // Skip showtimes without valid screen data
       const showtimeDate = startOfDay(new Date(s.start_time));
       return isSameDay(showtimeDate, selectedDate) && new Date(s.start_time) > new Date();
     }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
@@ -194,6 +195,8 @@ export default function CinemaBooking() {
   };
 
   const fetchSeatsForShowtime = async (showtime: Showtime) => {
+    if (!showtime.screens?.id) return;
+    
     // Fetch seat layouts
     const { data: layouts } = await supabase
       .from('seat_layouts')
@@ -545,7 +548,7 @@ export default function CinemaBooking() {
                       {format(new Date(showtime.start_time), 'HH:mm')}
                     </span>
                     <span className="text-xs opacity-70 mb-1">
-                      {showtime.screens.name}
+                      {showtime.screens?.name || 'Screen'}
                     </span>
                     <div className="flex items-center gap-1 text-[10px]">
                       <span className="opacity-80">${showtime.price}</span>
@@ -674,12 +677,12 @@ export default function CinemaBooking() {
             {/* Seat Grid */}
             <div className="flex-1 overflow-auto py-4">
               <div className="flex flex-col items-center gap-1.5">
-                {Array.from({ length: selectedShowtime.screens.rows }, (_, i) => {
+                {Array.from({ length: selectedShowtime.screens?.rows || 0 }, (_, i) => {
                   // In "All Seats", render front → back (VIP stays at the back/bottom).
                   // In filtered views, render back → front (so VIP rows appear first).
                   const rowIndex = seatTypeFilter === 'all'
                     ? i
-                    : selectedShowtime.screens.rows - 1 - i;
+                    : (selectedShowtime.screens?.rows || 1) - 1 - i;
                   const rowLabel = String.fromCharCode(65 + rowIndex);
                   const rowSeats = seatLayouts
                     .filter(s => s.row_label === rowLabel)
