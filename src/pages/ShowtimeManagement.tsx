@@ -74,6 +74,8 @@ export default function ShowtimeManagement() {
   const [timeFilter, setTimeFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [editingShowtime, setEditingShowtime] = useState<any | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [quickAddDate, setQuickAddDate] = useState<Date | null>(null);
+  const [quickAddDialogOpen, setQuickAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const {
@@ -411,6 +413,58 @@ export default function ShowtimeManagement() {
   const handleEditShowtime = (showtime: any) => {
     setEditingShowtime(showtime);
     setEditDialogOpen(true);
+  };
+
+  const handleAddShowtimeFromCalendar = (date: Date) => {
+    setQuickAddDate(date);
+    setQuickAddDialogOpen(true);
+  };
+
+  const handleQuickAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!profile?.organization_id || !quickAddDate) return;
+
+    const formData = new FormData(e.currentTarget);
+    const movieId = formData.get('movie_id') as string;
+    const screenId = formData.get('screen_id') as string;
+    const time = formData.get('time') as string;
+    const price = parseFloat(formData.get('price') as string) || 10;
+    const vipPrice = parseFloat(formData.get('vip_price') as string) || null;
+
+    if (!movieId || !screenId || !time) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const [hours, minutes] = time.split(':').map(Number);
+    const showtimeDate = new Date(quickAddDate);
+    showtimeDate.setHours(hours, minutes, 0, 0);
+
+    if (showtimeDate <= new Date()) {
+      toast.error('Cannot create showtime in the past');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('showtimes').insert({
+        organization_id: profile.organization_id,
+        movie_id: movieId,
+        screen_id: screenId,
+        start_time: showtimeDate.toISOString(),
+        price,
+        vip_price: vipPrice,
+      });
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['showtimes'] });
+      toast.success(`Showtime added for ${format(showtimeDate, 'MMM d, h:mm a')}`);
+      setQuickAddDialogOpen(false);
+      setQuickAddDate(null);
+    } catch (error) {
+      console.error('Error creating showtime:', error);
+      toast.error('Failed to create showtime');
+    }
   };
 
   const handleShowtimeMove = async (showtimeId: string, newDateTime: Date) => {
@@ -801,6 +855,7 @@ export default function ShowtimeManagement() {
                 bookingCounts={bookingCounts}
                 onShowtimeClick={handleEditShowtime}
                 onShowtimeMove={handleShowtimeMove}
+                onAddShowtime={handleAddShowtimeFromCalendar}
               />
             </CardContent>
           </Card>
@@ -969,6 +1024,91 @@ export default function ShowtimeManagement() {
         movies={movies || []}
         screens={screens || []}
       />
+
+      {/* Quick Add Showtime Dialog */}
+      <Dialog open={quickAddDialogOpen} onOpenChange={setQuickAddDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              Add Showtime
+            </DialogTitle>
+            <DialogDescription>
+              {quickAddDate && format(quickAddDate, 'EEEE, MMMM d, yyyy')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleQuickAddSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Movie *</Label>
+              <Select name="movie_id" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select movie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {movies?.map((movie) => (
+                    <SelectItem key={movie.id} value={movie.id}>
+                      {movie.title} ({movie.duration_minutes}min)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Screen *</Label>
+              <Select name="screen_id" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select screen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {screens?.map((screen) => (
+                    <SelectItem key={screen.id} value={screen.id}>
+                      {screen.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Time *</Label>
+              <Select name="time" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMMON_TIMES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Price ($)</Label>
+                <Input name="price" type="number" step="0.01" defaultValue="10" />
+              </div>
+              <div className="space-y-2">
+                <Label>VIP Price ($)</Label>
+                <Input name="vip_price" type="number" step="0.01" defaultValue="15" />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button type="button" variant="outline" className="flex-1" onClick={() => setQuickAddDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1">
+                Add Showtime
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
