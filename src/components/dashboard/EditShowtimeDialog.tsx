@@ -128,10 +128,8 @@ export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, scree
     }
   };
 
-  if (!showtime) return null;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open && !!showtime} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-2">
