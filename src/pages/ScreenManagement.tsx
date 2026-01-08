@@ -95,11 +95,17 @@ export default function ScreenManagement() {
 
         if (error) throw error;
 
-        // Regenerate seat layouts if dimensions changed
-        if (editingScreen.rows !== data.rows || editingScreen.columns !== data.columns) {
+        const dimensionsChanged = editingScreen.rows !== data.rows || editingScreen.columns !== data.columns;
+
+        // If dimensions changed, recreate the whole layout (including VIP rows)
+        if (dimensionsChanged) {
           await regenerateSeatLayouts(editingScreen.id, data.rows, data.columns, data.vipRows);
+        } else {
+          // If only VIP rows changed, apply VIP rows to the existing layout
+          await applyVipRows(editingScreen.id, data.rows, data.vipRows);
         }
 
+        queryClient.invalidateQueries({ queryKey: ['seat-layouts'] });
         toast.success('Screen updated successfully');
       } else {
         const { data: newScreen, error } = await supabase
@@ -164,6 +170,31 @@ export default function ScreenManagement() {
     await generateSeatLayouts(screenId, rows, columns, vipRows);
   };
 
+  const applyVipRows = async (screenId: string, rows: number, vipRows: number = 0) => {
+    // Reset all available seats back to standard (keep unavailable seats as-is)
+    const { error: resetError } = await supabase
+      .from('seat_layouts')
+      .update({ seat_type: 'standard', is_available: true })
+      .eq('screen_id', screenId)
+      .neq('seat_type', 'unavailable');
+
+    if (resetError) throw resetError;
+
+    if (vipRows <= 0) return;
+
+    const rowLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, rows);
+    const vipRowLabels = rowLabels.slice(Math.max(0, rows - vipRows));
+
+    const { error: vipError } = await supabase
+      .from('seat_layouts')
+      .update({ seat_type: 'vip', is_available: true })
+      .eq('screen_id', screenId)
+      .in('row_label', vipRowLabels)
+      .neq('seat_type', 'unavailable');
+
+    if (vipError) throw vipError;
+  };
+
   const deleteScreen = async (id: string) => {
     try {
       const { error } = await supabase.from('screens').delete().eq('id', id);
@@ -176,14 +207,38 @@ export default function ScreenManagement() {
     }
   };
 
-  const openEditDialog = (screen: any) => {
+  const openEditDialog = async (screen: any) => {
     setEditingScreen(screen);
+
+    // Best-effort: infer current VIP rows from the existing seat layout
+    let inferredVipRows = 0;
+    try {
+      const { data: vipSeats, error } = await supabase
+        .from('seat_layouts')
+        .select('row_label')
+        .eq('screen_id', screen.id)
+        .eq('seat_type', 'vip');
+
+      if (error) throw error;
+
+      const vipRowSet = new Set((vipSeats ?? []).map((s) => s.row_label));
+      const rowLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, screen.rows);
+
+      for (let i = rowLabels.length - 1; i >= 0; i--) {
+        if (vipRowSet.has(rowLabels[i])) inferredVipRows += 1;
+        else break;
+      }
+    } catch {
+      // ignore inference errors
+    }
+
     reset({
       name: screen.name,
       rows: screen.rows,
       columns: screen.columns,
-      vipRows: 0, // Default, as we don't store this separately
+      vipRows: inferredVipRows,
     });
+
     setDialogOpen(true);
   };
 
