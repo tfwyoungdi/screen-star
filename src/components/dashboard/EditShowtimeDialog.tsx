@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
-import { Loader2, Film, Monitor, Calendar, Clock, DollarSign } from 'lucide-react';
+import { format, addDays, eachDayOfInterval } from 'date-fns';
+import { Loader2, Film, Monitor, Calendar, Clock, DollarSign, Plus, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,6 +35,7 @@ interface Showtime {
   is_active: boolean;
   movie_id: string;
   screen_id: string;
+  organization_id?: string;
   movies?: { title: string; duration_minutes: number } | null;
   screens?: { name: string } | null;
 }
@@ -59,13 +61,15 @@ interface EditShowtimeDialogProps {
 
 export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, screens }: EditShowtimeDialogProps) {
   const queryClient = useQueryClient();
+  const [additionalTimes, setAdditionalTimes] = useState<string[]>([]);
+  const [extendToDate, setExtendToDate] = useState<string>('');
+  const [isCreatingAdditional, setIsCreatingAdditional] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    reset,
     formState: { errors, isSubmitting },
   } = useForm<EditShowtimeFormData>({
     resolver: zodResolver(editShowtimeSchema),
@@ -81,11 +85,27 @@ export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, scree
   });
 
   const watchedIsActive = watch('is_active');
+  const watchedDate = watch('date');
+
+  const addTime = () => {
+    setAdditionalTimes([...additionalTimes, '']);
+  };
+
+  const removeTime = (index: number) => {
+    setAdditionalTimes(additionalTimes.filter((_, i) => i !== index));
+  };
+
+  const updateTime = (index: number, value: string) => {
+    const updated = [...additionalTimes];
+    updated[index] = value;
+    setAdditionalTimes(updated);
+  };
 
   const onSubmit = async (data: EditShowtimeFormData) => {
     if (!showtime) return;
 
     try {
+      // Update the existing showtime
       const [hours, minutes] = data.time.split(':').map(Number);
       const startTime = new Date(data.date);
       startTime.setHours(hours, minutes, 0, 0);
@@ -104,12 +124,66 @@ export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, scree
 
       if (error) throw error;
 
+      // Create additional showtimes if any
+      const validAdditionalTimes = additionalTimes.filter(t => t.trim() !== '');
+      
+      if (validAdditionalTimes.length > 0 || extendToDate) {
+        setIsCreatingAdditional(true);
+        
+        const newShowtimes: any[] = [];
+        const baseDate = new Date(data.date);
+        const endDate = extendToDate ? new Date(extendToDate) : baseDate;
+        
+        // Get all dates in range
+        const dates = eachDayOfInterval({ start: baseDate, end: endDate });
+        
+        // All times to create (original time for extended dates + additional times)
+        const allTimes = extendToDate && dates.length > 1 
+          ? [data.time, ...validAdditionalTimes]
+          : validAdditionalTimes;
+        
+        for (const date of dates) {
+          const timesToCreate = date.getTime() === baseDate.getTime() 
+            ? validAdditionalTimes // For the original date, only add additional times
+            : allTimes; // For extended dates, add all times including original
+          
+          for (const time of timesToCreate) {
+            const [h, m] = time.split(':').map(Number);
+            const showDateTime = new Date(date);
+            showDateTime.setHours(h, m, 0, 0);
+            
+            newShowtimes.push({
+              movie_id: data.movie_id,
+              screen_id: data.screen_id,
+              organization_id: showtime.organization_id,
+              start_time: showDateTime.toISOString(),
+              price: data.price,
+              vip_price: data.vip_price || null,
+              is_active: data.is_active,
+            });
+          }
+        }
+
+        if (newShowtimes.length > 0) {
+          const { error: insertError } = await supabase
+            .from('showtimes')
+            .insert(newShowtimes);
+
+          if (insertError) throw insertError;
+          toast.success(`Created ${newShowtimes.length} additional showtime(s)`);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['showtimes'] });
       toast.success('Showtime updated successfully');
+      setAdditionalTimes([]);
+      setExtendToDate('');
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating showtime:', error);
       toast.error('Failed to update showtime');
+    } finally {
+      setIsCreatingAdditional(false);
     }
   };
 
@@ -128,16 +202,24 @@ export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, scree
     }
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setAdditionalTimes([]);
+      setExtendToDate('');
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open && !!showtime} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open && !!showtime} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
             Edit Showtime
           </DialogTitle>
           <DialogDescription>
-            Modify the details for this showtime
+            Modify details or add more showtimes
           </DialogDescription>
         </DialogHeader>
 
@@ -215,6 +297,66 @@ export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, scree
             </div>
           </div>
 
+          {/* Additional Times */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-2">
+                <Plus className="h-4 w-4 text-muted-foreground" />
+                Additional Times
+              </Label>
+              <Button type="button" variant="outline" size="sm" onClick={addTime}>
+                <Plus className="h-3 w-3 mr-1" />
+                Add Time
+              </Button>
+            </div>
+            {additionalTimes.length > 0 && (
+              <div className="space-y-2">
+                {additionalTimes.map((time, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={time}
+                      onChange={(e) => updateTime(index, e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeTime(index)}
+                      className="h-9 w-9"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {additionalTimes.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Add more showtimes for the same movie and screen
+              </p>
+            )}
+          </div>
+
+          {/* Extend to Date */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Copy className="h-4 w-4 text-muted-foreground" />
+              Extend to Date (optional)
+            </Label>
+            <Input
+              type="date"
+              value={extendToDate}
+              onChange={(e) => setExtendToDate(e.target.value)}
+              min={watchedDate}
+              placeholder="Repeat until..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Copy these showtimes to each day until this date
+            </p>
+          </div>
+
           {/* Pricing */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -265,11 +407,11 @@ export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, scree
             <Button type="button" variant="destructive" onClick={handleDelete} className="mr-auto">
               Delete
             </Button>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
+            <Button type="submit" disabled={isSubmitting || isCreatingAdditional}>
+              {isSubmitting || isCreatingAdditional ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
