@@ -415,36 +415,62 @@ export default function PublicCinema() {
                       )}
                     </div>
                     
-                    {/* Showtimes - Horizontal scroll */}
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {movie.showtimes.slice(0, 5).map((showtime) => (
-                        <Link
-                          key={showtime.id}
-                          to={`/cinema/${slug}/book?showtime=${showtime.id}`}
-                        >
-                          <button
-                            className="px-2 py-1 text-xs font-medium rounded border border-white/20 text-white/80 hover:text-black transition-all"
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
-                              e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                            }}
-                          >
-                            {format(new Date(showtime.start_time), 'h:mm a')}
-                          </button>
-                        </Link>
-                      ))}
-                      {movie.showtimes.length > 5 && (
-                        <button
-                          onClick={() => setSelectedMovie(movie)}
-                          className="px-2 py-1 text-xs font-medium text-white/50 hover:text-white"
-                        >
-                          +{movie.showtimes.length - 5} more
-                        </button>
-                      )}
+                    {/* Showtimes grouped by screen */}
+                    <div className="flex flex-col gap-2 mt-1">
+                      {(() => {
+                        // Group showtimes by screen
+                        const groupedByScreen = movie.showtimes.reduce((acc, st) => {
+                          const screenName = st.screens?.name || 'Screen';
+                          if (!acc[screenName]) acc[screenName] = [];
+                          acc[screenName].push(st);
+                          return acc;
+                        }, {} as Record<string, Showtime[]>);
+
+                        const screenEntries = Object.entries(groupedByScreen);
+                        
+                        return screenEntries.map(([screenName, showtimes]) => {
+                          const displayShowtimes = showtimes.slice(0, 5);
+                          const remainingCount = showtimes.length - 5;
+                          
+                          return (
+                            <div key={screenName} className="flex flex-col gap-1">
+                              <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
+                                {screenName}
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {displayShowtimes.map((showtime) => (
+                                  <Link
+                                    key={showtime.id}
+                                    to={`/cinema/${slug}/book?showtime=${showtime.id}`}
+                                  >
+                                    <button
+                                      className="px-2 py-1 text-xs font-medium rounded border border-white/20 text-white/80 hover:text-black transition-all"
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
+                                        e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                                      }}
+                                    >
+                                      {format(new Date(showtime.start_time), 'h:mm a')}
+                                    </button>
+                                  </Link>
+                                ))}
+                                {remainingCount > 0 && (
+                                  <button
+                                    onClick={() => setSelectedMovie(movie)}
+                                    className="px-2 py-1 text-xs font-medium text-white/50 hover:text-white"
+                                  >
+                                    +{remainingCount} more
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -554,38 +580,56 @@ export default function PublicCinema() {
                     }, {} as Record<string, Showtime[]>);
 
                     return (
-                      <div className="space-y-4">
-                        {Object.entries(groupedByDate).slice(0, 7).map(([dateKey, showtimes]) => (
-                          <div key={dateKey}>
-                            <p className="text-white/50 text-sm mb-2">
-                              {format(new Date(dateKey), 'EEEE, MMMM d')}
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {showtimes.map((showtime) => (
-                                <Link
-                                  key={showtime.id}
-                                  to={`/cinema/${slug}/book?showtime=${showtime.id}`}
-                                  onClick={() => setSelectedMovie(null)}
-                                >
-                                  <button
-                                    className="px-4 py-2 text-sm font-medium rounded-lg border border-white/20 text-white/80 hover:text-black transition-all"
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
-                                      e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = 'transparent';
-                                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                                    }}
-                                  >
-                                    {format(new Date(showtime.start_time), 'h:mm a')}
-                                    <span className="ml-2 text-xs opacity-60">{showtime.screens?.name}</span>
-                                  </button>
-                                </Link>
-                              ))}
+                      <div className="space-y-6">
+                        {Object.entries(groupedByDate).slice(0, 7).map(([dateKey, showtimes]) => {
+                          // Group by screen within each date
+                          const groupedByScreen = showtimes.reduce((acc, st) => {
+                            const screenName = st.screens?.name || 'Screen';
+                            if (!acc[screenName]) acc[screenName] = [];
+                            acc[screenName].push(st);
+                            return acc;
+                          }, {} as Record<string, Showtime[]>);
+
+                          return (
+                            <div key={dateKey}>
+                              <p className="text-white/50 text-sm mb-3 font-medium">
+                                {format(new Date(dateKey), 'EEEE, MMMM d')}
+                              </p>
+                              <div className="space-y-3">
+                                {Object.entries(groupedByScreen).map(([screenName, screenShowtimes]) => (
+                                  <div key={screenName} className="flex flex-col gap-2">
+                                    <span className="text-white/40 text-xs font-medium uppercase tracking-wide">
+                                      {screenName}
+                                    </span>
+                                    <div className="flex flex-wrap gap-2">
+                                      {screenShowtimes.map((showtime) => (
+                                        <Link
+                                          key={showtime.id}
+                                          to={`/cinema/${slug}/book?showtime=${showtime.id}`}
+                                          onClick={() => setSelectedMovie(null)}
+                                        >
+                                          <button
+                                            className="px-4 py-2 text-sm font-medium rounded-lg border border-white/20 text-white/80 hover:text-black transition-all"
+                                            onMouseEnter={(e) => {
+                                              e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
+                                              e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.currentTarget.style.backgroundColor = 'transparent';
+                                              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                                            }}
+                                          >
+                                            {format(new Date(showtime.start_time), 'h:mm a')}
+                                          </button>
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     );
                   })()}
