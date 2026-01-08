@@ -248,14 +248,15 @@ export default function ScreenManagement() {
   };
 
   const toggleSeatType = async (seat: any) => {
-    const newType = seat.seat_type === 'standard' ? 'vip' : seat.seat_type === 'vip' ? 'unavailable' : 'standard';
+    // Cycle: standard → vip → standard (click VIP to turn white/standard)
+    const newType = seat.seat_type === 'standard' ? 'vip' : 'standard';
     
     try {
       const { error } = await supabase
         .from('seat_layouts')
         .update({ 
           seat_type: newType,
-          is_available: newType !== 'unavailable'
+          is_available: true
         })
         .eq('id', seat.id);
 
