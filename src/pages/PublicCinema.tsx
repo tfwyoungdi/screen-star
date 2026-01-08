@@ -326,17 +326,17 @@ export default function PublicCinema() {
             </div>
           </div>
 
-          {/* Movies List - 2 Column Grid Layout with Poster + Showtimes */}
+          {/* Movies List - 5 Column Grid Layout */}
           {filteredMovies.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
               {filteredMovies.map((movie) => (
                 <div 
                   key={movie.id} 
-                  className="flex gap-4 md:gap-6 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                  className="flex flex-col rounded-xl bg-white/5 hover:bg-white/10 transition-colors overflow-hidden"
                 >
                   {/* Movie Poster - Clickable */}
                   <div 
-                    className="relative w-28 md:w-36 lg:w-44 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 cursor-pointer group"
+                    className="relative w-full aspect-[2/3] bg-gray-800 cursor-pointer group"
                     onClick={() => setSelectedMovie(movie)}
                   >
                     {movie.poster_url ? (
@@ -365,37 +365,37 @@ export default function PublicCinema() {
                   </div>
                   
                   {/* Movie Info & Showtimes */}
-                  <div className="flex-1 flex flex-col justify-center min-w-0">
+                  <div className="p-3 flex flex-col gap-2">
                     {/* Title */}
                     <h4 
-                      className="text-white font-bold text-lg md:text-xl leading-tight mb-1 cursor-pointer hover:underline"
+                      className="text-white font-bold text-sm md:text-base leading-tight cursor-pointer hover:underline line-clamp-2"
                       onClick={() => setSelectedMovie(movie)}
                     >
                       {movie.title}
                     </h4>
 
                     {/* Meta info */}
-                    <div className="flex items-center gap-3 text-white/50 text-sm mb-4">
+                    <div className="flex items-center gap-2 text-white/50 text-xs">
                       <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {movie.duration_minutes} min
+                        <Clock className="h-3 w-3" />
+                        {movie.duration_minutes}m
                       </span>
                       {movie.genre && (
-                        <Badge variant="outline" className="text-white/60 border-white/20">
+                        <Badge variant="outline" className="text-white/60 border-white/20 text-xs px-1.5 py-0">
                           {movie.genre}
                         </Badge>
                       )}
                     </div>
                     
-                    {/* Showtimes - Horizontal */}
-                    <div className="flex flex-wrap gap-2">
-                      {movie.showtimes.map((showtime) => (
+                    {/* Showtimes - Horizontal scroll */}
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {movie.showtimes.slice(0, 4).map((showtime) => (
                         <Link
                           key={showtime.id}
                           to={`/cinema/${slug}/book?showtime=${showtime.id}`}
                         >
                           <button
-                            className="px-4 py-2 text-sm font-medium rounded-lg border border-white/20 text-white/80 hover:text-black transition-all flex-shrink-0"
+                            className="px-2 py-1 text-xs font-medium rounded border border-white/20 text-white/80 hover:text-black transition-all"
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor = cinema?.primary_color || '#D4AF37';
                               e.currentTarget.style.borderColor = cinema?.primary_color || '#D4AF37';
@@ -409,6 +409,14 @@ export default function PublicCinema() {
                           </button>
                         </Link>
                       ))}
+                      {movie.showtimes.length > 4 && (
+                        <button
+                          onClick={() => setSelectedMovie(movie)}
+                          className="px-2 py-1 text-xs font-medium text-white/50 hover:text-white"
+                        >
+                          +{movie.showtimes.length - 4} more
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
