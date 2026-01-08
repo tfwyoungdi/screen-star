@@ -613,23 +613,51 @@ export default function CinemaBooking() {
         {selectedShowtime && seatLayouts.length > 0 && (
           <div className="flex-1 flex flex-col">
             {/* Seat Type Filter */}
-            <div className="flex justify-center gap-2 mb-4">
-              {(['all', 'regular', 'vip'] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setSeatTypeFilter(filter)}
-                  className={cn(
-                    "px-4 py-1.5 rounded-full text-xs font-medium transition-all",
-                    seatTypeFilter === filter
-                      ? "text-white"
-                      : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+            {(() => {
+              const vipSeatsCount = seatLayouts.filter(s => s.seat_type === 'vip' && s.is_available).length;
+              const regularSeatsCount = seatLayouts.filter(s => s.seat_type === 'standard' && s.is_available).length;
+              const noVipSeats = vipSeatsCount === 0;
+              const noRegularSeats = regularSeatsCount === 0;
+              
+              return (
+                <>
+                  <div className="flex justify-center gap-2 mb-2">
+                    {(['all', 'regular', 'vip'] as const).map((filter) => {
+                      const isDisabled = (filter === 'vip' && noVipSeats) || (filter === 'regular' && noRegularSeats);
+                      
+                      return (
+                        <button
+                          key={filter}
+                          onClick={() => !isDisabled && setSeatTypeFilter(filter)}
+                          disabled={isDisabled}
+                          className={cn(
+                            "px-4 py-1.5 rounded-full text-xs font-medium transition-all",
+                            isDisabled && "opacity-40 cursor-not-allowed",
+                            !isDisabled && seatTypeFilter === filter
+                              ? "text-white"
+                              : !isDisabled && "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                          )}
+                          style={!isDisabled && seatTypeFilter === filter ? { backgroundColor: primaryColor } : undefined}
+                        >
+                          {filter === 'all' ? 'All Seats' : filter === 'regular' ? `Regular (${regularSeatsCount})` : `VIP (${vipSeatsCount})`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {seatTypeFilter === 'vip' && noVipSeats && (
+                    <p className="text-center text-amber-400/80 text-xs mb-2">
+                      No VIP seats available for this screen
+                    </p>
                   )}
-                  style={seatTypeFilter === filter ? { backgroundColor: primaryColor } : undefined}
-                >
-                  {filter === 'all' ? 'All Seats' : filter === 'regular' ? 'Regular' : 'VIP'}
-                </button>
-              ))}
-            </div>
+                  {seatTypeFilter === 'regular' && noRegularSeats && (
+                    <p className="text-center text-white/60 text-xs mb-2">
+                      No regular seats available for this screen
+                    </p>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Screen indicator */}
             <div className="text-center mb-4">
