@@ -254,16 +254,13 @@ export default function PublicCinema() {
           </div>
 
           {/* Movies Grid */}
-          {allMovies.length > 0 ? (
+          {movies.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-                {allMovies.map((movie) => (
-                  <Link
-                    key={movie.id}
-                    to={`/cinema/${slug}#movies`}
-                    className="group"
-                  >
-                    <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 mb-2 md:mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                {movies.map((movie) => (
+                  <div key={movie.id} className="flex gap-3">
+                    {/* Movie Poster */}
+                    <div className="relative w-24 md:w-28 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 group">
                       {movie.poster_url ? (
                         <img
                           src={movie.poster_url}
@@ -272,7 +269,7 @@ export default function PublicCinema() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Film className="h-12 w-12 text-gray-600" />
+                          <Film className="h-8 w-8 text-gray-600" />
                         </div>
                       )}
                       
@@ -280,30 +277,43 @@ export default function PublicCinema() {
                       {movie.trailer_url && (
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <div 
-                            className="w-12 h-12 rounded-full flex items-center justify-center"
+                            className="w-10 h-10 rounded-full flex items-center justify-center"
                             style={{ backgroundColor: cinema?.primary_color || '#D4AF37' }}
                           >
-                            <Play className="h-5 w-5 text-black ml-0.5" fill="black" />
+                            <Play className="h-4 w-4 text-black ml-0.5" fill="black" />
                           </div>
                         </div>
                       )}
                     </div>
                     
-                    {/* Movie Title */}
-                    <h4 className="text-white font-medium text-sm md:text-base leading-tight mb-1 line-clamp-2 group-hover:text-opacity-80 transition-colors">
-                      {movie.title}
-                    </h4>
-                    
-                    {/* Rating and Votes */}
-                    <div className="flex items-center gap-2 text-xs text-white/60">
-                      <span className="flex items-center gap-1">
-                        <span style={{ color: cinema?.primary_color || '#D4AF37' }}>★</span>
-                        <span>{movie.rating || '8.0'}/10</span>
-                      </span>
-                      <span className="text-white/40">•</span>
-                      <span>567k Votes</span>
+                    {/* Movie Info & Showtimes */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white font-medium text-sm md:text-base leading-tight mb-2 line-clamp-2">
+                        {movie.title}
+                      </h4>
+                      
+                      {/* Showtimes */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {movie.showtimes.slice(0, 4).map((showtime) => (
+                          <Link
+                            key={showtime.id}
+                            to={`/cinema/${slug}/book?showtime=${showtime.id}`}
+                          >
+                            <button
+                              className="px-2 py-1 text-xs font-medium rounded border border-white/20 text-white/80 hover:border-white/40 hover:text-white transition-colors"
+                            >
+                              {format(new Date(showtime.start_time), 'h:mm a')}
+                            </button>
+                          </Link>
+                        ))}
+                        {movie.showtimes.length > 4 && (
+                          <span className="px-2 py-1 text-xs text-white/50">
+                            +{movie.showtimes.length - 4} more
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
               
