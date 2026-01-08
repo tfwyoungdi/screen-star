@@ -545,7 +545,7 @@ export default function CinemaBooking() {
                       {format(new Date(showtime.start_time), 'HH:mm')}
                     </span>
                     <span className="text-xs opacity-70 mb-1">
-                      {showtime.screens.name}
+                      {showtime.screens?.name || 'Screen'}
                     </span>
                     <div className="flex items-center gap-1 text-[10px]">
                       <span className="opacity-80">${showtime.price}</span>
