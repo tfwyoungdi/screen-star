@@ -671,11 +671,13 @@ export default function CinemaBooking() {
               />
             </div>
 
-            {/* Seat Grid */}
+            {/* Seat Grid - Back rows (VIP) at top */}
             <div className="flex-1 overflow-auto py-4">
               <div className="flex flex-col items-center gap-1.5">
                 {Array.from({ length: selectedShowtime.screens.rows }, (_, i) => {
-                  const rowLabel = String.fromCharCode(65 + i);
+                  // Reverse: start from last row (back) to first row (front)
+                  const rowIndex = selectedShowtime.screens.rows - 1 - i;
+                  const rowLabel = String.fromCharCode(65 + rowIndex);
                   const rowSeats = seatLayouts
                     .filter(s => s.row_label === rowLabel)
                     .sort((a, b) => a.seat_number - b.seat_number);

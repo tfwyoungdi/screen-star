@@ -486,7 +486,9 @@ export default function ScreenManagement() {
               {selectedScreen && seatLayouts && (
                 <div className="space-y-1">
                   {Array.from({ length: selectedScreen.rows }, (_, i) => {
-                    const rowLabel = String.fromCharCode(65 + i);
+                    // Reverse: start from last row (back/VIP) to first row (front)
+                    const rowIndex = selectedScreen.rows - 1 - i;
+                    const rowLabel = String.fromCharCode(65 + rowIndex);
                     const rowSeats = seatLayouts.filter(s => s.row_label === rowLabel).sort((a, b) => a.seat_number - b.seat_number);
                     
                     return (
