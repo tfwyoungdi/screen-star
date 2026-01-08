@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isBefore, startOfDay, setHours, setMinutes } from 'date-fns';
-import { ChevronLeft, ChevronRight, Clock, GripVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, GripVertical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -37,6 +37,7 @@ interface ShowtimeCalendarProps {
   bookingCounts?: BookingCount[];
   onShowtimeClick: (showtime: Showtime) => void;
   onShowtimeMove?: (showtimeId: string, newDate: Date) => void;
+  onAddShowtime?: (date: Date) => void;
 }
 
 // Draggable showtime item
@@ -119,12 +120,14 @@ function DroppableDay({
   day, 
   children, 
   isToday,
-  isPast 
+  isPast,
+  onAddClick
 }: { 
   day: Date; 
   children: React.ReactNode;
   isToday: boolean;
   isPast: boolean;
+  onAddClick?: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: day.toISOString(),
@@ -136,13 +139,23 @@ function DroppableDay({
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-[120px] border-b border-r p-1 transition-colors",
+        "min-h-[120px] border-b border-r p-1 transition-colors group/day relative",
         isPast && "bg-muted/30",
         isToday && "bg-primary/5 ring-1 ring-inset ring-primary/20",
         isOver && !isPast && "bg-primary/10 ring-2 ring-inset ring-primary/40"
       )}
     >
       {children}
+      {/* Add button - only show for non-past days */}
+      {!isPast && onAddClick && (
+        <button
+          onClick={onAddClick}
+          className="absolute bottom-1 right-1 opacity-0 group-hover/day:opacity-100 transition-opacity p-1 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
+          title="Add showtime"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
@@ -152,7 +165,8 @@ export function ShowtimeCalendar({
   screens, 
   bookingCounts = [],
   onShowtimeClick,
-  onShowtimeMove 
+  onShowtimeMove,
+  onAddShowtime
 }: ShowtimeCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedScreen, setSelectedScreen] = useState<string | 'all'>('all');
@@ -335,6 +349,7 @@ export function ShowtimeCalendar({
                   day={day} 
                   isToday={isToday}
                   isPast={isPast}
+                  onAddClick={onAddShowtime ? () => onAddShowtime(day) : undefined}
                 >
                   <div className={cn(
                     "text-sm font-medium mb-1 p-1",
