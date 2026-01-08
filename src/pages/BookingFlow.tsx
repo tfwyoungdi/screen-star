@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2, Popcorn, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 interface PromoCode {
   id: string;
@@ -613,193 +614,381 @@ export default function BookingFlow() {
     }
   };
 
+  const primaryColor = cinema?.primary_color || '#DC2626';
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Skeleton className="h-20 w-full" />
-        <div className="container mx-auto px-4 py-8">
-          <Skeleton className="h-96 w-full" />
-        </div>
+      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
+        <div className="animate-pulse text-white/60">Loading...</div>
       </div>
     );
   }
 
   if (!showtime || !cinema) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
         <div className="text-center">
-          <Film className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Showtime Not Found</h1>
-          <Button asChild>
-            <a href={`/cinema/${slug}`}>Back to Cinema</a>
-          </Button>
+          <Film className="h-16 w-16 text-white/40 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-4">Showtime Not Found</h1>
+          <a 
+            href={`/cinema/${slug}`}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-medium"
+            style={{ backgroundColor: primaryColor }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Cinema
+          </a>
         </div>
       </div>
     );
   }
 
-  const customStyles = {
-    '--cinema-primary': cinema.primary_color || '#D4AF37',
-  } as React.CSSProperties;
-
   return (
-    <div className="min-h-screen bg-background" style={customStyles}>
-      {/* Header */}
-      <header
-        className="border-b py-4"
-        style={{ backgroundColor: cinema.secondary_color || 'hsl(var(--card))' }}
-      >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <a href={`/cinema/${slug}`}>
-                <ArrowLeft className="h-5 w-5" />
-              </a>
-            </Button>
-            <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col lg:flex-row">
+      {/* Left Panel - Movie Info & Order Summary */}
+      <div className="lg:w-2/5 xl:w-1/3 relative overflow-hidden lg:min-h-screen lg:sticky lg:top-0">
+        {/* Poster Background */}
+        {showtime.movies.poster_url && (
+          <img 
+            src={showtime.movies.poster_url} 
+            alt={showtime.movies.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        
+        {/* Gradient Overlay */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: showtime.movies.poster_url 
+              ? 'linear-gradient(to bottom, rgba(26, 26, 46, 0.3) 0%, rgba(26, 26, 46, 0.8) 50%, rgba(26, 26, 46, 1) 100%)'
+              : `linear-gradient(135deg, ${primaryColor}40 0%, #1a1a2e 100%)`
+          }}
+        />
+        
+        {/* Content */}
+        <div className="relative z-10 p-6 lg:p-8 flex flex-col min-h-[300px] lg:min-h-screen">
+          {/* Back Button & Logo */}
+          <div className="flex items-center justify-between mb-6">
+            <a 
+              href={`/cinema/${slug}`}
+              className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <span className="text-sm">Back</span>
+            </a>
+            <div className="flex items-center gap-2">
               {cinema.logo_url ? (
-                <img src={cinema.logo_url} alt={cinema.name} className="h-10 w-auto" />
+                <img src={cinema.logo_url} alt={cinema.name} className="h-8 w-auto" />
               ) : (
-                <Film className="h-8 w-8" style={{ color: cinema.primary_color }} />
+                <Film className="h-6 w-6" style={{ color: primaryColor }} />
               )}
-              <span className="font-bold text-lg">{cinema.name}</span>
+              <span className="text-white/80 text-sm font-medium">{cinema.name}</span>
+            </div>
+          </div>
+
+          {/* Movie Info */}
+          <div className="mt-auto">
+            <div className="flex items-center gap-2 mb-3">
+              {showtime.movies.rating && (
+                <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/20 text-white">
+                  {showtime.movies.rating}
+                </span>
+              )}
+              {showtime.movies.genre && (
+                <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/10 text-white/80">
+                  {showtime.movies.genre}
+                </span>
+              )}
+            </div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-4 uppercase tracking-wide">
+              {showtime.movies.title}
+            </h1>
+            
+            {/* Showtime Details */}
+            <div className="flex flex-wrap gap-4 text-white/70 text-sm mb-6">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                {showtime.movies.duration_minutes} min
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" />
+                {format(new Date(showtime.start_time), 'MMM d, yyyy')}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                {format(new Date(showtime.start_time), 'h:mm a')}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" />
+                {showtime.screens.name}
+              </span>
+            </div>
+
+            {/* Order Summary Card */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+              <div className="flex items-center gap-2 mb-4">
+                <Ticket className="h-5 w-5" style={{ color: primaryColor }} />
+                <h3 className="font-semibold text-white">Order Summary</h3>
+              </div>
+              
+              {/* Selected Seats */}
+              <div className="mb-4">
+                <p className="text-white/60 text-xs uppercase tracking-wide mb-2">Selected Seats ({selectedSeats.length})</p>
+                {selectedSeats.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedSeats
+                      .sort((a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number)
+                      .map((seat) => (
+                        <span 
+                          key={`${seat.row_label}${seat.seat_number}`} 
+                          className="px-2 py-1 rounded-md text-xs font-medium"
+                          style={{ 
+                            backgroundColor: seat.seat_type === 'vip' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255,255,255,0.1)',
+                            color: seat.seat_type === 'vip' ? '#fbbf24' : 'rgba(255,255,255,0.8)'
+                          }}
+                        >
+                          {seat.row_label}{seat.seat_number}
+                          {seat.seat_type === 'vip' && ' ★'}
+                        </span>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="text-white/40 text-sm">No seats selected</p>
+                )}
+              </div>
+
+              {selectedSeats.length > 0 && (
+                <div className="space-y-2 border-t border-white/10 pt-4">
+                  {/* Tickets */}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/70">Tickets × {selectedSeats.length}</span>
+                    <span className="text-white">${ticketsSubtotal.toFixed(2)}</span>
+                  </div>
+
+                  {/* Concessions */}
+                  {selectedConcessions.length > 0 && selectedConcessions.map((c) => (
+                    <div key={c.item.id} className="flex justify-between text-sm">
+                      <span className="text-white/70">{c.item.name} × {c.quantity}</span>
+                      <span className="text-white">${(c.item.price * c.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+
+                  {/* Combos */}
+                  {selectedCombos.length > 0 && selectedCombos.map((c) => (
+                    <div key={c.combo.id} className="flex justify-between text-sm">
+                      <span className="text-white/70">{c.combo.name} × {c.quantity}</span>
+                      <span className="text-white">${(c.combo.combo_price * c.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+
+                  {/* Promo Code */}
+                  {step !== 'confirmation' && (
+                    <div className="pt-2">
+                      {appliedPromo ? (
+                        <div className="flex items-center justify-between bg-green-500/10 p-2 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Tag className="h-4 w-4 text-green-400" />
+                            <span className="text-sm font-mono text-green-400">{appliedPromo.code}</span>
+                          </div>
+                          <button 
+                            onClick={removePromoCode}
+                            className="text-white/60 hover:text-white transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Promo code"
+                            value={promoCode}
+                            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                            className="bg-white/5 border-white/10 text-white placeholder:text-white/40 font-mono text-sm"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={applyPromoCode}
+                            disabled={promoLoading || !promoCode}
+                            className="border-white/20 text-white hover:bg-white/10"
+                          >
+                            Apply
+                          </Button>
+                        </div>
+                      )}
+                      {promoError && (
+                        <p className="text-xs text-red-400 mt-1">{promoError}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-green-400">
+                      <span>Discount</span>
+                      <span>-${discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  <div className="border-t border-white/10 pt-3 flex justify-between font-bold">
+                    <span className="text-white">Total</span>
+                    <span style={{ color: primaryColor }}>${totalAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2">
-            {/* Movie Info */}
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <div className="flex gap-4">
-                  {showtime.movies.poster_url ? (
-                    <img
-                      src={showtime.movies.poster_url}
-                      alt={showtime.movies.title}
-                      className="w-24 h-36 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-24 h-36 bg-muted rounded flex items-center justify-center">
-                      <Film className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div>
-                    <h1 className="text-2xl font-bold mb-2">{showtime.movies.title}</h1>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {showtime.movies.rating && (
-                        <Badge variant="outline">{showtime.movies.rating}</Badge>
-                      )}
-                      {showtime.movies.genre && (
-                        <Badge variant="secondary">{showtime.movies.genre}</Badge>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {showtime.movies.duration_minutes} min
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {format(new Date(showtime.start_time), 'MMM d, yyyy')}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {format(new Date(showtime.start_time), 'h:mm a')}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {showtime.screens.name}
-                      </span>
-                    </div>
-                  </div>
+      {/* Right Panel - Booking Steps */}
+      <div className="lg:w-3/5 xl:w-2/3 p-6 lg:p-8 flex flex-col">
+        {/* Step Indicators */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          {['seats', 'snacks', 'details', 'payment', 'confirmation'].filter(s => 
+            s !== 'payment' || (cinema.payment_gateway && cinema.payment_gateway !== 'none' && cinema.payment_gateway_configured)
+          ).map((s, index, arr) => {
+            const stepIndex = arr.indexOf(step);
+            const thisIndex = index;
+            const isActive = s === step;
+            const isCompleted = thisIndex < stepIndex;
+            
+            return (
+              <div key={s} className="flex items-center gap-2">
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all"
+                  style={{ 
+                    backgroundColor: isActive ? primaryColor : isCompleted ? `${primaryColor}40` : 'rgba(255,255,255,0.1)',
+                    color: isActive || isCompleted ? 'white' : 'rgba(255,255,255,0.4)'
+                  }}
+                >
+                  {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
                 </div>
-              </CardContent>
-            </Card>
+                {index < arr.length - 1 && (
+                  <div 
+                    className="w-8 h-0.5 rounded"
+                    style={{ backgroundColor: isCompleted ? `${primaryColor}60` : 'rgba(255,255,255,0.1)' }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-            {step === 'seats' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Select Your Seats</CardTitle>
-                  <CardDescription className="flex items-center gap-2">
-                    Click on available seats to select them
-                    <Badge variant="outline" className="text-xs">
-                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-1" />
-                      Live updates
-                    </Badge>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-4 mb-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-secondary" />
-                      <span className="text-sm">Available</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-primary/30" />
-                      <span className="text-sm">VIP</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-primary" />
-                      <span className="text-sm">Selected</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-destructive/50" />
-                      <span className="text-sm">Booked</span>
-                    </div>
-                  </div>
+        {step === 'seats' && (
+          <div className="flex-1 flex flex-col">
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-white mb-1">Select Your Seats</h2>
+              <p className="text-white/60 text-sm flex items-center gap-2">
+                Click on available seats to select them
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  Live
+                </span>
+              </p>
+            </div>
 
-                  <div className="bg-card border rounded-lg p-4 overflow-auto">
-                    <div className="text-center mb-6 py-3 bg-gradient-to-b from-muted to-transparent rounded text-sm text-muted-foreground">
-                      SCREEN
+            {/* Legend */}
+            <div className="flex flex-wrap items-center gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-white/80" />
+                <span className="text-white/60 text-xs">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-amber-400 ring-1 ring-amber-500/50" />
+                <span className="text-white/60 text-xs">VIP</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full" style={{ backgroundColor: primaryColor }} />
+                <span className="text-white/60 text-xs">Selected</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-white/20" />
+                <span className="text-white/60 text-xs">Taken</span>
+              </div>
+            </div>
+
+            {/* Screen indicator */}
+            <div className="text-center mb-6">
+              <div className="text-white/40 text-xs mb-2">SCREEN</div>
+              <div 
+                className="h-1 w-3/4 mx-auto rounded-full opacity-60"
+                style={{ 
+                  background: `linear-gradient(90deg, transparent, ${primaryColor}, transparent)`,
+                  boxShadow: `0 0 20px ${primaryColor}40`
+                }}
+              />
+            </div>
+
+            {/* Seat Grid */}
+            <div className="flex-1 overflow-auto py-4">
+              <div className="flex flex-col items-center gap-1.5">
+                {Array.from({ length: showtime.screens.rows }, (_, i) => {
+                  const rowLabel = String.fromCharCode(65 + i);
+                  const rowSeats = seatLayouts
+                    .filter(s => s.row_label === rowLabel)
+                    .sort((a, b) => a.seat_number - b.seat_number);
+
+                  return (
+                    <div key={rowLabel} className="flex items-center gap-2">
+                      <span className="w-6 text-xs text-white/40 text-right">{rowLabel}</span>
+                      <div className="flex gap-1.5">
+                        {rowSeats.map((seat) => {
+                          const isBooked = isSeatBooked(seat.row_label, seat.seat_number);
+                          const isSelected = isSeatSelected(seat.row_label, seat.seat_number);
+                          const isUnavailable = !seat.is_available || seat.seat_type === 'unavailable';
+                          const isVip = seat.seat_type === 'vip';
+                          const isClickable = !isBooked && !isUnavailable;
+
+                          return (
+                            <button
+                              key={`${seat.row_label}${seat.seat_number}`}
+                              onClick={() => isClickable && toggleSeat(seat)}
+                              disabled={!isClickable}
+                              className={cn(
+                                "w-6 h-6 lg:w-7 lg:h-7 rounded-full transition-all text-xs font-medium",
+                                isUnavailable && "opacity-0 cursor-default",
+                                !isUnavailable && isBooked && "bg-white/20 cursor-not-allowed",
+                                !isUnavailable && !isBooked && !isSelected && isVip && 
+                                  "bg-amber-400 hover:bg-amber-300 cursor-pointer ring-1 ring-amber-500/50 text-amber-900",
+                                !isUnavailable && !isBooked && !isSelected && !isVip && 
+                                  "bg-white/80 hover:bg-white cursor-pointer text-gray-700",
+                                isSelected && "cursor-pointer text-white"
+                              )}
+                              style={isSelected ? { backgroundColor: primaryColor } : undefined}
+                              title={`${seat.row_label}${seat.seat_number}${isVip ? ' (VIP)' : ''}`}
+                            >
+                              {!isUnavailable && seat.seat_number}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <span className="w-6 text-xs text-white/40">{rowLabel}</span>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
 
-                    <div className="space-y-1 flex flex-col items-center">
-                      {Array.from({ length: showtime.screens.rows }, (_, i) => {
-                        const rowLabel = String.fromCharCode(65 + i);
-                        const rowSeats = seatLayouts
-                          .filter(s => s.row_label === rowLabel)
-                          .sort((a, b) => a.seat_number - b.seat_number);
-
-                        return (
-                          <div key={rowLabel} className="flex items-center gap-2">
-                            <span className="w-6 text-xs text-muted-foreground text-right">{rowLabel}</span>
-                            <div className="flex gap-1">
-                              {rowSeats.map((seat) => (
-                                <button
-                                  key={`${seat.row_label}${seat.seat_number}`}
-                                  onClick={() => toggleSeat(seat)}
-                                  disabled={!seat.is_available || isSeatBooked(seat.row_label, seat.seat_number)}
-                                  className={`w-7 h-7 rounded text-xs font-medium transition-all ${getSeatClass(seat)}`}
-                                  title={`${seat.row_label}${seat.seat_number} - ${seat.seat_type}`}
-                                >
-                                  {seat.seat_number}
-                                </button>
-                              ))}
-                            </div>
-                            <span className="w-6 text-xs text-muted-foreground">{rowLabel}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {selectedSeats.length > 0 && (
-                    <Button
-                      className="w-full mt-6"
-                      size="lg"
-                      onClick={() => setStep(concessionItems.length > 0 ? 'snacks' : 'details')}
-                      style={{ backgroundColor: cinema.primary_color }}
-                    >
-                      {concessionItems.length > 0 ? 'Continue to Snacks' : 'Continue to Details'}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {/* Continue Button */}
+            <div className="mt-6">
+              <button
+                onClick={() => setStep(concessionItems.length > 0 ? 'snacks' : 'details')}
+                disabled={selectedSeats.length === 0}
+                className="w-full py-4 rounded-xl font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ 
+                  backgroundColor: selectedSeats.length > 0 ? primaryColor : 'rgba(255,255,255,0.1)',
+                }}
+              >
+                {selectedSeats.length > 0 
+                  ? `Continue ${concessionItems.length > 0 ? 'to Snacks' : 'to Details'} - $${ticketsSubtotal.toFixed(2)}`
+                  : 'Select seats to continue'
+                }
+              </button>
+            </div>
+          </div>
+        )}
 
             {step === 'snacks' && (
               <div className="bg-[#1a1a2e] rounded-2xl overflow-hidden">
@@ -1020,360 +1209,254 @@ export default function BookingFlow() {
               </div>
             )}
 
-            {step === 'details' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Details</CardTitle>
-                  <CardDescription>Enter your contact information</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
-                    <Input
-                      id="name"
-                      value={bookingData.customer_name}
-                      onChange={(e) => setBookingData(prev => ({ ...prev, customer_name: e.target.value }))}
-                      required
-                    />
-                  </div>
+        {step === 'details' && (
+          <div className="flex-1 flex flex-col">
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-white mb-1">Your Details</h2>
+              <p className="text-white/60 text-sm">Enter your contact information</p>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={bookingData.customer_email}
-                      onChange={(e) => setBookingData(prev => ({ ...prev, customer_email: e.target.value }))}
-                      required
-                    />
-                  </div>
+            {/* Form */}
+            <div className="space-y-5">
+              <div>
+                <label className="block text-white/80 text-sm font-medium mb-2">Full Name *</label>
+                <input
+                  type="text"
+                  value={bookingData.customer_name}
+                  onChange={(e) => setBookingData(prev => ({ ...prev, customer_name: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors"
+                  placeholder="Enter your full name"
+                />
+              </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number (optional)</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={bookingData.customer_phone}
-                      onChange={(e) => setBookingData(prev => ({ ...prev, customer_phone: e.target.value }))}
-                    />
-                  </div>
+              <div>
+                <label className="block text-white/80 text-sm font-medium mb-2">Email Address *</label>
+                <input
+                  type="email"
+                  value={bookingData.customer_email}
+                  onChange={(e) => setBookingData(prev => ({ ...prev, customer_email: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors"
+                  placeholder="Enter your email"
+                />
+              </div>
 
-                  <div className="flex gap-4 pt-4">
-                    <Button variant="outline" onClick={() => setStep(concessionItems.length > 0 ? 'snacks' : 'seats')}>
-                      Back
-                    </Button>
-                    {cinema.payment_gateway && cinema.payment_gateway !== 'none' && cinema.payment_gateway_configured ? (
-                      <Button
-                        className="flex-1"
-                        onClick={() => setStep('payment')}
-                        disabled={!bookingData.customer_name || !bookingData.customer_email}
-                        style={{ backgroundColor: cinema.primary_color }}
-                      >
-                        Continue to Payment - ${totalAmount.toFixed(2)}
-                      </Button>
-                    ) : (
-                      <Button
-                        className="flex-1"
-                        onClick={handleBooking}
-                        disabled={!bookingData.customer_name || !bookingData.customer_email || submitting}
-                        style={{ backgroundColor: cinema.primary_color }}
-                      >
-                        {submitting ? 'Processing...' : `Confirm Booking - $${totalAmount.toFixed(2)}`}
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+              <div>
+                <label className="block text-white/80 text-sm font-medium mb-2">Phone Number (optional)</label>
+                <input
+                  type="tel"
+                  value={bookingData.customer_phone}
+                  onChange={(e) => setBookingData(prev => ({ ...prev, customer_phone: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors"
+                  placeholder="Enter your phone number"
+                />
+              </div>
+            </div>
 
-            {step === 'payment' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Payment
-                  </CardTitle>
-                  <CardDescription>Complete your payment to confirm the booking</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="bg-muted p-4 rounded-lg">
-                    <div className="flex justify-between mb-2">
-                      <span>Tickets ({selectedSeats.length})</span>
-                      <span>${subtotal.toFixed(2)}</span>
-                    </div>
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between mb-2 text-green-600">
-                        <span>Discount</span>
-                        <span>-${discountAmount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                      <span>Total</span>
-                      <span style={{ color: cinema.primary_color }}>${totalAmount.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <Alert>
-                    <CreditCard className="h-4 w-4" />
-                    <AlertDescription>
-                      You will be redirected to {cinema.payment_gateway === 'stripe' ? 'Stripe' : cinema.payment_gateway === 'flutterwave' ? 'Flutterwave' : 'Paystack'} to complete your payment securely.
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="flex gap-4">
-                    <Button variant="outline" onClick={() => setStep('details')}>
-                      Back
-                    </Button>
-                    <Button
-                      className="flex-1"
-                      onClick={async () => {
-                        setProcessingPayment(true);
-                        try {
-                          // Create pending booking first
-                          const { data: refData } = await supabase.rpc('generate_booking_reference');
-                          const bookingReference = refData as string;
-                          
-                          const { data: booking, error: bookingError } = await supabase
-                            .from('bookings')
-                            .insert({
-                              organization_id: cinema.id,
-                              showtime_id: showtime!.id,
-                              customer_name: bookingData.customer_name,
-                              customer_email: bookingData.customer_email,
-                              customer_phone: bookingData.customer_phone || null,
-                              total_amount: totalAmount,
-                              discount_amount: discountAmount,
-                              promo_code_id: appliedPromo?.id || null,
-                              booking_reference: bookingReference,
-                              status: 'pending',
-                            })
-                            .select()
-                            .single();
-
-                          if (bookingError) throw bookingError;
-
-                          // Book the seats
-                          const seatsToBook = selectedSeats.map(seat => ({
-                            booking_id: booking.id,
-                            showtime_id: showtime!.id,
-                            row_label: seat.row_label,
-                            seat_number: seat.seat_number,
-                            seat_type: seat.seat_type,
-                            price: seat.price,
-                          }));
-
-                          await supabase.from('booked_seats').insert(seatsToBook);
-
-                          // Initialize payment
-                          const { data: paymentData, error: paymentError } = await supabase.functions.invoke('process-payment', {
-                            body: {
-                              bookingReference,
-                              amount: totalAmount,
-                              currency: 'USD',
-                              customerEmail: bookingData.customer_email,
-                              customerName: bookingData.customer_name,
-                              gateway: cinema.payment_gateway,
-                              publicKey: cinema.payment_gateway_public_key,
-                              returnUrl: `${window.location.origin}/cinema/${slug}/book?showtime=${showtimeId}`,
-                            },
-                          });
-
-                          if (paymentError) throw paymentError;
-
-                          if (paymentData.paymentUrl) {
-                            window.location.href = paymentData.paymentUrl;
-                          } else {
-                            throw new Error('No payment URL received');
-                          }
-                        } catch (error: any) {
-                          console.error('Payment error:', error);
-                          toast.error(error.message || 'Failed to process payment');
-                          setProcessingPayment(false);
-                        }
-                      }}
-                      disabled={processingPayment}
-                      style={{ backgroundColor: cinema.primary_color }}
-                    >
-                      {processingPayment ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Redirecting to payment...
-                        </>
-                      ) : (
-                        `Pay $${totalAmount.toFixed(2)}`
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {step === 'confirmation' && (
-              <Card className="text-center">
-                <CardContent className="pt-8 pb-8">
-                  <div
-                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                    style={{ backgroundColor: `${cinema.primary_color}20` }}
-                  >
-                    <Check className="h-8 w-8" style={{ color: cinema.primary_color }} />
-                  </div>
-                  <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Your booking reference is:
-                  </p>
-                  <div className="text-3xl font-mono font-bold mb-6" style={{ color: cinema.primary_color }}>
-                    {bookingRef}
-                  </div>
-                  
-                  {/* QR Code */}
-                  <div className="bg-white p-4 rounded-lg inline-block mb-6">
-                    <QRCodeSVG
-                      value={JSON.stringify({ ref: bookingRef, cinema: cinema.slug })}
-                      size={180}
-                      level="H"
-                      includeMargin
-                    />
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Show this QR code at the gate for entry. Screenshot or save this page.
-                  </p>
-                  
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button asChild variant="outline">
-                      <a href={`/cinema/${slug}`}>Back to Cinema</a>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => setStep(concessionItems.length > 0 ? 'snacks' : 'seats')}
+                className="px-6 py-3 rounded-xl border border-white/20 text-white/80 font-medium hover:bg-white/10 transition-colors"
+              >
+                Back
+              </button>
+              {cinema.payment_gateway && cinema.payment_gateway !== 'none' && cinema.payment_gateway_configured ? (
+                <button
+                  onClick={() => setStep('payment')}
+                  disabled={!bookingData.customer_name || !bookingData.customer_email}
+                  className="flex-1 py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: (!bookingData.customer_name || !bookingData.customer_email) ? 'rgba(255,255,255,0.1)' : primaryColor }}
+                >
+                  Continue to Payment - ${totalAmount.toFixed(2)}
+                </button>
+              ) : (
+                <button
+                  onClick={handleBooking}
+                  disabled={!bookingData.customer_name || !bookingData.customer_email || submitting}
+                  className="flex-1 py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: (!bookingData.customer_name || !bookingData.customer_email || submitting) ? 'rgba(255,255,255,0.1)' : primaryColor }}
+                >
+                  {submitting ? 'Processing...' : `Confirm Booking - $${totalAmount.toFixed(2)}`}
+                </button>
+              )}
+            </div>
           </div>
+        )}
 
-          {/* Sidebar - Order Summary */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Ticket className="h-5 w-5" />
-                  Order Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="font-medium">{showtime.movies.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(showtime.start_time), 'MMM d, yyyy')} at{' '}
-                    {format(new Date(showtime.start_time), 'h:mm a')}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{showtime.screens.name}</p>
+        {step === 'payment' && (
+          <div className="flex-1 flex flex-col">
+            {/* Header */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-1">
+                <CreditCard className="h-6 w-6" style={{ color: primaryColor }} />
+                <h2 className="text-xl font-bold text-white">Payment</h2>
+              </div>
+              <p className="text-white/60 text-sm">Complete your payment to confirm the booking</p>
+            </div>
+
+            {/* Payment Summary */}
+            <div className="bg-white/5 rounded-xl p-5 mb-6 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-white/70">Tickets ({selectedSeats.length})</span>
+                <span className="text-white">${ticketsSubtotal.toFixed(2)}</span>
+              </div>
+              {(concessionsSubtotal + combosSubtotal) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Snacks & Combos</span>
+                  <span className="text-white">${(concessionsSubtotal + combosSubtotal).toFixed(2)}</span>
                 </div>
-
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium mb-2">Selected Seats ({selectedSeats.length})</p>
-                  {selectedSeats.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedSeats
-                        .sort((a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number)
-                        .map((seat) => (
-                          <Badge key={`${seat.row_label}${seat.seat_number}`} variant="secondary">
-                            {seat.row_label}{seat.seat_number}
-                            {seat.seat_type === 'vip' && ' (VIP)'}
-                          </Badge>
-                        ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No seats selected</p>
-                  )}
+              )}
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-green-400">
+                  <span>Discount</span>
+                  <span>-${discountAmount.toFixed(2)}</span>
                 </div>
+              )}
+              <div className="border-t border-white/10 pt-3 flex justify-between font-bold">
+                <span className="text-white">Total</span>
+                <span style={{ color: primaryColor }}>${totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
 
-                {selectedSeats.length > 0 && (
-                  <div className="border-t pt-4 space-y-3">
-                    {selectedSeats.map((seat, i) => (
-                      <div key={i} className="flex justify-between text-sm">
-                        <span>
-                          {seat.row_label}{seat.seat_number}
-                          {seat.seat_type === 'vip' && ' (VIP)'}
-                        </span>
-                        <span>${seat.price.toFixed(2)}</span>
-                      </div>
-                    ))}
+            {/* Payment Info */}
+            <div className="bg-white/5 rounded-xl p-4 mb-6 flex items-start gap-3">
+              <CreditCard className="h-5 w-5 text-white/60 mt-0.5" />
+              <p className="text-white/70 text-sm">
+                You will be redirected to {cinema.payment_gateway === 'stripe' ? 'Stripe' : cinema.payment_gateway === 'flutterwave' ? 'Flutterwave' : 'Paystack'} to complete your payment securely.
+              </p>
+            </div>
 
-                    {/* Concessions */}
-                    {selectedConcessions.length > 0 && (
-                      <>
-                        <div className="flex justify-between text-sm pt-2 border-t">
-                          <span className="font-medium flex items-center gap-1">
-                            <Popcorn className="h-3 w-3" /> Snacks
-                          </span>
-                        </div>
-                        {selectedConcessions.map((c) => (
-                          <div key={c.item.id} className="flex justify-between text-sm">
-                            <span>{c.item.name} x{c.quantity}</span>
-                            <span>${(c.item.price * c.quantity).toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </>
-                    )}
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-auto">
+              <button
+                onClick={() => setStep('details')}
+                className="px-6 py-3 rounded-xl border border-white/20 text-white/80 font-medium hover:bg-white/10 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={async () => {
+                  setProcessingPayment(true);
+                  try {
+                    const { data: refData } = await supabase.rpc('generate_booking_reference');
+                    const bookingReference = refData as string;
                     
-                    <div className="flex justify-between text-sm pt-2 border-t">
-                      <span>Subtotal</span>
-                      <span>${subtotal.toFixed(2)}</span>
-                    </div>
+                    const { data: booking, error: bookingError } = await supabase
+                      .from('bookings')
+                      .insert({
+                        organization_id: cinema.id,
+                        showtime_id: showtime!.id,
+                        customer_name: bookingData.customer_name,
+                        customer_email: bookingData.customer_email,
+                        customer_phone: bookingData.customer_phone || null,
+                        total_amount: totalAmount,
+                        discount_amount: discountAmount,
+                        promo_code_id: appliedPromo?.id || null,
+                        booking_reference: bookingReference,
+                        status: 'pending',
+                      })
+                      .select()
+                      .single();
 
-                    {/* Promo Code */}
-                    <div className="pt-2">
-                      {appliedPromo ? (
-                        <div className="flex items-center justify-between bg-green-500/10 p-2 rounded">
-                          <div className="flex items-center gap-2">
-                            <Tag className="h-4 w-4 text-green-600" />
-                            <span className="text-sm font-mono">{appliedPromo.code}</span>
-                          </div>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removePromoCode}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Promo code"
-                              value={promoCode}
-                              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                              className="font-mono text-sm"
-                            />
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={applyPromoCode}
-                              disabled={promoLoading || !promoCode}
-                            >
-                              Apply
-                            </Button>
-                          </div>
-                          {promoError && (
-                            <p className="text-xs text-destructive">{promoError}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    if (bookingError) throw bookingError;
 
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Discount</span>
-                        <span>-${discountAmount.toFixed(2)}</span>
-                      </div>
-                    )}
+                    const seatsToBook = selectedSeats.map(seat => ({
+                      booking_id: booking.id,
+                      showtime_id: showtime!.id,
+                      row_label: seat.row_label,
+                      seat_number: seat.seat_number,
+                      seat_type: seat.seat_type,
+                      price: seat.price,
+                    }));
 
-                    <div className="flex justify-between font-bold pt-2 border-t">
-                      <span>Total</span>
-                      <span style={{ color: cinema.primary_color }}>${totalAmount.toFixed(2)}</span>
-                    </div>
-                  </div>
+                    await supabase.from('booked_seats').insert(seatsToBook);
+
+                    const { data: paymentData, error: paymentError } = await supabase.functions.invoke('process-payment', {
+                      body: {
+                        bookingReference,
+                        amount: totalAmount,
+                        currency: 'USD',
+                        customerEmail: bookingData.customer_email,
+                        customerName: bookingData.customer_name,
+                        gateway: cinema.payment_gateway,
+                        publicKey: cinema.payment_gateway_public_key,
+                        returnUrl: `${window.location.origin}/cinema/${slug}/book?showtime=${showtimeId}`,
+                      },
+                    });
+
+                    if (paymentError) throw paymentError;
+
+                    if (paymentData.paymentUrl) {
+                      window.location.href = paymentData.paymentUrl;
+                    } else {
+                      throw new Error('No payment URL received');
+                    }
+                  } catch (error: any) {
+                    console.error('Payment error:', error);
+                    toast.error(error.message || 'Failed to process payment');
+                    setProcessingPayment(false);
+                  }
+                }}
+                disabled={processingPayment}
+                className="flex-1 py-3 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {processingPayment ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Redirecting to payment...
+                  </>
+                ) : (
+                  `Pay $${totalAmount.toFixed(2)}`
                 )}
-              </CardContent>
-            </Card>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {step === 'confirmation' && (
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+            {/* Success Icon */}
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+              style={{ backgroundColor: `${primaryColor}20` }}
+            >
+              <Check className="h-10 w-10" style={{ color: primaryColor }} />
+            </div>
+            
+            <h2 className="text-2xl font-bold text-white mb-2">Booking Confirmed!</h2>
+            <p className="text-white/60 mb-4">Your booking reference is:</p>
+            
+            <div 
+              className="text-3xl font-mono font-bold mb-8 px-6 py-3 rounded-xl bg-white/5"
+              style={{ color: primaryColor }}
+            >
+              {bookingRef}
+            </div>
+            
+            {/* QR Code */}
+            <div className="bg-white p-5 rounded-2xl mb-6">
+              <QRCodeSVG
+                value={JSON.stringify({ ref: bookingRef, cinema: cinema.slug })}
+                size={180}
+                level="H"
+                includeMargin
+              />
+            </div>
+            
+            <p className="text-white/60 text-sm mb-8 max-w-sm">
+              Show this QR code at the gate for entry. Screenshot or save this page.
+            </p>
+            
+            <a 
+              href={`/cinema/${slug}`}
+              className="px-8 py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/10 transition-colors"
+            >
+              Back to Cinema
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
