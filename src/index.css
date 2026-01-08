@@ -154,4 +154,13 @@ All colors MUST be HSL.
   .glass-hover {
     @apply hover:bg-card/90 hover:border-border transition-all duration-200;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
