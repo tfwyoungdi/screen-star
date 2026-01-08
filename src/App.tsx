@@ -23,6 +23,7 @@ import PromoCodeManagement from "./pages/PromoCodeManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import PublicCinema from "./pages/PublicCinema";
 import BookingFlow from "./pages/BookingFlow";
+import CinemaBooking from "./pages/CinemaBooking";
 import CustomerManagement from "./pages/CustomerManagement";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import ConcessionManagement from "./pages/ConcessionManagement";
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/accept-invitation" element={<AcceptInvitation />} />
               <Route path="/cinema/:slug" element={<PublicCinema />} />
+              <Route path="/cinema/:slug/booking" element={<CinemaBooking />} />
               <Route path="/cinema/:slug/book" element={<BookingFlow />} />
               <Route
                 path="/dashboard"
