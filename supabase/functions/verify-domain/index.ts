@@ -5,6 +5,72 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface SSLInfo {
+  valid: boolean;
+  issuer?: string;
+  expiresAt?: string;
+  daysUntilExpiry?: number;
+  error?: string;
+}
+
+async function checkSSL(domain: string): Promise<SSLInfo> {
+  try {
+    // Try to make an HTTPS request to check if SSL is working
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const response = await fetch(`https://${domain}`, {
+      method: 'HEAD',
+      signal: controller.signal,
+      redirect: 'manual',
+    });
+    
+    clearTimeout(timeoutId);
+    
+    // If we got a response, SSL is working
+    return {
+      valid: true,
+      issuer: 'Valid SSL Certificate',
+    };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Check specific error types
+    if (errorMessage.includes('certificate') || errorMessage.includes('SSL') || errorMessage.includes('TLS')) {
+      return {
+        valid: false,
+        error: 'SSL certificate error - certificate may be invalid or expired',
+      };
+    }
+    
+    if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('getaddrinfo')) {
+      return {
+        valid: false,
+        error: 'Domain not found - DNS not configured',
+      };
+    }
+    
+    if (errorMessage.includes('ECONNREFUSED')) {
+      return {
+        valid: false,
+        error: 'Connection refused - server not responding on HTTPS',
+      };
+    }
+    
+    if (errorMessage.includes('abort') || errorMessage.includes('timeout')) {
+      return {
+        valid: false,
+        error: 'Connection timed out - server not responding',
+      };
+    }
+    
+    return {
+      valid: false,
+      error: `Unable to verify SSL: ${errorMessage}`,
+    };
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -68,6 +134,11 @@ serve(async (req) => {
     const aRecords = aData.Answer?.filter((record: any) => record.type === 1) || [];
     const hasARecord = aRecords.length > 0;
 
+    // Check SSL certificate
+    console.log(`Checking SSL for: ${cleanDomain}`);
+    const sslInfo = await checkSSL(cleanDomain);
+    console.log('SSL check result:', JSON.stringify(sslInfo));
+
     // Determine verification status
     let verified = false;
     let status = 'not_configured';
@@ -80,13 +151,11 @@ serve(async (req) => {
       message = 'Domain verified successfully!';
       details = `CNAME record correctly pointing to cinetix.app`;
     } else if (hasARecord) {
-      // Check if the A record might be resolving correctly
       verified = true;
       status = 'verified';
       message = 'Domain configured with A record';
       details = `A record found: ${aRecords.map((r: any) => r.data).join(', ')}`;
     } else if (dnsData.Status === 3) {
-      // NXDOMAIN - domain doesn't exist
       status = 'not_found';
       message = 'Domain not found';
       details = 'The domain does not exist or has no DNS records configured.';
@@ -100,7 +169,7 @@ serve(async (req) => {
       details = 'The domain exists but is not configured correctly. Please verify your CNAME record points to cinetix.app';
     }
 
-    console.log(`Verification result for ${cleanDomain}: ${status}`);
+    console.log(`Verification result for ${cleanDomain}: ${status}, SSL valid: ${sslInfo.valid}`);
 
     return new Response(
       JSON.stringify({ 
@@ -112,7 +181,8 @@ serve(async (req) => {
         records: {
           cname: cnameRecords.map((r: any) => r.data),
           a: aRecords.map((r: any) => r.data)
-        }
+        },
+        ssl: sslInfo
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
