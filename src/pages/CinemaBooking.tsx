@@ -515,7 +515,7 @@ export default function CinemaBooking() {
         {/* Time Selector */}
         <div className="mb-6">
           <h3 className="text-white/60 text-center text-sm mb-3">Time</h3>
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex md:flex-wrap md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory md:overflow-visible">
             {filteredShowtimes.length === 0 ? (
               <p className="text-white/40 text-sm">No showtimes available for this date</p>
             ) : (
@@ -532,7 +532,7 @@ export default function CinemaBooking() {
                     onClick={() => !isSoldOut && handleShowtimeSelect(showtime)}
                     disabled={isSoldOut}
                     className={cn(
-                      "px-4 py-3 rounded-lg transition-all flex flex-col items-center min-w-[100px]",
+                      "px-4 py-3 rounded-lg transition-all flex flex-col items-center min-w-[100px] flex-shrink-0 snap-center md:flex-shrink",
                       isSoldOut
                         ? "bg-white/5 text-white/30 cursor-not-allowed"
                         : isSelected 
