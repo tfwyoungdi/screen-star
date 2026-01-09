@@ -1122,6 +1122,68 @@ export type Database = {
           },
         ]
       }
+      shifts: {
+        Row: {
+          cash_difference: number | null
+          closing_cash: number | null
+          created_at: string
+          ended_at: string | null
+          expected_cash: number | null
+          id: string
+          notes: string | null
+          opening_cash: number
+          organization_id: string
+          started_at: string
+          status: string
+          total_card_sales: number | null
+          total_cash_sales: number | null
+          total_transactions: number | null
+          user_id: string
+        }
+        Insert: {
+          cash_difference?: number | null
+          closing_cash?: number | null
+          created_at?: string
+          ended_at?: string | null
+          expected_cash?: number | null
+          id?: string
+          notes?: string | null
+          opening_cash?: number
+          organization_id: string
+          started_at?: string
+          status?: string
+          total_card_sales?: number | null
+          total_cash_sales?: number | null
+          total_transactions?: number | null
+          user_id: string
+        }
+        Update: {
+          cash_difference?: number | null
+          closing_cash?: number | null
+          created_at?: string
+          ended_at?: string | null
+          expected_cash?: number | null
+          id?: string
+          notes?: string | null
+          opening_cash?: number
+          organization_id?: string
+          started_at?: string
+          status?: string
+          total_card_sales?: number | null
+          total_cash_sales?: number | null
+          total_transactions?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       showtimes: {
         Row: {
           created_at: string

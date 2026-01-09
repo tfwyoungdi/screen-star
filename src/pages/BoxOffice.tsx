@@ -14,13 +14,14 @@ import {
   Film, Clock, Ticket, DollarSign, Search, 
   Check, X, ArrowLeft, Plus, Minus, Tag, 
   CreditCard, Loader2, LogOut, Receipt, RefreshCw,
-  Popcorn, Phone, Printer, User
+  Popcorn, Phone, Printer, User, ClipboardList
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { ShiftManagement } from '@/components/boxoffice/ShiftManagement';
 
 interface Showtime {
   id: string;
@@ -79,7 +80,7 @@ interface Customer {
 type Step = 'showtimes' | 'seats' | 'snacks' | 'customer' | 'payment' | 'confirmation';
 
 export default function BoxOffice() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const { data: profile } = useUserProfile();
   const { data: organization } = useOrganization();
@@ -102,6 +103,8 @@ export default function BoxOffice() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
   const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
+  const [hasActiveShift, setHasActiveShift] = useState<boolean | null>(null);
+  const [showShiftPanel, setShowShiftPanel] = useState(false);
 
   // Fetch today's showtimes
   const { data: showtimes, isLoading: showtimesLoading, refetch: refetchShowtimes } = useQuery({
@@ -681,6 +684,19 @@ export default function BoxOffice() {
             </div>
           </div>
 
+          <Button 
+            variant={showShiftPanel ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setShowShiftPanel(!showShiftPanel)}
+            className="gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            <span className="hidden sm:inline">Shift</span>
+            {hasActiveShift && (
+              <span className="h-2 w-2 bg-green-500 rounded-full" />
+            )}
+          </Button>
+
           <Button variant="outline" size="icon" onClick={() => refetchShowtimes()}>
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -694,6 +710,17 @@ export default function BoxOffice() {
 
       {/* Main Content */}
       <main className="flex-1 p-4 lg:p-6">
+        {/* Shift Management Panel */}
+        {showShiftPanel && user && profile?.organization_id && (
+          <div className="mb-6 max-w-md">
+            <ShiftManagement 
+              userId={user.id}
+              organizationId={profile.organization_id}
+              onShiftChange={setHasActiveShift}
+            />
+          </div>
+        )}
+
         {/* Step: Select Showtime */}
         {step === 'showtimes' && (
           <div className="space-y-4">
