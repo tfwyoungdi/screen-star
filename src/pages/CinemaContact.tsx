@@ -84,6 +84,7 @@ export default function CinemaContact() {
         try {
           await supabase.functions.invoke('send-contact-notification', {
             body: {
+              organizationId: cinema.id,
               cinemaName: cinema.name,
               adminEmail: cinema.contact_email,
               senderName: data.name,

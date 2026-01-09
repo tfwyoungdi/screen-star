@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, Building2, Palette, Save, Globe, CreditCard, Share2, Search, CheckCircle, XCircle, AlertTriangle, Copy, ExternalLink, FileText, Briefcase } from 'lucide-react';
+import { Loader2, Upload, Building2, Palette, Save, Globe, CreditCard, Share2, Search, CheckCircle, XCircle, AlertTriangle, Copy, ExternalLink, FileText, Briefcase, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AboutPageSettings } from '@/components/settings/AboutPageSettings';
 import { JobListingsSettings } from '@/components/settings/JobListingsSettings';
+import EmailTemplatesSettings from '@/components/settings/EmailTemplatesSettings';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -296,11 +297,15 @@ export default function CinemaSettings() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Tabs defaultValue="branding" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="branding">Branding</TabsTrigger>
               <TabsTrigger value="website">Website</TabsTrigger>
               <TabsTrigger value="about">About Page</TabsTrigger>
               <TabsTrigger value="jobs">Job Listings</TabsTrigger>
+              <TabsTrigger value="emails">
+                <Mail className="h-4 w-4 mr-1" />
+                Emails
+              </TabsTrigger>
               <TabsTrigger value="social">Social</TabsTrigger>
               <TabsTrigger value="seo">SEO</TabsTrigger>
               <TabsTrigger value="payments">Payments</TabsTrigger>
@@ -721,6 +726,11 @@ export default function CinemaSettings() {
             {/* Job Listings Tab */}
             <TabsContent value="jobs">
               <JobListingsSettings organizationId={organization.id} />
+            </TabsContent>
+
+            {/* Email Templates Tab */}
+            <TabsContent value="emails">
+              <EmailTemplatesSettings />
             </TabsContent>
 
             {/* Social Tab */}

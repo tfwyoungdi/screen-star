@@ -30,6 +30,7 @@ interface JobApplicationFormProps {
   onClose: () => void;
   jobId: string;
   jobTitle: string;
+  department: string;
   organizationId: string;
   cinemaName: string;
   primaryColor: string;
@@ -40,6 +41,7 @@ export function JobApplicationForm({
   onClose,
   jobId,
   jobTitle,
+  department,
   organizationId,
   cinemaName,
   primaryColor,
@@ -128,11 +130,12 @@ export function JobApplicationForm({
       try {
         await supabase.functions.invoke('send-application-confirmation', {
           body: {
+            organizationId,
             applicantName: data.applicant_name,
             applicantEmail: data.applicant_email,
             jobTitle,
+            department,
             cinemaName,
-            primaryColor,
           },
         });
       } catch (emailError) {

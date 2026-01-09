@@ -515,6 +515,47 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          created_at: string
+          html_body: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          subject: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          html_body: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          subject: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          html_body?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_history: {
         Row: {
           change_amount: number
