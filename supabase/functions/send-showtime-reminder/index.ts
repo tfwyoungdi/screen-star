@@ -1,11 +1,55 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const DEFAULT_HTML = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
+    <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">⏰ Your Movie Starts Soon!</h1>
+    <p style="color: #D4AF37; font-size: 18px; text-align: center; margin-bottom: 30px;">In approximately {{hours_until}} hours</p>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="color: #D4AF37; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">Booking Reference</p>
+      <p style="color: #f5f5f0; font-size: 24px; font-weight: bold; margin: 0; font-family: monospace; letter-spacing: 2px;">{{booking_reference}}</p>
+    </div>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 10px 0; color: #888; font-size: 14px;">Movie</td><td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">{{movie_title}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{showtime_date}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{showtime_time}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{screen_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{seats}}</td></tr>
+      </table>
+    </div>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <p style="color: #888; font-size: 14px; margin: 0 0 5px 0;">📍 Location</p>
+      <p style="color: #f5f5f0; font-size: 16px; margin: 0; font-weight: bold;">{{cinema_name}}</p>
+      <p style="color: #888; font-size: 14px; margin: 5px 0 0 0;">{{cinema_address}}</p>
+    </div>
+    <div style="background-color: #D4AF37; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <p style="color: #0a0a0a; font-size: 14px; margin: 0; font-weight: bold; text-align: center;">💡 Pro tip: Arrive 15-20 minutes early to grab snacks and find your seats!</p>
+    </div>
+    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+    <p style="color: #666; font-size: 12px; text-align: center;">We're excited to have you! Enjoy your movie experience.</p>
+  </div>
+</body>
+</html>`;
+
+function replaceVariables(template: string, variables: Record<string, string>): string {
+  let result = template;
+  Object.entries(variables).forEach(([key, value]) => {
+    result = result.replace(new RegExp(`{{${key}}}`, "g"), value);
+  });
+  return result;
+}
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-showtime-reminder function called");
@@ -40,6 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
         customer_email,
         total_amount,
         reminder_sent,
+        organization_id,
         showtimes!inner (
           id,
           start_time,
@@ -47,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
           movies (title, poster_url),
           organizations (name, address)
         ),
-        booked_seats (seat_label)
+        booked_seats (row_label, seat_number)
       `)
       .eq("status", "paid")
       .eq("reminder_sent", false)
@@ -60,6 +105,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log(`Found ${bookings?.length || 0} bookings to remind`);
+
+    // Cache templates by organization
+    const templateCache: Record<string, { subject: string; html_body: string } | null> = {};
 
     const results: { success: string[]; failed: string[] } = {
       success: [],
@@ -86,8 +134,39 @@ const handler = async (req: Request): Promise<Response> => {
           minute: "2-digit",
         });
 
-        const seatsList = booking.booked_seats.map((s: any) => s.seat_label).join(", ");
+        const seatsList = booking.booked_seats
+          .map((s: any) => `${s.row_label}${s.seat_number}`)
+          .join(", ");
         const hoursUntil = Math.round((showtimeDate.getTime() - now.getTime()) / (60 * 60 * 1000));
+
+        // Fetch custom template if not cached
+        if (!(booking.organization_id in templateCache)) {
+          const { data: template } = await supabase
+            .from("email_templates")
+            .select("subject, html_body, is_active")
+            .eq("organization_id", booking.organization_id)
+            .eq("template_type", "showtime_reminder")
+            .single();
+
+          templateCache[booking.organization_id] = template?.is_active ? template : null;
+        }
+
+        const customTemplate = templateCache[booking.organization_id];
+        let subject = customTemplate?.subject || "⏰ Reminder: {{movie_title}} starts in {{hours_until}} hours!";
+        let htmlBody = customTemplate?.html_body || DEFAULT_HTML;
+
+        const variables: Record<string, string> = {
+          customer_name: booking.customer_name,
+          booking_reference: booking.booking_reference,
+          movie_title: movie.title,
+          showtime_date: formattedDate,
+          showtime_time: formattedTime,
+          screen_name: screen.name,
+          seats: seatsList,
+          hours_until: String(hoursUntil),
+          cinema_name: org.name,
+          cinema_address: org.address || "Address not available",
+        };
 
         const emailBody = {
           from: {
@@ -102,74 +181,8 @@ const handler = async (req: Request): Promise<Response> => {
               },
             },
           ],
-          subject: `⏰ Reminder: ${movie.title} starts in ${hoursUntil} hours!`,
-          htmlbody: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                  <h1 style="color: #D4AF37; margin: 0; font-size: 28px;">🎬 CineTix</h1>
-                </div>
-                
-                <h2 style="color: #f5f5f0; margin-bottom: 10px; text-align: center;">Your Movie Starts Soon!</h2>
-                <p style="color: #D4AF37; font-size: 18px; text-align: center; margin-bottom: 30px;">⏰ In approximately ${hoursUntil} hours</p>
-                
-                <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                  <p style="color: #D4AF37; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">Booking Reference</p>
-                  <p style="color: #f5f5f0; font-size: 24px; font-weight: bold; margin: 0; font-family: monospace; letter-spacing: 2px;">${booking.booking_reference}</p>
-                </div>
-                
-                <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                  <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                      <td style="padding: 10px 0; color: #888; font-size: 14px;">Movie</td>
-                      <td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">${movie.title}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date</td>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">${formattedDate}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Time</td>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">${formattedTime}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">${screen.name}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">${seatsList}</td>
-                    </tr>
-                  </table>
-                </div>
-
-                <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                  <p style="color: #888; font-size: 14px; margin: 0 0 5px 0;">📍 Location</p>
-                  <p style="color: #f5f5f0; font-size: 16px; margin: 0; font-weight: bold;">${org.name}</p>
-                  <p style="color: #888; font-size: 14px; margin: 5px 0 0 0;">${org.address || 'Address not available'}</p>
-                </div>
-                
-                <div style="background-color: #D4AF37; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                  <p style="color: #0a0a0a; font-size: 14px; margin: 0; font-weight: bold; text-align: center;">
-                    💡 Pro tip: Arrive 15-20 minutes early to grab snacks and find your seats!
-                  </p>
-                </div>
-                
-                <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
-                
-                <p style="color: #666; font-size: 12px; text-align: center;">
-                  We're excited to have you! Enjoy your movie experience.
-                </p>
-              </div>
-            </body>
-            </html>
-          `,
+          subject: replaceVariables(subject, variables),
+          htmlbody: replaceVariables(htmlBody, variables),
         };
 
         const response = await fetch("https://api.zeptomail.com/v1.1/email", {

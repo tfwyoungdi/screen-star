@@ -27,6 +27,11 @@ const DEFAULT_HTML = `<!DOCTYPE html>
   <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
     <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">🎬 Booking Confirmed!</h1>
     <p style="color: #f5f5f0; font-size: 16px; text-align: center;">Hi {{customer_name}}, your booking is confirmed!</p>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+      <p style="color: #D4AF37; font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase;">Your Ticket QR Code</p>
+      <img src="{{qr_code_url}}" alt="Booking QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border-radius: 8px; background: white; padding: 10px;" />
+      <p style="color: #888; font-size: 12px; margin: 15px 0 0 0;">Scan this code at the entrance</p>
+    </div>
     <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="color: #D4AF37; font-size: 14px; margin: 0;">Booking Reference</p>
       <p style="color: #f5f5f0; font-size: 28px; font-weight: bold; margin: 0; font-family: monospace;">{{booking_reference}}</p>
@@ -41,6 +46,7 @@ const DEFAULT_HTML = `<!DOCTYPE html>
         <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Total</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #22c55e; font-size: 18px; text-align: right; font-weight: bold;">{{total_amount}}</td></tr>
       </table>
     </div>
+    <p style="color: #888; font-size: 14px; text-align: center;">Please arrive at least 15 minutes before the showtime. Present your QR code at the entrance.</p>
     <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
     <p style="color: #666; font-size: 12px; text-align: center;">Thank you for booking with {{cinema_name}}!</p>
   </div>
@@ -89,6 +95,9 @@ const handler = async (req: Request): Promise<Response> => {
       htmlBody = template.html_body;
     }
 
+    // Generate QR code URL
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrCodeData || bookingReference)}`;
+
     const variables = {
       customer_name: customerName,
       booking_reference: bookingReference,
@@ -98,6 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
       seats: seats.join(", "),
       total_amount: `$${totalAmount.toFixed(2)}`,
       cinema_name: cinemaName,
+      qr_code_url: qrCodeUrl,
     };
 
     const emailBody = {
