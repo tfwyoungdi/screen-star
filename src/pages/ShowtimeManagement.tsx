@@ -1085,6 +1085,7 @@ export default function ShowtimeManagement() {
         showtime={editingShowtime}
         movies={movies || []}
         screens={screens || []}
+        allShowtimes={allShowtimes || []}
       />
 
       {/* Quick Add Showtime Dialog */}
