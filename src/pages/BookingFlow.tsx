@@ -1375,12 +1375,11 @@ export default function BookingFlow() {
                     const { data: paymentData, error: paymentError } = await supabase.functions.invoke('process-payment', {
                       body: {
                         bookingReference,
+                        organizationId: cinema.id,
                         amount: totalAmount,
                         currency: 'USD',
                         customerEmail: bookingData.customer_email,
                         customerName: bookingData.customer_name,
-                        gateway: cinema.payment_gateway,
-                        publicKey: cinema.payment_gateway_public_key,
                         returnUrl: `${window.location.origin}/cinema/${slug}/book?showtime=${showtimeId}`,
                       },
                     });
