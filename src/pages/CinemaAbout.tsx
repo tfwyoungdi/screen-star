@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CinemaHeader } from '@/components/public/CinemaHeader';
-import { Film, MapPin, Phone, Mail, ArrowLeft, Heart, Star, Users, Target } from 'lucide-react';
+import { Film, MapPin, Phone, Mail, ArrowLeft, Heart, Star, Users, Target, Facebook, Instagram, Twitter } from 'lucide-react';
 
 interface CinemaData {
   id: string;
@@ -19,6 +19,9 @@ interface CinemaData {
   contact_email: string | null;
   contact_phone: string | null;
   address: string | null;
+  social_facebook: string | null;
+  social_instagram: string | null;
+  social_twitter: string | null;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -36,7 +39,7 @@ export default function CinemaAbout() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, name, slug, logo_url, primary_color, secondary_color, about_text, mission_text, values_json, contact_email, contact_phone, address')
+        .select('id, name, slug, logo_url, primary_color, secondary_color, about_text, mission_text, values_json, contact_email, contact_phone, address, social_facebook, social_instagram, social_twitter')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
@@ -180,6 +183,49 @@ export default function CinemaAbout() {
                 </div>
               )}
             </div>
+
+            {/* Social Media Links */}
+            {(cinema.social_facebook || cinema.social_instagram || cinema.social_twitter) && (
+              <div className="mt-8 text-center">
+                <h3 className="text-sm font-medium text-white/60 mb-4">Follow Us</h3>
+                <div className="flex items-center justify-center gap-4">
+                  {cinema.social_facebook && (
+                    <a
+                      href={cinema.social_facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                      aria-label="Facebook"
+                    >
+                      <Facebook className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                    </a>
+                  )}
+                  {cinema.social_instagram && (
+                    <a
+                      href={cinema.social_instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                      aria-label="Instagram"
+                    >
+                      <Instagram className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                    </a>
+                  )}
+                  {cinema.social_twitter && (
+                    <a
+                      href={cinema.social_twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                      aria-label="Twitter"
+                    >
+                      <Twitter className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="text-center mt-8">
               <Button 
                 asChild
