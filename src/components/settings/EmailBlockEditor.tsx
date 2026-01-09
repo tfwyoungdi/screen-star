@@ -55,6 +55,7 @@ export interface EmailBlock {
     borderRadius?: string;
   };
   tableData?: { label: string; value: string }[];
+  imageAlt?: string;
 }
 
 interface SortableBlockProps {
@@ -266,6 +267,79 @@ function SortableBlock({ block, onUpdate, onDelete, variables }: SortableBlockPr
             </div>
           )}
 
+          {block.type === "image" && (
+            <>
+              <div className="flex items-center gap-2 mb-2">
+                <Image className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase">Image</span>
+              </div>
+              <Input
+                value={block.content}
+                onChange={(e) => onUpdate(block.id, { content: e.target.value })}
+                placeholder="Image URL or {{variable}} like {{qr_code_url}}"
+              />
+              <div className="flex gap-2 mt-2">
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs">Width:</Label>
+                  <Input
+                    value={block.styles.fontSize || "180px"}
+                    onChange={(e) => onUpdate(block.id, { styles: { ...block.styles, fontSize: e.target.value } })}
+                    placeholder="180px"
+                    className="w-20"
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs">Alt:</Label>
+                  <Input
+                    value={block.imageAlt || ""}
+                    onChange={(e) => onUpdate(block.id, { imageAlt: e.target.value })}
+                    placeholder="Alt text"
+                    className="w-32"
+                  />
+                </div>
+                <div className="flex border rounded-md">
+                  <Button
+                    type="button"
+                    variant={block.styles.textAlign === "left" ? "secondary" : "ghost"}
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => onUpdate(block.id, { styles: { ...block.styles, textAlign: "left" } })}
+                  >
+                    <AlignLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={block.styles.textAlign === "center" ? "secondary" : "ghost"}
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => onUpdate(block.id, { styles: { ...block.styles, textAlign: "center" } })}
+                  >
+                    <AlignCenter className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={block.styles.textAlign === "right" ? "secondary" : "ghost"}
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => onUpdate(block.id, { styles: { ...block.styles, textAlign: "right" } })}
+                  >
+                    <AlignRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              {block.content && !block.content.includes("{{") && (
+                <div className="mt-2 p-2 bg-muted/50 rounded">
+                  <img 
+                    src={block.content} 
+                    alt={block.imageAlt || "Preview"} 
+                    className="max-w-[100px] max-h-[60px] object-contain mx-auto"
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                  />
+                </div>
+              )}
+            </>
+          )}
+
           {block.type === "table-row" && (
             <>
               <div className="flex items-center gap-2 mb-2">
@@ -396,6 +470,10 @@ export function EmailBlockEditor({ blocks, onChange, variables }: EmailBlockEdit
           <Table className="h-4 w-4 mr-1" />
           Info Row
         </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => addBlock("image")}>
+          <Image className="h-4 w-4 mr-1" />
+          Image
+        </Button>
         <Button type="button" variant="outline" size="sm" onClick={() => addBlock("divider")}>
           <Minus className="h-4 w-4 mr-1" />
           Divider
@@ -460,6 +538,12 @@ export function blocksToHtml(blocks: EmailBlock[]): string {
         return `<hr style="border: none; border-top: 1px solid #2a2a2a; margin: 20px 0;">`;
       case "spacer":
         return `<div style="height: ${padding};"></div>`;
+      case "image":
+        const imgWidth = fontSize || "180px";
+        const imgAlt = block.imageAlt || "Image";
+        return `<div style="text-align: ${textAlign}; margin: 20px 0;">
+          <img src="${block.content}" alt="${imgAlt}" style="width: ${imgWidth}; height: auto; border-radius: 8px; background: white; padding: 10px; display: inline-block;" />
+        </div>`;
       case "table-row":
         if (block.tableData?.[0]) {
           return `<tr>

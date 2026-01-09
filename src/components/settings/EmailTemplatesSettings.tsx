@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Mail, FileText, Save, RotateCcw, Eye, Code, Blocks, Ticket, Bell, Send, Loader2 } from "lucide-react";
+import { Mail, FileText, Save, RotateCcw, Eye, Code, Blocks, Ticket, Bell, Send, Loader2, XCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { EmailBlockEditor, EmailBlock, blocksToHtml } from "./EmailBlockEditor";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import EmailAnalyticsWidget from "./EmailAnalyticsWidget";
 
 interface EmailTemplate {
   id?: string;
@@ -211,6 +212,56 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; html_body: string; de
       { id: "11", type: "text", content: "💡 Pro tip: Arrive 15-20 minutes early to grab snacks and find your seats!", styles: { color: "#0a0a0a", fontSize: "14px", backgroundColor: "#D4AF37" } },
     ],
   },
+  cancellation_confirmation: {
+    subject: "Booking Cancellation Confirmation - {{booking_reference}}",
+    html_body: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
+    <h1 style="color: #ef4444; margin: 0 0 20px 0; font-size: 28px; text-align: center;">🎬 Booking Cancelled</h1>
+    <p style="color: #f5f5f0; font-size: 16px; text-align: center;">Hi {{customer_name}}, your booking has been cancelled.</p>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="color: #888; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">Cancelled Booking Reference</p>
+      <p style="color: #ef4444; font-size: 28px; font-weight: bold; margin: 0; font-family: monospace; letter-spacing: 2px; text-decoration: line-through;">{{booking_reference}}</p>
+    </div>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 10px 0; color: #888; font-size: 14px;">Cinema</td><td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right;">{{cinema_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Movie</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{movie_title}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date & Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{showtime}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{screen_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px; text-align: right; text-decoration: line-through;">{{seats}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Refund Amount</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #22c55e; font-size: 18px; text-align: right; font-weight: bold;">{{refund_amount}}</td></tr>
+      </table>
+    </div>
+    <div style="background-color: #22c55e20; border: 1px solid #22c55e40; border-radius: 8px; padding: 15px; margin: 20px 0;">
+      <p style="color: #22c55e; font-size: 14px; margin: 0; text-align: center;">💰 Your refund of {{refund_amount}} will be processed within 5-10 business days.</p>
+    </div>
+    <p style="color: #888; font-size: 14px; text-align: center; line-height: 1.6;">If you have any questions about your refund, please contact us.</p>
+    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+    <p style="color: #666; font-size: 12px; text-align: center;">We hope to see you again soon at {{cinema_name}}!</p>
+  </div>
+</body>
+</html>`,
+    defaultBlocks: [
+      { id: "1", type: "heading", content: "🎬 Booking Cancelled", styles: { color: "#ef4444", textAlign: "center", fontSize: "28px" } },
+      { id: "2", type: "text", content: "Hi {{customer_name}}, your booking has been cancelled.", styles: { color: "#f5f5f0", fontSize: "16px", textAlign: "center" } },
+      { id: "3", type: "heading", content: "{{booking_reference}}", styles: { color: "#ef4444", textAlign: "center", fontSize: "24px" } },
+      { id: "4", type: "table-row", content: "", styles: {}, tableData: [{ label: "Cinema", value: "{{cinema_name}}" }] },
+      { id: "5", type: "table-row", content: "", styles: {}, tableData: [{ label: "Movie", value: "{{movie_title}}" }] },
+      { id: "6", type: "table-row", content: "", styles: {}, tableData: [{ label: "Date & Time", value: "{{showtime}}" }] },
+      { id: "7", type: "table-row", content: "", styles: {}, tableData: [{ label: "Screen", value: "{{screen_name}}" }] },
+      { id: "8", type: "table-row", content: "", styles: {}, tableData: [{ label: "Seats", value: "{{seats}}" }] },
+      { id: "9", type: "table-row", content: "", styles: {}, tableData: [{ label: "Refund Amount", value: "{{refund_amount}}" }] },
+      { id: "10", type: "divider", content: "", styles: {} },
+      { id: "11", type: "text", content: "💰 Your refund will be processed within 5-10 business days.", styles: { color: "#22c55e", fontSize: "14px", textAlign: "center" } },
+      { id: "12", type: "text", content: "We hope to see you again soon!", styles: { color: "#888888", fontSize: "14px", textAlign: "center" } },
+    ],
+  },
 };
 
 const TEMPLATE_INFO: Record<string, { name: string; description: string; icon: any; variables: string[] }> = {
@@ -237,6 +288,12 @@ const TEMPLATE_INFO: Record<string, { name: string; description: string; icon: a
     description: "Sent to customers 2-3 hours before their showtime",
     icon: Bell,
     variables: ["{{customer_name}}", "{{booking_reference}}", "{{movie_title}}", "{{showtime_date}}", "{{showtime_time}}", "{{screen_name}}", "{{seats}}", "{{hours_until}}", "{{cinema_name}}", "{{cinema_address}}"],
+  },
+  cancellation_confirmation: {
+    name: "Cancellation Confirmation",
+    description: "Sent when a booking is cancelled or refunded",
+    icon: XCircle,
+    variables: ["{{customer_name}}", "{{booking_reference}}", "{{movie_title}}", "{{showtime}}", "{{screen_name}}", "{{seats}}", "{{refund_amount}}", "{{cinema_name}}"],
   },
 };
 
@@ -495,7 +552,7 @@ export default function EmailTemplatesSettings() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsList className="grid w-full grid-cols-5 mb-4">
             <TabsTrigger value="booking_confirmation" className="text-xs sm:text-sm">
               <Ticket className="h-4 w-4 mr-1 hidden sm:inline" />
               Booking
@@ -504,9 +561,13 @@ export default function EmailTemplatesSettings() {
               <Bell className="h-4 w-4 mr-1 hidden sm:inline" />
               Reminder
             </TabsTrigger>
+            <TabsTrigger value="cancellation_confirmation" className="text-xs sm:text-sm">
+              <XCircle className="h-4 w-4 mr-1 hidden sm:inline" />
+              Cancel
+            </TabsTrigger>
             <TabsTrigger value="application_confirmation" className="text-xs sm:text-sm">
               <FileText className="h-4 w-4 mr-1 hidden sm:inline" />
-              Application
+              Jobs
             </TabsTrigger>
             <TabsTrigger value="contact_notification" className="text-xs sm:text-sm">
               <Mail className="h-4 w-4 mr-1 hidden sm:inline" />
