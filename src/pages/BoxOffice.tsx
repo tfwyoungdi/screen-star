@@ -1,20 +1,20 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile, useOrganization } from '@/hooks/useUserProfile';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { 
-  Film, Clock, Monitor, Ticket, DollarSign, Search, 
-  QrCode, Check, X, ArrowLeft, Plus, Minus, Tag, 
-  CreditCard, Loader2, LogOut, User, Receipt, RefreshCw, Calendar
+  Film, Clock, Ticket, DollarSign, Search, 
+  Check, X, ArrowLeft, Plus, Minus, Tag, 
+  CreditCard, Loader2, LogOut, Receipt, RefreshCw,
+  Popcorn, Phone, Printer, User
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -55,18 +55,40 @@ interface BookingData {
   customer_phone: string;
 }
 
-type Step = 'showtimes' | 'seats' | 'customer' | 'payment' | 'confirmation';
+interface ConcessionItem {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  image_url: string | null;
+}
+
+interface SelectedConcession {
+  item: ConcessionItem;
+  quantity: number;
+}
+
+interface Customer {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  loyalty_points: number;
+}
+
+type Step = 'showtimes' | 'seats' | 'snacks' | 'customer' | 'payment' | 'confirmation';
 
 export default function BoxOffice() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { data: profile } = useUserProfile();
   const { data: organization } = useOrganization();
+  const printRef = useRef<HTMLDivElement>(null);
   
   const [step, setStep] = useState<Step>('showtimes');
   const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(null);
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
+  const [selectedConcessions, setSelectedConcessions] = useState<SelectedConcession[]>([]);
   const [bookingData, setBookingData] = useState<BookingData>({
     customer_name: '',
     customer_email: '',
@@ -76,8 +98,10 @@ export default function BoxOffice() {
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [bookingRef, setBookingRef] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [phoneSearch, setPhoneSearch] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+  const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
 
   // Fetch today's showtimes
   const { data: showtimes, isLoading: showtimesLoading, refetch: refetchShowtimes } = useQuery({
@@ -102,10 +126,10 @@ export default function BoxOffice() {
       return data as Showtime[];
     },
     enabled: !!profile?.organization_id,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
-  // Fetch seat layouts for selected showtime
+  // Fetch seat layouts
   const { data: seatLayouts } = useQuery({
     queryKey: ['box-office-seats', selectedShowtime?.screens?.id],
     queryFn: async () => {
@@ -120,7 +144,7 @@ export default function BoxOffice() {
     enabled: !!selectedShowtime?.screens?.id,
   });
 
-  // Fetch booked seats for selected showtime
+  // Fetch booked seats
   const { data: bookedSeats, refetch: refetchBookedSeats } = useQuery({
     queryKey: ['box-office-booked-seats', selectedShowtime?.id],
     queryFn: async () => {
@@ -135,7 +159,25 @@ export default function BoxOffice() {
     enabled: !!selectedShowtime?.id,
   });
 
-  // Fetch today's sales for this user
+  // Fetch concession items
+  const { data: concessionItems } = useQuery({
+    queryKey: ['box-office-concessions', profile?.organization_id],
+    queryFn: async () => {
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('concession_items')
+        .select('*')
+        .eq('organization_id', profile.organization_id)
+        .eq('is_available', true)
+        .order('category')
+        .order('display_order');
+      if (error) throw error;
+      return data as ConcessionItem[];
+    },
+    enabled: !!profile?.organization_id,
+  });
+
+  // Fetch today's sales
   const { data: todaysSales, refetch: refetchSales } = useQuery({
     queryKey: ['box-office-today-sales', profile?.organization_id],
     queryFn: async () => {
@@ -173,7 +215,6 @@ export default function BoxOffice() {
         },
         (payload) => {
           const newSeat = payload.new as { row_label: string; seat_number: number };
-          // Remove from selection if someone else booked it
           setSelectedSeats(prev => {
             const wasSelected = prev.some(
               s => s.row_label === newSeat.row_label && s.seat_number === newSeat.seat_number
@@ -196,7 +237,7 @@ export default function BoxOffice() {
     };
   }, [selectedShowtime?.id]);
 
-  // Filter showtimes by search
+  // Filter showtimes
   const filteredShowtimes = useMemo(() => {
     if (!showtimes) return [];
     if (!searchQuery.trim()) return showtimes;
@@ -206,6 +247,19 @@ export default function BoxOffice() {
       s.screens.name.toLowerCase().includes(query)
     );
   }, [showtimes, searchQuery]);
+
+  // Group concessions by category
+  const concessionsByCategory = useMemo(() => {
+    if (!concessionItems) return {};
+    const grouped: Record<string, ConcessionItem[]> = {};
+    concessionItems.forEach(item => {
+      if (!grouped[item.category]) {
+        grouped[item.category] = [];
+      }
+      grouped[item.category].push(item);
+    });
+    return grouped;
+  }, [concessionItems]);
 
   // Seat helpers
   const isSeatBooked = (row: string, num: number) => {
@@ -238,14 +292,76 @@ export default function BoxOffice() {
     }
   };
 
+  // Concession helpers
+  const addConcession = (item: ConcessionItem) => {
+    setSelectedConcessions(prev => {
+      const existing = prev.find(c => c.item.id === item.id);
+      if (existing) {
+        return prev.map(c => c.item.id === item.id ? { ...c, quantity: c.quantity + 1 } : c);
+      }
+      return [...prev, { item, quantity: 1 }];
+    });
+  };
+
+  const removeConcession = (itemId: string) => {
+    setSelectedConcessions(prev => {
+      const existing = prev.find(c => c.item.id === itemId);
+      if (existing && existing.quantity > 1) {
+        return prev.map(c => c.item.id === itemId ? { ...c, quantity: c.quantity - 1 } : c);
+      }
+      return prev.filter(c => c.item.id !== itemId);
+    });
+  };
+
+  const getConcessionQuantity = (itemId: string) => {
+    return selectedConcessions.find(c => c.item.id === itemId)?.quantity || 0;
+  };
+
   // Calculate totals
-  const subtotal = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+  const ticketsSubtotal = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+  const concessionsSubtotal = selectedConcessions.reduce((sum, c) => sum + (c.item.price * c.quantity), 0);
+  const subtotal = ticketsSubtotal + concessionsSubtotal;
   const discountAmount = appliedPromo 
     ? (appliedPromo.discount_type === 'percentage' 
-      ? subtotal * (appliedPromo.discount_value / 100) 
-      : Math.min(appliedPromo.discount_value, subtotal))
+      ? ticketsSubtotal * (appliedPromo.discount_value / 100) 
+      : Math.min(appliedPromo.discount_value, ticketsSubtotal))
     : 0;
   const totalAmount = subtotal - discountAmount;
+
+  // Customer lookup by phone
+  const searchCustomerByPhone = async () => {
+    if (!phoneSearch.trim() || !profile?.organization_id) return;
+    
+    setIsSearchingCustomer(true);
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, full_name, email, phone, loyalty_points')
+        .eq('organization_id', profile.organization_id)
+        .ilike('phone', `%${phoneSearch.replace(/\D/g, '')}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setFoundCustomer(data);
+        setBookingData({
+          customer_name: data.full_name,
+          customer_email: data.email,
+          customer_phone: data.phone || '',
+        });
+        toast.success(`Found: ${data.full_name}`);
+      } else {
+        toast.info('No customer found with that phone number');
+        setFoundCustomer(null);
+      }
+    } catch (error) {
+      toast.error('Error searching customer');
+    } finally {
+      setIsSearchingCustomer(false);
+    }
+  };
 
   // Apply promo code
   const applyPromo = async () => {
@@ -284,11 +400,9 @@ export default function BoxOffice() {
 
     setIsProcessing(true);
     try {
-      // Generate booking reference
       const { data: refData } = await supabase.rpc('generate_booking_reference');
       const bookingReference = refData as string;
 
-      // Create booking
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
@@ -308,7 +422,6 @@ export default function BoxOffice() {
 
       if (bookingError) throw bookingError;
 
-      // Create booked seats
       const seatsToBook = selectedSeats.map(seat => ({
         booking_id: booking.id,
         showtime_id: selectedShowtime.id,
@@ -324,14 +437,23 @@ export default function BoxOffice() {
 
       if (seatsError) throw seatsError;
 
-      // Update promo code usage if used
-      if (appliedPromo) {
-        await supabase.rpc('generate_booking_reference'); // Just to increment, we don't need result
+      // Save concessions
+      if (selectedConcessions.length > 0) {
+        const concessionsToBook = selectedConcessions.map(c => ({
+          booking_id: booking.id,
+          concession_item_id: c.item.id,
+          quantity: c.quantity,
+          unit_price: c.item.price,
+        }));
+
+        await supabase
+          .from('booking_concessions')
+          .insert(concessionsToBook);
       }
 
       setBookingRef(bookingReference);
       setStep('confirmation');
-      toast.success('Booking completed successfully!');
+      toast.success('Booking completed!');
       refetchSales();
     } catch (error: any) {
       console.error('Booking error:', error);
@@ -341,15 +463,139 @@ export default function BoxOffice() {
     }
   };
 
+  // Print ticket
+  const printTicket = () => {
+    const printContent = printRef.current;
+    if (!printContent) return;
+
+    const printWindow = window.open('', '_blank', 'width=300,height=600');
+    if (!printWindow) {
+      toast.error('Please allow popups to print');
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Ticket</title>
+        <style>
+          @page { size: 80mm auto; margin: 0; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: 'Courier New', monospace; 
+            width: 80mm; 
+            padding: 4mm;
+            font-size: 12px;
+          }
+          .header { text-align: center; margin-bottom: 4mm; border-bottom: 1px dashed #000; padding-bottom: 3mm; }
+          .header h1 { font-size: 16px; margin-bottom: 2mm; }
+          .qr { text-align: center; margin: 4mm 0; }
+          .qr svg { width: 50mm; height: 50mm; }
+          .ref { text-align: center; font-size: 18px; font-weight: bold; margin: 3mm 0; letter-spacing: 2px; }
+          .divider { border-top: 1px dashed #000; margin: 3mm 0; }
+          .row { display: flex; justify-content: space-between; margin: 2mm 0; }
+          .label { color: #666; }
+          .value { font-weight: bold; text-align: right; }
+          .seats { margin: 3mm 0; }
+          .seats-list { display: flex; flex-wrap: wrap; gap: 2mm; margin-top: 2mm; }
+          .seat { background: #f0f0f0; padding: 1mm 2mm; border-radius: 2px; font-weight: bold; }
+          .total { font-size: 16px; margin-top: 3mm; }
+          .footer { text-align: center; margin-top: 4mm; font-size: 10px; color: #666; }
+          .cut-line { border-top: 1px dashed #000; margin: 4mm 0; position: relative; }
+          .cut-line::before { content: '✂'; position: absolute; left: -2mm; top: -6px; background: white; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>${organization?.name || 'Cinema'}</h1>
+          <p>${organization?.address || ''}</p>
+        </div>
+        
+        <div class="qr">
+          ${printContent.querySelector('.qr-container')?.innerHTML || ''}
+        </div>
+        
+        <div class="ref">${bookingRef}</div>
+        
+        <div class="divider"></div>
+        
+        <div class="row">
+          <span class="label">Movie:</span>
+          <span class="value">${selectedShowtime?.movies.title}</span>
+        </div>
+        
+        <div class="row">
+          <span class="label">Date:</span>
+          <span class="value">${selectedShowtime ? format(new Date(selectedShowtime.start_time), 'MMM d, yyyy') : ''}</span>
+        </div>
+        
+        <div class="row">
+          <span class="label">Time:</span>
+          <span class="value">${selectedShowtime ? format(new Date(selectedShowtime.start_time), 'h:mm a') : ''}</span>
+        </div>
+        
+        <div class="row">
+          <span class="label">Screen:</span>
+          <span class="value">${selectedShowtime?.screens.name}</span>
+        </div>
+        
+        <div class="seats">
+          <span class="label">Seats:</span>
+          <div class="seats-list">
+            ${selectedSeats.map(s => `<span class="seat">${s.row_label}${s.seat_number}</span>`).join('')}
+          </div>
+        </div>
+        
+        ${selectedConcessions.length > 0 ? `
+          <div class="divider"></div>
+          <div class="label">Concessions:</div>
+          ${selectedConcessions.map(c => `
+            <div class="row">
+              <span>${c.item.name} x${c.quantity}</span>
+              <span>$${(c.item.price * c.quantity).toFixed(2)}</span>
+            </div>
+          `).join('')}
+        ` : ''}
+        
+        <div class="divider"></div>
+        
+        <div class="row total">
+          <span>TOTAL PAID:</span>
+          <span>$${totalAmount.toFixed(2)}</span>
+        </div>
+        
+        <div class="cut-line"></div>
+        
+        <div class="footer">
+          <p>Thank you for your purchase!</p>
+          <p>Please arrive 15 minutes before showtime.</p>
+          <p>${format(new Date(), 'MMM d, yyyy h:mm a')}</p>
+        </div>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
   // Reset for new sale
   const startNewSale = () => {
     setStep('showtimes');
     setSelectedShowtime(null);
     setSelectedSeats([]);
+    setSelectedConcessions([]);
     setBookingData({ customer_name: '', customer_email: '', customer_phone: '' });
     setAppliedPromo(null);
     setPromoCode('');
     setBookingRef(null);
+    setFoundCustomer(null);
+    setPhoneSearch('');
     refetchShowtimes();
   };
 
@@ -368,7 +614,6 @@ export default function BoxOffice() {
       }
       grouped[seat.row_label].push(seat);
     });
-    // Sort seats within each row
     Object.keys(grouped).forEach(row => {
       grouped[row].sort((a, b) => a.seat_number - b.seat_number);
     });
@@ -386,7 +631,7 @@ export default function BoxOffice() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col pb-20 md:pb-0">
       {/* Header */}
       <header className="h-16 border-b bg-card flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50">
         <div className="flex items-center gap-4">
@@ -399,8 +644,10 @@ export default function BoxOffice() {
                   setStep('showtimes');
                   setSelectedShowtime(null);
                   setSelectedSeats([]);
-                } else if (step === 'customer') {
+                } else if (step === 'snacks') {
                   setStep('seats');
+                } else if (step === 'customer') {
+                  setStep('snacks');
                 } else if (step === 'payment') {
                   setStep('customer');
                 }
@@ -422,7 +669,6 @@ export default function BoxOffice() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Today's Stats */}
           <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-muted rounded-xl">
             <div className="flex items-center gap-2">
               <Receipt className="h-4 w-4 text-muted-foreground" />
@@ -535,7 +781,6 @@ export default function BoxOffice() {
         {/* Step: Select Seats */}
         {step === 'seats' && selectedShowtime && (
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* Seat Map */}
             <div className="lg:col-span-2 space-y-4">
               <div>
                 <h1 className="text-2xl font-bold">{selectedShowtime.movies.title}</h1>
@@ -544,13 +789,11 @@ export default function BoxOffice() {
                 </p>
               </div>
 
-              {/* Screen indicator */}
               <div className="text-center py-2">
                 <div className="w-3/4 h-2 bg-primary/30 rounded-full mx-auto mb-2" />
                 <span className="text-xs text-muted-foreground uppercase tracking-widest">Screen</span>
               </div>
 
-              {/* Seat Grid */}
               <ScrollArea className="h-[400px] lg:h-[500px]">
                 <div className="space-y-2 p-4">
                   {sortedRows.map(row => (
@@ -588,7 +831,6 @@ export default function BoxOffice() {
                 </div>
               </ScrollArea>
 
-              {/* Legend */}
               <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded bg-secondary" />
@@ -609,7 +851,6 @@ export default function BoxOffice() {
               </div>
             </div>
 
-            {/* Order Panel */}
             <div className="space-y-4">
               <Card>
                 <CardHeader>
@@ -625,7 +866,6 @@ export default function BoxOffice() {
                     </p>
                   ) : (
                     <>
-                      {/* Selected Seats */}
                       <div>
                         <Label className="text-xs uppercase tracking-wide text-muted-foreground">
                           Selected Seats ({selectedSeats.length})
@@ -648,68 +888,148 @@ export default function BoxOffice() {
                         </div>
                       </div>
 
-                      {/* Promo Code */}
-                      <div className="space-y-2">
-                        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Promo Code
-                        </Label>
-                        {appliedPromo ? (
-                          <div className="flex items-center justify-between p-2 bg-primary/10 rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <Tag className="h-4 w-4 text-primary" />
-                              <span className="font-mono text-sm">{appliedPromo.code}</span>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6"
-                              onClick={() => setAppliedPromo(null)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Enter code"
-                              value={promoCode}
-                              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                              className="uppercase"
-                            />
-                            <Button variant="outline" onClick={applyPromo}>
-                              Apply
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Totals */}
                       <div className="border-t pt-4 space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Subtotal</span>
-                          <span>${subtotal.toFixed(2)}</span>
-                        </div>
-                        {discountAmount > 0 && (
-                          <div className="flex justify-between text-sm text-primary">
-                            <span>Discount</span>
-                            <span>-${discountAmount.toFixed(2)}</span>
-                          </div>
-                        )}
                         <div className="flex justify-between text-lg font-bold">
-                          <span>Total</span>
-                          <span>${totalAmount.toFixed(2)}</span>
+                          <span>Tickets</span>
+                          <span>${ticketsSubtotal.toFixed(2)}</span>
                         </div>
                       </div>
 
                       <Button 
                         size="lg" 
                         className="w-full h-14 text-lg touch-manipulation"
-                        onClick={() => setStep('customer')}
+                        onClick={() => setStep('snacks')}
                       >
-                        Continue to Payment
+                        <Popcorn className="h-5 w-5 mr-2" />
+                        Add Snacks
                       </Button>
                     </>
                   )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Step: Snacks */}
+        {step === 'snacks' && selectedShowtime && (
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold">Add Snacks</h1>
+                <p className="text-muted-foreground">Would the customer like anything else?</p>
+              </div>
+
+              {Object.entries(concessionsByCategory).map(([category, items]) => (
+                <div key={category}>
+                  <h2 className="text-lg font-semibold mb-3 capitalize">{category}</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {items.map(item => {
+                      const qty = getConcessionQuantity(item.id);
+                      return (
+                        <Card 
+                          key={item.id}
+                          className={cn(
+                            'overflow-hidden cursor-pointer transition-all touch-manipulation',
+                            qty > 0 && 'ring-2 ring-primary'
+                          )}
+                          onClick={() => addConcession(item)}
+                        >
+                          <div className="aspect-square relative bg-muted">
+                            {item.image_url ? (
+                              <img 
+                                src={item.image_url} 
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Popcorn className="h-10 w-10 text-muted-foreground" />
+                              </div>
+                            )}
+                            {qty > 0 && (
+                              <div className="absolute top-2 right-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                                {qty}
+                              </div>
+                            )}
+                          </div>
+                          <CardContent className="p-3">
+                            <h3 className="font-medium text-sm line-clamp-1">{item.name}</h3>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-primary font-bold">${item.price.toFixed(2)}</span>
+                              {qty > 0 && (
+                                <Button 
+                                  variant="outline" 
+                                  size="icon" 
+                                  className="h-6 w-6"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeConcession(item.id);
+                                  }}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {Object.keys(concessionsByCategory).length === 0 && (
+                <Card className="p-8 text-center">
+                  <Popcorn className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">No concession items available</p>
+                </Card>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Tickets × {selectedSeats.length}</span>
+                      <span>${ticketsSubtotal.toFixed(2)}</span>
+                    </div>
+                    {selectedConcessions.map(c => (
+                      <div key={c.item.id} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{c.item.name} × {c.quantity}</span>
+                        <span>${(c.item.price * c.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total</span>
+                      <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      size="lg" 
+                      className="flex-1 h-12 touch-manipulation"
+                      onClick={() => setStep('customer')}
+                    >
+                      Skip Snacks
+                    </Button>
+                    <Button 
+                      size="lg" 
+                      className="flex-1 h-12 touch-manipulation"
+                      onClick={() => setStep('customer')}
+                    >
+                      Continue
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -723,6 +1043,43 @@ export default function BoxOffice() {
               <h1 className="text-2xl font-bold">Customer Information</h1>
               <p className="text-muted-foreground">Optional - leave blank for walk-in customer</p>
             </div>
+
+            {/* Phone Lookup */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Phone className="h-4 w-4" />
+                  Quick Customer Lookup
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter phone number..."
+                    value={phoneSearch}
+                    onChange={(e) => setPhoneSearch(e.target.value)}
+                    className="h-12"
+                  />
+                  <Button 
+                    onClick={searchCustomerByPhone}
+                    disabled={isSearchingCustomer || !phoneSearch.trim()}
+                    className="h-12"
+                  >
+                    {isSearchingCustomer ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {foundCustomer && (
+                  <div className="mt-3 p-3 bg-primary/10 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-primary" />
+                      <span className="font-medium">{foundCustomer.full_name}</span>
+                      <Badge variant="secondary">{foundCustomer.loyalty_points} pts</Badge>
+                    </div>
+                    <Check className="h-4 w-4 text-primary" />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             <Card>
               <CardContent className="p-6 space-y-4">
@@ -761,24 +1118,71 @@ export default function BoxOffice() {
               </CardContent>
             </Card>
 
+            {/* Promo Code */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Tag className="h-4 w-4" />
+                  Promo Code
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-primary" />
+                      <span className="font-mono">{appliedPromo.code}</span>
+                      <Badge variant="secondary">
+                        {appliedPromo.discount_type === 'percentage' 
+                          ? `${appliedPromo.discount_value}% off` 
+                          : `$${appliedPromo.discount_value} off`}
+                      </Badge>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => setAppliedPromo(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter promo code"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      className="uppercase h-12"
+                    />
+                    <Button onClick={applyPromo} className="h-12">Apply</Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Order Summary */}
             <Card>
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{selectedShowtime.movies.title}</span>
-                </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {format(new Date(selectedShowtime.start_time), 'h:mm a')} • {selectedShowtime.screens.name}
-                  </span>
+                  <span className="text-muted-foreground">Tickets × {selectedSeats.length}</span>
+                  <span>${ticketsSubtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Seats</span>
-                  <span>{selectedSeats.map(s => `${s.row_label}${s.seat_number}`).join(', ')}</span>
-                </div>
+                {selectedConcessions.map(c => (
+                  <div key={c.item.id} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{c.item.name} × {c.quantity}</span>
+                    <span>${(c.item.price * c.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-primary">
+                    <span>Discount</span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
@@ -812,7 +1216,8 @@ export default function BoxOffice() {
                   ${totalAmount.toFixed(2)}
                 </div>
                 <p className="text-muted-foreground">
-                  {selectedSeats.length} ticket{selectedSeats.length > 1 ? 's' : ''} • {selectedShowtime.movies.title}
+                  {selectedSeats.length} ticket{selectedSeats.length > 1 ? 's' : ''}
+                  {selectedConcessions.length > 0 && ` + ${selectedConcessions.length} item${selectedConcessions.length > 1 ? 's' : ''}`}
                 </p>
               </CardContent>
             </Card>
@@ -865,10 +1270,9 @@ export default function BoxOffice() {
               <p className="text-muted-foreground">Show this QR code at the gate</p>
             </div>
 
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden" ref={printRef}>
               <CardContent className="p-6 space-y-4">
-                {/* QR Code */}
-                <div className="bg-white p-6 rounded-xl inline-block">
+                <div className="qr-container bg-white p-6 rounded-xl inline-block">
                   <QRCodeSVG 
                     value={JSON.stringify({ ref: bookingRef, cinema: organization?.slug })}
                     size={200}
@@ -876,13 +1280,11 @@ export default function BoxOffice() {
                   />
                 </div>
 
-                {/* Booking Reference */}
                 <div>
                   <p className="text-sm text-muted-foreground">Booking Reference</p>
                   <p className="text-2xl font-mono font-bold">{bookingRef}</p>
                 </div>
 
-                {/* Details */}
                 <div className="border-t pt-4 space-y-2 text-left">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Movie</span>
@@ -900,6 +1302,17 @@ export default function BoxOffice() {
                     <span className="text-muted-foreground">Seats</span>
                     <span>{selectedSeats.map(s => `${s.row_label}${s.seat_number}`).join(', ')}</span>
                   </div>
+                  {selectedConcessions.length > 0 && (
+                    <div className="pt-2 border-t">
+                      <p className="text-muted-foreground mb-1">Concessions:</p>
+                      {selectedConcessions.map(c => (
+                        <div key={c.item.id} className="flex justify-between text-sm">
+                          <span>{c.item.name} × {c.quantity}</span>
+                          <span>${(c.item.price * c.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold pt-2 border-t">
                     <span>Total Paid</span>
                     <span>${totalAmount.toFixed(2)}</span>
@@ -908,14 +1321,25 @@ export default function BoxOffice() {
               </CardContent>
             </Card>
 
-            <Button 
-              size="lg" 
-              className="w-full h-14 text-lg touch-manipulation"
-              onClick={startNewSale}
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              New Sale
-            </Button>
+            <div className="grid grid-cols-2 gap-4">
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="h-14 text-lg touch-manipulation"
+                onClick={printTicket}
+              >
+                <Printer className="h-5 w-5 mr-2" />
+                Print Ticket
+              </Button>
+              <Button 
+                size="lg" 
+                className="h-14 text-lg touch-manipulation"
+                onClick={startNewSale}
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                New Sale
+              </Button>
+            </div>
           </div>
         )}
       </main>
