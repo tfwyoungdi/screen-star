@@ -79,6 +79,25 @@ export default function CinemaContact() {
 
       if (error) throw error;
 
+      // Send email notification to admin if contact email is configured
+      if (cinema.contact_email) {
+        try {
+          await supabase.functions.invoke('send-contact-notification', {
+            body: {
+              cinemaName: cinema.name,
+              adminEmail: cinema.contact_email,
+              senderName: data.name,
+              senderEmail: data.email,
+              subject: data.subject,
+              message: data.message,
+            },
+          });
+        } catch (emailError) {
+          // Log but don't fail if email fails - submission was still saved
+          console.error('Failed to send email notification:', emailError);
+        }
+      }
+
       setSubmitted(true);
       reset();
       toast.success('Message sent successfully!');
