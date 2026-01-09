@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ import { BookingStatusChart } from '@/components/dashboard/BookingStatusChart';
 import { WebsiteStatsWidget } from '@/components/dashboard/WebsiteStatsWidget';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { WelcomeTour, useTour } from '@/components/dashboard/WelcomeTour';
+import { DataRefreshIndicator } from '@/components/dashboard/DataRefreshIndicator';
 import {
   DollarSign,
   Ticket,
@@ -38,6 +40,7 @@ export default function Dashboard() {
   const { data: organization, isLoading: orgLoading } = useOrganization();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { showTour, setShowTour } = useTour();
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const dateRange = 7;
 
   const startDate = startOfDay(subDays(new Date(), dateRange));
@@ -62,7 +65,7 @@ export default function Dashboard() {
   });
 
   // Fetch bookings for analytics
-  const { data: bookings, isLoading: bookingsLoading } = useQuery({
+  const { data: bookings, isLoading: bookingsLoading, isRefetching, refetch } = useQuery({
     queryKey: ['dashboard-bookings', profile?.organization_id],
     queryFn: async () => {
       if (!profile?.organization_id) return [];
@@ -83,6 +86,7 @@ export default function Dashboard() {
 
       if (error) throw error;
       resetNewBookingsCount();
+      setLastUpdated(new Date());
       return data;
     },
     enabled: !!profile?.organization_id,
@@ -269,7 +273,12 @@ export default function Dashboard() {
                 )}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <DataRefreshIndicator
+                lastUpdated={lastUpdated}
+                isRefetching={isRefetching}
+                onRefresh={() => refetch()}
+              />
               <Button onClick={() => navigate('/movies')} className="gap-2" data-tour="movies">
                 <Plus className="h-4 w-4" />
                 Add Movie
