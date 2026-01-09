@@ -309,17 +309,82 @@ export default function CinemaSettings() {
                     )}
                   </div>
 
+                </CardContent>
+              </Card>
+
+              {/* Custom Domain */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    Custom Domain
+                  </CardTitle>
+                  <CardDescription>
+                    Connect your own domain to your cinema's booking website
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="custom_domain">Custom Domain (optional)</Label>
+                    <Label htmlFor="custom_domain">Your Domain</Label>
                     <Input
                       id="custom_domain"
                       placeholder="booking.yourcinema.com"
                       {...register('custom_domain')}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Current URL: <span className="font-mono text-primary">{organization.slug}.cinetix.com</span>
-                    </p>
                   </div>
+                  
+                  <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
+                    <p className="text-sm font-medium">Current URLs:</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">Default</Badge>
+                        <code className="text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
+                          {window.location.origin}/cinema/{organization.slug}
+                        </code>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(`${window.location.origin}/cinema/${organization.slug}`)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      {watch('custom_domain') && (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">Custom</Badge>
+                          <code className="text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
+                            {watch('custom_domain')}
+                          </code>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {watch('custom_domain') && (
+                    <Alert>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription className="space-y-3">
+                        <p className="font-medium">DNS Setup Required</p>
+                        <p className="text-sm">Add these DNS records at your domain provider:</p>
+                        <div className="bg-muted rounded-md p-3 space-y-2 text-sm font-mono">
+                          <div className="grid grid-cols-3 gap-2">
+                            <span className="text-muted-foreground">Type</span>
+                            <span className="text-muted-foreground">Name</span>
+                            <span className="text-muted-foreground">Value</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <span>CNAME</span>
+                            <span>{watch('custom_domain')?.split('.')[0] || '@'}</span>
+                            <span>cinetix.app</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          DNS changes can take up to 48 hours to propagate. Contact support if you need help.
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
 
@@ -334,7 +399,7 @@ export default function CinemaSettings() {
                     Customize colors for your public booking website
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="primary_color">Primary Color</Label>
@@ -351,6 +416,7 @@ export default function CinemaSettings() {
                           className="flex-1 font-mono"
                         />
                       </div>
+                      <p className="text-xs text-muted-foreground">Used for buttons, links, and highlights</p>
                       {errors.primary_color && (
                         <p className="text-sm text-destructive">{errors.primary_color.message}</p>
                       )}
@@ -371,10 +437,69 @@ export default function CinemaSettings() {
                           className="flex-1 font-mono"
                         />
                       </div>
+                      <p className="text-xs text-muted-foreground">Used for backgrounds and accents</p>
                       {errors.secondary_color && (
                         <p className="text-sm text-destructive">{errors.secondary_color.message}</p>
                       )}
                     </div>
+                  </div>
+
+                  {/* Live Preview */}
+                  <div className="space-y-3">
+                    <Label>Live Preview</Label>
+                    <div 
+                      className="rounded-lg border border-border overflow-hidden"
+                      style={{ backgroundColor: watch('secondary_color') || '#1F2937' }}
+                    >
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                          {logoPreview || organization.logo_url ? (
+                            <img
+                              src={logoPreview || organization.logo_url || ''}
+                              alt="Logo"
+                              className="h-8 w-8 rounded object-cover"
+                            />
+                          ) : (
+                            <div 
+                              className="h-8 w-8 rounded flex items-center justify-center"
+                              style={{ backgroundColor: watch('primary_color') || '#D97706' }}
+                            >
+                              <Building2 className="h-4 w-4 text-white" />
+                            </div>
+                          )}
+                          <span className="text-white font-semibold">{watch('name') || organization.name}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            className="px-4 py-2 rounded-md text-sm font-medium text-black"
+                            style={{ backgroundColor: watch('primary_color') || '#D97706' }}
+                          >
+                            Book Tickets
+                          </button>
+                          <button
+                            type="button"
+                            className="px-4 py-2 rounded-md text-sm font-medium text-white border border-white/30"
+                          >
+                            View Trailer
+                          </button>
+                        </div>
+                        <div className="flex gap-2">
+                          <span 
+                            className="px-3 py-1 rounded-full text-xs text-black"
+                            style={{ backgroundColor: watch('primary_color') || '#D97706' }}
+                          >
+                            Today
+                          </span>
+                          <span className="px-3 py-1 rounded-full text-xs text-white/70 border border-white/20">
+                            Tomorrow
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This is how your colors will appear on the public booking website
+                    </p>
                   </div>
                 </CardContent>
               </Card>
