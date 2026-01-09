@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -57,9 +57,10 @@ interface EditShowtimeDialogProps {
   showtime: Showtime | null;
   movies: Movie[];
   screens: Screen[];
+  allShowtimes?: Showtime[];
 }
 
-export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, screens }: EditShowtimeDialogProps) {
+export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, screens, allShowtimes = [] }: EditShowtimeDialogProps) {
   const queryClient = useQueryClient();
   const [additionalTimes, setAdditionalTimes] = useState<string[]>([]);
   const [extendToDate, setExtendToDate] = useState<string>('');
@@ -86,6 +87,21 @@ export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, scree
 
   const watchedIsActive = watch('is_active');
   const watchedDate = watch('date');
+
+  // Get existing showtimes for the same day (excluding current showtime)
+  const dayShowtimes = useMemo(() => {
+    if (!watchedDate || !allShowtimes) return [];
+    const selectedDate = new Date(watchedDate);
+    return allShowtimes
+      .filter(s => {
+        if (showtime && s.id === showtime.id) return false; // Exclude current showtime
+        const showtimeDate = new Date(s.start_time);
+        return showtimeDate.getFullYear() === selectedDate.getFullYear() &&
+          showtimeDate.getMonth() === selectedDate.getMonth() &&
+          showtimeDate.getDate() === selectedDate.getDate();
+      })
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+  }, [watchedDate, allShowtimes, showtime]);
 
   const addTime = () => {
     setAdditionalTimes([...additionalTimes, '']);
@@ -222,6 +238,25 @@ export function EditShowtimeDialog({ open, onOpenChange, showtime, movies, scree
             Modify details or add more showtimes
           </DialogDescription>
         </DialogHeader>
+
+        {/* Existing showtimes for this day */}
+        {dayShowtimes.length > 0 && (
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              Other showtimes on this day ({dayShowtimes.length})
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {dayShowtimes.map(s => (
+                <Badge key={s.id} variant="secondary" className="text-xs gap-1">
+                  <Clock className="h-3 w-3" />
+                  {format(new Date(s.start_time), 'h:mm a')}
+                  <span className="opacity-60">· {s.movies?.title?.substring(0, 12)}{(s.movies?.title?.length || 0) > 12 ? '...' : ''}</span>
+                  <span className="opacity-60">· {s.screens?.name}</span>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 py-4">
           {/* Movie Selection */}
