@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Mail, FileText, Save, RotateCcw, Eye } from "lucide-react";
+import { Mail, FileText, Save, RotateCcw, Eye, Code, Blocks, Ticket, Bell } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { EmailBlockEditor, EmailBlock, blocksToHtml } from "./EmailBlockEditor";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EmailTemplate {
   id?: string;
@@ -28,7 +30,7 @@ interface EmailTemplate {
   is_active: boolean;
 }
 
-const DEFAULT_TEMPLATES: Record<string, { subject: string; html_body: string }> = {
+const DEFAULT_TEMPLATES: Record<string, { subject: string; html_body: string; defaultBlocks: EmailBlock[] }> = {
   application_confirmation: {
     subject: "Thank You for Your Application - {{cinema_name}}",
     html_body: `<!DOCTYPE html>
@@ -39,38 +41,28 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; html_body: string }> 
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #D4AF37; margin: 0; font-size: 28px;">🎬 Application Received!</h1>
-    </div>
-    
+    <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">🎬 Application Received!</h1>
     <p style="color: #f5f5f0; font-size: 16px; line-height: 1.6;">Dear {{applicant_name}},</p>
-    
-    <p style="color: #888; font-size: 14px; line-height: 1.6;">
-      Thank you for applying for the <strong style="color: #D4AF37;">{{job_title}}</strong> position at {{cinema_name}}.
-    </p>
-    
-    <p style="color: #888; font-size: 14px; line-height: 1.6;">
-      We have received your application and will review it carefully. If your qualifications match our requirements, we will contact you to schedule an interview.
-    </p>
-    
+    <p style="color: #888; font-size: 14px; line-height: 1.6;">Thank you for applying for the <strong style="color: #D4AF37;">{{job_title}}</strong> position at {{cinema_name}}.</p>
+    <p style="color: #888; font-size: 14px; line-height: 1.6;">We have received your application and will review it carefully. If your qualifications match our requirements, we will contact you to schedule an interview.</p>
     <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="color: #888; font-size: 12px; margin: 0;">Application Reference</p>
       <p style="color: #D4AF37; font-size: 18px; font-weight: bold; margin: 5px 0 0 0;">{{job_title}} - {{department}}</p>
     </div>
-    
-    <p style="color: #888; font-size: 14px; line-height: 1.6;">
-      Best regards,<br>
-      <strong style="color: #f5f5f0;">The {{cinema_name}} Team</strong>
-    </p>
-    
+    <p style="color: #888; font-size: 14px; line-height: 1.6;">Best regards,<br><strong style="color: #f5f5f0;">The {{cinema_name}} Team</strong></p>
     <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
-    
-    <p style="color: #666; font-size: 12px; text-align: center;">
-      This is an automated message. Please do not reply directly to this email.
-    </p>
+    <p style="color: #666; font-size: 12px; text-align: center;">This is an automated message. Please do not reply directly to this email.</p>
   </div>
 </body>
 </html>`,
+    defaultBlocks: [
+      { id: "1", type: "heading", content: "🎬 Application Received!", styles: { color: "#D4AF37", textAlign: "center", fontSize: "28px" } },
+      { id: "2", type: "text", content: "Dear {{applicant_name}},", styles: { color: "#f5f5f0", fontSize: "16px" } },
+      { id: "3", type: "text", content: "Thank you for applying for the {{job_title}} position at {{cinema_name}}. We have received your application and will review it carefully.", styles: { color: "#888888", fontSize: "14px" } },
+      { id: "4", type: "table-row", content: "", styles: {}, tableData: [{ label: "Position", value: "{{job_title}}" }] },
+      { id: "5", type: "table-row", content: "", styles: {}, tableData: [{ label: "Department", value: "{{department}}" }] },
+      { id: "6", type: "text", content: "Best regards,\nThe {{cinema_name}} Team", styles: { color: "#888888", fontSize: "14px" } },
+    ],
   },
   contact_notification: {
     subject: "New Contact Form Submission: {{subject}}",
@@ -82,57 +74,139 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; html_body: string }> 
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #D4AF37; margin: 0; font-size: 28px;">📬 New Contact Message</h1>
-    </div>
-    
-    <p style="color: #888; font-size: 14px; text-align: center; margin-bottom: 30px;">
-      You've received a new message from your cinema's contact form.
-    </p>
-    
+    <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">📬 New Contact Message</h1>
+    <p style="color: #888; font-size: 14px; text-align: center; margin-bottom: 30px;">You've received a new message from your cinema's contact form.</p>
     <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
       <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 10px 0; color: #888; font-size: 14px; width: 100px;">From</td>
-          <td style="padding: 10px 0; color: #f5f5f0; font-size: 14px;">{{sender_name}}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Email</td>
-          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px;">
-            <a href="mailto:{{sender_email}}" style="color: #D4AF37; text-decoration: none;">{{sender_email}}</a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Subject</td>
-          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; font-weight: bold;">{{subject}}</td>
-        </tr>
+        <tr><td style="padding: 10px 0; color: #888; font-size: 14px;">From</td><td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right;">{{sender_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Email</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right;">{{sender_email}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Subject</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">{{subject}}</td></tr>
       </table>
     </div>
-    
     <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
       <p style="color: #888; font-size: 12px; text-transform: uppercase; margin: 0 0 10px 0;">Message</p>
       <p style="color: #f5f5f0; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{message}}</p>
     </div>
-    
     <div style="text-align: center; margin-top: 30px;">
-      <a href="mailto:{{sender_email}}?subject=Re: {{subject}}" 
-         style="display: inline-block; background-color: #D4AF37; color: #000; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold;">
-        Reply to {{sender_name}}
-      </a>
+      <a href="mailto:{{sender_email}}?subject=Re: {{subject}}" style="display: inline-block; background-color: #D4AF37; color: #000; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold;">Reply to {{sender_name}}</a>
     </div>
-    
     <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
-    
-    <p style="color: #666; font-size: 12px; text-align: center;">
-      This notification was sent from the {{cinema_name}} contact form.
-    </p>
+    <p style="color: #666; font-size: 12px; text-align: center;">This notification was sent from the {{cinema_name}} contact form.</p>
   </div>
 </body>
 </html>`,
+    defaultBlocks: [
+      { id: "1", type: "heading", content: "📬 New Contact Message", styles: { color: "#D4AF37", textAlign: "center", fontSize: "28px" } },
+      { id: "2", type: "text", content: "You've received a new message from your cinema's contact form.", styles: { color: "#888888", fontSize: "14px", textAlign: "center" } },
+      { id: "3", type: "table-row", content: "", styles: {}, tableData: [{ label: "From", value: "{{sender_name}}" }] },
+      { id: "4", type: "table-row", content: "", styles: {}, tableData: [{ label: "Email", value: "{{sender_email}}" }] },
+      { id: "5", type: "table-row", content: "", styles: {}, tableData: [{ label: "Subject", value: "{{subject}}" }] },
+      { id: "6", type: "divider", content: "", styles: {} },
+      { id: "7", type: "text", content: "{{message}}", styles: { color: "#f5f5f0", fontSize: "14px" } },
+      { id: "8", type: "button", content: "Reply to {{sender_name}}", styles: { backgroundColor: "#D4AF37", color: "#000000" } },
+    ],
+  },
+  booking_confirmation: {
+    subject: "Your Booking Confirmation - {{movie_title}}",
+    html_body: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
+    <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">🎬 Booking Confirmed!</h1>
+    <p style="color: #f5f5f0; font-size: 16px; text-align: center;">Hi {{customer_name}}, your booking is confirmed!</p>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="color: #D4AF37; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">Booking Reference</p>
+      <p style="color: #f5f5f0; font-size: 28px; font-weight: bold; margin: 0; font-family: monospace; letter-spacing: 2px;">{{booking_reference}}</p>
+    </div>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 10px 0; color: #888; font-size: 14px;">Cinema</td><td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right;">{{cinema_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Movie</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">{{movie_title}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date & Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{showtime}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{screen_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{seats}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Total Paid</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #22c55e; font-size: 18px; text-align: right; font-weight: bold;">{{total_amount}}</td></tr>
+      </table>
+    </div>
+    <p style="color: #888; font-size: 14px; text-align: center; line-height: 1.6;">Please arrive at least 15 minutes before the showtime. Present your booking reference at the entrance.</p>
+    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+    <p style="color: #666; font-size: 12px; text-align: center;">Thank you for booking with {{cinema_name}}. Enjoy your movie!</p>
+  </div>
+</body>
+</html>`,
+    defaultBlocks: [
+      { id: "1", type: "heading", content: "🎬 Booking Confirmed!", styles: { color: "#D4AF37", textAlign: "center", fontSize: "28px" } },
+      { id: "2", type: "text", content: "Hi {{customer_name}}, your booking is confirmed!", styles: { color: "#f5f5f0", fontSize: "16px", textAlign: "center" } },
+      { id: "3", type: "heading", content: "{{booking_reference}}", styles: { color: "#f5f5f0", textAlign: "center", fontSize: "24px" } },
+      { id: "4", type: "table-row", content: "", styles: {}, tableData: [{ label: "Cinema", value: "{{cinema_name}}" }] },
+      { id: "5", type: "table-row", content: "", styles: {}, tableData: [{ label: "Movie", value: "{{movie_title}}" }] },
+      { id: "6", type: "table-row", content: "", styles: {}, tableData: [{ label: "Date & Time", value: "{{showtime}}" }] },
+      { id: "7", type: "table-row", content: "", styles: {}, tableData: [{ label: "Screen", value: "{{screen_name}}" }] },
+      { id: "8", type: "table-row", content: "", styles: {}, tableData: [{ label: "Seats", value: "{{seats}}" }] },
+      { id: "9", type: "table-row", content: "", styles: {}, tableData: [{ label: "Total Paid", value: "{{total_amount}}" }] },
+      { id: "10", type: "divider", content: "", styles: {} },
+      { id: "11", type: "text", content: "Please arrive at least 15 minutes before the showtime. Present your booking reference at the entrance.", styles: { color: "#888888", fontSize: "14px", textAlign: "center" } },
+    ],
+  },
+  showtime_reminder: {
+    subject: "⏰ Reminder: {{movie_title}} starts in {{hours_until}} hours!",
+    html_body: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
+    <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">⏰ Your Movie Starts Soon!</h1>
+    <p style="color: #D4AF37; font-size: 18px; text-align: center; margin-bottom: 30px;">In approximately {{hours_until}} hours</p>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="color: #D4AF37; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">Booking Reference</p>
+      <p style="color: #f5f5f0; font-size: 24px; font-weight: bold; margin: 0; font-family: monospace; letter-spacing: 2px;">{{booking_reference}}</p>
+    </div>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 10px 0; color: #888; font-size: 14px;">Movie</td><td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">{{movie_title}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{showtime_date}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{showtime_time}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{screen_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{seats}}</td></tr>
+      </table>
+    </div>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <p style="color: #888; font-size: 14px; margin: 0 0 5px 0;">📍 Location</p>
+      <p style="color: #f5f5f0; font-size: 16px; margin: 0; font-weight: bold;">{{cinema_name}}</p>
+      <p style="color: #888; font-size: 14px; margin: 5px 0 0 0;">{{cinema_address}}</p>
+    </div>
+    <div style="background-color: #D4AF37; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <p style="color: #0a0a0a; font-size: 14px; margin: 0; font-weight: bold; text-align: center;">💡 Pro tip: Arrive 15-20 minutes early to grab snacks and find your seats!</p>
+    </div>
+    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+    <p style="color: #666; font-size: 12px; text-align: center;">We're excited to have you! Enjoy your movie experience.</p>
+  </div>
+</body>
+</html>`,
+    defaultBlocks: [
+      { id: "1", type: "heading", content: "⏰ Your Movie Starts Soon!", styles: { color: "#D4AF37", textAlign: "center", fontSize: "28px" } },
+      { id: "2", type: "text", content: "In approximately {{hours_until}} hours", styles: { color: "#D4AF37", fontSize: "18px", textAlign: "center" } },
+      { id: "3", type: "heading", content: "{{booking_reference}}", styles: { color: "#f5f5f0", textAlign: "center", fontSize: "24px" } },
+      { id: "4", type: "table-row", content: "", styles: {}, tableData: [{ label: "Movie", value: "{{movie_title}}" }] },
+      { id: "5", type: "table-row", content: "", styles: {}, tableData: [{ label: "Date", value: "{{showtime_date}}" }] },
+      { id: "6", type: "table-row", content: "", styles: {}, tableData: [{ label: "Time", value: "{{showtime_time}}" }] },
+      { id: "7", type: "table-row", content: "", styles: {}, tableData: [{ label: "Screen", value: "{{screen_name}}" }] },
+      { id: "8", type: "table-row", content: "", styles: {}, tableData: [{ label: "Seats", value: "{{seats}}" }] },
+      { id: "9", type: "divider", content: "", styles: {} },
+      { id: "10", type: "text", content: "📍 {{cinema_name}}\n{{cinema_address}}", styles: { color: "#f5f5f0", fontSize: "14px" } },
+      { id: "11", type: "text", content: "💡 Pro tip: Arrive 15-20 minutes early to grab snacks and find your seats!", styles: { color: "#0a0a0a", fontSize: "14px", backgroundColor: "#D4AF37" } },
+    ],
   },
 };
 
-const TEMPLATE_INFO = {
+const TEMPLATE_INFO: Record<string, { name: string; description: string; icon: any; variables: string[] }> = {
   application_confirmation: {
     name: "Application Confirmation",
     description: "Sent to applicants when they submit a job application",
@@ -145,13 +219,27 @@ const TEMPLATE_INFO = {
     icon: Mail,
     variables: ["{{sender_name}}", "{{sender_email}}", "{{subject}}", "{{message}}", "{{cinema_name}}"],
   },
+  booking_confirmation: {
+    name: "Booking Confirmation",
+    description: "Sent to customers when their booking is confirmed",
+    icon: Ticket,
+    variables: ["{{customer_name}}", "{{booking_reference}}", "{{movie_title}}", "{{showtime}}", "{{screen_name}}", "{{seats}}", "{{total_amount}}", "{{cinema_name}}"],
+  },
+  showtime_reminder: {
+    name: "Showtime Reminder",
+    description: "Sent to customers 2-3 hours before their showtime",
+    icon: Bell,
+    variables: ["{{customer_name}}", "{{booking_reference}}", "{{movie_title}}", "{{showtime_date}}", "{{showtime_time}}", "{{screen_name}}", "{{seats}}", "{{hours_until}}", "{{cinema_name}}", "{{cinema_address}}"],
+  },
 };
 
 export default function EmailTemplatesSettings() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("application_confirmation");
+  const [activeTab, setActiveTab] = useState("booking_confirmation");
   const [templates, setTemplates] = useState<Record<string, EmailTemplate>>({});
+  const [blocks, setBlocks] = useState<Record<string, EmailBlock[]>>({});
+  const [editorMode, setEditorMode] = useState<Record<string, "visual" | "code">>({});
   const [previewHtml, setPreviewHtml] = useState("");
 
   const { data: organization } = useQuery({
@@ -193,6 +281,8 @@ export default function EmailTemplatesSettings() {
   useEffect(() => {
     if (organization?.id) {
       const templateMap: Record<string, EmailTemplate> = {};
+      const blockMap: Record<string, EmailBlock[]> = {};
+      const modeMap: Record<string, "visual" | "code"> = {};
       
       Object.keys(DEFAULT_TEMPLATES).forEach((type) => {
         const saved = savedTemplates?.find((t) => t.template_type === type);
@@ -207,9 +297,13 @@ export default function EmailTemplatesSettings() {
             is_active: true,
           };
         }
+        blockMap[type] = [...DEFAULT_TEMPLATES[type].defaultBlocks];
+        modeMap[type] = "visual";
       });
       
       setTemplates(templateMap);
+      setBlocks(blockMap);
+      setEditorMode(modeMap);
     }
   }, [organization?.id, savedTemplates]);
 
@@ -255,8 +349,22 @@ export default function EmailTemplatesSettings() {
     }));
   };
 
+  const handleBlocksChange = (type: string, newBlocks: EmailBlock[]) => {
+    setBlocks((prev) => ({ ...prev, [type]: newBlocks }));
+    // Auto-update HTML when blocks change
+    const html = blocksToHtml(newBlocks);
+    handleTemplateChange(type, "html_body", html);
+  };
+
   const handleSave = (type: string) => {
-    saveMutation.mutate(templates[type]);
+    // If in visual mode, generate HTML from blocks
+    if (editorMode[type] === "visual") {
+      const html = blocksToHtml(blocks[type] || []);
+      const updatedTemplate = { ...templates[type], html_body: html };
+      saveMutation.mutate(updatedTemplate);
+    } else {
+      saveMutation.mutate(templates[type]);
+    }
   };
 
   const handleReset = (type: string) => {
@@ -268,14 +376,18 @@ export default function EmailTemplatesSettings() {
         html_body: DEFAULT_TEMPLATES[type].html_body,
       },
     }));
+    setBlocks((prev) => ({
+      ...prev,
+      [type]: [...DEFAULT_TEMPLATES[type].defaultBlocks],
+    }));
     toast.info("Template reset to default");
   };
 
   const generatePreview = (type: string) => {
-    const template = templates[type];
-    if (!template) return;
-
-    let html = template.html_body;
+    let html = editorMode[type] === "visual" 
+      ? blocksToHtml(blocks[type] || [])
+      : templates[type]?.html_body || "";
+      
     const sampleData: Record<string, string> = {
       "{{applicant_name}}": "John Doe",
       "{{job_title}}": "Cinema Attendant",
@@ -284,7 +396,18 @@ export default function EmailTemplatesSettings() {
       "{{sender_name}}": "Jane Smith",
       "{{sender_email}}": "jane@example.com",
       "{{subject}}": "Question about showtimes",
-      "{{message}}": "Hello, I wanted to ask about the showtimes for this weekend. Do you have any late night shows available?",
+      "{{message}}": "Hello, I wanted to ask about the showtimes for this weekend.",
+      "{{customer_name}}": "John Doe",
+      "{{booking_reference}}": "ABC12345",
+      "{{movie_title}}": "Interstellar",
+      "{{showtime}}": "Saturday, Jan 15, 2025 at 7:30 PM",
+      "{{showtime_date}}": "Saturday, January 15, 2025",
+      "{{showtime_time}}": "7:30 PM",
+      "{{screen_name}}": "Screen 1",
+      "{{seats}}": "A1, A2, A3",
+      "{{total_amount}}": "$45.00",
+      "{{hours_until}}": "2",
+      "{{cinema_address}}": "123 Main St, City, State 12345",
     };
 
     Object.entries(sampleData).forEach(([key, value]) => {
@@ -292,6 +415,11 @@ export default function EmailTemplatesSettings() {
     });
 
     setPreviewHtml(html);
+  };
+
+  const toggleEditorMode = (type: string) => {
+    const newMode = editorMode[type] === "visual" ? "code" : "visual";
+    setEditorMode((prev) => ({ ...prev, [type]: newMode }));
   };
 
   if (isLoading || !organization) {
@@ -312,20 +440,27 @@ export default function EmailTemplatesSettings() {
           Email Templates
         </CardTitle>
         <CardDescription>
-          Customize the email templates sent to applicants and for contact notifications.
-          Use variables like {"{{applicant_name}}"} to personalize messages.
+          Customize email templates with the visual editor or raw HTML. Use variables like {"{{customer_name}}"} to personalize messages.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="application_confirmation">
-              <FileText className="h-4 w-4 mr-2" />
-              Application Confirmation
+          <TabsList className="grid w-full grid-cols-4 mb-4">
+            <TabsTrigger value="booking_confirmation" className="text-xs sm:text-sm">
+              <Ticket className="h-4 w-4 mr-1 hidden sm:inline" />
+              Booking
             </TabsTrigger>
-            <TabsTrigger value="contact_notification">
-              <Mail className="h-4 w-4 mr-2" />
-              Contact Notification
+            <TabsTrigger value="showtime_reminder" className="text-xs sm:text-sm">
+              <Bell className="h-4 w-4 mr-1 hidden sm:inline" />
+              Reminder
+            </TabsTrigger>
+            <TabsTrigger value="application_confirmation" className="text-xs sm:text-sm">
+              <FileText className="h-4 w-4 mr-1 hidden sm:inline" />
+              Application
+            </TabsTrigger>
+            <TabsTrigger value="contact_notification" className="text-xs sm:text-sm">
+              <Mail className="h-4 w-4 mr-1 hidden sm:inline" />
+              Contact
             </TabsTrigger>
           </TabsList>
 
@@ -336,13 +471,15 @@ export default function EmailTemplatesSettings() {
                   <h4 className="font-medium">{info.name}</h4>
                   <p className="text-sm text-muted-foreground">{info.description}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor={`${type}-active`} className="text-sm">Active</Label>
-                  <Switch
-                    id={`${type}-active`}
-                    checked={templates[type]?.is_active ?? true}
-                    onCheckedChange={(checked) => handleTemplateChange(type, "is_active", checked)}
-                  />
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`${type}-active`} className="text-sm">Active</Label>
+                    <Switch
+                      id={`${type}-active`}
+                      checked={templates[type]?.is_active ?? true}
+                      onCheckedChange={(checked) => handleTemplateChange(type, "is_active", checked)}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -356,16 +493,51 @@ export default function EmailTemplatesSettings() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor={`${type}-body`}>Email Body (HTML)</Label>
-                <Textarea
-                  id={`${type}-body`}
-                  value={templates[type]?.html_body || ""}
-                  onChange={(e) => handleTemplateChange(type, "html_body", e.target.value)}
-                  placeholder="Enter HTML email body..."
-                  className="min-h-[300px] font-mono text-sm"
-                />
+              {/* Editor Mode Toggle */}
+              <div className="flex items-center gap-2 border-b pb-2">
+                <Button
+                  type="button"
+                  variant={editorMode[type] === "visual" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setEditorMode((prev) => ({ ...prev, [type]: "visual" }))}
+                >
+                  <Blocks className="h-4 w-4 mr-1" />
+                  Visual Editor
+                </Button>
+                <Button
+                  type="button"
+                  variant={editorMode[type] === "code" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setEditorMode((prev) => ({ ...prev, [type]: "code" }))}
+                >
+                  <Code className="h-4 w-4 mr-1" />
+                  HTML Code
+                </Button>
               </div>
+
+              {editorMode[type] === "visual" ? (
+                <div className="space-y-2">
+                  <Label>Email Content (Drag blocks to reorder)</Label>
+                  <ScrollArea className="h-[400px] border rounded-lg p-4">
+                    <EmailBlockEditor
+                      blocks={blocks[type] || []}
+                      onChange={(newBlocks) => handleBlocksChange(type, newBlocks)}
+                      variables={info.variables}
+                    />
+                  </ScrollArea>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor={`${type}-body`}>Email Body (HTML)</Label>
+                  <Textarea
+                    id={`${type}-body`}
+                    value={templates[type]?.html_body || ""}
+                    onChange={(e) => handleTemplateChange(type, "html_body", e.target.value)}
+                    placeholder="Enter HTML email body..."
+                    className="min-h-[400px] font-mono text-sm"
+                  />
+                </div>
+              )}
 
               <div className="p-4 bg-muted/50 rounded-lg">
                 <h4 className="text-sm font-medium mb-2">Available Variables</h4>
@@ -386,7 +558,7 @@ export default function EmailTemplatesSettings() {
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => handleReset(type)}>
                   <RotateCcw className="h-4 w-4 mr-2" />
-                  Reset to Default
+                  Reset
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
