@@ -33,6 +33,7 @@ import CinemaContact from "./pages/CinemaContact";
 import ContactSubmissions from "./pages/ContactSubmissions";
 import JobApplications from "./pages/JobApplications";
 import BoxOffice from "./pages/BoxOffice";
+import GateStaff from "./pages/GateStaff";
 import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
@@ -184,6 +185,13 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/gate"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'gate_staff']}>
+                    <GateStaff />
+                  </ProtectedRoute>
+                }
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
