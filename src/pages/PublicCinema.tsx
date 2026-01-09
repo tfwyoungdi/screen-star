@@ -47,6 +47,8 @@ interface MovieWithShowtimes {
   genre: string | null;
   rating: string | null;
   trailer_url: string | null;
+  status: string;
+  release_date: string | null;
   showtimes: Showtime[];
 }
 
@@ -124,7 +126,7 @@ export default function PublicCinema() {
       
       const { data: moviesResult } = await supabase
         .from('movies')
-        .select('id, title, description, duration_minutes, poster_url, genre, rating, trailer_url')
+        .select('id, title, description, duration_minutes, poster_url, genre, rating, trailer_url, status, release_date')
         .eq('organization_id', cinema.id)
         .eq('is_active', true);
 
@@ -226,13 +228,15 @@ export default function PublicCinema() {
     };
   }, [cinema?.id, queryClient]);
 
+  // Now Showing = status is 'now_showing' AND has showtimes
   const movies = useMemo(() => 
-    (moviesData || []).filter(m => m.showtimes.length > 0),
+    (moviesData || []).filter(m => m.status === 'now_showing' && m.showtimes.length > 0),
     [moviesData]
   );
 
+  // Coming Soon = status is 'coming_soon' OR (status is 'now_showing' but has no showtimes yet)
   const comingSoonMovies = useMemo(() => 
-    (moviesData || []).filter(m => m.showtimes.length === 0),
+    (moviesData || []).filter(m => m.status === 'coming_soon' || (m.status === 'now_showing' && m.showtimes.length === 0)),
     [moviesData]
   );
 
@@ -633,10 +637,18 @@ export default function PublicCinema() {
                     </div>
                   </div>
                   
-                  {/* Title below poster */}
-                  <h4 className="mt-2 text-sm font-medium text-white/90 line-clamp-1 group-hover:text-white transition-colors">
-                    {movie.title}
-                  </h4>
+                  {/* Title and release date below poster */}
+                  <div className="mt-2">
+                    <h4 className="text-sm font-medium text-white/90 line-clamp-1 group-hover:text-white transition-colors">
+                      {movie.title}
+                    </h4>
+                    {movie.release_date && (
+                      <p className="text-xs text-white/50 flex items-center gap-1 mt-1">
+                        <Calendar className="h-3 w-3" />
+                        {format(new Date(movie.release_date), 'MMM d, yyyy')}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
