@@ -250,7 +250,10 @@ export default function CinemaSettings() {
 
       if (error) throw error;
 
+      // Invalidate both queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['organization'] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['public-cinema', organization.slug] });
       toast.success('Cinema settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);

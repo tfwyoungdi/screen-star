@@ -55,5 +55,6 @@ export function useOrganization() {
       return data;
     },
     enabled: !!profile?.organization_id,
+    staleTime: 0, // Always fetch fresh data
   });
 }
