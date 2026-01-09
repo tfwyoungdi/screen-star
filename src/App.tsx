@@ -28,6 +28,8 @@ import CustomerManagement from "./pages/CustomerManagement";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import ConcessionManagement from "./pages/ConcessionManagement";
 import About from "./pages/About";
+import Careers from "./pages/Careers";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
