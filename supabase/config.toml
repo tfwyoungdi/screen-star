@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.send-low-stock-notification]
 verify_jwt = false
+
+[functions.auto-transition-movies]
+verify_jwt = false
