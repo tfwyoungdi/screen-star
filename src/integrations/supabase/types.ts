@@ -515,6 +515,69 @@ export type Database = {
           },
         ]
       }
+      email_analytics: {
+        Row: {
+          booking_id: string | null
+          clicked_at: string | null
+          clicked_count: number | null
+          created_at: string
+          email_type: string
+          id: string
+          opened_at: string | null
+          opened_count: number | null
+          organization_id: string
+          recipient_email: string
+          sent_at: string
+          subject: string | null
+          tracking_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          clicked_at?: string | null
+          clicked_count?: number | null
+          created_at?: string
+          email_type: string
+          id?: string
+          opened_at?: string | null
+          opened_count?: number | null
+          organization_id: string
+          recipient_email: string
+          sent_at?: string
+          subject?: string | null
+          tracking_id?: string
+        }
+        Update: {
+          booking_id?: string | null
+          clicked_at?: string | null
+          clicked_count?: number | null
+          created_at?: string
+          email_type?: string
+          id?: string
+          opened_at?: string | null
+          opened_count?: number | null
+          organization_id?: string
+          recipient_email?: string
+          sent_at?: string
+          subject?: string | null
+          tracking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_analytics_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_analytics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           created_at: string
