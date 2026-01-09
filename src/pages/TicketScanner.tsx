@@ -19,7 +19,8 @@ import {
   Barcode,
   QrCode,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Trash2
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface TicketInfo {
   booking: {
@@ -408,6 +420,12 @@ export default function TicketScanner() {
     setCameraError(null);
   };
 
+  const clearHistory = () => {
+    setScanHistory([]);
+    localStorage.removeItem('scanHistory');
+    toast.success('Scan history cleared');
+  };
+
   const getScanTypeIcon = (type: 'qr' | 'barcode' | 'manual') => {
     switch (type) {
       case 'qr': return <QrCode className="h-3 w-3" />;
@@ -761,6 +779,39 @@ export default function TicketScanner() {
                         </div>
                       </div>
                     ))}
+                    
+                    {/* Clear History Button */}
+                    <div className="p-3 border-t">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Clear History
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Clear scan history?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete all {scanHistory.length} scan records from this device. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={clearHistory}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Clear All
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </CollapsibleContent>
               </Card>
