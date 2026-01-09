@@ -1,6 +1,7 @@
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import { format } from 'date-fns';
-import { MoreHorizontal, ExternalLink, Eye } from 'lucide-react';
+import { MoreHorizontal, ExternalLink, Eye, RefreshCw } from 'lucide-react';
+import { BookingDetailsDialog } from './BookingDetailsDialog';
 import {
   Table,
   TableBody,
@@ -47,7 +48,23 @@ const statusStyles: Record<string, string> = {
 };
 
 export const RecentBookingsTable = forwardRef<HTMLDivElement, RecentBookingsTableProps>(
-  function RecentBookingsTable({ bookings, isLoading }, ref) {
+  function RecentBookingsTable({ bookings: initialBookings, isLoading }, ref) {
+    const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [bookings, setBookings] = useState(initialBookings);
+
+    // Update bookings when props change
+    if (initialBookings !== bookings && !dialogOpen) {
+      setBookings(initialBookings);
+    }
+
+    const handleBookingUpdated = (updatedBooking: Booking) => {
+      setBookings(prev => 
+        prev.map(b => b.id === updatedBooking.id ? updatedBooking : b)
+      );
+      setSelectedBooking(updatedBooking);
+    };
+
     if (isLoading) {
       return (
         <div ref={ref} className="space-y-3">
@@ -149,9 +166,19 @@ export const RecentBookingsTable = forwardRef<HTMLDivElement, RecentBookingsTabl
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        setSelectedBooking(booking);
+                        setDialogOpen(true);
+                      }}>
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        setSelectedBooking(booking);
+                        setDialogOpen(true);
+                      }}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Regenerate Reference
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -160,6 +187,13 @@ export const RecentBookingsTable = forwardRef<HTMLDivElement, RecentBookingsTabl
             ))}
           </TableBody>
         </Table>
+
+        <BookingDetailsDialog
+          booking={selectedBooking}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onBookingUpdated={handleBookingUpdated}
+        />
       </div>
     );
   }
