@@ -1,17 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
-import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { format } from 'date-fns';
-import { Loader2, QrCode, CheckCircle, XCircle, Ticket, Film, Clock, MapPin, RotateCcw } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Loader2, 
+  Camera, 
+  CameraOff, 
+  CheckCircle2, 
+  XCircle, 
+  Ticket, 
+  Film, 
+  Clock, 
+  MapPin, 
+  RotateCcw,
+  Scan,
+  User,
+  Hash,
+  Armchair
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface TicketInfo {
   booking: {
@@ -42,49 +56,56 @@ export default function TicketScanner() {
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
-      }
+      stopScanner();
     };
   }, []);
 
-  const startScanner = () => {
-    setScanning(true);
+  const startScanner = async () => {
+    setCameraError(null);
     setTicketInfo(null);
 
-    setTimeout(() => {
-      scannerRef.current = new Html5QrcodeScanner(
-        'qr-reader',
+    try {
+      const html5QrCode = new Html5Qrcode('qr-reader');
+      scannerRef.current = html5QrCode;
+
+      await html5QrCode.start(
+        { facingMode: 'environment' },
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+          aspectRatio: 1,
         },
-        false
-      );
-
-      scannerRef.current.render(
         (decodedText) => {
           handleScan(decodedText);
-          if (scannerRef.current) {
-            scannerRef.current.clear().catch(console.error);
-          }
-          setScanning(false);
+          stopScanner();
         },
-        (error) => {
-          // Ignore scan errors
+        () => {
+          // Ignore scan errors (no QR found in frame)
         }
       );
-    }, 100);
+
+      setScanning(true);
+    } catch (error: any) {
+      console.error('Camera error:', error);
+      setCameraError(error?.message || 'Unable to access camera. Please check permissions.');
+      setScanning(false);
+    }
   };
 
-  const stopScanner = () => {
+  const stopScanner = async () => {
     if (scannerRef.current) {
-      scannerRef.current.clear().catch(console.error);
+      try {
+        await scannerRef.current.stop();
+        scannerRef.current = null;
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
     }
     setScanning(false);
   };
@@ -212,7 +233,7 @@ export default function TicketScanner() {
         message: 'Ticket marked as used.',
       } : null);
 
-      toast.success('Ticket validated and marked as used');
+      toast.success('Entry granted! Ticket validated.');
     } catch (error) {
       console.error('Error marking ticket:', error);
       toast.error('Failed to update ticket status');
@@ -230,171 +251,288 @@ export default function TicketScanner() {
   const resetScanner = () => {
     setTicketInfo(null);
     setManualRef('');
+    setCameraError(null);
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-2xl mx-auto">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Ticket Scanner</h1>
-          <p className="text-muted-foreground">
-            Scan QR codes or enter booking references to validate tickets
+      <div className="min-h-[calc(100vh-4rem)] flex flex-col">
+        {/* Header */}
+        <div className="text-center py-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-3">
+            <Scan className="h-4 w-4" />
+            Gate Control
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">Ticket Scanner</h1>
+          <p className="text-muted-foreground mt-1">
+            Scan QR codes or enter booking references
           </p>
         </div>
 
-        {/* Scanner Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5" />
-              Scan Ticket
-            </CardTitle>
-            <CardDescription>
-              Use the camera to scan the QR code on the ticket
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!scanning ? (
-              <Button onClick={startScanner} className="w-full" size="lg">
-                <QrCode className="mr-2 h-5 w-5" />
-                Start Camera Scanner
-              </Button>
-            ) : (
-              <div className="space-y-4">
-                <div id="qr-reader" className="rounded-lg overflow-hidden" />
-                <Button onClick={stopScanner} variant="outline" className="w-full">
-                  Stop Scanner
-                </Button>
-              </div>
-            )}
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or enter manually</span>
-              </div>
-            </div>
-
-            <form onSubmit={handleManualSubmit} className="flex gap-2">
-              <div className="flex-1">
-                <Label htmlFor="manual-ref" className="sr-only">Booking Reference</Label>
-                <Input
-                  id="manual-ref"
-                  placeholder="Enter booking reference (e.g., ABC12345)"
-                  value={manualRef}
-                  onChange={(e) => setManualRef(e.target.value.toUpperCase())}
-                  className="font-mono"
-                />
-              </div>
-              <Button type="submit" disabled={!manualRef.trim() || loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Check'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Loading State */}
-        {loading && (
-          <Card>
-            <CardContent className="py-8 text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-              <p className="mt-2 text-muted-foreground">Validating ticket...</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Result Section */}
-        {ticketInfo && !loading && (
-          <Card className={ticketInfo.isValid ? 'border-green-500' : 'border-destructive'}>
-            <CardContent className="pt-6 space-y-4">
-              {/* Status Alert */}
-              <Alert variant={ticketInfo.isValid ? 'default' : 'destructive'}>
-                {ticketInfo.isValid ? (
-                  <CheckCircle className="h-4 w-4 text-green-500" />
+        <div className="flex-1 max-w-lg mx-auto w-full px-4 pb-6 space-y-4">
+          {/* Camera Scanner Section */}
+          {!ticketInfo && !loading && (
+            <Card className="overflow-hidden border-2 border-dashed">
+              <CardContent className="p-0">
+                {!scanning ? (
+                  <div className="p-8 text-center space-y-4">
+                    <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center">
+                      <Camera className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                    {cameraError ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-destructive">{cameraError}</p>
+                        <Button onClick={startScanner} variant="outline">
+                          Try Again
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <p className="font-medium">Camera Scanner</p>
+                          <p className="text-sm text-muted-foreground">
+                            Point your camera at the ticket QR code
+                          </p>
+                        </div>
+                        <Button onClick={startScanner} size="lg" className="gap-2">
+                          <Camera className="h-5 w-5" />
+                          Start Scanning
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 ) : (
-                  <XCircle className="h-4 w-4" />
+                  <div className="relative">
+                    {/* Scanner Container */}
+                    <div 
+                      ref={containerRef}
+                      id="qr-reader" 
+                      className="w-full aspect-square bg-muted"
+                    />
+                    
+                    {/* Overlay Frame */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      <div className="absolute inset-0 bg-background/60" style={{
+                        maskImage: 'linear-gradient(to bottom, black 20%, transparent 20%, transparent 80%, black 80%), linear-gradient(to right, black 20%, transparent 20%, transparent 80%, black 80%)',
+                        WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 20%, transparent 80%, black 80%), linear-gradient(to right, black 20%, transparent 20%, transparent 80%, black 80%)',
+                        maskComposite: 'intersect',
+                        WebkitMaskComposite: 'source-in'
+                      }} />
+                      
+                      {/* Corner Markers */}
+                      <div className="absolute top-[20%] left-[20%] w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                      <div className="absolute top-[20%] right-[20%] w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                      <div className="absolute bottom-[20%] left-[20%] w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                      <div className="absolute bottom-[20%] right-[20%] w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
+                      
+                      {/* Scanning Line Animation */}
+                      <div className="absolute left-[22%] right-[22%] top-[25%] h-0.5 bg-primary/80 animate-pulse" />
+                    </div>
+
+                    {/* Stop Button */}
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                      <Button 
+                        onClick={stopScanner} 
+                        variant="secondary" 
+                        size="sm"
+                        className="gap-2 shadow-lg"
+                      >
+                        <CameraOff className="h-4 w-4" />
+                        Stop Scanner
+                      </Button>
+                    </div>
+                  </div>
                 )}
-                <AlertTitle>
-                  {ticketInfo.isValid ? 'Valid Ticket' : 'Invalid Ticket'}
-                </AlertTitle>
-                <AlertDescription>{ticketInfo.message}</AlertDescription>
-              </Alert>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Manual Entry */}
+          {!ticketInfo && !loading && (
+            <>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-3 text-muted-foreground font-medium">
+                    Or enter manually
+                  </span>
+                </div>
+              </div>
+
+              <form onSubmit={handleManualSubmit} className="flex gap-2">
+                <div className="relative flex-1">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Booking reference (e.g., ABC12345)"
+                    value={manualRef}
+                    onChange={(e) => setManualRef(e.target.value.toUpperCase())}
+                    className="pl-9 font-mono text-base"
+                  />
+                </div>
+                <Button type="submit" disabled={!manualRef.trim()}>
+                  Check
+                </Button>
+              </form>
+            </>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <Card className="border-2">
+              <CardContent className="py-12 text-center">
+                <div className="relative mx-auto w-16 h-16">
+                  <div className="absolute inset-0 rounded-full border-4 border-muted" />
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                </div>
+                <p className="mt-4 font-medium">Validating ticket...</p>
+                <p className="text-sm text-muted-foreground">Please wait</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Result Section */}
+          {ticketInfo && !loading && (
+            <div className="space-y-4">
+              {/* Status Banner */}
+              <Card className={cn(
+                "border-2 overflow-hidden",
+                ticketInfo.isValid 
+                  ? "border-green-500 bg-green-500/5" 
+                  : "border-destructive bg-destructive/5"
+              )}>
+                <CardContent className="py-6 text-center">
+                  <div className={cn(
+                    "mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-3",
+                    ticketInfo.isValid ? "bg-green-500/20" : "bg-destructive/20"
+                  )}>
+                    {ticketInfo.isValid ? (
+                      <CheckCircle2 className="h-8 w-8 text-green-500" />
+                    ) : (
+                      <XCircle className="h-8 w-8 text-destructive" />
+                    )}
+                  </div>
+                  <h2 className={cn(
+                    "text-xl font-bold",
+                    ticketInfo.isValid ? "text-green-600 dark:text-green-400" : "text-destructive"
+                  )}>
+                    {ticketInfo.isValid ? 'Valid Ticket' : 'Invalid Ticket'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {ticketInfo.message}
+                  </p>
+                </CardContent>
+              </Card>
 
               {/* Ticket Details */}
               {ticketInfo.booking?.booking_reference && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Reference</span>
-                    <Badge variant="outline" className="font-mono text-lg">
-                      {ticketInfo.booking.booking_reference}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Customer</p>
-                      <p className="font-medium">{ticketInfo.booking.customer_name}</p>
+                <Card>
+                  <CardContent className="py-4 space-y-4">
+                    {/* Reference Badge */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Reference</span>
+                      <Badge variant="secondary" className="font-mono text-base px-3 py-1">
+                        {ticketInfo.booking.booking_reference}
+                      </Badge>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Status</p>
-                      <Badge variant={ticketInfo.booking.status === 'confirmed' ? 'default' : 'secondary'}>
+
+                    <div className="h-px bg-border" />
+
+                    {/* Customer Info */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <User className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{ticketInfo.booking.customer_name}</p>
+                        <p className="text-sm text-muted-foreground truncate">{ticketInfo.booking.customer_email}</p>
+                      </div>
+                      <Badge 
+                        variant={ticketInfo.booking.status === 'confirmed' ? 'default' : 'secondary'}
+                        className="ml-auto shrink-0"
+                      >
                         {ticketInfo.booking.status}
                       </Badge>
                     </div>
-                  </div>
 
-                  <div className="border-t pt-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Film className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{ticketInfo.showtime.movie_title}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {format(new Date(ticketInfo.showtime.start_time), 'MMM d, yyyy')} at{' '}
-                        {format(new Date(ticketInfo.showtime.start_time), 'h:mm a')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{ticketInfo.showtime.screen_name}</span>
-                    </div>
-                  </div>
+                    <div className="h-px bg-border" />
 
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Seats ({ticketInfo.seats.length})
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {ticketInfo.seats.map((seat, i) => (
-                        <Badge key={i} variant="secondary">
-                          {seat.row_label}{seat.seat_number}
-                          {seat.seat_type === 'vip' && ' (VIP)'}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                    {/* Show Details */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <Film className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">{ticketInfo.showtime.movie_title}</p>
+                        </div>
+                      </div>
 
-                  {/* Actions */}
-                  <div className="border-t pt-4 flex gap-2">
-                    {ticketInfo.isValid && ticketInfo.booking.status === 'confirmed' && (
-                      <Button onClick={markAsUsed} className="flex-1">
-                        <Ticket className="mr-2 h-4 w-4" />
-                        Mark as Used & Allow Entry
-                      </Button>
-                    )}
-                    <Button onClick={resetScanner} variant="outline">
-                      <RotateCcw className="mr-2 h-4 w-4" />
-                      Scan Another
-                    </Button>
-                  </div>
-                </div>
+                      <div className="grid grid-cols-2 gap-3 pl-[52px]">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {format(new Date(ticketInfo.showtime.start_time), 'MMM d, h:mm a')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span>{ticketInfo.showtime.screen_name}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-border" />
+
+                    {/* Seats */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Armchair className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {ticketInfo.seats.length} seat{ticketInfo.seats.length !== 1 ? 's' : ''}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {ticketInfo.seats.map((seat, i) => (
+                            <Badge 
+                              key={i} 
+                              variant={seat.seat_type === 'vip' ? 'default' : 'outline'}
+                              className="font-mono"
+                            >
+                              {seat.row_label}{seat.seat_number}
+                              {seat.seat_type === 'vip' && ' ★'}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
-        )}
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                {ticketInfo.isValid && ticketInfo.booking?.status === 'confirmed' && (
+                  <Button onClick={markAsUsed} size="lg" className="flex-1 gap-2">
+                    <Ticket className="h-5 w-5" />
+                    Grant Entry
+                  </Button>
+                )}
+                <Button 
+                  onClick={resetScanner} 
+                  variant="outline" 
+                  size="lg"
+                  className={cn("gap-2", !ticketInfo.isValid && "flex-1")}
+                >
+                  <RotateCcw className="h-5 w-5" />
+                  Scan Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );
