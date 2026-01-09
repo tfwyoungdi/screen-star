@@ -558,6 +558,20 @@ export default function PublicCinema() {
         </div>
       </section>
 
+      {/* Section Divider */}
+      {comingSoonMovies.length > 0 && (
+        <div className="relative" style={{ backgroundColor: '#0a0a0f' }}>
+          <div className="container mx-auto px-4">
+            <div 
+              className="h-px w-full"
+              style={{ 
+                background: `linear-gradient(90deg, transparent, ${cinema?.primary_color || '#D4AF37'}40, transparent)` 
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Coming Soon */}
       {comingSoonMovies.length > 0 && (
         <section id="coming-soon" className="py-12 md:py-16" style={{ backgroundColor: '#0a0a0f' }}>
