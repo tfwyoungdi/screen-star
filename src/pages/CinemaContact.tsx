@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CinemaHeader } from '@/components/public/CinemaHeader';
-import { Film, ArrowLeft, MapPin, Phone, Mail, Clock, Send, CheckCircle } from 'lucide-react';
+import { Film, ArrowLeft, MapPin, Phone, Mail, Clock, Send, CheckCircle, Facebook, Instagram, Twitter } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CinemaData {
@@ -23,6 +23,9 @@ interface CinemaData {
   contact_email: string | null;
   contact_phone: string | null;
   address: string | null;
+  social_facebook: string | null;
+  social_instagram: string | null;
+  social_twitter: string | null;
 }
 
 const contactSchema = z.object({
@@ -43,7 +46,7 @@ export default function CinemaContact() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, name, slug, logo_url, primary_color, contact_email, contact_phone, address')
+        .select('id, name, slug, logo_url, primary_color, contact_email, contact_phone, address, social_facebook, social_instagram, social_twitter')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
@@ -222,6 +225,51 @@ export default function CinemaContact() {
                   </div>
                 </div>
               </div>
+
+              {/* Social Media Links */}
+              {(cinema.social_facebook || cinema.social_instagram || cinema.social_twitter) && (
+                <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                  <h3 className="font-medium text-white mb-4">Follow Us</h3>
+                  <div className="flex items-center gap-3">
+                    {cinema.social_facebook && (
+                      <a
+                        href={cinema.social_facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                        aria-label="Facebook"
+                      >
+                        <Facebook className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                        <span className="text-sm text-white/70">Facebook</span>
+                      </a>
+                    )}
+                    {cinema.social_instagram && (
+                      <a
+                        href={cinema.social_instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                        aria-label="Instagram"
+                      >
+                        <Instagram className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                        <span className="text-sm text-white/70">Instagram</span>
+                      </a>
+                    )}
+                    {cinema.social_twitter && (
+                      <a
+                        href={cinema.social_twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                        aria-label="Twitter"
+                      >
+                        <Twitter className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                        <span className="text-sm text-white/70">Twitter</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Contact Form */}
