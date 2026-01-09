@@ -42,6 +42,10 @@ export default function Dashboard() {
 
   const startDate = startOfDay(subDays(new Date(), dateRange));
   const endDate = endOfDay(new Date());
+  
+  // Previous period for trend calculation
+  const prevStartDate = startOfDay(subDays(new Date(), dateRange * 2));
+  const prevEndDate = endOfDay(subDays(new Date(), dateRange + 1));
 
   // Real-time subscriptions
   const { newBookingsCount, resetNewBookingsCount } = useRealtimeBookings({
@@ -79,6 +83,24 @@ export default function Dashboard() {
 
       if (error) throw error;
       resetNewBookingsCount();
+      return data;
+    },
+    enabled: !!profile?.organization_id,
+  });
+
+  // Fetch previous period bookings for trend calculation
+  const { data: prevBookings } = useQuery({
+    queryKey: ['dashboard-prev-bookings', profile?.organization_id],
+    queryFn: async () => {
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('id, total_amount')
+        .eq('organization_id', profile.organization_id)
+        .gte('created_at', prevStartDate.toISOString())
+        .lte('created_at', prevEndDate.toISOString());
+
+      if (error) throw error;
       return data;
     },
     enabled: !!profile?.organization_id,
@@ -135,6 +157,23 @@ export default function Dashboard() {
     enabled: !!bookings && bookings.length > 0,
   });
 
+  // Fetch previous period seats for trend
+  const { data: prevBookedSeats } = useQuery({
+    queryKey: ['dashboard-prev-seats', profile?.organization_id, prevBookings],
+    queryFn: async () => {
+      if (!prevBookings || prevBookings.length === 0) return [];
+      const bookingIds = prevBookings.map((b) => b.id);
+      const { data, error } = await supabase
+        .from('booked_seats')
+        .select('id')
+        .in('booking_id', bookingIds);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!prevBookings && prevBookings.length > 0,
+  });
+
   const loading = orgLoading || profileLoading;
 
   // Calculate metrics
@@ -143,6 +182,19 @@ export default function Dashboard() {
   const totalBookings = bookings?.length || 0;
   const activeMovies = movies?.length || 0;
   const scheduledShowtimes = upcomingShowtimes?.length || 0;
+
+  // Calculate previous period metrics for trends
+  const prevTotalRevenue = prevBookings?.reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+  const prevTotalTickets = prevBookedSeats?.length || 0;
+
+  // Calculate trend percentages
+  const calculateTrend = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  const revenueTrend = calculateTrend(totalRevenue, prevTotalRevenue);
+  const ticketsTrend = calculateTrend(totalTickets, prevTotalTickets);
 
   // Revenue by day for chart
   const revenueByDay = bookings?.reduce((acc, booking) => {
@@ -236,19 +288,25 @@ export default function Dashboard() {
               prefix="$"
               icon={DollarSign}
               variant="primary"
-              trend={{ value: 12.5, label: 'Increased from last month' }}
+              trend={revenueTrend !== 0 ? { 
+                value: Math.round(revenueTrend * 10) / 10, 
+                label: `${revenueTrend >= 0 ? 'Increased' : 'Decreased'} vs last ${dateRange} days` 
+              } : undefined}
             />
             <StatCard
               title="Tickets Sold"
               value={totalTickets}
               icon={Ticket}
-              trend={{ value: 8.2, label: 'Increased from last month' }}
+              trend={ticketsTrend !== 0 ? { 
+                value: Math.round(ticketsTrend * 10) / 10, 
+                label: `${ticketsTrend >= 0 ? 'Increased' : 'Decreased'} vs last ${dateRange} days` 
+              } : undefined}
             />
             <StatCard
               title="Active Movies"
               value={activeMovies}
               icon={Film}
-              trend={{ value: 5, label: 'Increased from last month' }}
+              subtitle="Currently showing"
             />
             <StatCard
               title="Upcoming Shows"
