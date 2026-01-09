@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar, Play, X, Search } from 'lucide-react';
+import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar, Play, X, Search, Facebook, Instagram, Twitter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { CinemaHero } from '@/components/public/CinemaHero';
 
@@ -942,8 +942,47 @@ export default function PublicCinema() {
         className="py-8 border-t"
         style={{ backgroundColor: cinema?.secondary_color || 'hsl(var(--card))' }}
       >
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground text-sm">
+        <div className="container mx-auto px-4">
+          {/* Social Media Links */}
+          {(cinema?.social_facebook || cinema?.social_instagram || cinema?.social_twitter) && (
+            <div className="flex items-center justify-center gap-4 mb-6">
+              {cinema?.social_facebook && (
+                <a
+                  href={cinema.social_facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Facebook"
+                >
+                  <Facebook className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                </a>
+              )}
+              {cinema?.social_instagram && (
+                <a
+                  href={cinema.social_instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                </a>
+              )}
+              {cinema?.social_twitter && (
+                <a
+                  href={cinema.social_twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Twitter"
+                >
+                  <Twitter className="h-5 w-5" style={{ color: cinema.primary_color }} />
+                </a>
+              )}
+            </div>
+          )}
+          
+          <p className="text-muted-foreground text-sm text-center">
             © {new Date().getFullYear()} {cinema?.name}. Powered by CineTix.
           </p>
         </div>
