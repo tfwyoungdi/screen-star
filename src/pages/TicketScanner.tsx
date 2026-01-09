@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { format } from 'date-fns';
 import { 
-  Loader2, 
   Camera, 
   CameraOff, 
   CheckCircle2, 
@@ -15,7 +14,12 @@ import {
   Scan,
   User,
   Hash,
-  Armchair
+  Armchair,
+  History,
+  Barcode,
+  QrCode,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +30,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface TicketInfo {
   booking: {
@@ -50,15 +55,118 @@ interface TicketInfo {
   message: string;
 }
 
+interface ScanHistoryItem {
+  id: string;
+  reference: string;
+  customerName: string;
+  movieTitle: string;
+  isValid: boolean;
+  timestamp: Date;
+  scanType: 'qr' | 'barcode' | 'manual';
+}
+
+// Supported barcode formats for ticket scanning
+const SUPPORTED_FORMATS = [
+  Html5QrcodeSupportedFormats.QR_CODE,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.ITF,
+  Html5QrcodeSupportedFormats.CODABAR,
+];
+
+// Audio feedback functions
+const playSuccessSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
+    oscillator.frequency.setValueAtTime(1108.73, audioContext.currentTime + 0.1); // C#6 note
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  } catch (e) {
+    console.log('Audio not supported');
+  }
+};
+
+const playErrorSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(150, audioContext.currentTime + 0.15);
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.4);
+  } catch (e) {
+    console.log('Audio not supported');
+  }
+};
+
+// Haptic feedback function
+const triggerHaptic = (pattern: 'success' | 'error') => {
+  if ('vibrate' in navigator) {
+    if (pattern === 'success') {
+      navigator.vibrate([50, 30, 50]); // Two short buzzes
+    } else {
+      navigator.vibrate([200, 100, 200]); // Two long buzzes
+    }
+  }
+};
+
 export default function TicketScanner() {
   const { data: profile } = useUserProfile();
   const [manualRef, setManualRef] = useState('');
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
+  const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [lastScanType, setLastScanType] = useState<'qr' | 'barcode' | 'manual'>('manual');
   const [cameraError, setCameraError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Load scan history from localStorage on mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('scanHistory');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        setScanHistory(parsed.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        })));
+      } catch (e) {
+        console.error('Failed to parse scan history');
+      }
+    }
+  }, []);
+
+  // Save scan history to localStorage when it changes
+  useEffect(() => {
+    if (scanHistory.length > 0) {
+      localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+    }
+  }, [scanHistory]);
 
   useEffect(() => {
     return () => {
@@ -66,12 +174,31 @@ export default function TicketScanner() {
     };
   }, []);
 
+  const addToHistory = useCallback((info: TicketInfo, scanType: 'qr' | 'barcode' | 'manual') => {
+    if (!info.booking?.booking_reference) return;
+    
+    const historyItem: ScanHistoryItem = {
+      id: crypto.randomUUID(),
+      reference: info.booking.booking_reference,
+      customerName: info.booking.customer_name,
+      movieTitle: info.showtime.movie_title || 'Unknown',
+      isValid: info.isValid,
+      timestamp: new Date(),
+      scanType,
+    };
+    
+    setScanHistory(prev => [historyItem, ...prev].slice(0, 10)); // Keep only last 10
+  }, []);
+
   const startScanner = async () => {
     setCameraError(null);
     setTicketInfo(null);
 
     try {
-      const html5QrCode = new Html5Qrcode('qr-reader');
+      const html5QrCode = new Html5Qrcode('qr-reader', {
+        formatsToSupport: SUPPORTED_FORMATS,
+        verbose: false,
+      });
       scannerRef.current = html5QrCode;
 
       await html5QrCode.start(
@@ -81,8 +208,12 @@ export default function TicketScanner() {
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1,
         },
-        (decodedText) => {
-          handleScan(decodedText);
+        (decodedText, result) => {
+          // Determine if it was a QR code or barcode
+          const format = result?.result?.format?.formatName;
+          const isQR = format === 'QR_CODE' || !format;
+          setLastScanType(isQR ? 'qr' : 'barcode');
+          handleScan(decodedText, isQR ? 'qr' : 'barcode');
           stopScanner();
         },
         () => {
@@ -110,7 +241,7 @@ export default function TicketScanner() {
     setScanning(false);
   };
 
-  const handleScan = async (reference: string) => {
+  const handleScan = async (reference: string, scanType: 'qr' | 'barcode' | 'manual' = 'manual') => {
     if (!profile?.organization_id) return;
     
     setLoading(true);
@@ -144,13 +275,18 @@ export default function TicketScanner() {
       if (bookingError) throw bookingError;
 
       if (!booking) {
-        setTicketInfo({
+        const invalidResult: TicketInfo = {
           booking: {} as any,
           showtime: {} as any,
           seats: [],
           isValid: false,
           message: 'Booking not found. Please check the reference.',
-        });
+        };
+        setTicketInfo(invalidResult);
+        
+        // Audio and haptic feedback for invalid
+        playErrorSound();
+        triggerHaptic('error');
         return;
       }
 
@@ -182,7 +318,7 @@ export default function TicketScanner() {
         message = 'Valid ticket. Show starts in ' + Math.round(hoursDiff) + ' hours.';
       }
 
-      setTicketInfo({
+      const result: TicketInfo = {
         booking: {
           id: booking.id,
           booking_reference: booking.booking_reference,
@@ -199,17 +335,35 @@ export default function TicketScanner() {
         seats: seats || [],
         isValid,
         message,
-      });
+      };
+
+      setTicketInfo(result);
+      
+      // Add to history
+      addToHistory(result, scanType);
+      
+      // Audio and haptic feedback
+      if (isValid) {
+        playSuccessSound();
+        triggerHaptic('success');
+      } else {
+        playErrorSound();
+        triggerHaptic('error');
+      }
 
     } catch (error) {
       console.error('Scan error:', error);
-      setTicketInfo({
+      const errorResult: TicketInfo = {
         booking: {} as any,
         showtime: {} as any,
         seats: [],
         isValid: false,
         message: 'Error validating ticket. Please try again.',
-      });
+      };
+      setTicketInfo(errorResult);
+      
+      playErrorSound();
+      triggerHaptic('error');
     } finally {
       setLoading(false);
     }
@@ -243,7 +397,7 @@ export default function TicketScanner() {
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (manualRef.trim()) {
-      handleScan(manualRef.trim());
+      handleScan(manualRef.trim(), 'manual');
       setManualRef('');
     }
   };
@@ -252,6 +406,14 @@ export default function TicketScanner() {
     setTicketInfo(null);
     setManualRef('');
     setCameraError(null);
+  };
+
+  const getScanTypeIcon = (type: 'qr' | 'barcode' | 'manual') => {
+    switch (type) {
+      case 'qr': return <QrCode className="h-3 w-3" />;
+      case 'barcode': return <Barcode className="h-3 w-3" />;
+      default: return <Hash className="h-3 w-3" />;
+    }
   };
 
   return (
@@ -265,7 +427,7 @@ export default function TicketScanner() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Ticket Scanner</h1>
           <p className="text-muted-foreground mt-1">
-            Scan QR codes or enter booking references
+            Scan QR codes, barcodes, or enter booking references
           </p>
         </div>
 
@@ -291,8 +453,16 @@ export default function TicketScanner() {
                         <div>
                           <p className="font-medium">Camera Scanner</p>
                           <p className="text-sm text-muted-foreground">
-                            Point your camera at the ticket QR code
+                            Supports QR codes and barcodes
                           </p>
+                          <div className="flex items-center justify-center gap-2 mt-2">
+                            <Badge variant="outline" className="gap-1">
+                              <QrCode className="h-3 w-3" /> QR
+                            </Badge>
+                            <Badge variant="outline" className="gap-1">
+                              <Barcode className="h-3 w-3" /> Barcode
+                            </Badge>
+                          </div>
                         </div>
                         <Button onClick={startScanner} size="lg" className="gap-2">
                           <Camera className="h-5 w-5" />
@@ -531,6 +701,70 @@ export default function TicketScanner() {
                 </Button>
               </div>
             </div>
+          )}
+
+          {/* Scan History */}
+          {scanHistory.length > 0 && !loading && (
+            <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+              <Card>
+                <CollapsibleTrigger asChild>
+                  <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <History className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">Recent Scans</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {scanHistory.length}
+                      </Badge>
+                    </div>
+                    {historyOpen ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="border-t">
+                    {scanHistory.map((item, index) => (
+                      <div 
+                        key={item.id}
+                        className={cn(
+                          "px-4 py-3 flex items-center gap-3",
+                          index !== scanHistory.length - 1 && "border-b"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                          item.isValid ? "bg-green-500/10" : "bg-destructive/10"
+                        )}>
+                          {item.isValid ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-destructive" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm font-medium">
+                              {item.reference}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {getScanTypeIcon(item.scanType)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {item.customerName} • {item.movieTitle}
+                          </p>
+                        </div>
+                        <div className="text-xs text-muted-foreground text-right shrink-0">
+                          {format(item.timestamp, 'h:mm a')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           )}
         </div>
       </div>
