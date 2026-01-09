@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CinemaHeader } from '@/components/public/CinemaHeader';
 import { Film, MapPin, Phone, Mail, ArrowLeft, Heart, Star, Users, Target } from 'lucide-react';
 
 interface CinemaData {
@@ -76,33 +77,13 @@ export default function CinemaAbout() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
-      {/* Header */}
-      <header className="border-b border-white/10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to={`/cinema/${slug}`} className="flex items-center gap-3">
-              {cinema.logo_url ? (
-                <img src={cinema.logo_url} alt={cinema.name} className="h-10 w-auto" />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-8 h-8 rotate-45"
-                    style={{ backgroundColor: cinema.primary_color }}
-                  />
-                  <span className="text-xl font-bold text-white">{cinema.name}</span>
-                </div>
-              )}
-            </Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to={`/cinema/${slug}`} className="text-white/70 hover:text-white text-sm transition-colors">HOME</Link>
-              <Link to={`/cinema/${slug}#movies`} className="text-white/70 hover:text-white text-sm transition-colors">MOVIES</Link>
-              <Link to={`/cinema/${slug}/about`} className="text-white text-sm font-medium">ABOUT</Link>
-              <Link to={`/cinema/${slug}/careers`} className="text-white/70 hover:text-white text-sm transition-colors">CAREERS</Link>
-              <Link to={`/cinema/${slug}/contact`} className="text-white/70 hover:text-white text-sm transition-colors">CONTACT</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <CinemaHeader
+        slug={slug!}
+        cinemaName={cinema.name}
+        logoUrl={cinema.logo_url}
+        primaryColor={cinema.primary_color}
+        currentPage="about"
+      />
 
       {/* Hero Section */}
       <section className="py-20 border-b border-white/10">

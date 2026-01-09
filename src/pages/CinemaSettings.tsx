@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, Building2, Palette, Save, Globe, CreditCard, Share2, Search, CheckCircle, XCircle, AlertTriangle, Copy, ExternalLink } from 'lucide-react';
+import { Loader2, Upload, Building2, Palette, Save, Globe, CreditCard, Share2, Search, CheckCircle, XCircle, AlertTriangle, Copy, ExternalLink, FileText, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { AboutPageSettings } from '@/components/settings/AboutPageSettings';
+import { JobListingsSettings } from '@/components/settings/JobListingsSettings';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -293,9 +295,11 @@ export default function CinemaSettings() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Tabs defaultValue="branding" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="branding">Branding</TabsTrigger>
               <TabsTrigger value="website">Website</TabsTrigger>
+              <TabsTrigger value="about">About Page</TabsTrigger>
+              <TabsTrigger value="jobs">Job Listings</TabsTrigger>
               <TabsTrigger value="social">Social</TabsTrigger>
               <TabsTrigger value="seo">SEO</TabsTrigger>
               <TabsTrigger value="payments">Payments</TabsTrigger>
@@ -706,6 +710,16 @@ export default function CinemaSettings() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* About Page Tab */}
+            <TabsContent value="about">
+              <AboutPageSettings organization={organization as any} />
+            </TabsContent>
+
+            {/* Job Listings Tab */}
+            <TabsContent value="jobs">
+              <JobListingsSettings organizationId={organization.id} />
             </TabsContent>
 
             {/* Social Tab */}
