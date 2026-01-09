@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Mail, FileText, Save, RotateCcw, Eye, Code, Blocks, Ticket, Bell } from "lucide-react";
+import { Mail, FileText, Save, RotateCcw, Eye, Code, Blocks, Ticket, Bell, Send, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -118,6 +118,11 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; html_body: string; de
   <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
     <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">🎬 Booking Confirmed!</h1>
     <p style="color: #f5f5f0; font-size: 16px; text-align: center;">Hi {{customer_name}}, your booking is confirmed!</p>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+      <p style="color: #D4AF37; font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase;">Your Ticket QR Code</p>
+      <img src="{{qr_code_url}}" alt="Booking QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border-radius: 8px; background: white; padding: 10px;" />
+      <p style="color: #888; font-size: 12px; margin: 15px 0 0 0;">Scan this code at the entrance</p>
+    </div>
     <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="color: #D4AF37; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">Booking Reference</p>
       <p style="color: #f5f5f0; font-size: 28px; font-weight: bold; margin: 0; font-family: monospace; letter-spacing: 2px;">{{booking_reference}}</p>
@@ -132,7 +137,7 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; html_body: string; de
         <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Total Paid</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #22c55e; font-size: 18px; text-align: right; font-weight: bold;">{{total_amount}}</td></tr>
       </table>
     </div>
-    <p style="color: #888; font-size: 14px; text-align: center; line-height: 1.6;">Please arrive at least 15 minutes before the showtime. Present your booking reference at the entrance.</p>
+    <p style="color: #888; font-size: 14px; text-align: center; line-height: 1.6;">Please arrive at least 15 minutes before the showtime. Present your QR code at the entrance.</p>
     <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
     <p style="color: #666; font-size: 12px; text-align: center;">Thank you for booking with {{cinema_name}}. Enjoy your movie!</p>
   </div>
@@ -141,15 +146,17 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; html_body: string; de
     defaultBlocks: [
       { id: "1", type: "heading", content: "🎬 Booking Confirmed!", styles: { color: "#D4AF37", textAlign: "center", fontSize: "28px" } },
       { id: "2", type: "text", content: "Hi {{customer_name}}, your booking is confirmed!", styles: { color: "#f5f5f0", fontSize: "16px", textAlign: "center" } },
-      { id: "3", type: "heading", content: "{{booking_reference}}", styles: { color: "#f5f5f0", textAlign: "center", fontSize: "24px" } },
-      { id: "4", type: "table-row", content: "", styles: {}, tableData: [{ label: "Cinema", value: "{{cinema_name}}" }] },
-      { id: "5", type: "table-row", content: "", styles: {}, tableData: [{ label: "Movie", value: "{{movie_title}}" }] },
-      { id: "6", type: "table-row", content: "", styles: {}, tableData: [{ label: "Date & Time", value: "{{showtime}}" }] },
-      { id: "7", type: "table-row", content: "", styles: {}, tableData: [{ label: "Screen", value: "{{screen_name}}" }] },
-      { id: "8", type: "table-row", content: "", styles: {}, tableData: [{ label: "Seats", value: "{{seats}}" }] },
-      { id: "9", type: "table-row", content: "", styles: {}, tableData: [{ label: "Total Paid", value: "{{total_amount}}" }] },
-      { id: "10", type: "divider", content: "", styles: {} },
-      { id: "11", type: "text", content: "Please arrive at least 15 minutes before the showtime. Present your booking reference at the entrance.", styles: { color: "#888888", fontSize: "14px", textAlign: "center" } },
+      { id: "3", type: "image", content: "{{qr_code_url}}", styles: { textAlign: "center" } },
+      { id: "4", type: "text", content: "Scan this QR code at the entrance", styles: { color: "#888888", fontSize: "12px", textAlign: "center" } },
+      { id: "5", type: "heading", content: "{{booking_reference}}", styles: { color: "#f5f5f0", textAlign: "center", fontSize: "24px" } },
+      { id: "6", type: "table-row", content: "", styles: {}, tableData: [{ label: "Cinema", value: "{{cinema_name}}" }] },
+      { id: "7", type: "table-row", content: "", styles: {}, tableData: [{ label: "Movie", value: "{{movie_title}}" }] },
+      { id: "8", type: "table-row", content: "", styles: {}, tableData: [{ label: "Date & Time", value: "{{showtime}}" }] },
+      { id: "9", type: "table-row", content: "", styles: {}, tableData: [{ label: "Screen", value: "{{screen_name}}" }] },
+      { id: "10", type: "table-row", content: "", styles: {}, tableData: [{ label: "Seats", value: "{{seats}}" }] },
+      { id: "11", type: "table-row", content: "", styles: {}, tableData: [{ label: "Total Paid", value: "{{total_amount}}" }] },
+      { id: "12", type: "divider", content: "", styles: {} },
+      { id: "13", type: "text", content: "Please arrive at least 15 minutes before the showtime. Present your QR code at the entrance.", styles: { color: "#888888", fontSize: "14px", textAlign: "center" } },
     ],
   },
   showtime_reminder: {
@@ -223,7 +230,7 @@ const TEMPLATE_INFO: Record<string, { name: string; description: string; icon: a
     name: "Booking Confirmation",
     description: "Sent to customers when their booking is confirmed",
     icon: Ticket,
-    variables: ["{{customer_name}}", "{{booking_reference}}", "{{movie_title}}", "{{showtime}}", "{{screen_name}}", "{{seats}}", "{{total_amount}}", "{{cinema_name}}"],
+    variables: ["{{customer_name}}", "{{booking_reference}}", "{{movie_title}}", "{{showtime}}", "{{screen_name}}", "{{seats}}", "{{total_amount}}", "{{cinema_name}}", "{{qr_code_url}}"],
   },
   showtime_reminder: {
     name: "Showtime Reminder",
@@ -241,7 +248,7 @@ export default function EmailTemplatesSettings() {
   const [blocks, setBlocks] = useState<Record<string, EmailBlock[]>>({});
   const [editorMode, setEditorMode] = useState<Record<string, "visual" | "code">>({});
   const [previewHtml, setPreviewHtml] = useState("");
-
+  const [sendingTest, setSendingTest] = useState<string | null>(null);
   const { data: organization } = useQuery({
     queryKey: ["organization", user?.id],
     queryFn: async () => {
@@ -383,38 +390,81 @@ export default function EmailTemplatesSettings() {
     toast.info("Template reset to default");
   };
 
+  const getSampleData = (): Record<string, string> => ({
+    "{{applicant_name}}": "John Doe",
+    "{{job_title}}": "Cinema Attendant",
+    "{{department}}": "Operations",
+    "{{cinema_name}}": organization?.name || "Cinema Name",
+    "{{sender_name}}": "Jane Smith",
+    "{{sender_email}}": "jane@example.com",
+    "{{subject}}": "Question about showtimes",
+    "{{message}}": "Hello, I wanted to ask about the showtimes for this weekend.",
+    "{{customer_name}}": "John Doe",
+    "{{booking_reference}}": "ABC12345",
+    "{{movie_title}}": "Interstellar",
+    "{{showtime}}": "Saturday, Jan 15, 2025 at 7:30 PM",
+    "{{showtime_date}}": "Saturday, January 15, 2025",
+    "{{showtime_time}}": "7:30 PM",
+    "{{screen_name}}": "Screen 1",
+    "{{seats}}": "A1, A2, A3",
+    "{{total_amount}}": "$45.00",
+    "{{hours_until}}": "2",
+    "{{cinema_address}}": organization?.address || "123 Main St, City, State 12345",
+    "{{qr_code_url}}": "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=TEST-ABC12345",
+  });
+
   const generatePreview = (type: string) => {
     let html = editorMode[type] === "visual" 
       ? blocksToHtml(blocks[type] || [])
       : templates[type]?.html_body || "";
       
-    const sampleData: Record<string, string> = {
-      "{{applicant_name}}": "John Doe",
-      "{{job_title}}": "Cinema Attendant",
-      "{{department}}": "Operations",
-      "{{cinema_name}}": organization?.name || "Cinema Name",
-      "{{sender_name}}": "Jane Smith",
-      "{{sender_email}}": "jane@example.com",
-      "{{subject}}": "Question about showtimes",
-      "{{message}}": "Hello, I wanted to ask about the showtimes for this weekend.",
-      "{{customer_name}}": "John Doe",
-      "{{booking_reference}}": "ABC12345",
-      "{{movie_title}}": "Interstellar",
-      "{{showtime}}": "Saturday, Jan 15, 2025 at 7:30 PM",
-      "{{showtime_date}}": "Saturday, January 15, 2025",
-      "{{showtime_time}}": "7:30 PM",
-      "{{screen_name}}": "Screen 1",
-      "{{seats}}": "A1, A2, A3",
-      "{{total_amount}}": "$45.00",
-      "{{hours_until}}": "2",
-      "{{cinema_address}}": "123 Main St, City, State 12345",
-    };
+    const sampleData = getSampleData();
 
     Object.entries(sampleData).forEach(([key, value]) => {
       html = html.replace(new RegExp(key.replace(/[{}]/g, "\\$&"), "g"), value);
     });
 
     setPreviewHtml(html);
+  };
+
+  const handleSendTestEmail = async (type: string) => {
+    if (!user?.email) {
+      toast.error("No email address found for your account");
+      return;
+    }
+
+    setSendingTest(type);
+    
+    try {
+      let html = editorMode[type] === "visual" 
+        ? blocksToHtml(blocks[type] || [])
+        : templates[type]?.html_body || "";
+      
+      let subject = templates[type]?.subject || "";
+      const sampleData = getSampleData();
+
+      Object.entries(sampleData).forEach(([key, value]) => {
+        html = html.replace(new RegExp(key.replace(/[{}]/g, "\\$&"), "g"), value);
+        subject = subject.replace(new RegExp(key.replace(/[{}]/g, "\\$&"), "g"), value);
+      });
+
+      const { error } = await supabase.functions.invoke("send-test-email", {
+        body: {
+          to: user.email,
+          subject: `[TEST] ${subject}`,
+          html,
+        },
+      });
+
+      if (error) throw error;
+      
+      toast.success(`Test email sent to ${user.email}`);
+    } catch (error: any) {
+      console.error("Failed to send test email:", error);
+      toast.error("Failed to send test email: " + error.message);
+    } finally {
+      setSendingTest(null);
+    }
   };
 
   const toggleEditorMode = (type: string) => {
@@ -555,7 +605,7 @@ export default function EmailTemplatesSettings() {
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-2 justify-end flex-wrap">
                 <Button variant="outline" onClick={() => handleReset(type)}>
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Reset
@@ -577,6 +627,18 @@ export default function EmailTemplatesSettings() {
                     />
                   </DialogContent>
                 </Dialog>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleSendTestEmail(type)}
+                  disabled={sendingTest === type}
+                >
+                  {sendingTest === type ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  {sendingTest === type ? "Sending..." : "Send Test"}
+                </Button>
                 <Button onClick={() => handleSave(type)} disabled={saveMutation.isPending}>
                   <Save className="h-4 w-4 mr-2" />
                   {saveMutation.isPending ? "Saving..." : "Save Template"}
