@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.validate-payment-keys]
 verify_jwt = false
+
+[functions.verify-domain]
+verify_jwt = false
