@@ -6,32 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface BookingWithDetails {
-  id: string;
-  booking_reference: string;
-  customer_name: string;
-  customer_email: string;
-  total_amount: number;
-  reminder_sent: boolean;
-  showtimes: {
-    id: string;
-    start_time: string;
-    screens: {
-      name: string;
-    };
-    movies: {
-      title: string;
-      poster_url: string;
-    };
-    organizations: {
-      name: string;
-      address: string;
-    };
-  };
-  booked_seats: {
-    seat_label: string;
-  }[];
-}
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-showtime-reminder function called");
@@ -96,6 +70,10 @@ const handler = async (req: Request): Promise<Response> => {
       const booking = rawBooking as any;
       try {
         const showtime = Array.isArray(booking.showtimes) ? booking.showtimes[0] : booking.showtimes;
+        const screen = Array.isArray(showtime.screens) ? showtime.screens[0] : showtime.screens;
+        const movie = Array.isArray(showtime.movies) ? showtime.movies[0] : showtime.movies;
+        const org = Array.isArray(showtime.organizations) ? showtime.organizations[0] : showtime.organizations;
+        
         const showtimeDate = new Date(showtime.start_time);
         const formattedDate = showtimeDate.toLocaleDateString("en-US", {
           weekday: "long",
@@ -124,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
               },
             },
           ],
-          subject: `⏰ Reminder: ${showtime.movies.title} starts in ${hoursUntil} hours!`,
+          subject: `⏰ Reminder: ${movie.title} starts in ${hoursUntil} hours!`,
           htmlbody: `
             <!DOCTYPE html>
             <html>
@@ -150,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
                   <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                       <td style="padding: 10px 0; color: #888; font-size: 14px;">Movie</td>
-                      <td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">${showtime.movies.title}</td>
+                      <td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">${movie.title}</td>
                     </tr>
                     <tr>
                       <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date</td>
@@ -162,7 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
                     </tr>
                     <tr>
                       <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td>
-                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">${showtime.screens.name}</td>
+                      <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">${screen.name}</td>
                     </tr>
                     <tr>
                       <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td>
@@ -173,8 +151,8 @@ const handler = async (req: Request): Promise<Response> => {
 
                 <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                   <p style="color: #888; font-size: 14px; margin: 0 0 5px 0;">📍 Location</p>
-                  <p style="color: #f5f5f0; font-size: 16px; margin: 0; font-weight: bold;">${showtime.organizations.name}</p>
-                  <p style="color: #888; font-size: 14px; margin: 5px 0 0 0;">${showtime.organizations.address || 'Address not available'}</p>
+                  <p style="color: #f5f5f0; font-size: 16px; margin: 0; font-weight: bold;">${org.name}</p>
+                  <p style="color: #888; font-size: 14px; margin: 5px 0 0 0;">${org.address || 'Address not available'}</p>
                 </div>
                 
                 <div style="background-color: #D4AF37; border-radius: 8px; padding: 20px; margin-bottom: 20px;">

@@ -155,6 +155,7 @@ export type Database = {
           id: string
           organization_id: string
           promo_code_id: string | null
+          reminder_sent: boolean
           showtime_id: string
           status: string
           total_amount: number
@@ -170,6 +171,7 @@ export type Database = {
           id?: string
           organization_id: string
           promo_code_id?: string | null
+          reminder_sent?: boolean
           showtime_id: string
           status?: string
           total_amount: number
@@ -185,6 +187,7 @@ export type Database = {
           id?: string
           organization_id?: string
           promo_code_id?: string | null
+          reminder_sent?: boolean
           showtime_id?: string
           status?: string
           total_amount?: number
