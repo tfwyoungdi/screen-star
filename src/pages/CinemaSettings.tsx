@@ -484,7 +484,7 @@ export default function CinemaSettings() {
                     <p className="text-sm font-medium">Current URLs:</p>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">Default</Badge>
+                        <Badge variant="outline" className="text-xs">Public</Badge>
                         <code className="text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
                           {window.location.origin}/cinema/{organization.slug}
                         </code>
@@ -495,6 +495,28 @@ export default function CinemaSettings() {
                           onClick={() => copyToClipboard(`${window.location.origin}/cinema/${organization.slug}`)}
                         >
                           <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">Staff Portal</Badge>
+                        <code className="text-sm text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">
+                          {window.location.origin}/cinema/{organization.slug}/staff
+                        </code>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(`${window.location.origin}/cinema/${organization.slug}/staff`)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => window.open(`${window.location.origin}/cinema/${organization.slug}/staff`, '_blank')}
+                        >
+                          <ExternalLink className="h-3 w-3" />
                         </Button>
                       </div>
                       {watch('custom_domain') && (
@@ -509,6 +531,9 @@ export default function CinemaSettings() {
                         </div>
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      💡 Share the Staff Portal URL with your team. It's a private, secure login page not linked from public pages.
+                    </p>
                   </div>
 
                   {watch('custom_domain') && !domainVerification?.verified && (

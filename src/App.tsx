@@ -37,6 +37,7 @@ import GateStaff from "./pages/GateStaff";
 import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
+import StaffLogin from "./pages/StaffLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/cinema/:slug/contact" element={<CinemaContact />} />
               <Route path="/cinema/:slug/booking" element={<CinemaBooking />} />
               <Route path="/cinema/:slug/book" element={<BookingFlow />} />
+              <Route path="/cinema/:slug/staff" element={<StaffLogin />} />
               <Route
                 path="/dashboard"
                 element={
