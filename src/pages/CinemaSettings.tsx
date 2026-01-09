@@ -54,6 +54,14 @@ export default function CinemaSettings() {
   const [uploading, setUploading] = useState(false);
   const [validatingKeys, setValidatingKeys] = useState(false);
   const [keyValidation, setKeyValidation] = useState<{ valid: boolean; message: string; isTestMode?: boolean } | null>(null);
+  const [verifyingDomain, setVerifyingDomain] = useState(false);
+  const [domainVerification, setDomainVerification] = useState<{ 
+    verified: boolean; 
+    status: string; 
+    message: string; 
+    details: string;
+    records?: { cname: string[]; a: string[] };
+  } | null>(null);
   const queryClient = useQueryClient();
 
   const webhookUrl = `https://immqqxnblovkdvokfbef.supabase.co/functions/v1/payment-webhook`;
@@ -163,6 +171,45 @@ export default function CinemaSettings() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard');
+  };
+
+  const verifyDomain = async () => {
+    const domain = watch('custom_domain');
+    
+    if (!domain) {
+      toast.error('Please enter a domain first');
+      return;
+    }
+
+    setVerifyingDomain(true);
+    setDomainVerification(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-domain', {
+        body: { domain },
+      });
+
+      if (error) throw error;
+
+      setDomainVerification(data);
+      
+      if (data.verified) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error: any) {
+      console.error('Domain verification error:', error);
+      toast.error('Failed to verify domain');
+      setDomainVerification({ 
+        verified: false, 
+        status: 'error',
+        message: 'Verification failed',
+        details: error.message || 'Unknown error'
+      });
+    } finally {
+      setVerifyingDomain(false);
+    }
   };
 
   const onSubmit = async (data: CinemaSettingsData) => {
@@ -326,12 +373,63 @@ export default function CinemaSettings() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="custom_domain">Your Domain</Label>
-                    <Input
-                      id="custom_domain"
-                      placeholder="booking.yourcinema.com"
-                      {...register('custom_domain')}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="custom_domain"
+                        placeholder="booking.yourcinema.com"
+                        {...register('custom_domain')}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={verifyDomain}
+                        disabled={verifyingDomain || !watch('custom_domain')}
+                      >
+                        {verifyingDomain ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Search className="h-4 w-4 mr-2" />
+                        )}
+                        Verify DNS
+                      </Button>
+                    </div>
                   </div>
+
+                  {/* Verification Status */}
+                  {domainVerification && (
+                    <div className={`rounded-lg border p-4 ${
+                      domainVerification.verified 
+                        ? 'border-green-500/50 bg-green-500/10' 
+                        : 'border-yellow-500/50 bg-yellow-500/10'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {domainVerification.verified ? (
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                        ) : (
+                          <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                        )}
+                        <div className="flex-1 space-y-1">
+                          <p className={`font-medium ${domainVerification.verified ? 'text-green-600' : 'text-yellow-600'}`}>
+                            {domainVerification.message}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {domainVerification.details}
+                          </p>
+                          {domainVerification.records && (domainVerification.records.cname.length > 0 || domainVerification.records.a.length > 0) && (
+                            <div className="mt-2 text-xs font-mono bg-muted/50 rounded p-2">
+                              {domainVerification.records.cname.length > 0 && (
+                                <div>CNAME: {domainVerification.records.cname.join(', ')}</div>
+                              )}
+                              {domainVerification.records.a.length > 0 && (
+                                <div>A: {domainVerification.records.a.join(', ')}</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
                     <p className="text-sm font-medium">Current URLs:</p>
@@ -356,12 +454,15 @@ export default function CinemaSettings() {
                           <code className="text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
                             {watch('custom_domain')}
                           </code>
+                          {domainVerification?.verified && (
+                            <Badge className="bg-green-500/20 text-green-600 text-xs">Verified</Badge>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {watch('custom_domain') && (
+                  {watch('custom_domain') && !domainVerification?.verified && (
                     <Alert>
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription className="space-y-3">
@@ -380,7 +481,7 @@ export default function CinemaSettings() {
                           </div>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          DNS changes can take up to 48 hours to propagate. Contact support if you need help.
+                          DNS changes can take up to 48 hours to propagate. Click "Verify DNS" to check your configuration.
                         </p>
                       </AlertDescription>
                     </Alert>
