@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
-import { Loader2, DollarSign, Ticket, TrendingUp, Calendar, Film, Users, Download, FileText } from 'lucide-react';
+import { Loader2, DollarSign, Ticket, TrendingUp, Calendar, Film, Users, Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,6 +11,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useExportReports } from '@/hooks/useExportReports';
+import { DataRefreshIndicator } from '@/components/dashboard/DataRefreshIndicator';
 import {
   BarChart,
   Bar,
@@ -27,17 +28,20 @@ import {
 } from 'recharts';
 
 const COLORS = ['hsl(38, 95%, 55%)', 'hsl(0, 70%, 50%)', 'hsl(200, 70%, 50%)', 'hsl(280, 65%, 60%)'];
+const ITEMS_PER_PAGE = 10;
 
 export default function SalesDashboard() {
   const { data: profile } = useUserProfile();
   const { exportToCSV, exportToPDF } = useExportReports();
   const [dateRange, setDateRange] = useState('7');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const startDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
   const endDate = endOfDay(new Date());
 
   // Fetch bookings for analytics
-  const { data: bookings, isLoading: bookingsLoading } = useQuery({
+  const { data: bookings, isLoading: bookingsLoading, isRefetching, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['sales-bookings', profile?.organization_id, dateRange],
     queryFn: async () => {
       if (!profile?.organization_id) return [];
@@ -57,6 +61,7 @@ export default function SalesDashboard() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      setLastUpdated(new Date());
       return data;
     },
     enabled: !!profile?.organization_id,
@@ -83,11 +88,24 @@ export default function SalesDashboard() {
     enabled: !!bookings && bookings.length > 0,
   });
 
+  // Reset to page 1 when date range changes
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [dateRange]);
+
   // Calculate metrics
   const totalRevenue = bookings?.reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
   const totalTickets = bookedSeats?.length || 0;
   const totalBookings = bookings?.length || 0;
   const avgOrderValue = totalBookings > 0 ? totalRevenue / totalBookings : 0;
+
+  // Pagination calculations
+  const totalPages = Math.ceil(totalBookings / ITEMS_PER_PAGE);
+  const paginatedBookings = useMemo(() => {
+    if (!bookings) return [];
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return bookings.slice(start, start + ITEMS_PER_PAGE);
+  }, [bookings, currentPage]);
 
   // Revenue by day
   const revenueByDay = bookings?.reduce((acc, booking) => {
@@ -125,15 +143,16 @@ export default function SalesDashboard() {
     value,
   }));
 
-  // Recent bookings
-  const recentBookings = bookings?.slice(0, 10) || [];
-
   const isLoading = bookingsLoading;
+
+  const handleRefresh = () => {
+    refetch();
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Sales Dashboard</h1>
             <p className="text-muted-foreground">
@@ -141,7 +160,12 @@ export default function SalesDashboard() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <DataRefreshIndicator
+              lastUpdated={lastUpdated}
+              isRefetching={isRefetching}
+              onRefresh={handleRefresh}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -374,25 +398,56 @@ export default function SalesDashboard() {
                 </CardContent>
               </Card>
 
-              {/* Recent Bookings */}
+              {/* Paginated Bookings */}
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Recent Bookings</CardTitle>
-                  <CardDescription>Latest ticket purchases</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>All Bookings</CardTitle>
+                      <CardDescription>
+                        Showing {paginatedBookings.length} of {totalBookings} bookings
+                      </CardDescription>
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  {recentBookings.length > 0 ? (
+                  {paginatedBookings.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Reference</TableHead>
                           <TableHead>Customer</TableHead>
                           <TableHead>Movie</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {recentBookings.map((booking) => (
+                        {paginatedBookings.map((booking) => (
                           <TableRow key={booking.id}>
                             <TableCell>
                               <Badge variant="outline" className="font-mono">
@@ -402,6 +457,23 @@ export default function SalesDashboard() {
                             <TableCell>{booking.customer_name}</TableCell>
                             <TableCell className="max-w-[150px] truncate">
                               {booking.showtimes?.movies?.title || '-'}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {format(new Date(booking.created_at), 'MMM d, h:mm a')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  booking.status === 'paid' || booking.status === 'completed'
+                                    ? 'default'
+                                    : booking.status === 'cancelled'
+                                    ? 'destructive'
+                                    : 'secondary'
+                                }
+                                className="capitalize"
+                              >
+                                {booking.status}
+                              </Badge>
                             </TableCell>
                             <TableCell className="text-right font-medium">
                               ${Number(booking.total_amount).toFixed(2)}
