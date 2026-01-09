@@ -61,6 +61,7 @@ export default function CinemaSettings() {
     message: string; 
     details: string;
     records?: { cname: string[]; a: string[] };
+    ssl?: { valid: boolean; issuer?: string; error?: string };
   } | null>(null);
   const queryClient = useQueryClient();
 
@@ -398,36 +399,71 @@ export default function CinemaSettings() {
 
                   {/* Verification Status */}
                   {domainVerification && (
-                    <div className={`rounded-lg border p-4 ${
-                      domainVerification.verified 
-                        ? 'border-green-500/50 bg-green-500/10' 
-                        : 'border-yellow-500/50 bg-yellow-500/10'
-                    }`}>
-                      <div className="flex items-start gap-3">
-                        {domainVerification.verified ? (
-                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                        ) : (
-                          <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
-                        )}
-                        <div className="flex-1 space-y-1">
-                          <p className={`font-medium ${domainVerification.verified ? 'text-green-600' : 'text-yellow-600'}`}>
-                            {domainVerification.message}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {domainVerification.details}
-                          </p>
-                          {domainVerification.records && (domainVerification.records.cname.length > 0 || domainVerification.records.a.length > 0) && (
-                            <div className="mt-2 text-xs font-mono bg-muted/50 rounded p-2">
-                              {domainVerification.records.cname.length > 0 && (
-                                <div>CNAME: {domainVerification.records.cname.join(', ')}</div>
-                              )}
-                              {domainVerification.records.a.length > 0 && (
-                                <div>A: {domainVerification.records.a.join(', ')}</div>
-                              )}
-                            </div>
+                    <div className="space-y-3">
+                      {/* DNS Status */}
+                      <div className={`rounded-lg border p-4 ${
+                        domainVerification.verified 
+                          ? 'border-green-500/50 bg-green-500/10' 
+                          : 'border-yellow-500/50 bg-yellow-500/10'
+                      }`}>
+                        <div className="flex items-start gap-3">
+                          {domainVerification.verified ? (
+                            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                          ) : (
+                            <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
                           )}
+                          <div className="flex-1 space-y-1">
+                            <p className={`font-medium ${domainVerification.verified ? 'text-green-600' : 'text-yellow-600'}`}>
+                              DNS: {domainVerification.message}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {domainVerification.details}
+                            </p>
+                            {domainVerification.records && (domainVerification.records.cname.length > 0 || domainVerification.records.a.length > 0) && (
+                              <div className="mt-2 text-xs font-mono bg-muted/50 rounded p-2">
+                                {domainVerification.records.cname.length > 0 && (
+                                  <div>CNAME: {domainVerification.records.cname.join(', ')}</div>
+                                )}
+                                {domainVerification.records.a.length > 0 && (
+                                  <div>A: {domainVerification.records.a.join(', ')}</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
+
+                      {/* SSL Status */}
+                      {domainVerification.ssl && (
+                        <div className={`rounded-lg border p-4 ${
+                          domainVerification.ssl.valid 
+                            ? 'border-green-500/50 bg-green-500/10' 
+                            : 'border-orange-500/50 bg-orange-500/10'
+                        }`}>
+                          <div className="flex items-start gap-3">
+                            {domainVerification.ssl.valid ? (
+                              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                            ) : (
+                              <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5" />
+                            )}
+                            <div className="flex-1 space-y-1">
+                              <p className={`font-medium ${domainVerification.ssl.valid ? 'text-green-600' : 'text-orange-600'}`}>
+                                SSL/HTTPS: {domainVerification.ssl.valid ? 'Certificate Valid' : 'Not Ready'}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {domainVerification.ssl.valid 
+                                  ? 'Your domain is secured with HTTPS. Visitors will see a secure padlock icon.'
+                                  : domainVerification.ssl.error || 'SSL certificate is not yet configured. This may take up to 24 hours after DNS is verified.'}
+                              </p>
+                              {domainVerification.ssl.valid && domainVerification.ssl.issuer && (
+                                <div className="mt-2 text-xs font-mono bg-muted/50 rounded p-2">
+                                  Issuer: {domainVerification.ssl.issuer}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   
