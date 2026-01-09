@@ -672,8 +672,8 @@ export default function CinemaBooking() {
             </div>
 
             {/* Seat Grid */}
-            <div className="flex-1 overflow-auto py-4">
-              <div className="flex flex-col items-center gap-1.5">
+            <div className="flex-1 overflow-x-auto overflow-y-auto py-4 scrollbar-hide">
+              <div className="flex flex-col items-center gap-1.5 min-w-max px-4">
                 {Array.from({ length: selectedShowtime.screens.rows }, (_, i) => {
                   // In "All Seats", render front → back (VIP stays at the back/bottom).
                   // In filtered views, render back → front (so VIP rows appear first).
