@@ -31,6 +31,7 @@ import CinemaAbout from "./pages/CinemaAbout";
 import CinemaCareers from "./pages/CinemaCareers";
 import CinemaContact from "./pages/CinemaContact";
 import ContactSubmissions from "./pages/ContactSubmissions";
+import JobApplications from "./pages/JobApplications";
 import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
@@ -163,6 +164,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['cinema_admin', 'manager']}>
                     <ContactSubmissions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/applications"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager']}>
+                    <JobApplications />
                   </ProtectedRoute>
                 }
               />

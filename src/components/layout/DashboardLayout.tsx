@@ -34,6 +34,7 @@ import {
   ExternalLink,
   Popcorn,
   Mail,
+  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +49,7 @@ const navItems = [
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
   { title: 'Messages', url: '/messages', icon: Mail },
+  { title: 'Applications', url: '/applications', icon: Briefcase },
   { title: 'Scanner', url: '/scanner', icon: QrCode },
   { title: 'Staff', url: '/staff', icon: Users },
   { title: 'Settings', url: '/settings', icon: Settings },
@@ -115,7 +117,7 @@ function SidebarContentWrapper() {
             )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5 px-2">
-                {navItems.slice(0, 9).map((item) => {
+                {navItems.slice(0, 10).map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
@@ -156,7 +158,7 @@ function SidebarContentWrapper() {
             )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5 px-2">
-                {navItems.slice(9).map((item) => {
+                {navItems.slice(10).map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>

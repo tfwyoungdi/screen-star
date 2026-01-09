@@ -174,6 +174,43 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       }
 
+      case 'nomba': {
+        // Nomba payment integration
+        const txRef = `CIN-${bookingReference}-${Date.now()}`;
+        
+        const response = await fetch("https://api.nomba.com/v1/checkout/order", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${secretKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            order_reference: txRef,
+            amount: amount,
+            currency: currency || "NGN",
+            callback_url: `${returnUrl}?status=callback&ref=${bookingReference}`,
+            customer_email: customerEmail,
+            customer_name: customerName,
+            description: `Movie Tickets - ${bookingReference}`,
+            metadata: {
+              booking_reference: bookingReference,
+              organization_id: organizationId,
+            },
+          }),
+        });
+
+        const result = await response.json();
+        
+        if (!result.data?.checkout_url) {
+          console.error("Nomba error:", result);
+          throw new Error(result.message || "Failed to initialize Nomba payment");
+        }
+
+        paymentUrl = result.data.checkout_url;
+        paymentReference = result.data.order_reference || txRef;
+        break;
+      }
+
       default:
         throw new Error(`Unsupported payment gateway: ${gateway}`);
     }
