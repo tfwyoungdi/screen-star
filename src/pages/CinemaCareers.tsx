@@ -221,6 +221,7 @@ export default function CinemaCareers() {
           onClose={() => setSelectedJob(null)}
           jobId={selectedJob.id}
           jobTitle={selectedJob.title}
+          department={selectedJob.department}
           organizationId={cinema.id}
           cinemaName={cinema.name}
           primaryColor={cinema.primary_color}

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,12 +7,79 @@ const corsHeaders = {
 };
 
 interface ContactNotificationRequest {
+  organizationId: string;
   cinemaName: string;
   adminEmail: string;
   senderName: string;
   senderEmail: string;
   subject: string;
   message: string;
+}
+
+const DEFAULT_SUBJECT = "New Contact Form Submission: {{subject}}";
+const DEFAULT_HTML_BODY = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: #D4AF37; margin: 0; font-size: 28px;">📬 New Contact Message</h1>
+    </div>
+    
+    <p style="color: #888; font-size: 14px; text-align: center; margin-bottom: 30px;">
+      You've received a new message from your cinema's contact form.
+    </p>
+    
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 10px 0; color: #888; font-size: 14px; width: 100px;">From</td>
+          <td style="padding: 10px 0; color: #f5f5f0; font-size: 14px;">{{sender_name}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Email</td>
+          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px;">
+            <a href="mailto:{{sender_email}}" style="color: #D4AF37; text-decoration: none;">{{sender_email}}</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Subject</td>
+          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; font-weight: bold;">{{subject}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <p style="color: #888; font-size: 12px; text-transform: uppercase; margin: 0 0 10px 0;">Message</p>
+      <p style="color: #f5f5f0; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{message}}</p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="mailto:{{sender_email}}?subject=Re: {{subject}}" 
+         style="display: inline-block; background-color: #D4AF37; color: #000; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+        Reply to {{sender_name}}
+      </a>
+    </div>
+    
+    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+    
+    <p style="color: #666; font-size: 12px; text-align: center;">
+      This notification was sent from the {{cinema_name}} contact form.
+    </p>
+  </div>
+</body>
+</html>`;
+
+function replaceVariables(template: string, variables: Record<string, string>): string {
+  let result = template;
+  Object.entries(variables).forEach(([key, value]) => {
+    const regex = new RegExp(`{{${key}}}`, "g");
+    result = result.replace(regex, value);
+  });
+  return result;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -23,6 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const {
+      organizationId,
       cinemaName,
       adminEmail,
       senderName,
@@ -38,6 +107,42 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("ZEPTOMAIL_API_KEY is not configured");
     }
 
+    // Initialize Supabase client to fetch custom template
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch custom template if exists
+    let emailSubject = DEFAULT_SUBJECT;
+    let htmlBody = DEFAULT_HTML_BODY;
+
+    const { data: template } = await supabase
+      .from("email_templates")
+      .select("subject, html_body, is_active")
+      .eq("organization_id", organizationId)
+      .eq("template_type", "contact_notification")
+      .single();
+
+    if (template && template.is_active) {
+      console.log("Using custom email template");
+      emailSubject = template.subject;
+      htmlBody = template.html_body;
+    } else {
+      console.log("Using default email template");
+    }
+
+    // Replace variables
+    const variables = {
+      sender_name: senderName,
+      sender_email: senderEmail,
+      subject: subject,
+      message: message,
+      cinema_name: cinemaName,
+    };
+
+    const finalSubject = replaceVariables(emailSubject, variables);
+    const finalHtmlBody = replaceVariables(htmlBody, variables);
+
     const emailBody = {
       from: {
         address: "noreply@cinetix.com",
@@ -51,64 +156,8 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
       ],
-      subject: `New Contact Form Submission: ${subject}`,
-      htmlbody: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #D4AF37; margin: 0; font-size: 28px;">📬 New Contact Message</h1>
-            </div>
-            
-            <p style="color: #888; font-size: 14px; text-align: center; margin-bottom: 30px;">
-              You've received a new message from your cinema's contact form.
-            </p>
-            
-            <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 10px 0; color: #888; font-size: 14px; width: 100px;">From</td>
-                  <td style="padding: 10px 0; color: #f5f5f0; font-size: 14px;">${senderName}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Email</td>
-                  <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px;">
-                    <a href="mailto:${senderEmail}" style="color: #D4AF37; text-decoration: none;">${senderEmail}</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Subject</td>
-                  <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; font-weight: bold;">${subject}</td>
-                </tr>
-              </table>
-            </div>
-            
-            <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-              <p style="color: #888; font-size: 12px; text-transform: uppercase; margin: 0 0 10px 0;">Message</p>
-              <p style="color: #f5f5f0; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${message}</p>
-            </div>
-            
-            <div style="text-align: center; margin-top: 30px;">
-              <a href="mailto:${senderEmail}?subject=Re: ${encodeURIComponent(subject)}" 
-                 style="display: inline-block; background-color: #D4AF37; color: #000; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold;">
-                Reply to ${senderName}
-              </a>
-            </div>
-            
-            <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
-            
-            <p style="color: #666; font-size: 12px; text-align: center;">
-              This notification was sent from the ${cinemaName} contact form.
-            </p>
-          </div>
-        </body>
-        </html>
-      `
+      subject: finalSubject,
+      htmlbody: finalHtmlBody
     };
 
     const response = await fetch("https://api.zeptomail.com/v1.1/email", {
