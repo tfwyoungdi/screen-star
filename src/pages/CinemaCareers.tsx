@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { CinemaHeader } from '@/components/public/CinemaHeader';
+import { JobApplicationForm } from '@/components/public/JobApplicationForm';
 import { Film, ArrowLeft, Briefcase, MapPin, Clock, Mail } from 'lucide-react';
 
 interface CinemaData {
@@ -38,6 +40,7 @@ const getDepartmentColor = (department: string) => {
 
 export default function CinemaCareers() {
   const { slug } = useParams<{ slug: string }>();
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   const { data: cinema, isLoading: cinemaLoading } = useQuery({
     queryKey: ['public-cinema-careers', slug],
@@ -166,17 +169,13 @@ export default function CinemaCareers() {
                           <p className="mt-3 text-sm text-white/50">{job.description}</p>
                         )}
                       </div>
-                      {cinema.contact_email && (
-                        <Button 
-                          asChild
-                          style={{ backgroundColor: cinema.primary_color }}
-                          className="hover:opacity-90 shrink-0"
-                        >
-                          <a href={`mailto:${cinema.contact_email}?subject=Application for ${job.title}`}>
-                            Apply Now
-                          </a>
-                        </Button>
-                      )}
+                      <Button 
+                        onClick={() => setSelectedJob(job)}
+                        style={{ backgroundColor: cinema.primary_color }}
+                        className="hover:opacity-90 shrink-0"
+                      >
+                        Apply Now
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -214,6 +213,18 @@ export default function CinemaCareers() {
           </p>
         </div>
       </footer>
+
+      {/* Application Form Modal */}
+      {selectedJob && (
+        <JobApplicationForm
+          isOpen={!!selectedJob}
+          onClose={() => setSelectedJob(null)}
+          jobId={selectedJob.id}
+          jobTitle={selectedJob.title}
+          organizationId={cinema.id}
+          primaryColor={cinema.primary_color}
+        />
+      )}
     </div>
   );
 }
