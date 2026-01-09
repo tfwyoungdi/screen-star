@@ -27,6 +27,9 @@ import CinemaBooking from "./pages/CinemaBooking";
 import CustomerManagement from "./pages/CustomerManagement";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import ConcessionManagement from "./pages/ConcessionManagement";
+import CinemaAbout from "./pages/CinemaAbout";
+import CinemaCareers from "./pages/CinemaCareers";
+import CinemaContact from "./pages/CinemaContact";
 import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
@@ -53,6 +56,9 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/accept-invitation" element={<AcceptInvitation />} />
               <Route path="/cinema/:slug" element={<PublicCinema />} />
+              <Route path="/cinema/:slug/about" element={<CinemaAbout />} />
+              <Route path="/cinema/:slug/careers" element={<CinemaCareers />} />
+              <Route path="/cinema/:slug/contact" element={<CinemaContact />} />
               <Route path="/cinema/:slug/booking" element={<CinemaBooking />} />
               <Route path="/cinema/:slug/book" element={<BookingFlow />} />
               <Route

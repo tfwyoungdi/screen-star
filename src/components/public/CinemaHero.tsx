@@ -106,9 +106,9 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
               <Search className="h-5 w-5 text-white/70 hover:text-white cursor-pointer" />
               <a href="#" className="text-white/90 hover:text-white font-medium">HOME</a>
               <a href="#movies" className="text-white/70 hover:text-white">MOVIE</a>
-              <Link to="/about" className="text-white/70 hover:text-white">ABOUT</Link>
-              <Link to="/careers" className="text-white/70 hover:text-white">CAREERS</Link>
-              <Link to="/contact" className="text-white/70 hover:text-white">CONTACT</Link>
+              <Link to={`/cinema/${cinemaSlug}/about`} className="text-white/70 hover:text-white">ABOUT</Link>
+              <Link to={`/cinema/${cinemaSlug}/careers`} className="text-white/70 hover:text-white">CAREERS</Link>
+              <Link to={`/cinema/${cinemaSlug}/contact`} className="text-white/70 hover:text-white">CONTACT</Link>
               <Grid3X3 className="h-5 w-5 text-white/70 hover:text-white cursor-pointer" />
             </nav>
           </div>
@@ -175,9 +175,9 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             <Search className="h-4 w-4 text-white/70 hover:text-white cursor-pointer transition-colors" />
             <a href="#" className="text-white text-sm font-medium hover:text-amber-400 transition-colors">HOME</a>
             <a href="#movies" className="text-white/70 text-sm hover:text-white font-medium transition-colors">MOVIE</a>
-            <Link to="/about" className="text-white/70 text-sm hover:text-white font-medium transition-colors">ABOUT</Link>
-            <Link to="/careers" className="text-white/70 text-sm hover:text-white font-medium transition-colors">CAREERS</Link>
-            <Link to="/contact" className="text-white/70 text-sm hover:text-white font-medium transition-colors">CONTACT</Link>
+            <Link to={`/cinema/${cinemaSlug}/about`} className="text-white/70 text-sm hover:text-white font-medium transition-colors">ABOUT</Link>
+            <Link to={`/cinema/${cinemaSlug}/careers`} className="text-white/70 text-sm hover:text-white font-medium transition-colors">CAREERS</Link>
+            <Link to={`/cinema/${cinemaSlug}/contact`} className="text-white/70 text-sm hover:text-white font-medium transition-colors">CONTACT</Link>
             <Grid3X3 className="h-4 w-4 text-white/70 hover:text-white cursor-pointer transition-colors" />
           </nav>
         </div>
