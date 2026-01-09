@@ -250,10 +250,10 @@ export default function CinemaSettings() {
 
       if (error) throw error;
 
-      // Invalidate both queries to ensure fresh data
+      // Invalidate caches to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['organization', organization.id] });
       queryClient.invalidateQueries({ queryKey: ['organization'] });
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['public-cinema', organization.slug] });
       toast.success('Cinema settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);
@@ -547,7 +547,8 @@ export default function CinemaSettings() {
                         <Input
                           type="color"
                           id="primary_color"
-                          {...register('primary_color')}
+                          value={watch('primary_color') || '#D97706'}
+                          onChange={(e) => setValue('primary_color', e.target.value, { shouldDirty: true, shouldValidate: true })}
                           className="w-16 h-10 p-1 cursor-pointer"
                         />
                         <Input
@@ -568,7 +569,8 @@ export default function CinemaSettings() {
                         <Input
                           type="color"
                           id="secondary_color"
-                          {...register('secondary_color')}
+                          value={watch('secondary_color') || '#1F2937'}
+                          onChange={(e) => setValue('secondary_color', e.target.value, { shouldDirty: true, shouldValidate: true })}
                           className="w-16 h-10 p-1 cursor-pointer"
                         />
                         <Input
