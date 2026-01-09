@@ -35,7 +35,7 @@ const cinemaSettingsSchema = z.object({
   social_twitter: z.string().url().optional().or(z.literal('')),
   seo_title: z.string().max(60).optional(),
   seo_description: z.string().max(160).optional(),
-  payment_gateway: z.enum(['none', 'stripe', 'flutterwave', 'paystack']),
+  payment_gateway: z.enum(['none', 'stripe', 'flutterwave', 'paystack', 'nomba']),
   payment_gateway_public_key: z.string().optional(),
   payment_gateway_secret_key: z.string().optional(),
 });
@@ -47,6 +47,7 @@ const paymentGatewayInfo = {
   stripe: { label: 'Stripe', description: 'Accept payments worldwide with cards, Apple Pay, Google Pay' },
   flutterwave: { label: 'Flutterwave', description: 'Popular in Africa - cards, mobile money, bank transfers' },
   paystack: { label: 'Paystack', description: 'Nigerian & Ghanaian payments - cards, bank, USSD' },
+  nomba: { label: 'Nomba', description: 'Nigerian payments - cards, transfers, POS integration' },
 };
 
 export default function CinemaSettings() {

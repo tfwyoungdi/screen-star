@@ -222,6 +222,7 @@ export default function CinemaCareers() {
           jobId={selectedJob.id}
           jobTitle={selectedJob.title}
           organizationId={cinema.id}
+          cinemaName={cinema.name}
           primaryColor={cinema.primary_color}
         />
       )}

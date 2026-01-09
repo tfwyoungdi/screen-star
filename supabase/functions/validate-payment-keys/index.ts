@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface ValidateKeysRequest {
-  gateway: 'stripe' | 'flutterwave' | 'paystack';
+  gateway: 'stripe' | 'flutterwave' | 'paystack' | 'nomba';
   publicKey: string;
   secretKey: string;
 }
@@ -179,6 +179,51 @@ const handler = async (req: Request): Promise<Response> => {
         } else {
           const error = await response.json();
           message = error.message || "Invalid Paystack secret key";
+        }
+        break;
+      }
+
+      case 'nomba': {
+        // Validate Nomba keys
+        // Nomba uses account_id as public key and secret_key for API authentication
+        if (!publicKey || publicKey.length < 10) {
+          return new Response(JSON.stringify({ 
+            valid: false, 
+            message: "Invalid Nomba Account ID format" 
+          }), {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+
+        if (!secretKey || secretKey.length < 20) {
+          return new Response(JSON.stringify({ 
+            valid: false, 
+            message: "Invalid Nomba API key format" 
+          }), {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+
+        // Check if test mode based on key pattern
+        isTestMode = secretKey.includes('test') || secretKey.includes('sandbox');
+
+        // Validate by checking account info
+        const response = await fetch("https://api.nomba.com/v1/accounts/me", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${secretKey}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          isValid = true;
+          message = `Nomba keys validated successfully (${isTestMode ? 'Test' : 'Live'} mode)`;
+        } else {
+          const error = await response.json();
+          message = error.message || "Invalid Nomba API key";
         }
         break;
       }
