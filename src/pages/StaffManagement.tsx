@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, UserPlus, Mail, Trash2, Clock, CheckCircle } from 'lucide-react';
+import { Loader2, UserPlus, Eye, EyeOff, Trash2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,12 +20,14 @@ import { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
-const inviteSchema = z.object({
+const createStaffSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  fullName: z.string().min(2, 'Full name is required'),
   role: z.enum(['box_office', 'gate_staff', 'manager', 'accountant'] as const),
 });
 
-type InviteFormData = z.infer<typeof inviteSchema>;
+type CreateStaffFormData = z.infer<typeof createStaffSchema>;
 
 const roleLabels: Record<string, string> = {
   box_office: 'Box Office',
@@ -46,6 +48,7 @@ export default function StaffManagement() {
   const { data: profile } = useUserProfile();
   const { data: organization } = useOrganization();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const queryClient = useQueryClient();
 
   const {
@@ -54,25 +57,8 @@ export default function StaffManagement() {
     setValue,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<InviteFormData>({
-    resolver: zodResolver(inviteSchema),
-  });
-
-  // Fetch pending invitations
-  const { data: invitations, isLoading: invitationsLoading } = useQuery({
-    queryKey: ['staff-invitations', profile?.organization_id],
-    queryFn: async () => {
-      if (!profile?.organization_id) return [];
-      const { data, error } = await supabase
-        .from('staff_invitations')
-        .select('*')
-        .eq('organization_id', profile.organization_id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!profile?.organization_id,
+  } = useForm<CreateStaffFormData>({
+    resolver: zodResolver(createStaffSchema),
   });
 
   // Fetch current staff members
@@ -110,88 +96,73 @@ export default function StaffManagement() {
     enabled: !!profile?.organization_id,
   });
 
-  const onSubmit = async (data: InviteFormData) => {
-    if (!profile?.organization_id || !profile?.id || !organization) return;
+  const onSubmit = async (data: CreateStaffFormData) => {
+    if (!profile?.organization_id || !organization) return;
 
     try {
-      // Check if email is already invited
-      const { data: existing } = await supabase
-        .from('staff_invitations')
-        .select('id')
-        .eq('organization_id', profile.organization_id)
-        .eq('email', data.email)
-        .is('accepted_at', null)
-        .maybeSingle();
+      const { data: result, error } = await supabase.functions.invoke('create-staff-account', {
+        body: {
+          email: data.email,
+          password: data.password,
+          fullName: data.fullName,
+          role: data.role,
+          organizationId: profile.organization_id,
+        },
+      });
 
-      if (existing) {
-        toast.error('An invitation has already been sent to this email');
+      if (error) {
+        console.error('Error creating staff:', error);
+        toast.error(error.message || 'Failed to create staff account');
         return;
       }
 
-      // Create invitation
-      const { data: invitation, error } = await supabase
-        .from('staff_invitations')
-        .insert({
-          organization_id: profile.organization_id,
-          email: data.email,
-          role: data.role,
-          invited_by: profile.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Send invitation email via edge function
-      const inviteUrl = `${window.location.origin}/accept-invitation?token=${invitation.token}`;
-      
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-staff-invitation', {
-          body: {
-            email: data.email,
-            cinemaName: organization.name,
-            role: data.role,
-            inviteToken: invitation.token,
-            inviteUrl,
-          },
-        });
-
-        if (emailError) {
-          console.error('Failed to send email:', emailError);
-          toast.warning('Invitation created but email could not be sent');
-        }
-      } catch (emailErr) {
-        console.error('Email sending error:', emailErr);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
       }
 
-      queryClient.invalidateQueries({ queryKey: ['staff-invitations'] });
-      toast.success(`Invitation sent to ${data.email}`);
+      queryClient.invalidateQueries({ queryKey: ['staff-members'] });
+      toast.success(`Staff account created for ${data.email}`);
       reset();
       setDialogOpen(false);
     } catch (error) {
-      console.error('Error sending invitation:', error);
-      toast.error('Failed to send invitation');
+      console.error('Error creating staff account:', error);
+      toast.error('Failed to create staff account');
     }
   };
 
-  const deleteInvitation = async (id: string) => {
+  const deleteStaffMember = async (userId: string, email: string) => {
+    // Note: This only removes from organization, doesn't delete the auth user
+    // Full deletion would require admin API
     try {
-      const { error } = await supabase
-        .from('staff_invitations')
+      // Remove role
+      const { error: roleError } = await supabase
+        .from('user_roles')
         .delete()
-        .eq('id', id);
+        .eq('user_id', userId)
+        .eq('organization_id', profile?.organization_id);
 
-      if (error) throw error;
+      if (roleError) throw roleError;
 
-      queryClient.invalidateQueries({ queryKey: ['staff-invitations'] });
-      toast.success('Invitation deleted');
+      // Deactivate profile (set organization_id to null)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ organization_id: null, is_active: false })
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      queryClient.invalidateQueries({ queryKey: ['staff-members'] });
+      toast.success(`Removed ${email} from staff`);
     } catch (error) {
-      console.error('Error deleting invitation:', error);
-      toast.error('Failed to delete invitation');
+      console.error('Error removing staff member:', error);
+      toast.error('Failed to remove staff member');
     }
   };
 
-  const isLoading = invitationsLoading || staffLoading;
+  const staffPortalUrl = organization?.slug 
+    ? `${window.location.origin}/cinema/${organization.slug}/staff`
+    : null;
 
   return (
     <DashboardLayout>
@@ -200,87 +171,151 @@ export default function StaffManagement() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Staff Management</h1>
             <p className="text-muted-foreground">
-              Invite and manage your cinema staff
+              Create and manage your cinema staff accounts
             </p>
           </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Invite Staff
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Invite Staff Member</DialogTitle>
-              <DialogDescription>
-                Send an invitation email to add a new staff member
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="staff@example.com"
-                  {...register('email')}
-                  className={errors.email ? 'border-destructive' : ''}
-                />
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select onValueChange={(value) => setValue('role', value as InviteFormData['role'])}>
-                  <SelectTrigger className={errors.role ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(roleDescriptions).map(([role, description]) => (
-                      <SelectItem key={role} value={role}>
-                        <div className="flex flex-col">
-                          <span>{roleLabels[role]}</span>
-                          <span className="text-xs text-muted-foreground">{description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.role && (
-                  <p className="text-sm text-destructive">{errors.role.message}</p>
-                )}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send Invitation
-                  </>
-                )}
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add Staff
               </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Staff Account</DialogTitle>
+                <DialogDescription>
+                  Create a new staff account for your cinema
+                </DialogDescription>
+              </DialogHeader>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center min-h-[200px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    {...register('fullName')}
+                    className={errors.fullName ? 'border-destructive' : ''}
+                  />
+                  {errors.fullName && (
+                    <p className="text-sm text-destructive">{errors.fullName.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="staff@example.com"
+                    {...register('email')}
+                    className={errors.email ? 'border-destructive' : ''}
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      {...register('password')}
+                      className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-destructive">{errors.password.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Select onValueChange={(value) => setValue('role', value as CreateStaffFormData['role'])}>
+                    <SelectTrigger className={errors.role ? 'border-destructive' : ''}>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(roleDescriptions).map(([role, description]) => (
+                        <SelectItem key={role} value={role}>
+                          <div className="flex flex-col">
+                            <span>{roleLabels[role]}</span>
+                            <span className="text-xs text-muted-foreground">{description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.role && (
+                    <p className="text-sm text-destructive">{errors.role.message}</p>
+                  )}
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Create Account
+                    </>
+                  )}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Current Staff */}
+
+        {/* Staff Portal URL */}
+        {staffPortalUrl && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Staff Login Portal</CardTitle>
+              <CardDescription>
+                Share this URL with your staff members so they can log in
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 px-3 py-2 bg-muted rounded-md text-sm break-all">
+                  {staffPortalUrl}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(staffPortalUrl);
+                    toast.success('Copied to clipboard');
+                  }}
+                >
+                  Copy
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {staffLoading ? (
+          <div className="flex items-center justify-center min-h-[200px]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
           <Card>
             <CardHeader>
               <CardTitle>Current Staff</CardTitle>
@@ -297,6 +332,7 @@ export default function StaffManagement() {
                       <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="w-[100px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -315,61 +351,17 @@ export default function StaffManagement() {
                             Active
                           </Badge>
                         </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-muted-foreground text-center py-4">
-                  No staff members yet. Invite your first team member!
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Pending Invitations */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Invitations</CardTitle>
-              <CardDescription>
-                Invitations waiting to be accepted
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {invitations && invitations.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Expires</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invitations.filter(inv => !inv.accepted_at).map((invitation) => (
-                      <TableRow key={invitation.id}>
-                        <TableCell className="font-medium">{invitation.email}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">
-                            {roleLabels[invitation.role]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {new Date(invitation.expires_at).toLocaleDateString()}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteInvitation(invitation.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {member.role !== 'cinema_admin' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteStaffMember(member.id, member.email)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -377,13 +369,12 @@ export default function StaffManagement() {
                 </Table>
               ) : (
                 <p className="text-muted-foreground text-center py-4">
-                  No pending invitations
+                  No staff members yet. Add your first team member!
                 </p>
               )}
             </CardContent>
           </Card>
-        </div>
-      )}
+        )}
       </div>
     </DashboardLayout>
   );
