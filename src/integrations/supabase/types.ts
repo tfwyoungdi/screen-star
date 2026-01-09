@@ -524,6 +524,8 @@ export type Database = {
           organization_id: string
           poster_url: string | null
           rating: string | null
+          release_date: string | null
+          status: string
           title: string
           trailer_url: string | null
           updated_at: string
@@ -538,6 +540,8 @@ export type Database = {
           organization_id: string
           poster_url?: string | null
           rating?: string | null
+          release_date?: string | null
+          status?: string
           title: string
           trailer_url?: string | null
           updated_at?: string
@@ -552,6 +556,8 @@ export type Database = {
           organization_id?: string
           poster_url?: string | null
           rating?: string | null
+          release_date?: string | null
+          status?: string
           title?: string
           trailer_url?: string | null
           updated_at?: string

@@ -2,7 +2,8 @@ import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Film, Clock, Edit, Trash2, Upload, Play, X } from 'lucide-react';
+import { format } from 'date-fns';
+import { Loader2, Plus, Film, Clock, Edit, Trash2, Upload, Play, X, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +28,8 @@ const movieSchema = z.object({
   rating: z.string().optional(),
   poster_url: z.string().url().optional().or(z.literal('')),
   trailer_url: z.string().optional(),
+  status: z.enum(['now_showing', 'coming_soon']),
+  release_date: z.string().optional(),
 });
 
 type MovieFormData = z.infer<typeof movieSchema>;
@@ -142,6 +146,8 @@ export default function MovieManagement() {
             rating: data.rating || null,
             poster_url: posterUrl || null,
             trailer_url: data.trailer_url || null,
+            status: data.status,
+            release_date: data.release_date || null,
           })
           .eq('id', editingMovie.id);
 
@@ -160,6 +166,8 @@ export default function MovieManagement() {
             rating: data.rating || null,
             poster_url: data.poster_url || null,
             trailer_url: data.trailer_url || null,
+            status: data.status,
+            release_date: data.release_date || null,
           })
           .select()
           .single();
@@ -238,6 +246,8 @@ export default function MovieManagement() {
       rating: movie.rating || '',
       poster_url: movie.poster_url || '',
       trailer_url: movie.trailer_url || '',
+      status: movie.status || 'now_showing',
+      release_date: movie.release_date || '',
     });
     setDialogOpen(true);
   };
@@ -254,6 +264,8 @@ export default function MovieManagement() {
       rating: '',
       poster_url: '',
       trailer_url: '',
+      status: 'now_showing',
+      release_date: '',
     });
     setDialogOpen(true);
   };
@@ -385,6 +397,36 @@ export default function MovieManagement() {
                       <Label htmlFor="genre">Genre</Label>
                       <Input id="genre" {...register('genre')} placeholder="Action, Drama" />
                     </div>
+
+                    {/* Status and Release Date */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Status *</Label>
+                        <Select
+                          value={watch('status')}
+                          onValueChange={(value: 'now_showing' | 'coming_soon') => setValue('status', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="now_showing">Now Showing</SelectItem>
+                            <SelectItem value="coming_soon">Coming Soon</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {watch('status') === 'coming_soon' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="release_date">Release Date</Label>
+                          <Input
+                            id="release_date"
+                            type="date"
+                            {...register('release_date')}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -449,7 +491,8 @@ export default function MovieManagement() {
                       <TableHead>Genre</TableHead>
                       <TableHead>Rating</TableHead>
                       <TableHead>Trailer</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Movie Status</TableHead>
+                      <TableHead>Active</TableHead>
                       <TableHead className="w-[120px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -498,6 +541,19 @@ export default function MovieManagement() {
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={movie.status === 'coming_soon' ? 'secondary' : 'default'}>
+                              {movie.status === 'coming_soon' ? 'Coming Soon' : 'Now Showing'}
+                            </Badge>
+                            {movie.status === 'coming_soon' && movie.release_date && (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(movie.release_date), 'MMM d, yyyy')}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Switch
