@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, Building2, Palette, Save, Globe, CreditCard, Share2, Search } from 'lucide-react';
+import { Loader2, Upload, Building2, Palette, Save, Globe, CreditCard, Share2, Search, CheckCircle, XCircle, AlertTriangle, Copy, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,7 +52,11 @@ export default function CinemaSettings() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [validatingKeys, setValidatingKeys] = useState(false);
+  const [keyValidation, setKeyValidation] = useState<{ valid: boolean; message: string; isTestMode?: boolean } | null>(null);
   const queryClient = useQueryClient();
+
+  const webhookUrl = `https://immqqxnblovkdvokfbef.supabase.co/functions/v1/payment-webhook`;
 
   const {
     register,
@@ -117,6 +122,47 @@ export default function CinemaSettings() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const validatePaymentKeys = async () => {
+    const publicKey = watch('payment_gateway_public_key');
+    const secretKey = watch('payment_gateway_secret_key');
+    const gateway = watch('payment_gateway');
+
+    if (!publicKey || !secretKey || gateway === 'none') {
+      toast.error('Please enter both public and secret keys');
+      return;
+    }
+
+    setValidatingKeys(true);
+    setKeyValidation(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-payment-keys', {
+        body: { gateway, publicKey, secretKey },
+      });
+
+      if (error) throw error;
+
+      setKeyValidation(data);
+      
+      if (data.valid) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error: any) {
+      console.error('Validation error:', error);
+      toast.error('Failed to validate keys');
+      setKeyValidation({ valid: false, message: 'Failed to validate keys' });
+    } finally {
+      setValidatingKeys(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard');
   };
 
   const onSubmit = async (data: CinemaSettingsData) => {
@@ -521,7 +567,10 @@ export default function CinemaSettings() {
                     <Label>Select Payment Provider</Label>
                     <Select
                       value={selectedGateway}
-                      onValueChange={(value) => setValue('payment_gateway', value as any)}
+                      onValueChange={(value) => {
+                        setValue('payment_gateway', value as any);
+                        setKeyValidation(null);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -547,50 +596,176 @@ export default function CinemaSettings() {
                   </div>
 
                   {selectedGateway !== 'none' && (
-                    <div className="space-y-4 pt-4 border-t">
-                      <div className="space-y-2">
-                        <Label htmlFor="payment_gateway_public_key">
-                          {selectedGateway === 'stripe' && 'Stripe Publishable Key (pk_...)'}
-                          {selectedGateway === 'flutterwave' && 'Flutterwave Public Key (FLWPUBK_...)'}
-                          {selectedGateway === 'paystack' && 'Paystack Public Key (pk_...)'}
-                        </Label>
-                        <Input
-                          id="payment_gateway_public_key"
-                          {...register('payment_gateway_public_key')}
-                          placeholder={
-                            selectedGateway === 'stripe' ? 'pk_test_...' :
-                            selectedGateway === 'flutterwave' ? 'FLWPUBK_TEST-...' :
-                            'pk_test_...'
-                          }
-                          className="font-mono"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          This key is used for the frontend payment form
-                        </p>
+                    <div className="space-y-6 pt-4 border-t">
+                      {/* Test/Live Mode Indicator */}
+                      {keyValidation?.isTestMode !== undefined && (
+                        <Alert className={keyValidation.isTestMode ? 'border-amber-500 bg-amber-500/10' : 'border-green-500 bg-green-500/10'}>
+                          <AlertTriangle className={`h-4 w-4 ${keyValidation.isTestMode ? 'text-amber-500' : 'text-green-500'}`} />
+                          <AlertDescription className="flex items-center justify-between">
+                            <span>
+                              <strong>{keyValidation.isTestMode ? '⚠️ Test Mode' : '✅ Live Mode'}:</strong>{' '}
+                              {keyValidation.isTestMode 
+                                ? 'Payments will use test credentials. No real money will be charged.'
+                                : 'Payments are live. Real transactions will be processed.'
+                              }
+                            </span>
+                            <Badge variant={keyValidation.isTestMode ? 'secondary' : 'default'}>
+                              {keyValidation.isTestMode ? 'TEST' : 'LIVE'}
+                            </Badge>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {/* API Keys */}
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="payment_gateway_public_key">
+                            {selectedGateway === 'stripe' && 'Stripe Publishable Key (pk_...)'}
+                            {selectedGateway === 'flutterwave' && 'Flutterwave Public Key (FLWPUBK_...)'}
+                            {selectedGateway === 'paystack' && 'Paystack Public Key (pk_...)'}
+                          </Label>
+                          <Input
+                            id="payment_gateway_public_key"
+                            {...register('payment_gateway_public_key')}
+                            placeholder={
+                              selectedGateway === 'stripe' ? 'pk_test_... or pk_live_...' :
+                              selectedGateway === 'flutterwave' ? 'FLWPUBK_TEST-... or FLWPUBK-...' :
+                              'pk_test_... or pk_live_...'
+                            }
+                            className="font-mono"
+                            onChange={() => setKeyValidation(null)}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Use <code className="bg-muted px-1 rounded">pk_test_</code> for testing or <code className="bg-muted px-1 rounded">pk_live_</code> for production
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="payment_gateway_secret_key">
+                            {selectedGateway === 'stripe' && 'Stripe Secret Key (sk_...)'}
+                            {selectedGateway === 'flutterwave' && 'Flutterwave Secret Key (FLWSECK_...)'}
+                            {selectedGateway === 'paystack' && 'Paystack Secret Key (sk_...)'}
+                          </Label>
+                          <Input
+                            id="payment_gateway_secret_key"
+                            type="password"
+                            {...register('payment_gateway_secret_key')}
+                            placeholder={
+                              selectedGateway === 'stripe' ? 'sk_test_... or sk_live_...' :
+                              selectedGateway === 'flutterwave' ? 'FLWSECK_TEST-... or FLWSECK-...' :
+                              'sk_test_... or sk_live_...'
+                            }
+                            className="font-mono"
+                            onChange={() => setKeyValidation(null)}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            This key is kept secure and only used server-side for processing payments
+                          </p>
+                        </div>
+
+                        {/* Validate Keys Button */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={validatePaymentKeys}
+                          disabled={validatingKeys}
+                          className="w-full"
+                        >
+                          {validatingKeys ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Validating Keys...
+                            </>
+                          ) : keyValidation?.valid ? (
+                            <>
+                              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                              Keys Validated
+                            </>
+                          ) : keyValidation?.valid === false ? (
+                            <>
+                              <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                              Validation Failed - Click to Retry
+                            </>
+                          ) : (
+                            'Validate API Keys'
+                          )}
+                        </Button>
+
+                        {keyValidation && (
+                          <Alert variant={keyValidation.valid ? 'default' : 'destructive'}>
+                            <AlertDescription className="flex items-center gap-2">
+                              {keyValidation.valid ? (
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <XCircle className="h-4 w-4" />
+                              )}
+                              {keyValidation.message}
+                            </AlertDescription>
+                          </Alert>
+                        )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="payment_gateway_secret_key">
-                          {selectedGateway === 'stripe' && 'Stripe Secret Key (sk_...)'}
-                          {selectedGateway === 'flutterwave' && 'Flutterwave Secret Key (FLWSECK_...)'}
-                          {selectedGateway === 'paystack' && 'Paystack Secret Key (sk_...)'}
-                        </Label>
-                        <Input
-                          id="payment_gateway_secret_key"
-                          type="password"
-                          {...register('payment_gateway_secret_key')}
-                          placeholder={
-                            selectedGateway === 'stripe' ? 'sk_test_...' :
-                            selectedGateway === 'flutterwave' ? 'FLWSECK_TEST-...' :
-                            'sk_test_...'
-                          }
-                          className="font-mono"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          This key is kept secure and only used server-side for processing payments
-                        </p>
-                      </div>
+                      {/* Webhook Configuration */}
+                      <Card className="bg-muted/50">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            🔗 Webhook Configuration
+                          </CardTitle>
+                          <CardDescription>
+                            Configure this webhook URL in your payment provider's dashboard to receive payment notifications
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Webhook URL</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                value={webhookUrl}
+                                readOnly
+                                className="font-mono text-sm bg-background"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => copyToClipboard(webhookUrl)}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
 
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Setup Instructions:</p>
+                            {selectedGateway === 'stripe' && (
+                              <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                                <li>Go to <a href="https://dashboard.stripe.com/webhooks" target="_blank" className="text-primary hover:underline inline-flex items-center gap-1">Stripe Webhooks Dashboard <ExternalLink className="h-3 w-3" /></a></li>
+                                <li>Click "Add endpoint" and paste the webhook URL above</li>
+                                <li>Select events: <code className="bg-background px-1 rounded text-xs">checkout.session.completed</code>, <code className="bg-background px-1 rounded text-xs">payment_intent.succeeded</code></li>
+                                <li>Copy the Webhook Signing Secret and store it securely</li>
+                              </ol>
+                            )}
+                            {selectedGateway === 'flutterwave' && (
+                              <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                                <li>Go to <a href="https://dashboard.flutterwave.com/settings/webhooks" target="_blank" className="text-primary hover:underline inline-flex items-center gap-1">Flutterwave Webhooks <ExternalLink className="h-3 w-3" /></a></li>
+                                <li>Paste the webhook URL in the "Webhook URL" field</li>
+                                <li>Copy your Secret Hash for verification</li>
+                                <li>Save the settings</li>
+                              </ol>
+                            )}
+                            {selectedGateway === 'paystack' && (
+                              <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                                <li>Go to <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" className="text-primary hover:underline inline-flex items-center gap-1">Paystack Settings <ExternalLink className="h-3 w-3" /></a></li>
+                                <li>Scroll to "API Keys & Webhooks" section</li>
+                                <li>Paste the webhook URL in the "Webhook URL" field</li>
+                                <li>The secret key is used for signature verification</li>
+                              </ol>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Security Note */}
                       <Alert>
                         <AlertDescription>
                           <strong>🔒 Security Note:</strong> Your secret key is stored securely and never exposed to the frontend.
@@ -598,15 +773,16 @@ export default function CinemaSettings() {
                         </AlertDescription>
                       </Alert>
 
+                      {/* Setup Instructions */}
                       <div className="p-4 bg-muted rounded-lg">
-                        <p className="text-sm font-medium mb-2">Setup Instructions:</p>
+                        <p className="text-sm font-medium mb-2">Getting Your API Keys:</p>
                         <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                           {selectedGateway === 'stripe' && (
                             <>
                               <li>Create an account at <a href="https://stripe.com" target="_blank" className="text-primary hover:underline">stripe.com</a></li>
                               <li>Go to Dashboard → Developers → API keys</li>
                               <li>Copy both your Publishable key (pk_...) and Secret key (sk_...)</li>
-                              <li>Enter the keys above and save</li>
+                              <li>For testing, use keys starting with <code className="bg-background px-1 rounded">_test_</code></li>
                             </>
                           )}
                           {selectedGateway === 'flutterwave' && (
@@ -614,7 +790,7 @@ export default function CinemaSettings() {
                               <li>Create an account at <a href="https://flutterwave.com" target="_blank" className="text-primary hover:underline">flutterwave.com</a></li>
                               <li>Go to Settings → API Keys</li>
                               <li>Copy both your Public key (FLWPUBK_...) and Secret key (FLWSECK_...)</li>
-                              <li>Enter the keys above and save</li>
+                              <li>For testing, use keys containing <code className="bg-background px-1 rounded">TEST</code></li>
                             </>
                           )}
                           {selectedGateway === 'paystack' && (
@@ -622,7 +798,7 @@ export default function CinemaSettings() {
                               <li>Create an account at <a href="https://paystack.com" target="_blank" className="text-primary hover:underline">paystack.com</a></li>
                               <li>Go to Settings → API Keys & Webhooks</li>
                               <li>Copy both your Public key (pk_...) and Secret key (sk_...)</li>
-                              <li>Enter the keys above and save</li>
+                              <li>For testing, use keys starting with <code className="bg-background px-1 rounded">_test_</code></li>
                             </>
                           )}
                         </ol>

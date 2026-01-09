@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.send-showtime-reminder]
 verify_jwt = false
+
+[functions.validate-payment-keys]
+verify_jwt = false
