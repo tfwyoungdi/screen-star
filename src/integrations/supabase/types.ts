@@ -590,6 +590,7 @@ export type Database = {
           payment_gateway: string | null
           payment_gateway_configured: boolean | null
           payment_gateway_public_key: string | null
+          payment_gateway_secret_key: string | null
           primary_color: string | null
           secondary_color: string | null
           seo_description: string | null
@@ -615,6 +616,7 @@ export type Database = {
           payment_gateway?: string | null
           payment_gateway_configured?: boolean | null
           payment_gateway_public_key?: string | null
+          payment_gateway_secret_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           seo_description?: string | null
@@ -640,6 +642,7 @@ export type Database = {
           payment_gateway?: string | null
           payment_gateway_configured?: boolean | null
           payment_gateway_public_key?: string | null
+          payment_gateway_secret_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           seo_description?: string | null

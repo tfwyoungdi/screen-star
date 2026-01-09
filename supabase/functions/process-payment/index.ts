@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,12 +8,11 @@ const corsHeaders = {
 
 interface PaymentRequest {
   bookingReference: string;
+  organizationId: string;
   amount: number;
   currency: string;
   customerEmail: string;
   customerName: string;
-  gateway: 'stripe' | 'flutterwave' | 'paystack';
-  publicKey: string;
   returnUrl: string;
 }
 
@@ -25,34 +25,52 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { 
-      bookingReference, 
+      bookingReference,
+      organizationId,
       amount, 
       currency, 
       customerEmail, 
       customerName,
-      gateway,
-      publicKey,
       returnUrl 
     }: PaymentRequest = await req.json();
     
-    console.log(`Processing ${gateway} payment for ${bookingReference}, amount: ${amount} ${currency}`);
+    console.log(`Processing payment for booking ${bookingReference}, organization: ${organizationId}`);
+
+    // Initialize Supabase client to fetch organization's payment config
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch organization's payment configuration
+    const { data: org, error: orgError } = await supabase
+      .from("organizations")
+      .select("payment_gateway, payment_gateway_secret_key, payment_gateway_configured")
+      .eq("id", organizationId)
+      .single();
+
+    if (orgError || !org) {
+      console.error("Error fetching organization:", orgError);
+      throw new Error("Organization not found");
+    }
+
+    if (!org.payment_gateway_configured || !org.payment_gateway_secret_key) {
+      throw new Error("Payment gateway not configured. Please configure your payment settings in the dashboard.");
+    }
+
+    const gateway = org.payment_gateway;
+    const secretKey = org.payment_gateway_secret_key;
+
+    console.log(`Using ${gateway} gateway for payment processing`);
 
     let paymentUrl: string;
     let paymentReference: string;
 
     switch (gateway) {
       case 'stripe': {
-        // For Stripe, we create a checkout session
-        // The cinema's secret key should be stored in their org config or as a secret
-        const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
-        if (!STRIPE_SECRET_KEY) {
-          throw new Error("Stripe is not configured. Please add your Stripe secret key.");
-        }
-
         const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${STRIPE_SECRET_KEY}`,
+            "Authorization": `Bearer ${secretKey}`,
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({
@@ -66,12 +84,14 @@ const handler = async (req: Request): Promise<Response> => {
             "cancel_url": `${returnUrl}?status=cancelled&ref=${bookingReference}`,
             "customer_email": customerEmail,
             "metadata[booking_reference]": bookingReference,
+            "metadata[organization_id]": organizationId,
           }),
         });
 
         const session = await response.json();
         
         if (session.error) {
+          console.error("Stripe error:", session.error);
           throw new Error(session.error.message);
         }
 
@@ -81,18 +101,12 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       case 'flutterwave': {
-        // Flutterwave payment initialization
-        const FLUTTERWAVE_SECRET_KEY = Deno.env.get("FLUTTERWAVE_SECRET_KEY");
-        if (!FLUTTERWAVE_SECRET_KEY) {
-          throw new Error("Flutterwave is not configured. Please add your Flutterwave secret key.");
-        }
-
         const txRef = `CIN-${bookingReference}-${Date.now()}`;
         
         const response = await fetch("https://api.flutterwave.com/v3/payments", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${FLUTTERWAVE_SECRET_KEY}`,
+            "Authorization": `Bearer ${secretKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -110,6 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
             },
             meta: {
               booking_reference: bookingReference,
+              organization_id: organizationId,
             },
           }),
         });
@@ -117,6 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
         const result = await response.json();
         
         if (result.status !== "success") {
+          console.error("Flutterwave error:", result);
           throw new Error(result.message || "Failed to initialize Flutterwave payment");
         }
 
@@ -126,16 +142,10 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       case 'paystack': {
-        // Paystack payment initialization
-        const PAYSTACK_SECRET_KEY = Deno.env.get("PAYSTACK_SECRET_KEY");
-        if (!PAYSTACK_SECRET_KEY) {
-          throw new Error("Paystack is not configured. Please add your Paystack secret key.");
-        }
-
         const response = await fetch("https://api.paystack.co/transaction/initialize", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${PAYSTACK_SECRET_KEY}`,
+            "Authorization": `Bearer ${secretKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -146,6 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
             callback_url: `${returnUrl}?status=callback&ref=${bookingReference}`,
             metadata: {
               booking_reference: bookingReference,
+              organization_id: organizationId,
               customer_name: customerName,
             },
           }),
@@ -154,6 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
         const result = await response.json();
         
         if (!result.status) {
+          console.error("Paystack error:", result);
           throw new Error(result.message || "Failed to initialize Paystack payment");
         }
 
@@ -166,7 +178,7 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error(`Unsupported payment gateway: ${gateway}`);
     }
 
-    console.log(`Payment initialized: ${paymentReference}`);
+    console.log(`Payment initialized successfully: ${paymentReference}`);
 
     return new Response(JSON.stringify({ 
       success: true, 

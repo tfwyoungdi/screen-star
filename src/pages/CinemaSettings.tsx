@@ -34,6 +34,7 @@ const cinemaSettingsSchema = z.object({
   seo_description: z.string().max(160).optional(),
   payment_gateway: z.enum(['none', 'stripe', 'flutterwave', 'paystack']),
   payment_gateway_public_key: z.string().optional(),
+  payment_gateway_secret_key: z.string().optional(),
 });
 
 type CinemaSettingsData = z.infer<typeof cinemaSettingsSchema>;
@@ -76,6 +77,7 @@ export default function CinemaSettings() {
       seo_description: (organization as any).seo_description || '',
       payment_gateway: (organization as any).payment_gateway || 'none',
       payment_gateway_public_key: (organization as any).payment_gateway_public_key || '',
+      payment_gateway_secret_key: (organization as any).payment_gateway_secret_key || '',
     } : undefined,
   });
 
@@ -147,7 +149,8 @@ export default function CinemaSettings() {
           seo_description: data.seo_description || null,
           payment_gateway: data.payment_gateway,
           payment_gateway_public_key: data.payment_gateway_public_key || null,
-          payment_gateway_configured: data.payment_gateway !== 'none' && !!data.payment_gateway_public_key,
+          payment_gateway_secret_key: data.payment_gateway_secret_key || null,
+          payment_gateway_configured: data.payment_gateway !== 'none' && !!data.payment_gateway_public_key && !!data.payment_gateway_secret_key,
         })
         .eq('id', organization.id);
 
@@ -545,13 +548,6 @@ export default function CinemaSettings() {
 
                   {selectedGateway !== 'none' && (
                     <div className="space-y-4 pt-4 border-t">
-                      <Alert>
-                        <AlertDescription>
-                          Enter your <strong>publishable/public</strong> key. Never share your secret key here.
-                          The secret key should be configured in your edge function secrets.
-                        </AlertDescription>
-                      </Alert>
-
                       <div className="space-y-2">
                         <Label htmlFor="payment_gateway_public_key">
                           {selectedGateway === 'stripe' && 'Stripe Publishable Key (pk_...)'}
@@ -568,7 +564,39 @@ export default function CinemaSettings() {
                           }
                           className="font-mono"
                         />
+                        <p className="text-xs text-muted-foreground">
+                          This key is used for the frontend payment form
+                        </p>
                       </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="payment_gateway_secret_key">
+                          {selectedGateway === 'stripe' && 'Stripe Secret Key (sk_...)'}
+                          {selectedGateway === 'flutterwave' && 'Flutterwave Secret Key (FLWSECK_...)'}
+                          {selectedGateway === 'paystack' && 'Paystack Secret Key (sk_...)'}
+                        </Label>
+                        <Input
+                          id="payment_gateway_secret_key"
+                          type="password"
+                          {...register('payment_gateway_secret_key')}
+                          placeholder={
+                            selectedGateway === 'stripe' ? 'sk_test_...' :
+                            selectedGateway === 'flutterwave' ? 'FLWSECK_TEST-...' :
+                            'sk_test_...'
+                          }
+                          className="font-mono"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          This key is kept secure and only used server-side for processing payments
+                        </p>
+                      </div>
+
+                      <Alert>
+                        <AlertDescription>
+                          <strong>🔒 Security Note:</strong> Your secret key is stored securely and never exposed to the frontend.
+                          It is only used by our secure payment processing server.
+                        </AlertDescription>
+                      </Alert>
 
                       <div className="p-4 bg-muted rounded-lg">
                         <p className="text-sm font-medium mb-2">Setup Instructions:</p>
@@ -576,22 +604,25 @@ export default function CinemaSettings() {
                           {selectedGateway === 'stripe' && (
                             <>
                               <li>Create an account at <a href="https://stripe.com" target="_blank" className="text-primary hover:underline">stripe.com</a></li>
-                              <li>Get your publishable key from the Dashboard → Developers → API keys</li>
-                              <li>Enter the key above and save</li>
+                              <li>Go to Dashboard → Developers → API keys</li>
+                              <li>Copy both your Publishable key (pk_...) and Secret key (sk_...)</li>
+                              <li>Enter the keys above and save</li>
                             </>
                           )}
                           {selectedGateway === 'flutterwave' && (
                             <>
                               <li>Create an account at <a href="https://flutterwave.com" target="_blank" className="text-primary hover:underline">flutterwave.com</a></li>
-                              <li>Get your public key from Settings → API Keys</li>
-                              <li>Enter the key above and save</li>
+                              <li>Go to Settings → API Keys</li>
+                              <li>Copy both your Public key (FLWPUBK_...) and Secret key (FLWSECK_...)</li>
+                              <li>Enter the keys above and save</li>
                             </>
                           )}
                           {selectedGateway === 'paystack' && (
                             <>
                               <li>Create an account at <a href="https://paystack.com" target="_blank" className="text-primary hover:underline">paystack.com</a></li>
-                              <li>Get your public key from Settings → API Keys & Webhooks</li>
-                              <li>Enter the key above and save</li>
+                              <li>Go to Settings → API Keys & Webhooks</li>
+                              <li>Copy both your Public key (pk_...) and Secret key (sk_...)</li>
+                              <li>Enter the keys above and save</li>
                             </>
                           )}
                         </ol>
