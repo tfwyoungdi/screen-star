@@ -560,7 +560,7 @@ export default function PublicCinema() {
 
       {/* Coming Soon */}
       {comingSoonMovies.length > 0 && (
-        <section id="coming-soon" className="py-12 md:py-16" style={{ backgroundColor: '#12121a' }}>
+        <section id="coming-soon" className="py-12 md:py-16" style={{ backgroundColor: '#0a0a0f' }}>
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-3 mb-10">
               <h3 className="text-2xl md:text-3xl font-bold text-white">
