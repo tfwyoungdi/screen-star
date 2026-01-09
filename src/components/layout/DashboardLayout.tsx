@@ -35,11 +35,13 @@ import {
   Popcorn,
   Mail,
   Briefcase,
+  Ticket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Box Office', url: '/box-office', icon: Ticket },
   { title: 'Movies', url: '/movies', icon: Film },
   { title: 'Screens', url: '/screens', icon: Monitor },
   { title: 'Showtimes', url: '/showtimes', icon: Calendar },
@@ -117,7 +119,7 @@ function SidebarContentWrapper() {
             )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5 px-2">
-                {navItems.slice(0, 10).map((item) => {
+                {navItems.slice(0, 11).map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
@@ -158,7 +160,7 @@ function SidebarContentWrapper() {
             )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5 px-2">
-                {navItems.slice(10).map((item) => {
+                {navItems.slice(11).map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
