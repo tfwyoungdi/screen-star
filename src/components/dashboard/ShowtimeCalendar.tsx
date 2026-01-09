@@ -146,11 +146,11 @@ function DroppableDay({
       )}
     >
       {children}
-      {/* Add button - only show for non-past days */}
+      {/* Add button - always visible for non-past days */}
       {!isPast && onAddClick && (
         <button
           onClick={onAddClick}
-          className="absolute bottom-1 right-1 opacity-0 group-hover/day:opacity-100 transition-opacity p-1 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
+          className="absolute bottom-1 right-1 p-1 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
           title="Add showtime"
         >
           <Plus className="h-3.5 w-3.5" />
