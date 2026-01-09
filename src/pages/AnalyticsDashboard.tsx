@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/button';
 import { ChartCard } from '@/components/dashboard/ChartCard';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useExportReports } from '@/hooks/useExportReports';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   format,
   subDays,
@@ -27,6 +34,8 @@ import {
   BarChart3,
   Clock,
   Armchair,
+  FileText,
+  FileSpreadsheet,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -49,6 +58,7 @@ import {
 export default function AnalyticsDashboard() {
   const { data: profile } = useUserProfile();
   const [dateRange, setDateRange] = useState(30);
+  const { exportToCSV, exportToPDF } = useExportReports();
 
   const startDate = startOfDay(subDays(new Date(), dateRange));
   const endDate = endOfDay(new Date());
@@ -199,27 +209,15 @@ export default function AnalyticsDashboard() {
     return [...revenueByDay.slice(-7).map((d) => ({ ...d, isProjected: false })), ...forecast];
   }, [revenueByDay]);
 
-  // Export data as CSV
-  const exportData = () => {
+  // Export handlers
+  const handleExportCSV = () => {
     if (!bookings) return;
-    
-    const headers = ['Date', 'Reference', 'Customer', 'Movie', 'Amount', 'Status'];
-    const rows = bookings.map((b) => [
-      format(new Date(b.created_at), 'yyyy-MM-dd HH:mm'),
-      b.booking_reference,
-      b.customer_name,
-      b.showtimes?.movies?.title || 'Unknown',
-      b.total_amount,
-      b.status,
-    ]);
-    
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `bookings-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
+    exportToCSV(bookings, 'analytics-report');
+  };
+
+  const handleExportPDF = () => {
+    if (!bookings) return;
+    exportToPDF(bookings, `Analytics Report - Last ${dateRange} Days`);
   };
 
   const loading = bookingsLoading;
@@ -249,10 +247,24 @@ export default function AnalyticsDashboard() {
                 </Button>
               ))}
             </div>
-            <Button variant="outline" onClick={exportData} className="gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportCSV} className="gap-2">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
