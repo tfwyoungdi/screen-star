@@ -300,7 +300,7 @@ export default function CinemaSettings() {
             <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="branding">Branding</TabsTrigger>
               <TabsTrigger value="website">Website</TabsTrigger>
-              <TabsTrigger value="about">About Page</TabsTrigger>
+              <TabsTrigger value="about">Mission</TabsTrigger>
               <TabsTrigger value="jobs">Job Listings</TabsTrigger>
               <TabsTrigger value="emails">
                 <Mail className="h-4 w-4 mr-1" />
