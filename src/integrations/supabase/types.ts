@@ -223,6 +223,53 @@ export type Database = {
           },
         ]
       }
+      cinema_jobs: {
+        Row: {
+          created_at: string
+          department: string
+          description: string | null
+          id: string
+          is_active: boolean
+          location: string
+          organization_id: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string
+          organization_id: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string
+          organization_id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cinema_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       combo_deal_items: {
         Row: {
           combo_deal_id: string
@@ -364,6 +411,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "concession_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_read: boolean
+          message: string
+          name: string
+          organization_id: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_read?: boolean
+          message: string
+          name: string
+          organization_id: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          name?: string
+          organization_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_submissions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -586,6 +674,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           logo_url: string | null
+          mission_text: string | null
           name: string
           payment_gateway: string | null
           payment_gateway_configured: boolean | null
@@ -601,6 +690,7 @@ export type Database = {
           social_twitter: string | null
           subscription_plan: string | null
           updated_at: string
+          values_json: Json | null
         }
         Insert: {
           about_text?: string | null
@@ -612,6 +702,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
+          mission_text?: string | null
           name: string
           payment_gateway?: string | null
           payment_gateway_configured?: boolean | null
@@ -627,6 +718,7 @@ export type Database = {
           social_twitter?: string | null
           subscription_plan?: string | null
           updated_at?: string
+          values_json?: Json | null
         }
         Update: {
           about_text?: string | null
@@ -638,6 +730,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
+          mission_text?: string | null
           name?: string
           payment_gateway?: string | null
           payment_gateway_configured?: boolean | null
@@ -653,6 +746,7 @@ export type Database = {
           social_twitter?: string | null
           subscription_plan?: string | null
           updated_at?: string
+          values_json?: Json | null
         }
         Relationships: []
       }
