@@ -231,6 +231,11 @@ export default function PublicCinema() {
     [moviesData]
   );
 
+  const comingSoonMovies = useMemo(() => 
+    (moviesData || []).filter(m => m.showtimes.length === 0),
+    [moviesData]
+  );
+
   const allMovies = useMemo(() => 
     (moviesData || []).map(m => ({ ...m, showtimes: [] })),
     [moviesData]
@@ -548,6 +553,96 @@ export default function PublicCinema() {
           )}
         </div>
       </section>
+
+      {/* Coming Soon */}
+      {comingSoonMovies.length > 0 && (
+        <section id="coming-soon" className="py-12 md:py-16" style={{ backgroundColor: '#12121a' }}>
+          <div className="container mx-auto px-4">
+            <div className="flex items-center gap-3 mb-10">
+              <h3 className="text-2xl md:text-3xl font-bold text-white">
+                Coming Soon
+              </h3>
+              <Badge 
+                className="text-xs font-medium border-0"
+                style={{ 
+                  backgroundColor: `${cinema?.primary_color || '#D4AF37'}20`,
+                  color: cinema?.primary_color || '#D4AF37'
+                }}
+              >
+                {comingSoonMovies.length} {comingSoonMovies.length === 1 ? 'Movie' : 'Movies'}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              {comingSoonMovies.map((movie) => (
+                <div 
+                  key={movie.id} 
+                  className="group relative"
+                >
+                  {/* Poster Card */}
+                  <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-gray-900">
+                    {movie.poster_url ? (
+                      <img
+                        src={movie.poster_url}
+                        alt={movie.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                        <Film className="h-12 w-12 text-gray-700" />
+                      </div>
+                    )}
+                    
+                    {/* Coming Soon Badge */}
+                    <div className="absolute top-2 left-2">
+                      <Badge 
+                        className="text-xs font-semibold border-0 shadow-lg"
+                        style={{ 
+                          backgroundColor: cinema?.primary_color || '#D4AF37',
+                          color: '#000'
+                        }}
+                      >
+                        Coming Soon
+                      </Badge>
+                    </div>
+                    
+                    {/* Hover overlay with info */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                      {/* Bottom info */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <div className="flex items-center gap-2 text-white/70 text-xs mb-2">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {movie.duration_minutes} min
+                          </span>
+                          {movie.rating && (
+                            <Badge className="text-[10px] px-1.5 py-0 bg-white/10 text-white border-0">
+                              {movie.rating}
+                            </Badge>
+                          )}
+                        </div>
+                        {movie.genre && (
+                          <p className="text-white/50 text-xs">{movie.genre}</p>
+                        )}
+                        {movie.description && (
+                          <p className="text-white/60 text-xs line-clamp-2 mt-2">
+                            {movie.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Title below poster */}
+                  <h4 className="mt-2 text-sm font-medium text-white/90 line-clamp-1 group-hover:text-white transition-colors">
+                    {movie.title}
+                  </h4>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Movie Details Modal */}
       <Dialog open={!!selectedMovie} onOpenChange={(open) => !open && setSelectedMovie(null)}>
