@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.update-staff-role]
 verify_jwt = false
+
+[functions.toggle-staff-status]
+verify_jwt = false

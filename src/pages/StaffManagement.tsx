@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, UserPlus, Eye, EyeOff, Trash2, CheckCircle, KeyRound, Shield, MoreHorizontal } from 'lucide-react';
+import { Loader2, UserPlus, Eye, EyeOff, Trash2, CheckCircle, KeyRound, Shield, MoreHorizontal, UserX, UserCheck, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,6 +60,7 @@ interface StaffMember {
   email: string;
   avatar_url: string | null;
   role: string;
+  is_active: boolean;
 }
 
 export default function StaffManagement() {
@@ -73,6 +74,7 @@ export default function StaffManagement() {
   const [newRole, setNewRole] = useState<string>('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const queryClient = useQueryClient();
 
@@ -101,10 +103,10 @@ export default function StaffManagement() {
     queryFn: async () => {
       if (!profile?.organization_id) return [];
       
-      // First get profiles
+      // First get profiles including is_active status
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url')
+        .select('id, full_name, email, avatar_url, is_active')
         .eq('organization_id', profile.organization_id);
 
       if (profilesError) throw profilesError;
@@ -121,6 +123,7 @@ export default function StaffManagement() {
           return {
             ...p,
             role: roles?.[0]?.role || 'unknown',
+            is_active: p.is_active ?? true,
           };
         })
       );
@@ -277,6 +280,40 @@ export default function StaffManagement() {
     setSelectedStaff(staff);
     setNewRole(staff.role);
     setEditRoleDialogOpen(true);
+  };
+
+  const handleToggleStatus = async (staff: StaffMember) => {
+    if (!profile?.organization_id) return;
+
+    setIsTogglingStatus(true);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('toggle-staff-status', {
+        body: {
+          userId: staff.id,
+          organizationId: profile.organization_id,
+          isActive: !staff.is_active,
+        },
+      });
+
+      if (error) {
+        console.error('Error toggling status:', error);
+        toast.error(error.message || 'Failed to update status');
+        return;
+      }
+
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['staff-members'] });
+      toast.success(staff.is_active ? `${staff.email} has been deactivated` : `${staff.email} has been reactivated`);
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      toast.error('Failed to update status');
+    } finally {
+      setIsTogglingStatus(false);
+    }
   };
 
   const staffPortalUrl = organization?.slug 
@@ -465,10 +502,17 @@ export default function StaffManagement() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            <CheckCircle className="mr-1 h-3 w-3" />
-                            Active
-                          </Badge>
+                          {member.is_active ? (
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              <CheckCircle className="mr-1 h-3 w-3" />
+                              Active
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-destructive border-destructive">
+                              <XCircle className="mr-1 h-3 w-3" />
+                              Inactive
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           {member.role !== 'cinema_admin' && (
@@ -488,6 +532,22 @@ export default function StaffManagement() {
                                   Change Role
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => handleToggleStatus(member)}
+                                  disabled={isTogglingStatus}
+                                >
+                                  {member.is_active ? (
+                                    <>
+                                      <UserX className="mr-2 h-4 w-4" />
+                                      Deactivate
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="mr-2 h-4 w-4" />
+                                      Reactivate
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => deleteStaffMember(member.id, member.email)}
                                   className="text-destructive"
