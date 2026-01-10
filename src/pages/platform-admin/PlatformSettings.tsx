@@ -12,11 +12,13 @@ import { toast } from 'sonner';
 import { Settings, Shield, Globe, Mail } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
+import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 
 type PlatformSettings = Tables<'platform_settings'>;
 
 export default function PlatformSettingsPage() {
   const queryClient = useQueryClient();
+  const { logAction } = usePlatformAuditLog();
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['platform-settings'],
@@ -25,9 +27,9 @@ export default function PlatformSettingsPage() {
         .from('platform_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data as PlatformSettings | null;
     },
   });
@@ -75,9 +77,18 @@ export default function PlatformSettingsPage() {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['platform-settings'] });
       toast.success('Settings saved successfully');
+      
+      logAction({
+        action: 'platform_settings_updated',
+        target_type: 'platform_settings',
+        details: {
+          maintenance_mode: variables.maintenance_mode,
+          platform_name: variables.platform_name,
+        },
+      });
     },
     onError: (error) => {
       console.error('Failed to save settings:', error);
