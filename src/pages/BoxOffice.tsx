@@ -727,79 +727,139 @@ export default function BoxOffice() {
     );
   }
 
+  // Progress steps configuration
+  const progressSteps = [
+    { key: 'showtimes', label: 'Showtime', icon: Film },
+    { key: 'seats', label: 'Seats', icon: Ticket },
+    { key: 'snacks', label: 'Snacks', icon: Popcorn },
+    { key: 'customer', label: 'Customer', icon: User },
+    { key: 'payment', label: 'Payment', icon: CreditCard },
+  ] as const;
+
+  const currentStepIndex = progressSteps.findIndex(s => s.key === step);
+
   return (
     <div className="min-h-screen bg-background flex flex-col pb-20 md:pb-0">
       {/* Header */}
-      <header className="h-16 border-b bg-card flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          {step !== 'showtimes' && (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => {
-                if (step === 'seats') {
-                  setStep('showtimes');
-                  setSelectedShowtime(null);
-                  setSelectedSeats([]);
-                } else if (step === 'snacks') {
-                  setStep('seats');
-                } else if (step === 'customer') {
-                  setStep('snacks');
-                } else if (step === 'payment') {
-                  setStep('customer');
-                }
-              }}
-              className="touch-manipulation"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
-          <div className="flex items-center gap-2">
-            <Ticket className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">Box Office</span>
-          </div>
-          {organization && (
-            <Badge variant="secondary" className="hidden sm:inline-flex">
-              {organization.name}
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-muted rounded-xl">
-            <div className="flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{todaysSales?.count || 0} sales</span>
-            </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <span className="text-sm font-bold">${todaysSales?.revenue.toFixed(2) || '0.00'}</span>
-            </div>
-          </div>
-
-          <Button 
-            variant={showShiftPanel ? "default" : "outline"} 
-            size="sm" 
-            onClick={() => setShowShiftPanel(!showShiftPanel)}
-            className="gap-2"
-          >
-            <ClipboardList className="h-4 w-4" />
-            <span className="hidden sm:inline">Shift</span>
-            {hasActiveShift && (
-              <span className="h-2 w-2 bg-green-500 rounded-full" />
+      <header className="border-b bg-card sticky top-0 z-50">
+        <div className="h-16 flex items-center justify-between px-4 lg:px-6">
+          <div className="flex items-center gap-4">
+            {step !== 'showtimes' && step !== 'confirmation' && (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => {
+                  if (step === 'seats') {
+                    setStep('showtimes');
+                    setSelectedShowtime(null);
+                    setSelectedSeats([]);
+                  } else if (step === 'snacks') {
+                    setStep('seats');
+                  } else if (step === 'customer') {
+                    setStep('snacks');
+                  } else if (step === 'payment') {
+                    setStep('customer');
+                  }
+                }}
+                className="touch-manipulation"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
             )}
-          </Button>
+            <div className="flex items-center gap-2">
+              <Ticket className="h-6 w-6 text-primary" />
+              <span className="font-bold text-lg">Box Office</span>
+            </div>
+            {organization && (
+              <Badge variant="secondary" className="hidden sm:inline-flex">
+                {organization.name}
+              </Badge>
+            )}
+          </div>
 
-          <Button variant="outline" size="icon" onClick={() => refetchShowtimes()}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-muted rounded-xl">
+              <div className="flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">{todaysSales?.count || 0} sales</span>
+              </div>
+              <div className="w-px h-4 bg-border" />
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-primary" />
+                <span className="text-sm font-bold">${todaysSales?.revenue.toFixed(2) || '0.00'}</span>
+              </div>
+            </div>
 
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
+            <Button 
+              variant={showShiftPanel ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => setShowShiftPanel(!showShiftPanel)}
+              className="gap-2"
+            >
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Shift</span>
+              {hasActiveShift && (
+                <span className="h-2 w-2 bg-green-500 rounded-full" />
+              )}
+            </Button>
+
+            <Button variant="outline" size="icon" onClick={() => refetchShowtimes()}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
+          </div>
         </div>
+
+        {/* Progress Stepper - only show during booking flow */}
+        {step !== 'showtimes' && step !== 'confirmation' && (
+          <div className="px-4 lg:px-6 py-3 bg-muted/50 border-t">
+            <div className="flex items-center justify-center gap-1 sm:gap-2 max-w-2xl mx-auto">
+              {progressSteps.map((progressStep, index) => {
+                const StepIcon = progressStep.icon;
+                const isCompleted = index < currentStepIndex;
+                const isCurrent = index === currentStepIndex;
+                const isUpcoming = index > currentStepIndex;
+
+                return (
+                  <div key={progressStep.key} className="flex items-center">
+                    <div 
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-medium transition-colors",
+                        isCompleted && "bg-primary/20 text-primary",
+                        isCurrent && "bg-primary text-primary-foreground",
+                        isUpcoming && "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold",
+                        isCompleted && "bg-primary text-primary-foreground",
+                        isCurrent && "bg-primary-foreground text-primary",
+                        isUpcoming && "bg-muted-foreground/30 text-muted-foreground"
+                      )}>
+                        {isCompleted ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          index + 1
+                        )}
+                      </div>
+                      <span className="hidden sm:inline">{progressStep.label}</span>
+                    </div>
+                    {index < progressSteps.length - 1 && (
+                      <div className={cn(
+                        "w-4 sm:w-8 h-0.5 mx-1",
+                        index < currentStepIndex ? "bg-primary" : "bg-muted-foreground/30"
+                      )} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
