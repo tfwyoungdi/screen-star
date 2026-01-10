@@ -2,10 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Building2, Users, CreditCard, MessageSquare, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Building2, CreditCard, MessageSquare, TrendingUp, AlertTriangle, Bell } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
+import { useRealtimeSupportTickets } from '@/hooks/useRealtimeSupportTickets';
 
 export default function PlatformDashboard() {
+  // Real-time support ticket notifications
+  const { newTicketsCount, resetNewTicketsCount } = useRealtimeSupportTickets({
+    enabled: true,
+    isPlatformAdmin: true,
+  });
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['platform-stats'],
     queryFn: async () => {
@@ -67,11 +75,22 @@ export default function PlatformDashboard() {
   return (
     <PlatformLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Platform Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Overview of the entire cinema platform
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Platform Dashboard</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Overview of the entire cinema platform
+            </p>
+          </div>
+          {newTicketsCount > 0 && (
+            <button
+              onClick={resetNewTicketsCount}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+            >
+              <Bell className="h-4 w-4 text-primary" />
+              <Badge variant="destructive">{newTicketsCount} new</Badge>
+            </button>
+          )}
         </div>
 
         {/* Stats Grid */}

@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PlatformProtectedRoute } from "@/components/auth/PlatformProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -38,35 +40,44 @@ import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import StaffLogin from "./pages/StaffLogin";
+import SupportTickets from "./pages/SupportTickets";
+import PlatformAdminLogin from "./pages/PlatformAdminLogin";
+import PlatformDashboard from "./pages/platform-admin/PlatformDashboard";
+import PlatformCinemas from "./pages/platform-admin/PlatformCinemas";
+import PlatformPlans from "./pages/platform-admin/PlatformPlans";
+import PlatformTransactions from "./pages/platform-admin/PlatformTransactions";
+import PlatformTickets from "./pages/platform-admin/PlatformTickets";
+import PlatformSettings from "./pages/platform-admin/PlatformSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <TooltipProvider>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/careers" element={<Careers />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/accept-invitation" element={<AcceptInvitation />} />
-              <Route path="/cinema/:slug" element={<PublicCinema />} />
-              <Route path="/cinema/:slug/about" element={<CinemaAbout />} />
-              <Route path="/cinema/:slug/careers" element={<CinemaCareers />} />
-              <Route path="/cinema/:slug/contact" element={<CinemaContact />} />
-              <Route path="/cinema/:slug/booking" element={<CinemaBooking />} />
-              <Route path="/cinema/:slug/book" element={<BookingFlow />} />
-              <Route path="/cinema/:slug/staff" element={<StaffLogin />} />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <TooltipProvider>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/accept-invitation" element={<AcceptInvitation />} />
+                <Route path="/cinema/:slug" element={<PublicCinema />} />
+                <Route path="/cinema/:slug/about" element={<CinemaAbout />} />
+                <Route path="/cinema/:slug/careers" element={<CinemaCareers />} />
+                <Route path="/cinema/:slug/contact" element={<CinemaContact />} />
+                <Route path="/cinema/:slug/booking" element={<CinemaBooking />} />
+                <Route path="/cinema/:slug/book" element={<BookingFlow />} />
+                <Route path="/cinema/:slug/staff" element={<StaffLogin />} />
               <Route
                 path="/dashboard"
                 element={
@@ -195,6 +206,66 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/support"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager']}>
+                    <SupportTickets />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Platform Admin Routes */}
+              <Route path="/platform-admin/login" element={<PlatformAdminLogin />} />
+              <Route
+                path="/platform-admin"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformDashboard />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/cinemas"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformCinemas />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/plans"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformPlans />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/transactions"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformTransactions />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/tickets"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformTickets />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/settings"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformSettings />
+                  </PlatformProtectedRoute>
+                }
+              />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -203,6 +274,7 @@ const App = () => (
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
