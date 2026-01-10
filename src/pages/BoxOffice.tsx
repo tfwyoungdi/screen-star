@@ -251,6 +251,32 @@ export default function BoxOffice() {
     );
   }, [showtimes, searchQuery]);
 
+  // Group showtimes by movie
+  const showtimesByMovie = useMemo(() => {
+    if (!filteredShowtimes) return [];
+    const movieMap = new Map<string, { movie: Showtime['movies']; showtimes: Showtime[] }>();
+    
+    filteredShowtimes.forEach(showtime => {
+      const movieId = showtime.movies.id;
+      if (!movieMap.has(movieId)) {
+        movieMap.set(movieId, {
+          movie: showtime.movies,
+          showtimes: [],
+        });
+      }
+      movieMap.get(movieId)!.showtimes.push(showtime);
+    });
+    
+    // Sort showtimes within each movie by start time
+    movieMap.forEach(entry => {
+      entry.showtimes.sort((a, b) => 
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      );
+    });
+    
+    return Array.from(movieMap.values());
+  }, [filteredShowtimes]);
+
   // Group concessions by category
   const concessionsByCategory = useMemo(() => {
     if (!concessionItems) return {};
@@ -746,7 +772,7 @@ export default function BoxOffice() {
                   <Skeleton key={i} className="h-48 rounded-xl" />
                 ))}
               </div>
-            ) : filteredShowtimes.length === 0 ? (
+            ) : showtimesByMovie.length === 0 ? (
               <Card className="p-12 text-center">
                 <Film className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">No Showtimes Today</h2>
@@ -754,20 +780,16 @@ export default function BoxOffice() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredShowtimes.map((showtime) => (
+                {showtimesByMovie.map(({ movie, showtimes: movieShowtimes }) => (
                   <Card 
-                    key={showtime.id}
-                    className="cursor-pointer hover:border-primary transition-colors touch-manipulation overflow-hidden"
-                    onClick={() => {
-                      setSelectedShowtime(showtime);
-                      setStep('seats');
-                    }}
+                    key={movie.id}
+                    className="overflow-hidden"
                   >
                     <div className="aspect-[3/4] relative bg-muted">
-                      {showtime.movies.poster_url ? (
+                      {movie.poster_url ? (
                         <img 
-                          src={showtime.movies.poster_url} 
-                          alt={showtime.movies.title}
+                          src={movie.poster_url} 
+                          alt={movie.title}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -776,26 +798,40 @@ export default function BoxOffice() {
                         </div>
                       )}
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-4">
-                        <h3 className="font-bold text-white line-clamp-2">{showtime.movies.title}</h3>
+                        <h3 className="font-bold text-white line-clamp-2">{movie.title}</h3>
                         <div className="flex items-center gap-2 mt-1">
-                          {showtime.movies.rating && (
-                            <Badge variant="secondary" className="text-xs">{showtime.movies.rating}</Badge>
+                          {movie.rating && (
+                            <Badge variant="secondary" className="text-xs">{movie.rating}</Badge>
                           )}
-                          <span className="text-white/80 text-sm">{showtime.movies.duration_minutes} min</span>
+                          <span className="text-white/80 text-sm">{movie.duration_minutes} min</span>
                         </div>
                       </div>
                     </div>
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-primary" />
-                          <span className="font-bold text-lg">{format(new Date(showtime.start_time), 'h:mm a')}</span>
-                        </div>
-                        <Badge variant="outline">{showtime.screens.name}</Badge>
+                      <p className="text-xs text-muted-foreground mb-2">Select a showtime:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {movieShowtimes.map((showtime) => (
+                          <Button
+                            key={showtime.id}
+                            variant="outline"
+                            size="sm"
+                            className="touch-manipulation hover:bg-primary hover:text-primary-foreground"
+                            onClick={() => {
+                              setSelectedShowtime(showtime);
+                              setStep('seats');
+                            }}
+                          >
+                            <Clock className="h-3 w-3 mr-1" />
+                            {format(new Date(showtime.start_time), 'h:mm a')}
+                            <span className="ml-1 text-xs opacity-70">({showtime.screens.name})</span>
+                          </Button>
+                        ))}
                       </div>
-                      <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
-                        <span>${showtime.price.toFixed(2)}</span>
-                        {showtime.vip_price && <span>VIP: ${showtime.vip_price.toFixed(2)}</span>}
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t text-sm text-muted-foreground">
+                        <span>From ${Math.min(...movieShowtimes.map(s => s.price)).toFixed(2)}</span>
+                        {movieShowtimes.some(s => s.vip_price) && (
+                          <span>VIP from ${Math.min(...movieShowtimes.filter(s => s.vip_price).map(s => s.vip_price!)).toFixed(2)}</span>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
