@@ -105,6 +105,7 @@ export default function BoxOffice() {
   const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
   const [hasActiveShift, setHasActiveShift] = useState<boolean | null>(null);
   const [showShiftPanel, setShowShiftPanel] = useState(false);
+  const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
 
   // Fetch today's showtimes
   const { data: showtimes, isLoading: showtimesLoading, refetch: refetchShowtimes } = useQuery({
@@ -160,6 +161,34 @@ export default function BoxOffice() {
       return data;
     },
     enabled: !!selectedShowtime?.id,
+  });
+
+  // Fetch seat availability for all today's showtimes
+  const { data: seatAvailability } = useQuery({
+    queryKey: ['box-office-seat-availability', profile?.organization_id],
+    queryFn: async () => {
+      if (!profile?.organization_id || !showtimes) return {};
+      
+      const showtimeIds = showtimes.map(s => s.id);
+      if (showtimeIds.length === 0) return {};
+
+      const { data, error } = await supabase
+        .from('booked_seats')
+        .select('showtime_id')
+        .in('showtime_id', showtimeIds);
+
+      if (error) throw error;
+
+      // Count booked seats per showtime
+      const counts: Record<string, number> = {};
+      data?.forEach(seat => {
+        counts[seat.showtime_id] = (counts[seat.showtime_id] || 0) + 1;
+      });
+
+      return counts;
+    },
+    enabled: !!profile?.organization_id && !!showtimes && showtimes.length > 0,
+    refetchInterval: 30000,
   });
 
   // Fetch concession items
@@ -240,22 +269,42 @@ export default function BoxOffice() {
     };
   }, [selectedShowtime?.id]);
 
-  // Filter showtimes - exclude past showtimes
+  // Get unique screens for filter
+  const uniqueScreens = useMemo(() => {
+    if (!showtimes) return [];
+    const screenMap = new Map<string, { id: string; name: string }>();
+    showtimes.forEach(s => {
+      if (!screenMap.has(s.screens.id)) {
+        screenMap.set(s.screens.id, { id: s.screens.id, name: s.screens.name });
+      }
+    });
+    return Array.from(screenMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [showtimes]);
+
+  // Filter showtimes - exclude past showtimes and apply filters
   const filteredShowtimes = useMemo(() => {
     if (!showtimes) return [];
     const now = new Date();
     
     // First filter out past showtimes
-    const upcomingShowtimes = showtimes.filter(s => new Date(s.start_time) > now);
+    let result = showtimes.filter(s => new Date(s.start_time) > now);
+    
+    // Apply screen filter
+    if (selectedScreen) {
+      result = result.filter(s => s.screens.id === selectedScreen);
+    }
     
     // Then apply search filter
-    if (!searchQuery.trim()) return upcomingShowtimes;
-    const query = searchQuery.toLowerCase();
-    return upcomingShowtimes.filter(s => 
-      s.movies.title.toLowerCase().includes(query) ||
-      s.screens.name.toLowerCase().includes(query)
-    );
-  }, [showtimes, searchQuery]);
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(s => 
+        s.movies.title.toLowerCase().includes(query) ||
+        s.screens.name.toLowerCase().includes(query)
+      );
+    }
+    
+    return result;
+  }, [showtimes, searchQuery, selectedScreen]);
 
   // Group showtimes by movie
   const showtimesByMovie = useMemo(() => {
@@ -772,6 +821,31 @@ export default function BoxOffice() {
               </div>
             </div>
 
+            {/* Screen Filters */}
+            {uniqueScreens.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={selectedScreen === null ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedScreen(null)}
+                  className="touch-manipulation"
+                >
+                  All Screens
+                </Button>
+                {uniqueScreens.map((screen) => (
+                  <Button
+                    key={screen.id}
+                    variant={selectedScreen === screen.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedScreen(screen.id)}
+                    className="touch-manipulation"
+                  >
+                    {screen.name}
+                  </Button>
+                ))}
+              </div>
+            )}
+
             {showtimesLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {[...Array(6)].map((_, i) => (
@@ -816,22 +890,39 @@ export default function BoxOffice() {
                     <CardContent className="p-4">
                       <p className="text-xs text-muted-foreground mb-2">Select a showtime:</p>
                       <div className="flex flex-wrap gap-2">
-                        {movieShowtimes.map((showtime) => (
-                          <Button
-                            key={showtime.id}
-                            variant="outline"
-                            size="sm"
-                            className="touch-manipulation hover:bg-primary hover:text-primary-foreground"
-                            onClick={() => {
-                              setSelectedShowtime(showtime);
-                              setStep('seats');
-                            }}
-                          >
-                            <Clock className="h-3 w-3 mr-1" />
-                            {format(new Date(showtime.start_time), 'h:mm a')}
-                            <span className="ml-1 text-xs opacity-70">({showtime.screens.name})</span>
-                          </Button>
-                        ))}
+                        {movieShowtimes.map((showtime) => {
+                          const totalSeats = showtime.screens.rows * showtime.screens.columns;
+                          const bookedCount = seatAvailability?.[showtime.id] || 0;
+                          const availableSeats = totalSeats - bookedCount;
+                          const isLowAvailability = availableSeats < totalSeats * 0.2;
+                          
+                          return (
+                            <Button
+                              key={showtime.id}
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                "touch-manipulation hover:bg-primary hover:text-primary-foreground flex-col h-auto py-2",
+                                isLowAvailability && "border-amber-500/50"
+                              )}
+                              onClick={() => {
+                                setSelectedShowtime(showtime);
+                                setStep('seats');
+                              }}
+                            >
+                              <span className="flex items-center">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {format(new Date(showtime.start_time), 'h:mm a')}
+                              </span>
+                              <span className={cn(
+                                "text-xs mt-0.5",
+                                isLowAvailability ? "text-amber-500" : "opacity-70"
+                              )}>
+                                {availableSeats} left • {showtime.screens.name}
+                              </span>
+                            </Button>
+                          );
+                        })}
                       </div>
                       <div className="flex items-center justify-between mt-3 pt-3 border-t text-sm text-muted-foreground">
                         <span>From ${Math.min(...movieShowtimes.map(s => s.price)).toFixed(2)}</span>
