@@ -818,20 +818,30 @@ export default function BoxOffice() {
         {step !== 'showtimes' && step !== 'confirmation' && (
           <div className="px-4 lg:px-6 py-3 bg-muted/50 border-t">
             <div className="flex items-center justify-center gap-1 sm:gap-2 max-w-2xl mx-auto">
-              {progressSteps.map((progressStep, index) => {
+            {progressSteps.map((progressStep, index) => {
                 const StepIcon = progressStep.icon;
                 const isCompleted = index < currentStepIndex;
                 const isCurrent = index === currentStepIndex;
                 const isUpcoming = index > currentStepIndex;
+                const isClickable = isCompleted;
+
+                const handleStepClick = () => {
+                  if (!isClickable) return;
+                  setStep(progressStep.key);
+                };
 
                 return (
                   <div key={progressStep.key} className="flex items-center">
-                    <div 
+                    <button
+                      type="button"
+                      onClick={handleStepClick}
+                      disabled={!isClickable}
                       className={cn(
                         "flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-medium transition-colors",
-                        isCompleted && "bg-primary/20 text-primary",
-                        isCurrent && "bg-primary text-primary-foreground",
-                        isUpcoming && "bg-muted text-muted-foreground"
+                        isCompleted && "bg-primary/20 text-primary cursor-pointer hover:bg-primary/30",
+                        isCurrent && "bg-primary text-primary-foreground cursor-default",
+                        isUpcoming && "bg-muted text-muted-foreground cursor-not-allowed",
+                        isClickable && "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       )}
                     >
                       <div className={cn(
@@ -847,7 +857,7 @@ export default function BoxOffice() {
                         )}
                       </div>
                       <span className="hidden sm:inline">{progressStep.label}</span>
-                    </div>
+                    </button>
                     {index < progressSteps.length - 1 && (
                       <div className={cn(
                         "w-4 sm:w-8 h-0.5 mx-1",
