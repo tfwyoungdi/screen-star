@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { MessageSquare, Clock, CheckCircle2, AlertCircle, XCircle, Eye } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
+import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 
 type SupportTicket = Tables<'support_tickets'>;
 
@@ -28,6 +29,7 @@ const STATUS_OPTIONS = [
 
 export default function PlatformTickets() {
   const queryClient = useQueryClient();
+  const { logAction } = usePlatformAuditLog();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -78,9 +80,21 @@ export default function PlatformTickets() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['all-support-tickets'] });
       toast.success('Ticket updated successfully');
+      
+      // Audit log
+      logAction({
+        action: 'ticket_status_updated',
+        target_type: 'support_ticket',
+        target_id: variables.id,
+        details: {
+          new_status: variables.status,
+          has_response: !!variables.internal_notes,
+        },
+      });
+      
       setSelectedTicket(null);
       setResponseNote('');
       setNewStatus('');

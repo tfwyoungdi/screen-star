@@ -16,11 +16,13 @@ import { toast } from 'sonner';
 import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
+import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 
 type Organization = Tables<'organizations'>;
 
 export default function PlatformCinemas() {
   const queryClient = useQueryClient();
+  const { logAction } = usePlatformAuditLog();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCinema, setSelectedCinema] = useState<Organization | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
@@ -61,9 +63,21 @@ export default function PlatformCinemas() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['all-cinemas'] });
       toast.success(variables.suspend ? 'Cinema suspended' : 'Cinema reactivated');
+      
+      // Audit log
+      logAction({
+        action: variables.suspend ? 'cinema_suspended' : 'cinema_reactivated',
+        target_type: 'organization',
+        target_id: variables.id,
+        details: {
+          cinema_name: data?.name,
+          reason: variables.reason || null,
+        },
+      });
+      
       setSelectedCinema(null);
       setSuspendReason('');
     },

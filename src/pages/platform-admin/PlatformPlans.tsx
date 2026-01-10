@@ -14,11 +14,13 @@ import { toast } from 'sonner';
 import { Plus, Edit, Check, X } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
+import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 
 type SubscriptionPlan = Tables<'subscription_plans'>;
 
 export default function PlatformPlans() {
   const queryClient = useQueryClient();
+  const { logAction } = usePlatformAuditLog();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
 
@@ -64,9 +66,17 @@ export default function PlatformPlans() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
       toast.success('Plan created successfully');
+      
+      logAction({
+        action: 'plan_created',
+        target_type: 'subscription_plan',
+        target_id: data?.id,
+        details: { plan_name: data?.name, price_monthly: data?.price_monthly },
+      });
+      
       setIsCreateOpen(false);
       resetForm();
     },
@@ -87,9 +97,17 @@ export default function PlatformPlans() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
       toast.success('Plan updated successfully');
+      
+      logAction({
+        action: 'plan_updated',
+        target_type: 'subscription_plan',
+        target_id: data?.id,
+        details: { plan_name: data?.name },
+      });
+      
       setEditingPlan(null);
       resetForm();
     },
