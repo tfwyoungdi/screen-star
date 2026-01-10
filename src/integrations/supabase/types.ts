@@ -270,6 +270,75 @@ export type Database = {
           },
         ]
       }
+      cinema_subscriptions: {
+        Row: {
+          billing_email: string | null
+          cancelled_at: string | null
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          discount_expires_at: string | null
+          discount_percentage: number | null
+          id: string
+          organization_id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_email?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end: string
+          current_period_start?: string
+          discount_expires_at?: string | null
+          discount_percentage?: number | null
+          id?: string
+          organization_id: string
+          plan_id: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_email?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          discount_expires_at?: string | null
+          discount_percentage?: number | null
+          id?: string
+          organization_id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cinema_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cinema_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       combo_deal_items: {
         Row: {
           combo_deal_id: string
@@ -508,6 +577,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domain_records: {
+        Row: {
+          created_at: string
+          dns_verification_token: string | null
+          dns_verified: boolean | null
+          domain: string
+          domain_type: string
+          error_message: string | null
+          id: string
+          is_primary: boolean | null
+          last_checked_at: string | null
+          organization_id: string
+          ssl_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dns_verification_token?: string | null
+          dns_verified?: boolean | null
+          domain: string
+          domain_type: string
+          error_message?: string | null
+          id?: string
+          is_primary?: boolean | null
+          last_checked_at?: string | null
+          organization_id: string
+          ssl_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dns_verification_token?: string | null
+          dns_verified?: boolean | null
+          domain?: string
+          domain_type?: string
+          error_message?: string | null
+          id?: string
+          is_primary?: boolean | null
+          last_checked_at?: string | null
+          organization_id?: string
+          ssl_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_records_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -850,6 +972,8 @@ export type Database = {
           social_instagram: string | null
           social_twitter: string | null
           subscription_plan: string | null
+          suspended_at: string | null
+          suspended_reason: string | null
           updated_at: string
           values_json: Json | null
         }
@@ -878,6 +1002,8 @@ export type Database = {
           social_instagram?: string | null
           social_twitter?: string | null
           subscription_plan?: string | null
+          suspended_at?: string | null
+          suspended_reason?: string | null
           updated_at?: string
           values_json?: Json | null
         }
@@ -906,6 +1032,8 @@ export type Database = {
           social_instagram?: string | null
           social_twitter?: string | null
           subscription_plan?: string | null
+          suspended_at?: string | null
+          suspended_reason?: string | null
           updated_at?: string
           values_json?: Json | null
         }
@@ -942,6 +1070,150 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "page_views_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_audit_logs: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          created_at: string
+          enable_cinema_gateways: boolean | null
+          enable_custom_domains: boolean | null
+          enable_promotions: boolean | null
+          enable_wallet_feature: boolean | null
+          id: string
+          logo_url: string | null
+          maintenance_message: string | null
+          maintenance_mode: boolean | null
+          platform_name: string
+          primary_color: string | null
+          support_email: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enable_cinema_gateways?: boolean | null
+          enable_custom_domains?: boolean | null
+          enable_promotions?: boolean | null
+          enable_wallet_feature?: boolean | null
+          id?: string
+          logo_url?: string | null
+          maintenance_message?: string | null
+          maintenance_mode?: boolean | null
+          platform_name?: string
+          primary_color?: string | null
+          support_email?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enable_cinema_gateways?: boolean | null
+          enable_custom_domains?: boolean | null
+          enable_promotions?: boolean | null
+          enable_wallet_feature?: boolean | null
+          id?: string
+          logo_url?: string | null
+          maintenance_message?: string | null
+          maintenance_mode?: boolean | null
+          platform_name?: string
+          primary_color?: string | null
+          support_email?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_transactions: {
+        Row: {
+          booking_id: string | null
+          commission_amount: number
+          created_at: string
+          gateway_transaction_id: string | null
+          gross_amount: number
+          id: string
+          metadata: Json | null
+          net_amount: number
+          organization_id: string
+          payment_gateway: string | null
+          payment_status: string
+          transaction_type: string
+        }
+        Insert: {
+          booking_id?: string | null
+          commission_amount?: number
+          created_at?: string
+          gateway_transaction_id?: string | null
+          gross_amount: number
+          id?: string
+          metadata?: Json | null
+          net_amount: number
+          organization_id: string
+          payment_gateway?: string | null
+          payment_status?: string
+          transaction_type: string
+        }
+        Update: {
+          booking_id?: string | null
+          commission_amount?: number
+          created_at?: string
+          gateway_transaction_id?: string | null
+          gross_amount?: number
+          id?: string
+          metadata?: Json | null
+          net_amount?: number
+          organization_id?: string
+          payment_gateway?: string | null
+          payment_status?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_transactions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1285,6 +1557,152 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          allow_custom_domain: boolean | null
+          allow_own_gateway: boolean | null
+          commission_percentage: number | null
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_locations: number | null
+          max_screens: number | null
+          max_staff: number | null
+          name: string
+          per_ticket_fee: number | null
+          price_monthly: number
+          price_yearly: number | null
+          slug: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          allow_custom_domain?: boolean | null
+          allow_own_gateway?: boolean | null
+          commission_percentage?: number | null
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_locations?: number | null
+          max_screens?: number | null
+          max_staff?: number | null
+          name: string
+          per_ticket_fee?: number | null
+          price_monthly?: number
+          price_yearly?: number | null
+          slug: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          allow_custom_domain?: boolean | null
+          allow_own_gateway?: boolean | null
+          commission_percentage?: number | null
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_locations?: number | null
+          max_screens?: number | null
+          max_staff?: number | null
+          name?: string
+          per_ticket_fee?: number | null
+          price_monthly?: number
+          price_yearly?: number | null
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          description: string
+          id: string
+          internal_notes: string | null
+          organization_id: string | null
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          internal_notes?: string | null
+          organization_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          internal_notes?: string | null
+          organization_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_health_logs: {
+        Row: {
+          details: Json | null
+          error_count: number | null
+          id: string
+          metric_type: string
+          recorded_at: string
+          response_time_ms: number | null
+          status: string
+        }
+        Insert: {
+          details?: Json | null
+          error_count?: number | null
+          id?: string
+          metric_type: string
+          recorded_at?: string
+          response_time_ms?: number | null
+          status: string
+        }
+        Update: {
+          details?: Json | null
+          error_count?: number | null
+          id?: string
+          metric_type?: string
+          recorded_at?: string
+          response_time_ms?: number | null
+          status?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
