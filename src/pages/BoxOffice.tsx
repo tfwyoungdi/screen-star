@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfDay, endOfDay, addDays, isSameDay } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile, useOrganization } from '@/hooks/useUserProfile';
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +14,7 @@ import {
   Film, Clock, Ticket, DollarSign, Search, 
   Check, X, ArrowLeft, Plus, Minus, Tag, 
   CreditCard, Loader2, LogOut, Receipt, RefreshCw,
-  Popcorn, Phone, Printer, User, ClipboardList
+  Popcorn, Phone, Printer, User, ClipboardList, Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -106,13 +106,13 @@ export default function BoxOffice() {
   const [hasActiveShift, setHasActiveShift] = useState<boolean | null>(null);
   const [showShiftPanel, setShowShiftPanel] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // Fetch today's showtimes
+  // Fetch showtimes for selected date
   const { data: showtimes, isLoading: showtimesLoading, refetch: refetchShowtimes } = useQuery({
-    queryKey: ['box-office-showtimes', profile?.organization_id],
+    queryKey: ['box-office-showtimes', profile?.organization_id, format(selectedDate, 'yyyy-MM-dd')],
     queryFn: async () => {
       if (!profile?.organization_id) return [];
-      const today = new Date();
       const { data, error } = await supabase
         .from('showtimes')
         .select(`
@@ -122,8 +122,8 @@ export default function BoxOffice() {
         `)
         .eq('organization_id', profile.organization_id)
         .eq('is_active', true)
-        .gte('start_time', startOfDay(today).toISOString())
-        .lte('start_time', endOfDay(today).toISOString())
+        .gte('start_time', startOfDay(selectedDate).toISOString())
+        .lte('start_time', endOfDay(selectedDate).toISOString())
         .order('start_time', { ascending: true });
 
       if (error) throw error;
@@ -281,13 +281,16 @@ export default function BoxOffice() {
     return Array.from(screenMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [showtimes]);
 
-  // Filter showtimes - exclude past showtimes and apply filters
+  // Filter showtimes - exclude past showtimes (only for today) and apply filters
   const filteredShowtimes = useMemo(() => {
     if (!showtimes) return [];
     const now = new Date();
+    const isToday = isSameDay(selectedDate, now);
     
-    // First filter out past showtimes
-    let result = showtimes.filter(s => new Date(s.start_time) > now);
+    // Filter out past showtimes only for today
+    let result = isToday 
+      ? showtimes.filter(s => new Date(s.start_time) > now)
+      : showtimes;
     
     // Apply screen filter
     if (selectedScreen) {
@@ -304,7 +307,17 @@ export default function BoxOffice() {
     }
     
     return result;
-  }, [showtimes, searchQuery, selectedScreen]);
+  }, [showtimes, searchQuery, selectedScreen, selectedDate]);
+
+  // Helper to check if a showtime is sold out
+  const getShowtimeAvailability = (showtime: Showtime) => {
+    const totalSeats = showtime.screens.rows * showtime.screens.columns;
+    const bookedCount = seatAvailability?.[showtime.id] || 0;
+    const availableSeats = totalSeats - bookedCount;
+    const isSoldOut = availableSeats <= 0;
+    const isLowAvailability = availableSeats > 0 && availableSeats / totalSeats < 0.2;
+    return { availableSeats, totalSeats, isSoldOut, isLowAvailability };
+  };
 
   // Group showtimes by movie
   const showtimesByMovie = useMemo(() => {
@@ -807,8 +820,10 @@ export default function BoxOffice() {
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">Today's Showtimes</h1>
-                <p className="text-muted-foreground">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+                <h1 className="text-2xl font-bold">
+                  {isSameDay(selectedDate, new Date()) ? "Today's" : "Tomorrow's"} Showtimes
+                </h1>
+                <p className="text-muted-foreground">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
               </div>
               <div className="relative w-full sm:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -821,30 +836,54 @@ export default function BoxOffice() {
               </div>
             </div>
 
-            {/* Screen Filters */}
-            {uniqueScreens.length > 1 && (
-              <div className="flex flex-wrap gap-2">
+            {/* Date Picker: Today / Tomorrow */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="flex gap-1 bg-muted p-1 rounded-lg">
                 <Button
-                  variant={selectedScreen === null ? "default" : "outline"}
+                  variant={isSameDay(selectedDate, new Date()) ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setSelectedScreen(null)}
-                  className="touch-manipulation"
+                  onClick={() => setSelectedDate(new Date())}
+                  className="touch-manipulation gap-2"
                 >
-                  All Screens
+                  <Calendar className="h-4 w-4" />
+                  Today
                 </Button>
-                {uniqueScreens.map((screen) => (
+                <Button
+                  variant={isSameDay(selectedDate, addDays(new Date(), 1)) ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedDate(addDays(new Date(), 1))}
+                  className="touch-manipulation gap-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Tomorrow
+                </Button>
+              </div>
+
+              {/* Screen Filters */}
+              {uniqueScreens.length > 1 && (
+                <div className="flex flex-wrap gap-2 border-l pl-3 ml-1">
                   <Button
-                    key={screen.id}
-                    variant={selectedScreen === screen.id ? "default" : "outline"}
+                    variant={selectedScreen === null ? "secondary" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedScreen(screen.id)}
+                    onClick={() => setSelectedScreen(null)}
                     className="touch-manipulation"
                   >
-                    {screen.name}
+                    All Screens
                   </Button>
-                ))}
-              </div>
-            )}
+                  {uniqueScreens.map((screen) => (
+                    <Button
+                      key={screen.id}
+                      variant={selectedScreen === screen.id ? "secondary" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedScreen(screen.id)}
+                      className="touch-manipulation"
+                    >
+                      {screen.name}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {showtimesLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -891,35 +930,43 @@ export default function BoxOffice() {
                       <p className="text-xs text-muted-foreground mb-2">Select a showtime:</p>
                       <div className="flex flex-wrap gap-2">
                         {movieShowtimes.map((showtime) => {
-                          const totalSeats = showtime.screens.rows * showtime.screens.columns;
-                          const bookedCount = seatAvailability?.[showtime.id] || 0;
-                          const availableSeats = totalSeats - bookedCount;
-                          const isLowAvailability = availableSeats < totalSeats * 0.2;
+                          const { availableSeats, isSoldOut, isLowAvailability } = getShowtimeAvailability(showtime);
                           
                           return (
                             <Button
                               key={showtime.id}
                               variant="outline"
                               size="sm"
+                              disabled={isSoldOut}
                               className={cn(
-                                "touch-manipulation hover:bg-primary hover:text-primary-foreground flex-col h-auto py-2",
-                                isLowAvailability && "border-amber-500/50"
+                                "touch-manipulation flex-col h-auto py-2",
+                                !isSoldOut && "hover:bg-primary hover:text-primary-foreground",
+                                isLowAvailability && !isSoldOut && "border-amber-500/50",
+                                isSoldOut && "opacity-60 cursor-not-allowed"
                               )}
                               onClick={() => {
-                                setSelectedShowtime(showtime);
-                                setStep('seats');
+                                if (!isSoldOut) {
+                                  setSelectedShowtime(showtime);
+                                  setStep('seats');
+                                }
                               }}
                             >
                               <span className="flex items-center">
                                 <Clock className="h-3 w-3 mr-1" />
                                 {format(new Date(showtime.start_time), 'h:mm a')}
                               </span>
-                              <span className={cn(
-                                "text-xs mt-0.5",
-                                isLowAvailability ? "text-amber-500" : "opacity-70"
-                              )}>
-                                {availableSeats} left • {showtime.screens.name}
-                              </span>
+                              {isSoldOut ? (
+                                <Badge variant="destructive" className="text-[10px] mt-0.5 py-0">
+                                  Sold Out
+                                </Badge>
+                              ) : (
+                                <span className={cn(
+                                  "text-xs mt-0.5",
+                                  isLowAvailability ? "text-amber-500" : "opacity-70"
+                                )}>
+                                  {availableSeats} left • {showtime.screens.name}
+                                </span>
+                              )}
                             </Button>
                           );
                         })}
