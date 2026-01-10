@@ -240,12 +240,18 @@ export default function BoxOffice() {
     };
   }, [selectedShowtime?.id]);
 
-  // Filter showtimes
+  // Filter showtimes - exclude past showtimes
   const filteredShowtimes = useMemo(() => {
     if (!showtimes) return [];
-    if (!searchQuery.trim()) return showtimes;
+    const now = new Date();
+    
+    // First filter out past showtimes
+    const upcomingShowtimes = showtimes.filter(s => new Date(s.start_time) > now);
+    
+    // Then apply search filter
+    if (!searchQuery.trim()) return upcomingShowtimes;
     const query = searchQuery.toLowerCase();
-    return showtimes.filter(s => 
+    return upcomingShowtimes.filter(s => 
       s.movies.title.toLowerCase().includes(query) ||
       s.screens.name.toLowerCase().includes(query)
     );
