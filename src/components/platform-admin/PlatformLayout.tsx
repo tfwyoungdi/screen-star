@@ -12,6 +12,11 @@ import {
   Settings,
   LogOut,
   Shield,
+  Globe,
+  Users,
+  Activity,
+  BarChart3,
+  ScrollText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,11 +29,11 @@ const navItems = [
   { title: 'Cinemas', href: '/platform-admin/cinemas', icon: Building2 },
   { title: 'Subscription Plans', href: '/platform-admin/plans', icon: CreditCard },
   { title: 'Transactions', href: '/platform-admin/transactions', icon: Receipt },
-  { title: 'Domains', href: '/platform-admin/domains', icon: Shield },
-  { title: 'Users & Roles', href: '/platform-admin/users', icon: Shield },
-  { title: 'Monitoring', href: '/platform-admin/monitoring', icon: Shield },
-  { title: 'Reports', href: '/platform-admin/reports', icon: Receipt },
-  { title: 'Audit Logs', href: '/platform-admin/audit-logs', icon: Shield },
+  { title: 'Domains', href: '/platform-admin/domains', icon: Globe },
+  { title: 'Users & Roles', href: '/platform-admin/users', icon: Users },
+  { title: 'Monitoring', href: '/platform-admin/monitoring', icon: Activity },
+  { title: 'Reports', href: '/platform-admin/reports', icon: BarChart3 },
+  { title: 'Audit Logs', href: '/platform-admin/audit-logs', icon: ScrollText },
   { title: 'Support Tickets', href: '/platform-admin/tickets', icon: MessageSquare },
   { title: 'Settings', href: '/platform-admin/settings', icon: Settings },
 ];
