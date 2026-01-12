@@ -16,12 +16,15 @@ import {
   DollarSign, 
   Ticket,
   Building2,
-  Users 
+  Users,
+  FileText,
 } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
+import { usePlatformExportPDF } from '@/hooks/usePlatformExportPDF';
 
 export default function PlatformReports() {
   const [period, setPeriod] = useState<string>('30days');
+  const { exportReportToPDF } = usePlatformExportPDF();
 
   const getDateRange = () => {
     const now = new Date();
@@ -132,33 +135,44 @@ export default function PlatformReports() {
     },
   });
 
-  const handleExport = (type: 'csv' | 'pdf') => {
+  const getPeriodLabel = () => {
+    switch (period) {
+      case '7days': return 'Last 7 Days';
+      case '30days': return 'Last 30 Days';
+      case 'thisMonth': return 'This Month';
+      case 'lastMonth': return 'Last Month';
+      default: return 'Last 30 Days';
+    }
+  };
+
+  const handleExportCSV = () => {
     if (!topCinemas || topCinemas.length === 0) {
       toast.error('No data to export');
       return;
     }
 
-    if (type === 'csv') {
-      const headers = ['Cinema', 'Gross Revenue', 'Platform Commission', 'Transactions'];
-      const rows = topCinemas.map((c) => [
-        c.name,
-        c.gross.toFixed(2),
-        c.commission.toFixed(2),
-        c.count,
-      ]);
+    const headers = ['Cinema', 'Gross Revenue', 'Platform Commission', 'Transactions'];
+    const rows = topCinemas.map((c) => [
+      c.name,
+      c.gross.toFixed(2),
+      c.commission.toFixed(2),
+      c.count,
+    ]);
 
-      const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `platform-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success('CSV exported successfully');
-    } else {
-      toast.info('PDF export coming soon');
-    }
+    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `platform-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported successfully');
+  };
+
+  const handleExportPDF = () => {
+    exportReportToPDF(topCinemas || [], revenueData, cinemaStats, getPeriodLabel());
+    toast.success('PDF report opened for printing');
   };
 
   const isLoading = revenueLoading || cinemaLoading || topLoading;
@@ -185,9 +199,13 @@ export default function PlatformReports() {
                 <SelectItem value="lastMonth">Last Month</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" className="gap-2" onClick={() => handleExport('csv')}>
+            <Button variant="outline" className="gap-2" onClick={handleExportCSV}>
               <Download className="h-4 w-4" />
-              Export CSV
+              CSV
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={handleExportPDF}>
+              <FileText className="h-4 w-4" />
+              PDF
             </Button>
           </div>
         </div>

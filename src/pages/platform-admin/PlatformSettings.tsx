@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Settings, Shield, Globe, Mail } from 'lucide-react';
+import { Settings, Shield, Globe, Timer } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
@@ -44,6 +44,12 @@ export default function PlatformSettingsPage() {
     enable_cinema_gateways: true,
     enable_promotions: true,
     enable_wallet_feature: false,
+    sla_response_time_low: 72,
+    sla_response_time_medium: 24,
+    sla_response_time_high: 8,
+    sla_response_time_urgent: 2,
+    sla_escalation_enabled: true,
+    sla_escalation_email: '',
   });
 
   useEffect(() => {
@@ -58,6 +64,12 @@ export default function PlatformSettingsPage() {
         enable_cinema_gateways: settings.enable_cinema_gateways ?? true,
         enable_promotions: settings.enable_promotions ?? true,
         enable_wallet_feature: settings.enable_wallet_feature ?? false,
+        sla_response_time_low: (settings as any).sla_response_time_low ?? 72,
+        sla_response_time_medium: (settings as any).sla_response_time_medium ?? 24,
+        sla_response_time_high: (settings as any).sla_response_time_high ?? 8,
+        sla_response_time_urgent: (settings as any).sla_response_time_urgent ?? 2,
+        sla_escalation_enabled: (settings as any).sla_escalation_enabled ?? true,
+        sla_escalation_email: (settings as any).sla_escalation_email || '',
       });
     }
   }, [settings]);
@@ -272,6 +284,85 @@ export default function PlatformSettingsPage() {
                   checked={formData.enable_wallet_feature}
                   onCheckedChange={(checked) => setFormData({ ...formData, enable_wallet_feature: checked })}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SLA Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Timer className="h-5 w-5" />
+                SLA Response Times
+              </CardTitle>
+              <CardDescription>Configure target response times by priority (in hours)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Urgent (hours)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.sla_response_time_urgent}
+                    onChange={(e) => setFormData({ ...formData, sla_response_time_urgent: parseInt(e.target.value) || 2 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>High (hours)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.sla_response_time_high}
+                    onChange={(e) => setFormData({ ...formData, sla_response_time_high: parseInt(e.target.value) || 8 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Medium (hours)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.sla_response_time_medium}
+                    onChange={(e) => setFormData({ ...formData, sla_response_time_medium: parseInt(e.target.value) || 24 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Low (hours)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.sla_response_time_low}
+                    onChange={(e) => setFormData({ ...formData, sla_response_time_low: parseInt(e.target.value) || 72 })}
+                  />
+                </div>
+              </div>
+              <div className="pt-4 border-t space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Enable SLA Escalation</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Send alerts when tickets breach SLA targets
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.sla_escalation_enabled}
+                    onCheckedChange={(checked) => setFormData({ ...formData, sla_escalation_enabled: checked })}
+                  />
+                </div>
+                {formData.sla_escalation_enabled && (
+                  <div className="space-y-2">
+                    <Label>Escalation Email</Label>
+                    <Input
+                      type="email"
+                      value={formData.sla_escalation_email}
+                      onChange={(e) => setFormData({ ...formData, sla_escalation_email: e.target.value })}
+                      placeholder="escalations@cinetix.com"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Email address to receive SLA breach notifications
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

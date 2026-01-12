@@ -1126,6 +1126,12 @@ export type Database = {
           maintenance_mode: boolean | null
           platform_name: string
           primary_color: string | null
+          sla_escalation_email: string | null
+          sla_escalation_enabled: boolean | null
+          sla_response_time_high: number | null
+          sla_response_time_low: number | null
+          sla_response_time_medium: number | null
+          sla_response_time_urgent: number | null
           support_email: string | null
           updated_at: string
         }
@@ -1141,6 +1147,12 @@ export type Database = {
           maintenance_mode?: boolean | null
           platform_name?: string
           primary_color?: string | null
+          sla_escalation_email?: string | null
+          sla_escalation_enabled?: boolean | null
+          sla_response_time_high?: number | null
+          sla_response_time_low?: number | null
+          sla_response_time_medium?: number | null
+          sla_response_time_urgent?: number | null
           support_email?: string | null
           updated_at?: string
         }
@@ -1156,6 +1168,12 @@ export type Database = {
           maintenance_mode?: boolean | null
           platform_name?: string
           primary_color?: string | null
+          sla_escalation_email?: string | null
+          sla_escalation_enabled?: boolean | null
+          sla_response_time_high?: number | null
+          sla_response_time_low?: number | null
+          sla_response_time_medium?: number | null
+          sla_response_time_urgent?: number | null
           support_email?: string | null
           updated_at?: string
         }
@@ -1627,11 +1645,13 @@ export type Database = {
           category: string | null
           created_at: string
           description: string
+          first_response_at: string | null
           id: string
           internal_notes: string | null
           organization_id: string | null
           priority: string
           resolved_at: string | null
+          sla_breached: boolean | null
           status: string
           subject: string
           updated_at: string
@@ -1641,11 +1661,13 @@ export type Database = {
           category?: string | null
           created_at?: string
           description: string
+          first_response_at?: string | null
           id?: string
           internal_notes?: string | null
           organization_id?: string | null
           priority?: string
           resolved_at?: string | null
+          sla_breached?: boolean | null
           status?: string
           subject: string
           updated_at?: string
@@ -1655,11 +1677,13 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string
+          first_response_at?: string | null
           id?: string
           internal_notes?: string | null
           organization_id?: string | null
           priority?: string
           resolved_at?: string | null
+          sla_breached?: boolean | null
           status?: string
           subject?: string
           updated_at?: string

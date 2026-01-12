@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useExportReports } from '@/hooks/useExportReports';
@@ -32,6 +33,8 @@ const ITEMS_PER_PAGE = 10;
 
 export default function SalesDashboard() {
   const { data: profile } = useUserProfile();
+  const { getEffectiveOrganizationId } = useImpersonation();
+  const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const { exportToCSV, exportToPDF } = useExportReports();
   const [dateRange, setDateRange] = useState('7');
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,9 +45,9 @@ export default function SalesDashboard() {
 
   // Fetch bookings for analytics
   const { data: bookings, isLoading: bookingsLoading, isRefetching, refetch, dataUpdatedAt } = useQuery({
-    queryKey: ['sales-bookings', profile?.organization_id, dateRange],
+    queryKey: ['sales-bookings', effectiveOrgId, dateRange],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -55,7 +58,7 @@ export default function SalesDashboard() {
             screens (name)
           )
         `)
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
         .order('created_at', { ascending: false });
@@ -64,7 +67,7 @@ export default function SalesDashboard() {
       setLastUpdated(new Date());
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   // Fetch booked seats for ticket count

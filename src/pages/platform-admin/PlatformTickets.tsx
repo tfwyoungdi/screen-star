@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,8 +12,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { MessageSquare, Clock, CheckCircle2, AlertCircle, XCircle, Eye } from 'lucide-react';
+import { MessageSquare, Clock, CheckCircle2, AlertCircle, XCircle, Eye, Timer } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
+import { SLAIndicator } from '@/components/platform-admin/SLAIndicator';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 
@@ -60,16 +60,39 @@ export default function PlatformTickets() {
     },
   });
 
+  // Fetch SLA settings
+  const { data: slaSettings } = useQuery({
+    queryKey: ['platform-sla-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('sla_response_time_low, sla_response_time_medium, sla_response_time_high, sla_response_time_urgent')
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data ? {
+        low: (data as any).sla_response_time_low || 72,
+        medium: (data as any).sla_response_time_medium || 24,
+        high: (data as any).sla_response_time_high || 8,
+        urgent: (data as any).sla_response_time_urgent || 2,
+      } : { low: 72, medium: 24, high: 8, urgent: 2 };
+    },
+  });
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, status, internal_notes }: { id: string; status: string; internal_notes?: string }) => {
       const updates: any = { status };
       if (internal_notes) {
         updates.internal_notes = internal_notes;
       }
+      // If this is the first response, set first_response_at
+      if (!selectedTicket?.first_response_at && internal_notes) {
+        updates.first_response_at = new Date().toISOString();
+      }
       if (status === 'resolved') {
         updates.resolved_at = new Date().toISOString();
       }
-
       const { data, error } = await supabase
         .from('support_tickets')
         .update(updates)
@@ -158,6 +181,7 @@ export default function PlatformTickets() {
   const openTickets = tickets?.filter((t) => t.status === 'open').length || 0;
   const inProgressTickets = tickets?.filter((t) => t.status === 'in_progress').length || 0;
   const urgentTickets = tickets?.filter((t) => t.priority === 'urgent' && t.status !== 'resolved' && t.status !== 'closed').length || 0;
+  const breachedTickets = tickets?.filter((t) => (t as any).sla_breached === true).length || 0;
 
   return (
     <PlatformLayout>
@@ -213,12 +237,12 @@ export default function PlatformTickets() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <Timer className="h-5 w-5 text-orange-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{tickets?.length || 0}</p>
-                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold">{breachedTickets}</p>
+                  <p className="text-xs text-muted-foreground">SLA Breached</p>
                 </div>
               </div>
             </CardContent>
@@ -275,9 +299,9 @@ export default function PlatformTickets() {
                   <TableRow>
                     <TableHead>Cinema</TableHead>
                     <TableHead>Subject</TableHead>
-                    <TableHead>Category</TableHead>
                     <TableHead>Priority</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>SLA</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -289,9 +313,17 @@ export default function PlatformTickets() {
                         {(ticket.organizations as any)?.name || 'Unknown'}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">{ticket.subject}</TableCell>
-                      <TableCell>{ticket.category || '-'}</TableCell>
                       <TableCell>{getPriorityBadge(ticket.priority)}</TableCell>
                       <TableCell>{getStatusBadge(ticket.status)}</TableCell>
+                      <TableCell>
+                        <SLAIndicator
+                          createdAt={ticket.created_at}
+                          priority={ticket.priority}
+                          firstResponseAt={(ticket as any).first_response_at}
+                          status={ticket.status}
+                          slaSettings={slaSettings}
+                        />
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(ticket.created_at), 'MMM d, yyyy')}
                       </TableCell>

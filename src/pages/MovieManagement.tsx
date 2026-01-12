@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -50,6 +51,8 @@ const extractVideoId = (url: string): { type: 'youtube' | 'vimeo' | null; id: st
 
 export default function MovieManagement() {
   const { data: profile } = useUserProfile();
+  const { getEffectiveOrganizationId, isImpersonating } = useImpersonation();
+  const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMovie, setEditingMovie] = useState<any>(null);
   const [posterFile, setPosterFile] = useState<File | null>(null);
@@ -73,19 +76,19 @@ export default function MovieManagement() {
   const trailerUrl = watch('trailer_url');
 
   const { data: movies, isLoading } = useQuery({
-    queryKey: ['movies', profile?.organization_id],
+    queryKey: ['movies', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('movies')
         .select('*')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,12 +104,12 @@ export default function MovieManagement() {
   };
 
   const uploadPoster = async (movieId: string): Promise<string | null> => {
-    if (!posterFile || !profile?.organization_id) return null;
+    if (!posterFile || !effectiveOrgId) return null;
     
     setUploading(true);
     try {
       const fileExt = posterFile.name.split('.').pop();
-      const filePath = `${profile.organization_id}/${movieId}.${fileExt}`;
+      const filePath = `${effectiveOrgId}/${movieId}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('movie-posters')
@@ -125,7 +128,7 @@ export default function MovieManagement() {
   };
 
   const onSubmit = async (data: MovieFormData) => {
-    if (!profile?.organization_id) return;
+    if (!effectiveOrgId) return;
 
     try {
       if (editingMovie) {
@@ -158,7 +161,7 @@ export default function MovieManagement() {
         const { data: newMovie, error } = await supabase
           .from('movies')
           .insert({
-            organization_id: profile.organization_id,
+            organization_id: effectiveOrgId,
             title: data.title,
             description: data.description || null,
             duration_minutes: data.duration_minutes,
