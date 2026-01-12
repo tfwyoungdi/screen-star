@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -66,6 +67,8 @@ const BUFFER_MINUTES = 15; // Buffer between showtimes for cleaning/previews
 
 export default function ShowtimeManagement() {
   const { data: profile } = useUserProfile();
+  const { getEffectiveOrganizationId, isImpersonating } = useImpersonation();
+  const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [customTimeInput, setCustomTimeInput] = useState('');
@@ -94,40 +97,40 @@ export default function ShowtimeManagement() {
   });
 
   const { data: movies } = useQuery({
-    queryKey: ['movies', profile?.organization_id],
+    queryKey: ['movies', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('movies')
         .select('id, title, duration_minutes')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .eq('is_active', true);
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   const { data: screens } = useQuery({
-    queryKey: ['screens', profile?.organization_id],
+    queryKey: ['screens', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('screens')
         .select('id, name')
-        .eq('organization_id', profile.organization_id);
+        .eq('organization_id', effectiveOrgId);
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   const { data: allShowtimes, isLoading } = useQuery({
-    queryKey: ['showtimes', profile?.organization_id],
+    queryKey: ['showtimes', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('showtimes')
         .select(`
@@ -135,13 +138,13 @@ export default function ShowtimeManagement() {
           movies (title, duration_minutes),
           screens (name, rows, columns)
         `)
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .order('start_time', { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   // Filter showtimes based on timeFilter
@@ -158,9 +161,9 @@ export default function ShowtimeManagement() {
 
   // Fetch booking counts and revenue for all showtimes
   const { data: bookingStats } = useQuery({
-    queryKey: ['showtime-booking-stats', profile?.organization_id, allShowtimes?.length],
+    queryKey: ['showtime-booking-stats', effectiveOrgId, allShowtimes?.length],
     queryFn: async () => {
-      if (!profile?.organization_id || !allShowtimes?.length) return {};
+      if (!effectiveOrgId || !allShowtimes?.length) return {};
       
       const showtimeIds = allShowtimes.map(s => s.id);
       
@@ -194,7 +197,7 @@ export default function ShowtimeManagement() {
 
       return statsMap;
     },
-    enabled: !!profile?.organization_id && !!allShowtimes?.length,
+    enabled: !!effectiveOrgId && !!allShowtimes?.length,
   });
 
   // For calendar view compatibility
@@ -303,7 +306,7 @@ export default function ShowtimeManagement() {
   }, [watchedMovieId, watchedScreenId, watchedStartDate, watchedEndDate, selectedTimes, showtimes, movies]);
 
   const onSubmit = async (data: BulkShowtimeFormData) => {
-    if (!profile?.organization_id) return;
+    if (!effectiveOrgId) return;
 
     if (selectedTimes.length === 0) {
       toast.error('Please add at least one showtime');
@@ -340,7 +343,7 @@ export default function ShowtimeManagement() {
             // Only add future showtimes
             if (showtimeDate > new Date()) {
               showtimesToCreate.push({
-                organization_id: profile.organization_id,
+                organization_id: effectiveOrgId,
                 movie_id: data.movie_id,
                 screen_id: data.screen_id,
                 start_time: showtimeDate.toISOString(),
@@ -472,7 +475,7 @@ export default function ShowtimeManagement() {
 
   const handleQuickAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!profile?.organization_id || !quickAddDate) return;
+    if (!effectiveOrgId || !quickAddDate) return;
 
     const formData = new FormData(e.currentTarget);
     const movieId = formData.get('movie_id') as string;
@@ -508,8 +511,8 @@ export default function ShowtimeManagement() {
     }
 
     try {
-      const { error } = await supabase.from('showtimes').insert({
-        organization_id: profile.organization_id,
+    const { error } = await supabase.from('showtimes').insert({
+      organization_id: effectiveOrgId,
         movie_id: movieId,
         screen_id: screenId,
         start_time: showtimeDate.toISOString(),
