@@ -24,6 +24,11 @@ const navItems = [
   { title: 'Cinemas', href: '/platform-admin/cinemas', icon: Building2 },
   { title: 'Subscription Plans', href: '/platform-admin/plans', icon: CreditCard },
   { title: 'Transactions', href: '/platform-admin/transactions', icon: Receipt },
+  { title: 'Domains', href: '/platform-admin/domains', icon: Shield },
+  { title: 'Users & Roles', href: '/platform-admin/users', icon: Shield },
+  { title: 'Monitoring', href: '/platform-admin/monitoring', icon: Shield },
+  { title: 'Reports', href: '/platform-admin/reports', icon: Receipt },
+  { title: 'Audit Logs', href: '/platform-admin/audit-logs', icon: Shield },
   { title: 'Support Tickets', href: '/platform-admin/tickets', icon: MessageSquare },
   { title: 'Settings', href: '/platform-admin/settings', icon: Settings },
 ];

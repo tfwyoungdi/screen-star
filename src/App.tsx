@@ -48,6 +48,11 @@ import PlatformPlans from "./pages/platform-admin/PlatformPlans";
 import PlatformTransactions from "./pages/platform-admin/PlatformTransactions";
 import PlatformTickets from "./pages/platform-admin/PlatformTickets";
 import PlatformSettings from "./pages/platform-admin/PlatformSettings";
+import PlatformDomains from "./pages/platform-admin/PlatformDomains";
+import PlatformUsers from "./pages/platform-admin/PlatformUsers";
+import PlatformMonitoring from "./pages/platform-admin/PlatformMonitoring";
+import PlatformReports from "./pages/platform-admin/PlatformReports";
+import PlatformAuditLogs from "./pages/platform-admin/PlatformAuditLogs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -262,6 +267,46 @@ const App = () => (
                 element={
                   <PlatformProtectedRoute>
                     <PlatformSettings />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/domains"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformDomains />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/users"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformUsers />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/monitoring"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformMonitoring />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/reports"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformReports />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/audit-logs"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformAuditLogs />
                   </PlatformProtectedRoute>
                 }
               />
