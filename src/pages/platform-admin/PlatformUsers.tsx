@@ -72,8 +72,8 @@ export default function PlatformUsers() {
         .from('user_roles')
         .select('id')
         .eq('user_id', profile.id)
-        .eq('role', role)
-        .single();
+        .eq('role', 'platform_admin')
+        .maybeSingle();
 
       if (existingRole) {
         throw new Error('User already has this role');
