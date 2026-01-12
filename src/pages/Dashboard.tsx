@@ -4,6 +4,7 @@ import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization, useUserProfile } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { useRealtimeBookings, useRealtimeShowtimes, useRealtimeMovies } from '@/hooks/useRealtimeDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -39,9 +40,14 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { data: organization, isLoading: orgLoading } = useOrganization();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
+  const { isImpersonating, impersonatedOrganization, getEffectiveOrganizationId } = useImpersonation();
   const { showTour, setShowTour } = useTour();
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const dateRange = 7;
+
+  // Use impersonated org if in impersonation mode, otherwise use real org
+  const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
+  const effectiveOrg = isImpersonating ? impersonatedOrganization : organization;
 
   const startDate = startOfDay(subDays(new Date(), dateRange));
   const endDate = endOfDay(new Date());
@@ -52,23 +58,23 @@ export default function Dashboard() {
 
   // Real-time subscriptions
   const { newBookingsCount, resetNewBookingsCount } = useRealtimeBookings({
-    organizationId: profile?.organization_id,
-    enabled: !!profile?.organization_id,
+    organizationId: effectiveOrgId,
+    enabled: !!effectiveOrgId && !isImpersonating, // Disable realtime in impersonation mode
   });
   useRealtimeShowtimes({
-    organizationId: profile?.organization_id,
-    enabled: !!profile?.organization_id,
+    organizationId: effectiveOrgId,
+    enabled: !!effectiveOrgId && !isImpersonating,
   });
   useRealtimeMovies({
-    organizationId: profile?.organization_id,
-    enabled: !!profile?.organization_id,
+    organizationId: effectiveOrgId,
+    enabled: !!effectiveOrgId && !isImpersonating,
   });
 
   // Fetch bookings for analytics
   const { data: bookings, isLoading: bookingsLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['dashboard-bookings', profile?.organization_id],
+    queryKey: ['dashboard-bookings', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -79,74 +85,74 @@ export default function Dashboard() {
             screens (name)
           )
         `)
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      resetNewBookingsCount();
+      if (!isImpersonating) resetNewBookingsCount();
       setLastUpdated(new Date());
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   // Fetch previous period bookings for trend calculation
   const { data: prevBookings } = useQuery({
-    queryKey: ['dashboard-prev-bookings', profile?.organization_id],
+    queryKey: ['dashboard-prev-bookings', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('bookings')
         .select('id, total_amount')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .gte('created_at', prevStartDate.toISOString())
         .lte('created_at', prevEndDate.toISOString());
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   // Fetch movies count
   const { data: movies } = useQuery({
-    queryKey: ['dashboard-movies', profile?.organization_id],
+    queryKey: ['dashboard-movies', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('movies')
         .select('id, title')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .eq('is_active', true);
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   // Fetch upcoming showtimes
   const { data: upcomingShowtimes } = useQuery({
-    queryKey: ['dashboard-showtimes', profile?.organization_id],
+    queryKey: ['dashboard-showtimes', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('showtimes')
         .select('id')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .gte('start_time', new Date().toISOString());
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   // Fetch booked seats count
   const { data: bookedSeats } = useQuery({
-    queryKey: ['dashboard-seats', profile?.organization_id, bookings],
+    queryKey: ['dashboard-seats', effectiveOrgId, bookings],
     queryFn: async () => {
       if (!bookings || bookings.length === 0) return [];
       const bookingIds = bookings.map((b) => b.id);
@@ -163,7 +169,7 @@ export default function Dashboard() {
 
   // Fetch previous period seats for trend
   const { data: prevBookedSeats } = useQuery({
-    queryKey: ['dashboard-prev-seats', profile?.organization_id, prevBookings],
+    queryKey: ['dashboard-prev-seats', effectiveOrgId, prevBookings],
     queryFn: async () => {
       if (!prevBookings || prevBookings.length === 0) return [];
       const bookingIds = prevBookings.map((b) => b.id);
@@ -329,8 +335,8 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
             {/* Website Stats Widget */}
             <WebsiteStatsWidget 
-              organizationId={profile?.organization_id} 
-              cinemaSlug={organization?.slug}
+              organizationId={effectiveOrgId} 
+              cinemaSlug={effectiveOrg?.slug}
             />
             {/* Project Analytics Chart */}
             <ChartCard
@@ -416,7 +422,7 @@ export default function Dashboard() {
             </ChartCard>
 
             {/* Low Stock Widget */}
-            <LowStockWidget organizationId={profile?.organization_id} />
+            <LowStockWidget organizationId={effectiveOrgId} />
           </div>
 
           {/* Bottom Row */}

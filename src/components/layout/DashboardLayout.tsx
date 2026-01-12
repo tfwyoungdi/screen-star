@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganization } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -68,10 +69,14 @@ interface DashboardLayoutProps {
 function SidebarContentWrapper() {
   const { signOut } = useAuth();
   const { data: organization, isLoading: loading } = useOrganization();
+  const { isImpersonating, impersonatedOrganization } = useImpersonation();
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+
+  // Use impersonated org if in impersonation mode
+  const displayOrg = isImpersonating ? impersonatedOrganization : organization;
 
   const handleSignOut = async () => {
     await signOut();
@@ -90,10 +95,10 @@ function SidebarContentWrapper() {
       <div className="h-16 border-b border-sidebar-border flex items-center px-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex-shrink-0">
-            {organization?.logo_url ? (
+            {displayOrg?.logo_url ? (
               <img
-                src={organization.logo_url}
-                alt={organization.name}
+                src={displayOrg.logo_url}
+                alt={displayOrg.name}
                 className="h-9 w-9 rounded-xl object-cover"
               />
             ) : (
@@ -104,7 +109,7 @@ function SidebarContentWrapper() {
           </div>
           {!isCollapsed && (
             <span className="font-bold text-sidebar-foreground truncate">
-              {organization?.name || 'CineTix'}
+              {displayOrg?.name || 'CineTix'}
             </span>
           )}
         </div>
@@ -192,14 +197,14 @@ function SidebarContentWrapper() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {organization && (
+          {displayOrg && (
             <SidebarGroup className="mt-4">
               <SidebarGroupContent>
                 <SidebarMenu className="px-2">
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
                       <a
-                        href={`/cinema/${organization.slug}`}
+                        href={`/cinema/${displayOrg.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 text-primary transition-colors"
@@ -247,9 +252,11 @@ export function DashboardLayout({
   addButtonLabel,
   onAddClick,
 }: DashboardLayoutProps) {
+  const { isImpersonating } = useImpersonation();
+  
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className={cn("min-h-screen flex w-full bg-background", isImpersonating && "pt-10")}>
         <SidebarContentWrapper />
 
         <main className="flex-1 flex flex-col min-w-0">

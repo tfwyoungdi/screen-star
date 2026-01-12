@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,16 +14,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search } from 'lucide-react';
+import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
+import { useImpersonation } from '@/hooks/useImpersonation';
 
 type Organization = Tables<'organizations'>;
 
 export default function PlatformCinemas() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { logAction } = usePlatformAuditLog();
+  const { startImpersonation } = useImpersonation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCinema, setSelectedCinema] = useState<Organization | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
@@ -97,6 +101,25 @@ export default function PlatformCinemas() {
 
   const handleReactivate = (cinema: Organization) => {
     suspendMutation.mutate({ id: cinema.id, suspend: false });
+  };
+
+  const handleImpersonate = (cinema: Organization) => {
+    startImpersonation(cinema);
+    
+    // Log the impersonation action
+    logAction({
+      action: 'cinema_impersonation_started',
+      target_type: 'organization',
+      target_id: cinema.id,
+      details: {
+        cinema_name: cinema.name,
+        cinema_slug: cinema.slug,
+      },
+    });
+    
+    toast.success(`Now viewing as ${cinema.name}`);
+    setSelectedCinema(null);
+    navigate('/dashboard');
   };
 
   const activeCinemas = cinemas?.filter((c) => c.is_active).length || 0;
@@ -311,51 +334,65 @@ export default function PlatformCinemas() {
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                  {selectedCinema.is_active ? (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="gap-2">
-                          <Ban className="h-4 w-4" />
-                          Suspend Cinema
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Suspend {selectedCinema.name}?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will prevent the cinema from accessing their dashboard and public website.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <div className="space-y-2 py-4">
-                          <Label>Reason for suspension *</Label>
-                          <Textarea
-                            value={suspendReason}
-                            onChange={(e) => setSuspendReason(e.target.value)}
-                            placeholder="Enter the reason for suspension..."
-                          />
-                        </div>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleSuspend(selectedCinema)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Suspend
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  ) : (
+                <div className="flex flex-col gap-3 pt-4 border-t">
+                  {/* Impersonation Button */}
+                  {selectedCinema.is_active && (
                     <Button
-                      onClick={() => handleReactivate(selectedCinema)}
-                      className="gap-2"
-                      disabled={suspendMutation.isPending}
+                      variant="outline"
+                      onClick={() => handleImpersonate(selectedCinema)}
+                      className="w-full gap-2"
                     >
-                      <CheckCircle className="h-4 w-4" />
-                      Reactivate Cinema
+                      <UserCheck className="h-4 w-4" />
+                      View as Cinema Admin (Support Mode)
                     </Button>
                   )}
+                  
+                  <div className="flex justify-end gap-3">
+                    {selectedCinema.is_active ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="gap-2">
+                            <Ban className="h-4 w-4" />
+                            Suspend Cinema
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Suspend {selectedCinema.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will prevent the cinema from accessing their dashboard and public website.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <div className="space-y-2 py-4">
+                            <Label>Reason for suspension *</Label>
+                            <Textarea
+                              value={suspendReason}
+                              onChange={(e) => setSuspendReason(e.target.value)}
+                              placeholder="Enter the reason for suspension..."
+                            />
+                          </div>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleSuspend(selectedCinema)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Suspend
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <Button
+                        onClick={() => handleReactivate(selectedCinema)}
+                        className="gap-2"
+                        disabled={suspendMutation.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Reactivate Cinema
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

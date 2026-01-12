@@ -5,8 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ImpersonationProvider } from "@/hooks/useImpersonation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PlatformProtectedRoute } from "@/components/auth/PlatformProtectedRoute";
+import { ImpersonationBanner } from "@/components/platform-admin/ImpersonationBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -63,10 +65,12 @@ const App = () => (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <TooltipProvider>
           <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
+            <ImpersonationProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <ImpersonationBanner />
+                <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/careers" element={<Careers />} />
@@ -311,10 +315,11 @@ const App = () => (
                 }
               />
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ImpersonationProvider>
         </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>
