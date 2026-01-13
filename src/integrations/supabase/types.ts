@@ -887,6 +887,169 @@ export type Database = {
           },
         ]
       }
+      loyalty_rewards: {
+        Row: {
+          concession_item_id: string | null
+          created_at: string
+          description: string | null
+          discount_value: number | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          points_required: number
+          reward_type: string
+          updated_at: string
+        }
+        Insert: {
+          concession_item_id?: string | null
+          created_at?: string
+          description?: string | null
+          discount_value?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          points_required: number
+          reward_type: string
+          updated_at?: string
+        }
+        Update: {
+          concession_item_id?: string | null
+          created_at?: string
+          description?: string | null
+          discount_value?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          points_required?: number
+          reward_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_rewards_concession_item_id_fkey"
+            columns: ["concession_item_id"]
+            isOneToOne: false
+            referencedRelation: "concession_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_rewards_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          organization_id: string
+          points_per_booking: number | null
+          points_per_dollar: number | null
+          updated_at: string
+          welcome_bonus_points: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id: string
+          points_per_booking?: number | null
+          points_per_dollar?: number | null
+          updated_at?: string
+          welcome_bonus_points?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id?: string
+          points_per_booking?: number | null
+          points_per_dollar?: number | null
+          updated_at?: string
+          welcome_bonus_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_transactions: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          customer_id: string
+          description: string | null
+          id: string
+          organization_id: string
+          points: number
+          reward_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          id?: string
+          organization_id: string
+          points: number
+          reward_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          id?: string
+          organization_id?: string
+          points?: number
+          reward_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movies: {
         Row: {
           created_at: string

@@ -24,6 +24,7 @@ import ShowtimeManagement from "./pages/ShowtimeManagement";
 import SalesDashboard from "./pages/SalesDashboard";
 import TicketScanner from "./pages/TicketScanner";
 import PromoCodeManagement from "./pages/PromoCodeManagement";
+import LoyaltyProgram from "./pages/LoyaltyProgram";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import PublicCinema from "./pages/PublicCinema";
 import BookingFlow from "./pages/BookingFlow";
@@ -157,6 +158,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['cinema_admin']}>
                     <PromoCodeManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/loyalty"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin']}>
+                    <LoyaltyProgram />
                   </ProtectedRoute>
                 }
               />
