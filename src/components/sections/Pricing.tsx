@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Star, Loader2 } from "lucide-react";
+import { Check, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 
 const Pricing = () => {
+  const [isYearly, setIsYearly] = useState(false);
   const { data: plans, isLoading } = useQuery({
     queryKey: ['public-subscription-plans'],
     queryFn: async () => {
@@ -79,9 +82,27 @@ const Pricing = () => {
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground mb-8">
             Choose the plan that fits your cinema. All plans include a 14-day free trial.
           </p>
+          
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4">
+            <span className={`text-sm font-medium ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Monthly
+            </span>
+            <Switch
+              checked={isYearly}
+              onCheckedChange={setIsYearly}
+              className="data-[state=checked]:bg-primary"
+            />
+            <span className={`text-sm font-medium ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Yearly
+            </span>
+            <span className="ml-2 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              Save 20%
+            </span>
+          </div>
         </div>
 
         {/* Pricing Cards */}
@@ -135,9 +156,17 @@ const Pricing = () => {
                     ) : (
                       <>
                         <span className="text-4xl lg:text-5xl font-bold text-foreground">
-                          ${Number(plan.price_monthly).toFixed(0)}
+                          ${isYearly 
+                            ? Number(plan.price_yearly ? Number(plan.price_yearly) / 12 : Number(plan.price_monthly) * 0.8).toFixed(0)
+                            : Number(plan.price_monthly).toFixed(0)
+                          }
                         </span>
                         <span className="text-muted-foreground">/month</span>
+                        {isYearly && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Billed ${Number(plan.price_yearly || Number(plan.price_monthly) * 12 * 0.8).toFixed(0)} yearly
+                          </p>
+                        )}
                       </>
                     )}
                   </div>
