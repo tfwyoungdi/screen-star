@@ -17,6 +17,7 @@ import {
   Activity,
   BarChart3,
   ScrollText,
+  Timer,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,7 @@ const navItems = [
   { title: 'Monitoring', href: '/platform-admin/monitoring', icon: Activity },
   { title: 'Reports', href: '/platform-admin/reports', icon: BarChart3 },
   { title: 'Audit Logs', href: '/platform-admin/audit-logs', icon: ScrollText },
+  { title: 'SLA Dashboard', href: '/platform-admin/sla', icon: Timer },
   { title: 'Support Tickets', href: '/platform-admin/tickets', icon: MessageSquare },
   { title: 'Settings', href: '/platform-admin/settings', icon: Settings },
 ];

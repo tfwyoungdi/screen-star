@@ -17,6 +17,7 @@ import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { SLAIndicator } from '@/components/platform-admin/SLAIndicator';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
+import { useSLABreachNotification } from '@/hooks/useSLABreachNotification';
 
 type SupportTicket = Tables<'support_tickets'>;
 
@@ -30,6 +31,7 @@ const STATUS_OPTIONS = [
 export default function PlatformTickets() {
   const queryClient = useQueryClient();
   const { logAction } = usePlatformAuditLog();
+  useSLABreachNotification(); // Monitors and sends SLA breach alerts
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<any>(null);

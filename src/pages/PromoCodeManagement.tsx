@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -44,6 +45,8 @@ interface NewPromoCode {
 
 export default function PromoCodeManagement() {
   const { data: organization } = useOrganization();
+  const { getEffectiveOrganizationId, isImpersonating, impersonatedOrganization } = useImpersonation();
+  const effectiveOrgId = getEffectiveOrganizationId(organization?.id);
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newCode, setNewCode] = useState<NewPromoCode>({
@@ -58,24 +61,29 @@ export default function PromoCodeManagement() {
   });
 
   const { data: promoCodes, isLoading } = useQuery({
-    queryKey: ['promo-codes', organization?.id],
+    queryKey: ['promo-codes', effectiveOrgId],
     queryFn: async () => {
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('promo_codes')
         .select('*')
-        .eq('organization_id', organization!.id)
+        .eq('organization_id', effectiveOrgId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as PromoCode[];
     },
-    enabled: !!organization?.id,
+    enabled: !!effectiveOrgId,
   });
 
   const createMutation = useMutation({
     mutationFn: async (promoCode: NewPromoCode) => {
+      if (isImpersonating) {
+        throw new Error('Cannot modify data in impersonation mode');
+      }
+      if (!effectiveOrgId) throw new Error('No organization');
       const { error } = await supabase.from('promo_codes').insert({
-        organization_id: organization!.id,
+        organization_id: effectiveOrgId,
         code: promoCode.code.toUpperCase(),
         description: promoCode.description || null,
         discount_type: promoCode.discount_type,
@@ -114,6 +122,9 @@ export default function PromoCodeManagement() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      if (isImpersonating) {
+        throw new Error('Cannot modify data in impersonation mode');
+      }
       const { error } = await supabase
         .from('promo_codes')
         .update({ is_active })
@@ -128,6 +139,9 @@ export default function PromoCodeManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (isImpersonating) {
+        throw new Error('Cannot modify data in impersonation mode');
+      }
       const { error } = await supabase
         .from('promo_codes')
         .delete()

@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -27,6 +28,8 @@ type ScreenFormData = z.infer<typeof screenSchema>;
 
 export default function ScreenManagement() {
   const { data: profile } = useUserProfile();
+  const { getEffectiveOrganizationId, isImpersonating } = useImpersonation();
+  const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingScreen, setEditingScreen] = useState<any>(null);
   const [layoutDialogOpen, setLayoutDialogOpen] = useState(false);
@@ -49,19 +52,19 @@ export default function ScreenManagement() {
   });
 
   const { data: screens, isLoading } = useQuery({
-    queryKey: ['screens', profile?.organization_id],
+    queryKey: ['screens', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('screens')
         .select('*')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .order('name');
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   const { data: seatLayouts } = useQuery({
@@ -80,7 +83,12 @@ export default function ScreenManagement() {
   });
 
   const onSubmit = async (data: ScreenFormData) => {
-    if (!profile?.organization_id) return;
+    if (!effectiveOrgId || isImpersonating) {
+      if (isImpersonating) {
+        toast.error('Cannot modify data in impersonation mode');
+      }
+      return;
+    }
 
     try {
       if (editingScreen) {
@@ -111,7 +119,7 @@ export default function ScreenManagement() {
         const { data: newScreen, error } = await supabase
           .from('screens')
           .insert({
-            organization_id: profile.organization_id,
+            organization_id: effectiveOrgId,
             name: data.name,
             rows: data.rows,
             columns: data.columns,

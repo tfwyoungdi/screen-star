@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.toggle-staff-status]
 verify_jwt = false
+
+[functions.send-sla-escalation]
+verify_jwt = false
