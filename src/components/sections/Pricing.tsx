@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 
 const Pricing = () => {
+  const navigate = useNavigate();
   const [isYearly, setIsYearly] = useState(false);
   const { data: plans, isLoading } = useQuery({
     queryKey: ['public-subscription-plans'],
@@ -189,6 +191,7 @@ const Pricing = () => {
                     variant={isPopular ? "hero" : "outline"}
                     className="w-full"
                     size="lg"
+                    onClick={isEnterprise ? () => navigate('/contact') : undefined}
                   >
                     {isEnterprise ? "Contact Sales Team" : "Start Free Trial"}
                   </Button>
@@ -202,9 +205,12 @@ const Pricing = () => {
         <div className="text-center mt-12">
           <p className="text-muted-foreground">
             Need a custom solution?{" "}
-            <a href="#" className="text-primary hover:underline">
+            <button 
+              onClick={() => navigate('/contact')} 
+              className="text-primary hover:underline"
+            >
               Contact our sales team
-            </a>
+            </button>
           </p>
         </div>
       </div>
