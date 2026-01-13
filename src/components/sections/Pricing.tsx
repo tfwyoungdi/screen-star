@@ -1,62 +1,70 @@
 import { Button } from "@/components/ui/button";
-import { Check, Star } from "lucide-react";
-
-const plans = [
-  {
-    name: "Starter",
-    description: "Perfect for single-screen cinemas",
-    price: "$49",
-    period: "/month",
-    features: [
-      "1 Cinema Location",
-      "Up to 2 Halls",
-      "Basic Website Template",
-      "Email Support",
-      "QR Ticketing",
-      "Basic Analytics",
-    ],
-    cta: "Start Free Trial",
-    popular: false,
-  },
-  {
-    name: "Professional",
-    description: "For growing multiplex cinemas",
-    price: "$149",
-    period: "/month",
-    features: [
-      "1 Cinema Location",
-      "Up to 8 Halls",
-      "Custom Domain",
-      "Priority Support",
-      "Advanced Analytics",
-      "Multiple Payment Gateways",
-      "Role-Based Access",
-      "Custom Branding",
-    ],
-    cta: "Start Free Trial",
-    popular: true,
-  },
-  {
-    name: "Enterprise",
-    description: "For cinema chains & franchises",
-    price: "Custom",
-    period: "",
-    features: [
-      "Unlimited Locations",
-      "Unlimited Halls",
-      "White-label Solution",
-      "Dedicated Account Manager",
-      "Custom Integrations",
-      "SLA Guarantee",
-      "On-premise Option",
-      "API Access",
-    ],
-    cta: "Contact Sales",
-    popular: false,
-  },
-];
+import { Check, Star, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Pricing = () => {
+  const { data: plans, isLoading } = useQuery({
+    queryKey: ['public-subscription-plans'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Helper to build features list from plan data
+  const buildFeatures = (plan: typeof plans extends (infer T)[] ? T : never) => {
+    const features: string[] = [];
+    
+    if (plan.max_locations === -1) {
+      features.push("Unlimited Locations");
+    } else if (plan.max_locations === 1) {
+      features.push("1 Cinema Location");
+    } else {
+      features.push(`Up to ${plan.max_locations} Locations`);
+    }
+    
+    if (plan.max_screens === -1) {
+      features.push("Unlimited Screens");
+    } else {
+      features.push(`Up to ${plan.max_screens} Screens`);
+    }
+    
+    if (plan.max_staff === -1) {
+      features.push("Unlimited Staff");
+    } else {
+      features.push(`Up to ${plan.max_staff} Staff Members`);
+    }
+    
+    if (plan.allow_custom_domain) {
+      features.push("Custom Domain");
+    }
+    
+    if (plan.allow_own_gateway) {
+      features.push("Own Payment Gateway");
+    }
+    
+    // Add commission info
+    if (plan.commission_percentage) {
+      features.push(`${plan.commission_percentage}% Commission`);
+    }
+    
+    if (plan.per_ticket_fee) {
+      features.push(`$${plan.per_ticket_fee} Per Ticket Fee`);
+    }
+    
+    return features;
+  };
+
+  // Find the middle plan to mark as popular
+  const popularIndex = plans && plans.length > 1 ? 1 : 0;
+
   return (
     <section id="pricing" className="py-24 lg:py-32 bg-card relative overflow-hidden">
       {/* Background decoration */}
@@ -77,62 +85,86 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-2xl p-6 lg:p-8 ${
-                plan.popular
-                  ? "bg-background border-2 border-primary shadow-lg shadow-primary/10"
-                  : "bg-background border border-border"
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                    <Star className="h-3.5 w-3.5 fill-current" />
-                    Most Popular
-                  </span>
-                </div>
-              )}
-
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold text-foreground mb-1">
-                  {plan.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {plan.description}
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <span className="text-4xl lg:text-5xl font-bold text-foreground">
-                  {plan.price}
-                </span>
-                <span className="text-muted-foreground">{plan.period}</span>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
-                    <div className="p-1 rounded-full bg-primary/10">
-                      <Check className="h-3.5 w-3.5 text-primary" />
+        {isLoading ? (
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-96 rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+            {plans?.map((plan, index) => {
+              const isPopular = index === popularIndex;
+              const isEnterprise = plan.slug === 'enterprise' || plan.max_locations === -1;
+              const features = buildFeatures(plan);
+              
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative rounded-2xl p-6 lg:p-8 ${
+                    isPopular
+                      ? "bg-background border-2 border-primary shadow-lg shadow-primary/10"
+                      : "bg-background border border-border"
+                  }`}
+                >
+                  {isPopular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                      <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                        <Star className="h-3.5 w-3.5 fill-current" />
+                        Most Popular
+                      </span>
                     </div>
-                    <span className="text-sm text-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+                  )}
 
-              <Button
-                variant={plan.popular ? "hero" : "outline"}
-                className="w-full"
-                size="lg"
-              >
-                {plan.cta}
-              </Button>
-            </div>
-          ))}
-        </div>
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-foreground mb-1">
+                      {plan.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {plan.description}
+                    </p>
+                  </div>
+
+                  <div className="mb-6">
+                    {isEnterprise ? (
+                      <>
+                        <span className="text-4xl lg:text-5xl font-bold text-foreground">
+                          Custom
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-4xl lg:text-5xl font-bold text-foreground">
+                          ${Number(plan.price_monthly).toFixed(0)}
+                        </span>
+                        <span className="text-muted-foreground">/month</span>
+                      </>
+                    )}
+                  </div>
+
+                  <ul className="space-y-3 mb-8">
+                    {features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-3">
+                        <div className="p-1 rounded-full bg-primary/10">
+                          <Check className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <span className="text-sm text-foreground">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    variant={isPopular ? "hero" : "outline"}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isEnterprise ? "Contact Sales" : "Start Free Trial"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Additional Info */}
         <div className="text-center mt-12">
