@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Settings, Shield, Globe, Timer } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
+import { SLAEmailTemplateEditor, DEFAULT_TEMPLATE } from '@/components/platform-admin/SLAEmailTemplateEditor';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 
@@ -50,6 +51,13 @@ export default function PlatformSettingsPage() {
     sla_response_time_urgent: 2,
     sla_escalation_enabled: true,
     sla_escalation_email: '',
+    sla_email_subject: DEFAULT_TEMPLATE.subject,
+    sla_email_html_body: DEFAULT_TEMPLATE.htmlBody,
+  });
+
+  const [emailTemplate, setEmailTemplate] = useState({
+    subject: DEFAULT_TEMPLATE.subject,
+    htmlBody: DEFAULT_TEMPLATE.htmlBody,
   });
 
   useEffect(() => {
@@ -70,6 +78,12 @@ export default function PlatformSettingsPage() {
         sla_response_time_urgent: (settings as any).sla_response_time_urgent ?? 2,
         sla_escalation_enabled: (settings as any).sla_escalation_enabled ?? true,
         sla_escalation_email: (settings as any).sla_escalation_email || '',
+        sla_email_subject: (settings as any).sla_email_subject || DEFAULT_TEMPLATE.subject,
+        sla_email_html_body: (settings as any).sla_email_html_body || DEFAULT_TEMPLATE.htmlBody,
+      });
+      setEmailTemplate({
+        subject: (settings as any).sla_email_subject || DEFAULT_TEMPLATE.subject,
+        htmlBody: (settings as any).sla_email_html_body || DEFAULT_TEMPLATE.htmlBody,
       });
     }
   }, [settings]);
@@ -109,7 +123,16 @@ export default function PlatformSettingsPage() {
   });
 
   const handleSave = () => {
-    updateMutation.mutate(formData);
+    updateMutation.mutate({
+      ...formData,
+      sla_email_subject: emailTemplate.subject,
+      sla_email_html_body: emailTemplate.htmlBody,
+    });
+  };
+
+  const handleEmailTemplateSave = (template: { subject: string; htmlBody: string }) => {
+    setEmailTemplate(template);
+    toast.success('Email template updated - click Save Changes to persist');
   };
 
   if (isLoading) {
@@ -366,6 +389,15 @@ export default function PlatformSettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* SLA Email Template */}
+          {formData.sla_escalation_enabled && (
+            <SLAEmailTemplateEditor
+              template={emailTemplate}
+              onSave={handleEmailTemplateSave}
+              isSaving={updateMutation.isPending}
+            />
+          )}
         </div>
       </div>
     </PlatformLayout>

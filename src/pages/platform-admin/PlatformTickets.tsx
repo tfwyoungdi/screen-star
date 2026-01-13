@@ -12,12 +12,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { MessageSquare, Clock, CheckCircle2, AlertCircle, XCircle, Eye, Timer } from 'lucide-react';
+import { MessageSquare, Clock, CheckCircle2, AlertCircle, XCircle, Eye, Timer, Wand2 } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
-import { SLAIndicator } from '@/components/platform-admin/SLAIndicator';
+import { SLACountdownTimer } from '@/components/platform-admin/SLACountdownTimer';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 import { useSLABreachNotification } from '@/hooks/useSLABreachNotification';
+import { useAutoAssignment } from '@/hooks/useAutoAssignment';
 
 type SupportTicket = Tables<'support_tickets'>;
 
@@ -32,6 +33,7 @@ export default function PlatformTickets() {
   const queryClient = useQueryClient();
   const { logAction } = usePlatformAuditLog();
   useSLABreachNotification(); // Monitors and sends SLA breach alerts
+  const { autoAssign, bulkAutoAssign, isAssigning } = useAutoAssignment();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -259,7 +261,7 @@ export default function PlatformTickets() {
                 <CardTitle>All Tickets</CardTitle>
                 <CardDescription>Support requests from cinema organizations</CardDescription>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="Status" />
@@ -285,6 +287,23 @@ export default function PlatformTickets() {
                     <SelectItem value="urgent">Urgent</SelectItem>
                   </SelectContent>
                 </Select>
+                {tickets && tickets.filter((t) => t.status === 'open' && !t.assigned_to).length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const unassignedTickets = tickets
+                        .filter((t) => t.status === 'open' && !t.assigned_to)
+                        .map((t) => ({ id: t.id, priority: t.priority }));
+                      bulkAutoAssign(unassignedTickets);
+                    }}
+                    disabled={isAssigning}
+                    className="gap-2"
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    Auto-Assign All
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -318,7 +337,7 @@ export default function PlatformTickets() {
                       <TableCell>{getPriorityBadge(ticket.priority)}</TableCell>
                       <TableCell>{getStatusBadge(ticket.status)}</TableCell>
                       <TableCell>
-                        <SLAIndicator
+                        <SLACountdownTimer
                           createdAt={ticket.created_at}
                           priority={ticket.priority}
                           firstResponseAt={(ticket as any).first_response_at}
@@ -330,13 +349,26 @@ export default function PlatformTickets() {
                         {format(new Date(ticket.created_at), 'MMM d, yyyy')}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openTicketDetail(ticket)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          {ticket.status === 'open' && !ticket.assigned_to && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => autoAssign({ ticketId: ticket.id, priority: ticket.priority })}
+                              disabled={isAssigning}
+                              title="Auto-assign ticket"
+                            >
+                              <Wand2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openTicketDetail(ticket)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
