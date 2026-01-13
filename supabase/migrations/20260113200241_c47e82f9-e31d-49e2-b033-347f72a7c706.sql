@@ -1,0 +1,43 @@
+-- Insert Enterprise plan
+INSERT INTO public.subscription_plans (
+  name,
+  slug,
+  description,
+  price_monthly,
+  price_yearly,
+  max_locations,
+  max_screens,
+  max_staff,
+  allow_custom_domain,
+  allow_own_gateway,
+  commission_percentage,
+  per_ticket_fee,
+  is_active,
+  sort_order
+) VALUES (
+  'Enterprise',
+  'enterprise',
+  'For large cinema chains with custom requirements',
+  0,
+  0,
+  -1,
+  -1,
+  -1,
+  true,
+  true,
+  0,
+  0,
+  true,
+  100
+) ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  max_locations = EXCLUDED.max_locations,
+  max_screens = EXCLUDED.max_screens,
+  max_staff = EXCLUDED.max_staff,
+  allow_custom_domain = EXCLUDED.allow_custom_domain,
+  allow_own_gateway = EXCLUDED.allow_own_gateway,
+  commission_percentage = EXCLUDED.commission_percentage,
+  per_ticket_fee = EXCLUDED.per_ticket_fee,
+  is_active = EXCLUDED.is_active,
+  sort_order = EXCLUDED.sort_order;
