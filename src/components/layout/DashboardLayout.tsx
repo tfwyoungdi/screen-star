@@ -37,6 +37,7 @@ import {
   Mail,
   Briefcase,
   Ticket,
+  Gift,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +49,7 @@ const navItems = [
   { title: 'Showtimes', url: '/showtimes', icon: Calendar },
   { title: 'Concessions', url: '/concessions', icon: Popcorn },
   { title: 'Promos', url: '/promos', icon: Tag },
+  { title: 'Loyalty', url: '/loyalty', icon: Gift },
   { title: 'Sales', url: '/sales', icon: BarChart3 },
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
