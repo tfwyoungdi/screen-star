@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Gift, Plus, Pencil, Trash2, Settings, Award, Ticket, Coffee, Percent, DollarSign } from "lucide-react";
+import { LoyaltyTransactionHistory } from "@/components/loyalty/LoyaltyTransactionHistory";
 
 interface LoyaltySettings {
   id: string;
@@ -612,6 +613,9 @@ export default function LoyaltyProgram() {
             )}
           </CardContent>
         </Card>
+
+        {/* Transaction History */}
+        <LoyaltyTransactionHistory />
       </div>
     </DashboardLayout>
   );

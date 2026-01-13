@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { CustomerLoyaltyWidget } from '@/components/loyalty/CustomerLoyaltyWidget';
 
 interface CinemaHeaderProps {
   slug: string;
@@ -10,6 +11,7 @@ interface CinemaHeaderProps {
   logoUrl: string | null;
   primaryColor: string;
   currentPage: 'home' | 'movies' | 'about' | 'careers' | 'contact';
+  organizationId?: string;
 }
 
 export function CinemaHeader({ 
@@ -17,7 +19,8 @@ export function CinemaHeader({
   cinemaName, 
   logoUrl, 
   primaryColor, 
-  currentPage 
+  currentPage,
+  organizationId
 }: CinemaHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -63,6 +66,12 @@ export function CinemaHeader({
                 {item.label}
               </Link>
             ))}
+            {organizationId && (
+              <CustomerLoyaltyWidget 
+                organizationId={organizationId} 
+                primaryColor={primaryColor} 
+              />
+            )}
           </nav>
 
           {/* Mobile Menu Button */}

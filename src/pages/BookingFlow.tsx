@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2, Popcorn, Plus, Minus } from 'lucide-react';
+import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2, Popcorn, Plus, Minus, Gift, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LoyaltyRedemption } from '@/components/loyalty/LoyaltyRedemption';
 import { cn } from '@/lib/utils';
 
 interface PromoCode {
@@ -121,6 +122,7 @@ export default function BookingFlow() {
   const [selectedConcessions, setSelectedConcessions] = useState<SelectedConcession[]>([]);
   const [combos, setCombos] = useState<ComboDeal[]>([]);
   const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
+  const [appliedLoyaltyReward, setAppliedLoyaltyReward] = useState<{ reward: any; customer: any; discount: number } | null>(null);
 
   // Load pre-selected seats from CinemaBooking page
   useEffect(() => {
@@ -427,16 +429,20 @@ export default function BookingFlow() {
   const subtotal = ticketsSubtotal + concessionsSubtotal + combosSubtotal;
   
   const calculateDiscount = () => {
-    if (!appliedPromo) return 0;
-    if (ticketsSubtotal < appliedPromo.min_purchase_amount) return 0;
-    
-    if (appliedPromo.discount_type === 'percentage') {
-      return ticketsSubtotal * (appliedPromo.discount_value / 100);
+    let promoDiscount = 0;
+    if (appliedPromo && ticketsSubtotal >= appliedPromo.min_purchase_amount) {
+      if (appliedPromo.discount_type === 'percentage') {
+        promoDiscount = ticketsSubtotal * (appliedPromo.discount_value / 100);
+      } else {
+        promoDiscount = Math.min(appliedPromo.discount_value, ticketsSubtotal);
+      }
     }
-    return Math.min(appliedPromo.discount_value, ticketsSubtotal);
+    return promoDiscount;
   };
   
-  const discountAmount = calculateDiscount();
+  const promoDiscountAmount = calculateDiscount();
+  const loyaltyDiscountAmount = appliedLoyaltyReward?.discount || 0;
+  const discountAmount = promoDiscountAmount + loyaltyDiscountAmount;
   const totalAmount = subtotal - discountAmount;
 
   const applyPromoCode = async () => {
@@ -823,10 +829,37 @@ export default function BookingFlow() {
                     </div>
                   )}
 
-                  {discountAmount > 0 && (
+                  {/* Loyalty Rewards Section */}
+                  {step === 'details' && cinema && bookingData.customer_email && (
+                    <div className="pt-2">
+                      <LoyaltyRedemption
+                        organizationId={cinema.id}
+                        customerEmail={bookingData.customer_email}
+                        ticketSubtotal={ticketsSubtotal}
+                        primaryColor={primaryColor}
+                        appliedReward={appliedLoyaltyReward?.reward || null}
+                        onRewardApplied={(reward, customer, discount) => {
+                          setAppliedLoyaltyReward({ reward, customer, discount });
+                        }}
+                        onRewardRemoved={() => setAppliedLoyaltyReward(null)}
+                      />
+                    </div>
+                  )}
+
+                  {promoDiscountAmount > 0 && (
                     <div className="flex justify-between text-sm text-green-400">
-                      <span>Discount</span>
-                      <span>-${discountAmount.toFixed(2)}</span>
+                      <span>Promo Discount</span>
+                      <span>-${promoDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  {loyaltyDiscountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-amber-400">
+                      <span className="flex items-center gap-1">
+                        <Gift className="h-3 w-3" />
+                        Loyalty Reward
+                      </span>
+                      <span>-${loyaltyDiscountAmount.toFixed(2)}</span>
                     </div>
                   )}
 
