@@ -1126,6 +1126,8 @@ export type Database = {
           maintenance_mode: boolean | null
           platform_name: string
           primary_color: string | null
+          sla_email_html_body: string | null
+          sla_email_subject: string | null
           sla_escalation_email: string | null
           sla_escalation_enabled: boolean | null
           sla_response_time_high: number | null
@@ -1147,6 +1149,8 @@ export type Database = {
           maintenance_mode?: boolean | null
           platform_name?: string
           primary_color?: string | null
+          sla_email_html_body?: string | null
+          sla_email_subject?: string | null
           sla_escalation_email?: string | null
           sla_escalation_enabled?: boolean | null
           sla_response_time_high?: number | null
@@ -1168,6 +1172,8 @@ export type Database = {
           maintenance_mode?: boolean | null
           platform_name?: string
           primary_color?: string | null
+          sla_email_html_body?: string | null
+          sla_email_subject?: string | null
           sla_escalation_email?: string | null
           sla_escalation_enabled?: boolean | null
           sla_response_time_high?: number | null
