@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Edit, Check, X, GripVertical } from 'lucide-react';
+import { Plus, Edit, Check, X, GripVertical, Trash2 } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
@@ -38,9 +39,10 @@ type SubscriptionPlan = Tables<'subscription_plans'>;
 interface SortablePlanCardProps {
   plan: SubscriptionPlan;
   onEdit: (plan: SubscriptionPlan) => void;
+  onDelete: (plan: SubscriptionPlan) => void;
 }
 
-function SortablePlanCard({ plan, onEdit }: SortablePlanCardProps) {
+function SortablePlanCard({ plan, onEdit, onDelete }: SortablePlanCardProps) {
   const {
     attributes,
     listeners,
@@ -77,9 +79,14 @@ function SortablePlanCard({ plan, onEdit }: SortablePlanCardProps) {
               <CardDescription>{plan.description}</CardDescription>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => onEdit(plan)}>
-            <Edit className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" onClick={() => onEdit(plan)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => onDelete(plan)} className="text-destructive hover:text-destructive">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -145,6 +152,7 @@ export default function PlatformPlans() {
   const { logAction } = usePlatformAuditLog();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+  const [deletingPlan, setDeletingPlan] = useState<SubscriptionPlan | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -245,6 +253,36 @@ export default function PlatformPlans() {
     onError: (error) => {
       console.error('Failed to update plan:', error);
       toast.error('Failed to update plan');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['public-subscription-plans'] });
+      toast.success('Plan deleted successfully');
+      
+      if (deletingPlan) {
+        logAction({
+          action: 'plan_deleted',
+          target_type: 'subscription_plan',
+          target_id: deletingPlan.id,
+          details: { plan_name: deletingPlan.name },
+        });
+      }
+      
+      setDeletingPlan(null);
+    },
+    onError: (error) => {
+      console.error('Failed to delete plan:', error);
+      toast.error('Failed to delete plan. It may be in use by existing subscriptions.');
     },
   });
 
@@ -502,6 +540,28 @@ export default function PlatformPlans() {
           </Dialog>
         </div>
 
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deletingPlan} onOpenChange={() => setDeletingPlan(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Subscription Plan</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete the "{deletingPlan?.name}" plan? This action cannot be undone. 
+                Make sure no cinemas are currently subscribed to this plan.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deletingPlan && deleteMutation.mutate(deletingPlan.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete Plan'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Edit Dialog */}
         <Dialog open={!!editingPlan} onOpenChange={() => { setEditingPlan(null); resetForm(); }}>
           <DialogContent className="sm:max-w-lg">
@@ -542,7 +602,7 @@ export default function PlatformPlans() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {plans?.map((plan) => (
-                  <SortablePlanCard key={plan.id} plan={plan} onEdit={handleEdit} />
+                  <SortablePlanCard key={plan.id} plan={plan} onEdit={handleEdit} onDelete={setDeletingPlan} />
                 ))}
               </div>
             </SortableContext>
