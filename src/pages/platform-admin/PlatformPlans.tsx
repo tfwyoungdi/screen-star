@@ -11,18 +11,147 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Edit, Check, X } from 'lucide-react';
+import { Plus, Edit, Check, X, GripVertical } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type SubscriptionPlan = Tables<'subscription_plans'>;
+
+interface SortablePlanCardProps {
+  plan: SubscriptionPlan;
+  onEdit: (plan: SubscriptionPlan) => void;
+}
+
+function SortablePlanCard({ plan, onEdit }: SortablePlanCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: plan.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card 
+      ref={setNodeRef} 
+      style={style} 
+      className={`${!plan.is_active ? 'opacity-60' : ''} ${isDragging ? 'shadow-lg ring-2 ring-primary' : ''}`}
+    >
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-2">
+            <button
+              {...attributes}
+              {...listeners}
+              className="mt-1 cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <div>
+              <CardTitle className="text-xl">{plan.name}</CardTitle>
+              <CardDescription>{plan.description}</CardDescription>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => onEdit(plan)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <p className="text-3xl font-bold">
+            {plan.price_monthly === 0 ? (
+              'Custom'
+            ) : (
+              <>
+                ${Number(plan.price_monthly).toFixed(0)}
+                <span className="text-sm font-normal text-muted-foreground">/month</span>
+              </>
+            )}
+          </p>
+          {plan.price_yearly && plan.price_yearly > 0 && (
+            <p className="text-sm text-muted-foreground">
+              or ${Number(plan.price_yearly).toFixed(0)}/year
+            </p>
+          )}
+        </div>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Max Screens:</span>
+            <span>{plan.max_screens === -1 ? 'Unlimited' : plan.max_screens}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Max Staff:</span>
+            <span>{plan.max_staff === -1 ? 'Unlimited' : plan.max_staff}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Commission:</span>
+            <span>{plan.commission_percentage}%</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Per Ticket Fee:</span>
+            <span>${plan.per_ticket_fee}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {plan.allow_custom_domain && (
+            <Badge variant="secondary" className="gap-1">
+              <Check className="h-3 w-3" /> Custom Domain
+            </Badge>
+          )}
+          {plan.allow_own_gateway && (
+            <Badge variant="secondary" className="gap-1">
+              <Check className="h-3 w-3" /> Own Gateway
+            </Badge>
+          )}
+          {!plan.is_active && (
+            <Badge variant="outline" className="gap-1">
+              <X className="h-3 w-3" /> Inactive
+            </Badge>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function PlatformPlans() {
   const queryClient = useQueryClient();
   const { logAction } = usePlatformAuditLog();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Form state
   const [formData, setFormData] = useState({
@@ -55,11 +184,13 @@ export default function PlatformPlans() {
 
   const createMutation = useMutation({
     mutationFn: async (plan: typeof formData) => {
+      const maxSortOrder = plans?.reduce((max, p) => Math.max(max, p.sort_order || 0), 0) || 0;
       const { data, error } = await supabase
         .from('subscription_plans')
         .insert({
           ...plan,
           features: [],
+          sort_order: maxSortOrder + 1,
         })
         .select()
         .single();
@@ -117,6 +248,34 @@ export default function PlatformPlans() {
     },
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number }[]) => {
+      const promises = updates.map(({ id, sort_order }) =>
+        supabase
+          .from('subscription_plans')
+          .update({ sort_order })
+          .eq('id', id)
+      );
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['public-subscription-plans'] });
+      toast.success('Plan order updated');
+      
+      logAction({
+        action: 'plans_reordered',
+        target_type: 'subscription_plan',
+        details: { message: 'Subscription plans were reordered' },
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to reorder plans:', error);
+      toast.error('Failed to update plan order');
+      queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -164,6 +323,27 @@ export default function PlatformPlans() {
       updateMutation.mutate({ id: editingPlan.id, ...formData });
     } else {
       createMutation.mutate(formData);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && plans) {
+      const oldIndex = plans.findIndex((p) => p.id === active.id);
+      const newIndex = plans.findIndex((p) => p.id === over.id);
+
+      const newPlans = arrayMove(plans, oldIndex, newIndex);
+      
+      // Optimistic update
+      queryClient.setQueryData(['subscription-plans'], newPlans);
+
+      // Persist to database
+      const updates = newPlans.map((plan, index) => ({
+        id: plan.id,
+        sort_order: index + 1,
+      }));
+      reorderMutation.mutate(updates);
     }
   };
 
@@ -215,7 +395,7 @@ export default function PlatformPlans() {
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label>Max Screens</Label>
+          <Label>Max Screens (-1 = unlimited)</Label>
           <Input
             type="number"
             value={formData.max_screens}
@@ -223,7 +403,7 @@ export default function PlatformPlans() {
           />
         </div>
         <div className="space-y-2">
-          <Label>Max Staff</Label>
+          <Label>Max Staff (-1 = unlimited)</Label>
           <Input
             type="number"
             value={formData.max_staff}
@@ -231,7 +411,7 @@ export default function PlatformPlans() {
           />
         </div>
         <div className="space-y-2">
-          <Label>Max Locations</Label>
+          <Label>Max Locations (-1 = unlimited)</Label>
           <Input
             type="number"
             value={formData.max_locations}
@@ -292,7 +472,7 @@ export default function PlatformPlans() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Subscription Plans</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Manage pricing tiers for cinema subscriptions
+              Manage pricing tiers for cinema subscriptions. Drag to reorder.
             </p>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -351,71 +531,22 @@ export default function PlatformPlans() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans?.map((plan) => (
-              <Card key={plan.id} className={!plan.is_active ? 'opacity-60' : ''}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-xl">{plan.name}</CardTitle>
-                      <CardDescription>{plan.description}</CardDescription>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(plan)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-3xl font-bold">
-                      ${Number(plan.price_monthly).toFixed(0)}
-                      <span className="text-sm font-normal text-muted-foreground">/month</span>
-                    </p>
-                    {plan.price_yearly && (
-                      <p className="text-sm text-muted-foreground">
-                        or ${Number(plan.price_yearly).toFixed(0)}/year
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Max Screens:</span>
-                      <span>{plan.max_screens}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Max Staff:</span>
-                      <span>{plan.max_staff}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Commission:</span>
-                      <span>{plan.commission_percentage}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Per Ticket Fee:</span>
-                      <span>${plan.per_ticket_fee}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {plan.allow_custom_domain && (
-                      <Badge variant="secondary" className="gap-1">
-                        <Check className="h-3 w-3" /> Custom Domain
-                      </Badge>
-                    )}
-                    {plan.allow_own_gateway && (
-                      <Badge variant="secondary" className="gap-1">
-                        <Check className="h-3 w-3" /> Own Gateway
-                      </Badge>
-                    )}
-                    {!plan.is_active && (
-                      <Badge variant="outline" className="gap-1">
-                        <X className="h-3 w-3" /> Inactive
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={plans?.map((p) => p.id) || []}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {plans?.map((plan) => (
+                  <SortablePlanCard key={plan.id} plan={plan} onEdit={handleEdit} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </PlatformLayout>
