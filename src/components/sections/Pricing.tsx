@@ -150,8 +150,11 @@ const Pricing = () => {
                     {isEnterprise ? (
                       <>
                         <span className="text-4xl lg:text-5xl font-bold text-foreground">
-                          Custom
+                          Let's Talk
                         </span>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Tailored to your needs
+                        </p>
                       </>
                     ) : (
                       <>
@@ -187,7 +190,7 @@ const Pricing = () => {
                     className="w-full"
                     size="lg"
                   >
-                    {isEnterprise ? "Contact Sales" : "Start Free Trial"}
+                    {isEnterprise ? "Contact Sales Team" : "Start Free Trial"}
                   </Button>
                 </div>
               );
