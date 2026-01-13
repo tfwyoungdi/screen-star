@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,23 +52,25 @@ interface Customer {
 
 export default function CustomerManagement() {
   const { data: profile } = useUserProfile();
+  const { getEffectiveOrganizationId } = useImpersonation();
+  const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   const { data: customers, isLoading } = useQuery({
-    queryKey: ['customers', profile?.organization_id],
+    queryKey: ['customers', effectiveOrgId],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .order('total_spent', { ascending: false });
 
       if (error) throw error;
       return data as Customer[];
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   const { data: customerBookings } = useQuery({

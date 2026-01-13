@@ -55,6 +55,7 @@ import PlatformUsers from "./pages/platform-admin/PlatformUsers";
 import PlatformMonitoring from "./pages/platform-admin/PlatformMonitoring";
 import PlatformReports from "./pages/platform-admin/PlatformReports";
 import PlatformAuditLogs from "./pages/platform-admin/PlatformAuditLogs";
+import PlatformSLA from "./pages/platform-admin/PlatformSLA";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -311,6 +312,14 @@ const App = () => (
                 element={
                   <PlatformProtectedRoute>
                     <PlatformAuditLogs />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/sla"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformSLA />
                   </PlatformProtectedRoute>
                 }
               />
