@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Edit, Check, X, GripVertical, Trash2 } from 'lucide-react';
+import { Plus, Edit, Check, X, GripVertical, Trash2, Copy } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
@@ -40,9 +40,10 @@ interface SortablePlanCardProps {
   plan: SubscriptionPlan;
   onEdit: (plan: SubscriptionPlan) => void;
   onDelete: (plan: SubscriptionPlan) => void;
+  onDuplicate: (plan: SubscriptionPlan) => void;
 }
 
-function SortablePlanCard({ plan, onEdit, onDelete }: SortablePlanCardProps) {
+function SortablePlanCard({ plan, onEdit, onDelete, onDuplicate }: SortablePlanCardProps) {
   const {
     attributes,
     listeners,
@@ -80,10 +81,13 @@ function SortablePlanCard({ plan, onEdit, onDelete }: SortablePlanCardProps) {
             </div>
           </div>
           <div className="flex gap-1">
-            <Button variant="ghost" size="icon" onClick={() => onEdit(plan)}>
+            <Button variant="ghost" size="icon" onClick={() => onDuplicate(plan)} title="Duplicate plan">
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => onEdit(plan)} title="Edit plan">
               <Edit className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => onDelete(plan)} className="text-destructive hover:text-destructive">
+            <Button variant="ghost" size="icon" onClick={() => onDelete(plan)} className="text-destructive hover:text-destructive" title="Delete plan">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -351,6 +355,25 @@ export default function PlatformPlans() {
     });
   };
 
+  const handleDuplicate = (plan: SubscriptionPlan) => {
+    setFormData({
+      name: `${plan.name} (Copy)`,
+      slug: `${plan.slug}-copy`,
+      description: plan.description || '',
+      price_monthly: Number(plan.price_monthly),
+      price_yearly: Number(plan.price_yearly) || 0,
+      max_screens: plan.max_screens || 3,
+      max_staff: plan.max_staff || 10,
+      max_locations: plan.max_locations || 1,
+      commission_percentage: Number(plan.commission_percentage) || 5,
+      per_ticket_fee: Number(plan.per_ticket_fee) || 0.5,
+      allow_custom_domain: plan.allow_custom_domain || false,
+      allow_own_gateway: plan.allow_own_gateway || false,
+      is_active: plan.is_active ?? true,
+    });
+    setIsCreateOpen(true);
+  };
+
   const handleSubmit = () => {
     if (!formData.name.trim() || !formData.slug.trim()) {
       toast.error('Please fill in all required fields');
@@ -602,7 +625,7 @@ export default function PlatformPlans() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {plans?.map((plan) => (
-                  <SortablePlanCard key={plan.id} plan={plan} onEdit={handleEdit} onDelete={setDeletingPlan} />
+                  <SortablePlanCard key={plan.id} plan={plan} onEdit={handleEdit} onDelete={setDeletingPlan} onDuplicate={handleDuplicate} />
                 ))}
               </div>
             </SortableContext>
