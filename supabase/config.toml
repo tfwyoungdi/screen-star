@@ -59,3 +59,18 @@ verify_jwt = false
 
 [functions.send-sla-escalation]
 verify_jwt = false
+
+[functions.send-platform-email]
+verify_jwt = false
+
+[functions.track-platform-email]
+verify_jwt = false
+
+[functions.check-subscription-expiring]
+verify_jwt = false
+
+[functions.send-payment-failed]
+verify_jwt = false
+
+[functions.send-bulk-announcement]
+verify_jwt = false
