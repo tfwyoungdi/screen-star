@@ -1240,6 +1240,60 @@ export type Database = {
           },
         ]
       }
+      platform_announcement_campaigns: {
+        Row: {
+          clicked_count: number | null
+          created_at: string
+          created_by: string | null
+          filter_criteria: Json | null
+          html_body: string
+          id: string
+          opened_count: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string
+          title: string
+          total_recipients: number | null
+          updated_at: string
+        }
+        Insert: {
+          clicked_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          filter_criteria?: Json | null
+          html_body: string
+          id?: string
+          opened_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject: string
+          title: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Update: {
+          clicked_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          filter_criteria?: Json | null
+          html_body?: string
+          id?: string
+          opened_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string
+          title?: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_audit_logs: {
         Row: {
           action: string
@@ -1276,9 +1330,63 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_email_analytics: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          email_type: string
+          id: string
+          metadata: Json | null
+          opened_at: string | null
+          recipient_email: string
+          recipient_organization_id: string | null
+          sent_at: string
+          status: string
+          subject: string
+          tracking_id: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          email_type: string
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email: string
+          recipient_organization_id?: string | null
+          sent_at?: string
+          status?: string
+          subject: string
+          tracking_id?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          email_type?: string
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email?: string
+          recipient_organization_id?: string | null
+          sent_at?: string
+          status?: string
+          subject?: string
+          tracking_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_email_analytics_recipient_organization_id_fkey"
+            columns: ["recipient_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           created_at: string
+          email_templates: Json | null
           enable_cinema_gateways: boolean | null
           enable_custom_domains: boolean | null
           enable_promotions: boolean | null
@@ -1302,6 +1410,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email_templates?: Json | null
           enable_cinema_gateways?: boolean | null
           enable_custom_domains?: boolean | null
           enable_promotions?: boolean | null
@@ -1325,6 +1434,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email_templates?: Json | null
           enable_cinema_gateways?: boolean | null
           enable_custom_domains?: boolean | null
           enable_promotions?: boolean | null
@@ -1738,6 +1848,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "staff_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_notification_log: {
+        Row: {
+          id: string
+          metadata: Json | null
+          notification_type: string
+          organization_id: string
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          notification_type: string
+          organization_id: string
+          sent_at?: string
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          organization_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_notification_log_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
