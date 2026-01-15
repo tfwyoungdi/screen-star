@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { 
   Mail, Eye, Code, RefreshCw, AlertTriangle, UserPlus, 
-  CreditCard, Building2, Bell, ShieldCheck, Send
+  CreditCard, Building2, Bell, ShieldCheck, Send, Ticket
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -28,6 +28,7 @@ export interface PlatformEmailTemplates {
   subscription_expiring: EmailTemplate;
   payment_failed: EmailTemplate;
   platform_announcement: EmailTemplate;
+  booking_confirmation: EmailTemplate;
 }
 
 interface TemplateInfo {
@@ -121,6 +122,23 @@ const TEMPLATE_INFO: TemplateInfo[] = [
       { name: '{{announcement_title}}', description: 'Announcement title' },
       { name: '{{announcement_content}}', description: 'Main content' },
       { name: '{{platform_name}}', description: 'Platform name' },
+    ],
+  },
+  {
+    key: 'booking_confirmation',
+    name: 'Booking Confirmation',
+    description: 'Sent to customers when they purchase movie tickets',
+    icon: <Ticket className="h-4 w-4" />,
+    variables: [
+      { name: '{{customer_name}}', description: 'Customer full name' },
+      { name: '{{booking_reference}}', description: 'Unique booking reference' },
+      { name: '{{movie_title}}', description: 'Name of the movie' },
+      { name: '{{showtime}}', description: 'Date and time of the show' },
+      { name: '{{screen_name}}', description: 'Screen/auditorium name' },
+      { name: '{{seats}}', description: 'Selected seat numbers' },
+      { name: '{{total_amount}}', description: 'Total booking amount' },
+      { name: '{{cinema_name}}', description: 'Name of the cinema' },
+      { name: '{{qr_code_url}}', description: 'QR code image URL' },
     ],
   },
 ];
@@ -356,6 +374,42 @@ const DEFAULT_TEMPLATES: PlatformEmailTemplates = {
 </html>`,
     isActive: true,
   },
+  booking_confirmation: {
+    subject: '🎬 Booking Confirmed! - {{movie_title}}',
+    htmlBody: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
+    <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">🎬 Booking Confirmed!</h1>
+    <p style="color: #f5f5f0; font-size: 16px; text-align: center;">Hi {{customer_name}}, your booking is confirmed!</p>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+      <p style="color: #D4AF37; font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase;">Your Ticket QR Code</p>
+      <img src="{{qr_code_url}}" alt="Booking QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border-radius: 8px; background: white; padding: 10px;" />
+      <p style="color: #888; font-size: 12px; margin: 15px 0 0 0;">Scan this code at the entrance</p>
+    </div>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="color: #D4AF37; font-size: 14px; margin: 0;">Booking Reference</p>
+      <p style="color: #f5f5f0; font-size: 28px; font-weight: bold; margin: 0; font-family: monospace;">{{booking_reference}}</p>
+    </div>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 10px 0; color: #888;">Cinema</td><td style="padding: 10px 0; color: #f5f5f0; text-align: right;">{{cinema_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Movie</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; text-align: right; font-weight: bold;">{{movie_title}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Date & Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; text-align: right;">{{showtime}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; text-align: right;">{{screen_name}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; text-align: right; font-weight: bold;">{{seats}}</td></tr>
+        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Total</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #22c55e; font-size: 18px; text-align: right; font-weight: bold;">{{total_amount}}</td></tr>
+      </table>
+    </div>
+    <p style="color: #888; font-size: 14px; text-align: center;">Please arrive at least 15 minutes before the showtime. Present your QR code at the entrance.</p>
+    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+    <p style="color: #666; font-size: 12px; text-align: center;">Thank you for booking with {{cinema_name}}!</p>
+  </div>
+</body>
+</html>`,
+    isActive: true,
+  },
 };
 
 const getSampleData = (templateKey: keyof PlatformEmailTemplates): Record<string, string> => {
@@ -417,6 +471,19 @@ const getSampleData = (templateKey: keyof PlatformEmailTemplates): Record<string
         cinema_name: 'Your Cinema',
         announcement_title: 'New Feature Release',
         announcement_content: 'We are excited to announce our new mobile app integration! You can now manage your cinema on the go.',
+      };
+    case 'booking_confirmation':
+      return {
+        ...base,
+        customer_name: 'John Doe',
+        booking_reference: 'BK-ABC123',
+        movie_title: 'The Dark Knight',
+        showtime: 'Jan 15, 2026 at 7:30 PM',
+        screen_name: 'Screen 1',
+        seats: 'A1, A2, A3',
+        total_amount: '$45.00',
+        cinema_name: 'Grand Cinema',
+        qr_code_url: 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=BK-ABC123',
       };
     default:
       return base;
