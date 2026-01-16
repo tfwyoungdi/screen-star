@@ -1086,11 +1086,11 @@ export default function BoxOffice() {
                   </div>
 
                   <ScrollArea className="h-[350px]">
-                    <div className="space-y-2 p-2">
+                    <div className="space-y-2 p-2 flex flex-col items-center">
                       {sortedRows.map(row => (
-                        <div key={row} className="flex items-center gap-2">
+                        <div key={row} className="flex items-center gap-2 justify-center">
                           <span className="w-6 text-center font-medium text-muted-foreground text-sm">{row}</span>
-                          <div className="flex gap-1 flex-wrap">
+                          <div className="flex gap-1 justify-center">
                             {seatsByRow[row].map((seat: any) => {
                               const isBooked = isSeatBooked(seat.row_label, seat.seat_number);
                               const isSelected = isSeatSelected(seat.row_label, seat.seat_number);
