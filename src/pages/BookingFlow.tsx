@@ -630,7 +630,8 @@ export default function BookingFlow() {
     );
   }
 
-  if (!showtime || !cinema) {
+  // Allow confirmation step to render even without showtime data (for payment callbacks)
+  if ((!showtime || !cinema) && step !== 'confirmation') {
     return (
       <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
         <div className="text-center">
@@ -642,6 +643,62 @@ export default function BookingFlow() {
             style={{ backgroundColor: primaryColor }}
           >
             <ArrowLeft className="h-4 w-4" />
+            Back to Cinema
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Special confirmation-only view when returning from payment without full data
+  if (step === 'confirmation' && (!showtime || !cinema)) {
+    return (
+      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+          {/* Success Icon */}
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+            style={{ backgroundColor: `${primaryColor}20` }}
+          >
+            <Check className="h-10 w-10" style={{ color: primaryColor }} />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-white mb-2">Booking Confirmed!</h2>
+          <p className="text-white/60 mb-4">Your booking reference is:</p>
+          
+          <div 
+            className="text-3xl font-mono font-bold mb-4 px-6 py-3 rounded-xl bg-white/5"
+            style={{ color: primaryColor }}
+          >
+            {bookingRef}
+          </div>
+
+          {/* Unique Reference Indicator */}
+          <div className="flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span className="text-emerald-400 text-sm font-medium">Guaranteed Unique Reference</span>
+          </div>
+          
+          {/* QR Code */}
+          <div className="bg-white p-5 rounded-2xl mb-6">
+            <QRCodeSVG
+              value={JSON.stringify({ ref: bookingRef, cinema: slug })}
+              size={180}
+              level="H"
+              includeMargin
+            />
+          </div>
+          
+          <p className="text-white/60 text-sm mb-8 max-w-sm">
+            Show this QR code at the gate for entry. Screenshot or save this page.
+          </p>
+          
+          <a 
+            href={`/cinema/${slug}`}
+            className="px-8 py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/10 transition-colors"
+          >
             Back to Cinema
           </a>
         </div>
