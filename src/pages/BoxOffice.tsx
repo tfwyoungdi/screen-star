@@ -1190,7 +1190,7 @@ export default function BoxOffice() {
                       {Object.entries(concessionsByCategory).map(([category, items]) => (
                         <div key={category}>
                           <h3 className="text-sm font-semibold mb-2 capitalize text-muted-foreground">{category}</h3>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-3 gap-1.5">
                             {items.map(item => {
                               const qty = getConcessionQuantity(item.id);
                               return (
@@ -1204,7 +1204,7 @@ export default function BoxOffice() {
                                   )}
                                   onClick={() => addConcession(item)}
                                 >
-                                  <div className="aspect-[3/2] relative bg-muted">
+                                  <div className="aspect-square relative bg-muted">
                                     {item.image_url ? (
                                       <img 
                                         src={item.image_url} 
@@ -1213,30 +1213,30 @@ export default function BoxOffice() {
                                       />
                                     ) : (
                                       <div className="w-full h-full flex items-center justify-center">
-                                        <Popcorn className="h-6 w-6 text-muted-foreground" />
+                                        <Popcorn className="h-4 w-4 text-muted-foreground" />
                                       </div>
                                     )}
                                     {qty > 0 && (
-                                      <div className="absolute top-1 right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs">
+                                      <div className="absolute top-0.5 right-0.5 bg-primary text-primary-foreground w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px]">
                                         {qty}
                                       </div>
                                     )}
                                   </div>
-                                  <CardContent className="p-2">
-                                    <h4 className="font-medium text-xs line-clamp-1">{item.name}</h4>
-                                    <div className="flex items-center justify-between mt-1">
-                                      <span className="text-primary font-bold text-sm">${item.price.toFixed(2)}</span>
+                                  <CardContent className="p-1.5">
+                                    <h4 className="font-medium text-[10px] line-clamp-1">{item.name}</h4>
+                                    <div className="flex items-center justify-between mt-0.5">
+                                      <span className="text-primary font-bold text-xs">${item.price.toFixed(2)}</span>
                                       {qty > 0 && (
                                         <Button 
                                           variant="outline" 
                                           size="icon" 
-                                          className="h-5 w-5"
+                                          className="h-4 w-4"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             removeConcession(item.id);
                                           }}
                                         >
-                                          <Minus className="h-3 w-3" />
+                                          <Minus className="h-2 w-2" />
                                         </Button>
                                       )}
                                     </div>
