@@ -77,7 +77,7 @@ interface Customer {
   loyalty_points: number;
 }
 
-type Step = 'showtimes' | 'seats' | 'snacks' | 'customer' | 'payment' | 'confirmation';
+type Step = 'showtimes' | 'seats_snacks' | 'customer' | 'payment' | 'confirmation';
 
 export default function BoxOffice() {
   const { signOut, user } = useAuth();
@@ -730,8 +730,7 @@ export default function BoxOffice() {
   // Progress steps configuration
   const progressSteps = [
     { key: 'showtimes', label: 'Showtime', icon: Film },
-    { key: 'seats', label: 'Seats', icon: Ticket },
-    { key: 'snacks', label: 'Snacks', icon: Popcorn },
+    { key: 'seats_snacks', label: 'Seats & Snacks', icon: Ticket },
     { key: 'customer', label: 'Customer', icon: User },
     { key: 'payment', label: 'Payment', icon: CreditCard },
   ] as const;
@@ -749,14 +748,12 @@ export default function BoxOffice() {
                 variant="ghost" 
                 size="icon"
                 onClick={() => {
-                  if (step === 'seats') {
+                  if (step === 'seats_snacks') {
                     setStep('showtimes');
                     setSelectedShowtime(null);
                     setSelectedSeats([]);
-                  } else if (step === 'snacks') {
-                    setStep('seats');
                   } else if (step === 'customer') {
-                    setStep('snacks');
+                    setStep('seats_snacks');
                   } else if (step === 'payment') {
                     setStep('customer');
                   }
@@ -1017,7 +1014,7 @@ export default function BoxOffice() {
                               onClick={() => {
                                 if (!isSoldOut) {
                                   setSelectedShowtime(showtime);
-                                  setStep('seats');
+                                  setStep('seats_snacks');
                                 }
                               }}
                             >
@@ -1055,253 +1052,243 @@ export default function BoxOffice() {
           </div>
         )}
 
-        {/* Step: Select Seats */}
-        {step === 'seats' && selectedShowtime && (
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
+        {/* Step: Select Seats & Snacks (Side by Side) */}
+        {step === 'seats_snacks' && selectedShowtime && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h1 className="text-2xl font-bold">{selectedShowtime.movies.title}</h1>
                 <p className="text-muted-foreground">
                   {format(new Date(selectedShowtime.start_time), 'h:mm a')} • {selectedShowtime.screens.name}
                 </p>
               </div>
-
-              <div className="text-center py-2">
-                <div className="w-3/4 h-2 bg-primary/30 rounded-full mx-auto mb-2" />
-                <span className="text-xs text-muted-foreground uppercase tracking-widest">Screen</span>
-              </div>
-
-              <ScrollArea className="h-[400px] lg:h-[500px]">
-                <div className="space-y-2 p-4">
-                  {sortedRows.map(row => (
-                    <div key={row} className="flex items-center gap-2">
-                      <span className="w-8 text-center font-medium text-muted-foreground">{row}</span>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {seatsByRow[row].map((seat: any) => {
-                          const isBooked = isSeatBooked(seat.row_label, seat.seat_number);
-                          const isSelected = isSeatSelected(seat.row_label, seat.seat_number);
-                          const isVip = seat.seat_type === 'vip';
-                          const isUnavailable = !seat.is_available || seat.seat_type === 'unavailable';
-
-                          return (
-                            <button
-                              key={seat.id}
-                              disabled={isBooked || isUnavailable}
-                              onClick={() => toggleSeat(seat)}
-                              className={cn(
-                                'w-10 h-10 rounded-lg text-xs font-medium transition-all touch-manipulation',
-                                'flex items-center justify-center',
-                                isUnavailable && 'bg-muted text-muted-foreground cursor-not-allowed',
-                                isBooked && 'bg-destructive/30 text-destructive cursor-not-allowed',
-                                isSelected && 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2',
-                                !isBooked && !isSelected && !isUnavailable && isVip && 'bg-amber-500/20 text-amber-600 hover:bg-amber-500/30',
-                                !isBooked && !isSelected && !isUnavailable && !isVip && 'bg-secondary hover:bg-secondary/80'
-                              )}
-                            >
-                              {seat.seat_number}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-
-              <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-secondary" />
-                  <span>Available</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-amber-500/20 border border-amber-500/40" />
-                  <span>VIP</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-primary" />
-                  <span>Selected</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-destructive/30" />
-                  <span>Booked</span>
-                </div>
-              </div>
+              {selectedSeats.length > 0 && (
+                <Button 
+                  size="lg" 
+                  className="h-12 px-6 touch-manipulation"
+                  onClick={() => setStep('customer')}
+                >
+                  Continue to Checkout
+                  <span className="ml-2 font-bold">${subtotal.toFixed(2)}</span>
+                </Button>
+              )}
             </div>
 
-            <div className="space-y-4">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Left Panel: Seats */}
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Ticket className="h-5 w-5" />
-                    Order Summary
+                    Select Seats
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {selectedSeats.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      Select seats to continue
-                    </p>
-                  ) : (
-                    <>
-                      <div>
-                        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Selected Seats ({selectedSeats.length})
-                        </Label>
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {selectedSeats
-                            .sort((a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number)
-                            .map(seat => (
-                              <Badge 
-                                key={`${seat.row_label}${seat.seat_number}`}
-                                variant={seat.seat_type === 'vip' ? 'default' : 'secondary'}
-                                className="cursor-pointer"
-                                onClick={() => toggleSeat(seat)}
-                              >
-                                {seat.row_label}{seat.seat_number}
-                                {seat.seat_type === 'vip' && ' ★'}
-                                <X className="h-3 w-3 ml-1" />
-                              </Badge>
-                            ))}
-                        </div>
-                      </div>
+                  <div className="text-center py-2">
+                    <div className="w-3/4 h-2 bg-primary/30 rounded-full mx-auto mb-2" />
+                    <span className="text-xs text-muted-foreground uppercase tracking-widest">Screen</span>
+                  </div>
 
-                      <div className="border-t pt-4 space-y-2">
-                        <div className="flex justify-between text-lg font-bold">
-                          <span>Tickets</span>
-                          <span>${ticketsSubtotal.toFixed(2)}</span>
-                        </div>
-                      </div>
+                  <ScrollArea className="h-[350px]">
+                    <div className="space-y-2 p-2">
+                      {sortedRows.map(row => (
+                        <div key={row} className="flex items-center gap-2">
+                          <span className="w-6 text-center font-medium text-muted-foreground text-sm">{row}</span>
+                          <div className="flex gap-1 flex-wrap">
+                            {seatsByRow[row].map((seat: any) => {
+                              const isBooked = isSeatBooked(seat.row_label, seat.seat_number);
+                              const isSelected = isSeatSelected(seat.row_label, seat.seat_number);
+                              const isVip = seat.seat_type === 'vip';
+                              const isUnavailable = !seat.is_available || seat.seat_type === 'unavailable';
 
-                      <Button 
-                        size="lg" 
-                        className="w-full h-14 text-lg touch-manipulation"
-                        onClick={() => setStep('snacks')}
-                      >
-                        <Popcorn className="h-5 w-5 mr-2" />
-                        Add Snacks
-                      </Button>
-                    </>
+                              return (
+                                <button
+                                  key={seat.id}
+                                  disabled={isBooked || isUnavailable}
+                                  onClick={() => toggleSeat(seat)}
+                                  className={cn(
+                                    'w-8 h-8 rounded text-xs font-medium transition-all touch-manipulation',
+                                    'flex items-center justify-center',
+                                    isUnavailable && 'bg-muted text-muted-foreground cursor-not-allowed',
+                                    isBooked && 'bg-destructive/30 text-destructive cursor-not-allowed',
+                                    isSelected && 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-1',
+                                    !isBooked && !isSelected && !isUnavailable && isVip && 'bg-amber-500/20 text-amber-600 hover:bg-amber-500/30',
+                                    !isBooked && !isSelected && !isUnavailable && !isVip && 'bg-secondary hover:bg-secondary/80'
+                                  )}
+                                >
+                                  {seat.seat_number}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+
+                  <div className="flex flex-wrap items-center justify-center gap-3 text-xs border-t pt-3">
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-4 rounded bg-secondary" />
+                      <span>Available</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-4 rounded bg-amber-500/20 border border-amber-500/40" />
+                      <span>VIP</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-4 rounded bg-primary" />
+                      <span>Selected</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-4 rounded bg-destructive/30" />
+                      <span>Booked</span>
+                    </div>
+                  </div>
+
+                  {selectedSeats.length > 0 && (
+                    <div className="border-t pt-3">
+                      <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Selected ({selectedSeats.length})
+                      </Label>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {selectedSeats
+                          .sort((a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number)
+                          .map(seat => (
+                            <Badge 
+                              key={`${seat.row_label}${seat.seat_number}`}
+                              variant={seat.seat_type === 'vip' ? 'default' : 'secondary'}
+                              className="cursor-pointer"
+                              onClick={() => toggleSeat(seat)}
+                            >
+                              {seat.row_label}{seat.seat_number}
+                              {seat.seat_type === 'vip' && ' ★'}
+                              <X className="h-3 w-3 ml-1" />
+                            </Badge>
+                          ))}
+                      </div>
+                      <div className="flex justify-between mt-3 font-bold">
+                        <span>Tickets</span>
+                        <span>${ticketsSubtotal.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Right Panel: Snacks */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <Popcorn className="h-5 w-5" />
+                    Add Snacks
+                    {selectedConcessions.length > 0 && (
+                      <Badge variant="secondary">{selectedConcessions.reduce((sum, c) => sum + c.quantity, 0)}</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[450px]">
+                    <div className="space-y-4 pr-2">
+                      {Object.entries(concessionsByCategory).map(([category, items]) => (
+                        <div key={category}>
+                          <h3 className="text-sm font-semibold mb-2 capitalize text-muted-foreground">{category}</h3>
+                          <div className="grid grid-cols-2 gap-2">
+                            {items.map(item => {
+                              const qty = getConcessionQuantity(item.id);
+                              return (
+                                <Card 
+                                  key={item.id}
+                                  className={cn(
+                                    'overflow-hidden cursor-pointer transition-all touch-manipulation',
+                                    qty > 0 && 'ring-2 ring-primary'
+                                  )}
+                                  onClick={() => addConcession(item)}
+                                >
+                                  <div className="aspect-[4/3] relative bg-muted">
+                                    {item.image_url ? (
+                                      <img 
+                                        src={item.image_url} 
+                                        alt={item.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center">
+                                        <Popcorn className="h-8 w-8 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    {qty > 0 && (
+                                      <div className="absolute top-1 right-1 bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center font-bold text-sm">
+                                        {qty}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <CardContent className="p-2">
+                                    <h4 className="font-medium text-xs line-clamp-1">{item.name}</h4>
+                                    <div className="flex items-center justify-between mt-1">
+                                      <span className="text-primary font-bold text-sm">${item.price.toFixed(2)}</span>
+                                      {qty > 0 && (
+                                        <Button 
+                                          variant="outline" 
+                                          size="icon" 
+                                          className="h-5 w-5"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeConcession(item.id);
+                                          }}
+                                        >
+                                          <Minus className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+
+                      {Object.keys(concessionsByCategory).length === 0 && (
+                        <div className="text-center py-8">
+                          <Popcorn className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-muted-foreground text-sm">No concession items available</p>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+
+                  {selectedConcessions.length > 0 && (
+                    <div className="border-t pt-3 mt-3 space-y-1">
+                      {selectedConcessions.map(c => (
+                        <div key={c.item.id} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{c.item.name} × {c.quantity}</span>
+                          <span>${(c.item.price * c.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between font-bold pt-2">
+                        <span>Snacks</span>
+                        <span>${concessionsSubtotal.toFixed(2)}</span>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
             </div>
-          </div>
-        )}
 
-        {/* Step: Snacks */}
-        {step === 'snacks' && selectedShowtime && (
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold">Add Snacks</h1>
-                <p className="text-muted-foreground">Would the customer like anything else?</p>
-              </div>
-
-              {Object.entries(concessionsByCategory).map(([category, items]) => (
-                <div key={category}>
-                  <h2 className="text-lg font-semibold mb-3 capitalize">{category}</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {items.map(item => {
-                      const qty = getConcessionQuantity(item.id);
-                      return (
-                        <Card 
-                          key={item.id}
-                          className={cn(
-                            'overflow-hidden cursor-pointer transition-all touch-manipulation',
-                            qty > 0 && 'ring-2 ring-primary'
-                          )}
-                          onClick={() => addConcession(item)}
-                        >
-                          <div className="aspect-square relative bg-muted">
-                            {item.image_url ? (
-                              <img 
-                                src={item.image_url} 
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Popcorn className="h-10 w-10 text-muted-foreground" />
-                              </div>
-                            )}
-                            {qty > 0 && (
-                              <div className="absolute top-2 right-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
-                                {qty}
-                              </div>
-                            )}
-                          </div>
-                          <CardContent className="p-3">
-                            <h3 className="font-medium text-sm line-clamp-1">{item.name}</h3>
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-primary font-bold">${item.price.toFixed(2)}</span>
-                              {qty > 0 && (
-                                <Button 
-                                  variant="outline" 
-                                  size="icon" 
-                                  className="h-6 w-6"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeConcession(item.id);
-                                  }}
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {Object.keys(concessionsByCategory).length === 0 && (
-                <Card className="p-8 text-center">
-                  <Popcorn className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No concession items available</p>
-                </Card>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Tickets × {selectedSeats.length}</span>
-                      <span>${ticketsSubtotal.toFixed(2)}</span>
+            {/* Bottom Order Summary Bar */}
+            {selectedSeats.length > 0 && (
+              <Card className="lg:hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedSeats.length} seats • {selectedConcessions.reduce((sum, c) => sum + c.quantity, 0)} snacks
+                      </p>
+                      <p className="text-xl font-bold">${subtotal.toFixed(2)}</p>
                     </div>
-                    {selectedConcessions.map(c => (
-                      <div key={c.item.id} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{c.item.name} × {c.quantity}</span>
-                        <span>${(c.item.price * c.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span>${subtotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline"
-                      size="lg" 
-                      className="flex-1 h-12 touch-manipulation"
-                      onClick={() => setStep('customer')}
-                    >
-                      Skip Snacks
-                    </Button>
                     <Button 
                       size="lg" 
-                      className="flex-1 h-12 touch-manipulation"
+                      className="h-12 px-6 touch-manipulation"
                       onClick={() => setStep('customer')}
                     >
                       Continue
@@ -1309,7 +1296,7 @@ export default function BoxOffice() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            )}
           </div>
         )}
 
