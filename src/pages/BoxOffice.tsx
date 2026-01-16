@@ -22,6 +22,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { ShiftManagement } from '@/components/boxoffice/ShiftManagement';
+import { FloatingOrderSummary } from '@/components/boxoffice/FloatingOrderSummary';
 
 interface Showtime {
   id: string;
@@ -1054,24 +1055,12 @@ export default function BoxOffice() {
 
         {/* Step: Select Seats & Snacks (Side by Side) */}
         {step === 'seats_snacks' && selectedShowtime && (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h1 className="text-2xl font-bold">{selectedShowtime.movies.title}</h1>
-                <p className="text-muted-foreground">
-                  {format(new Date(selectedShowtime.start_time), 'h:mm a')} • {selectedShowtime.screens.name}
-                </p>
-              </div>
-              {selectedSeats.length > 0 && (
-                <Button 
-                  size="lg" 
-                  className="h-12 px-6 touch-manipulation"
-                  onClick={() => setStep('customer')}
-                >
-                  Continue to Checkout
-                  <span className="ml-2 font-bold">${subtotal.toFixed(2)}</span>
-                </Button>
-              )}
+          <div className="space-y-4 pb-24">
+            <div>
+              <h1 className="text-2xl font-bold">{selectedShowtime.movies.title}</h1>
+              <p className="text-muted-foreground">
+                {format(new Date(selectedShowtime.start_time), 'h:mm a')} • {selectedShowtime.screens.name}
+              </p>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
@@ -1204,7 +1193,7 @@ export default function BoxOffice() {
                                   )}
                                   onClick={() => addConcession(item)}
                                 >
-                                  <div className="aspect-[4/3] relative bg-muted">
+                                  <div className="aspect-[3/2] relative bg-muted">
                                     {item.image_url ? (
                                       <img 
                                         src={item.image_url} 
@@ -1213,11 +1202,11 @@ export default function BoxOffice() {
                                       />
                                     ) : (
                                       <div className="w-full h-full flex items-center justify-center">
-                                        <Popcorn className="h-8 w-8 text-muted-foreground" />
+                                        <Popcorn className="h-6 w-6 text-muted-foreground" />
                                       </div>
                                     )}
                                     {qty > 0 && (
-                                      <div className="absolute top-1 right-1 bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center font-bold text-sm">
+                                      <div className="absolute top-1 right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs">
                                         {qty}
                                       </div>
                                     )}
@@ -1276,27 +1265,12 @@ export default function BoxOffice() {
             </div>
 
             {/* Bottom Order Summary Bar */}
-            {selectedSeats.length > 0 && (
-              <Card className="lg:hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedSeats.length} seats • {selectedConcessions.reduce((sum, c) => sum + c.quantity, 0)} snacks
-                      </p>
-                      <p className="text-xl font-bold">${subtotal.toFixed(2)}</p>
-                    </div>
-                    <Button 
-                      size="lg" 
-                      className="h-12 px-6 touch-manipulation"
-                      onClick={() => setStep('customer')}
-                    >
-                      Continue
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <FloatingOrderSummary
+              selectedSeats={selectedSeats}
+              selectedConcessions={selectedConcessions}
+              subtotal={subtotal}
+              onContinue={() => setStep('customer')}
+            />
           </div>
         )}
 
