@@ -141,12 +141,12 @@ export default function BookingFlow() {
     }
   }, [fromBooking]);
 
-  // Handle payment callback
+  // Handle payment callback - must wait for cinema to be loaded
   useEffect(() => {
-    if (paymentStatus && paymentRef) {
+    if (paymentStatus && paymentRef && cinema) {
       handlePaymentCallback();
     }
-  }, [paymentStatus, paymentRef]);
+  }, [paymentStatus, paymentRef, cinema]);
 
   const handlePaymentCallback = async () => {
     if (!paymentRef || !cinema) return;
