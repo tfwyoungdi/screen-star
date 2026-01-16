@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { QRCodeSVG } from 'qrcode.react';
+import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2, Popcorn, Plus, Minus, Gift, Star } from 'lucide-react';
+import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2, Popcorn, Plus, Minus, Gift, Star, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoyaltyRedemption } from '@/components/loyalty/LoyaltyRedemption';
@@ -123,6 +124,35 @@ export default function BookingFlow() {
   const [combos, setCombos] = useState<ComboDeal[]>([]);
   const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
   const [appliedLoyaltyReward, setAppliedLoyaltyReward] = useState<{ reward: any; customer: any; discount: number } | null>(null);
+  const [savingTicket, setSavingTicket] = useState(false);
+  
+  const ticketRef = useRef<HTMLDivElement>(null);
+  const fallbackTicketRef = useRef<HTMLDivElement>(null);
+
+  const saveTicketToDevice = async (targetRef: React.RefObject<HTMLDivElement>) => {
+    if (!targetRef.current || !bookingRef) return;
+    
+    setSavingTicket(true);
+    try {
+      const canvas = await html2canvas(targetRef.current, {
+        backgroundColor: '#1a1a2e',
+        scale: 2,
+        useCORS: true,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `ticket-${bookingRef}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast.success('Ticket saved to your device!');
+    } catch (error) {
+      console.error('Failed to save ticket:', error);
+      toast.error('Failed to save ticket. Please take a screenshot instead.');
+    } finally {
+      setSavingTicket(false);
+    }
+  };
 
   // Load pre-selected seats from CinemaBooking page
   useEffect(() => {
@@ -653,8 +683,11 @@ export default function BookingFlow() {
   // Special confirmation-only view when returning from payment without full data
   if (step === 'confirmation' && (!showtime || !cinema)) {
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
-        <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-4">
+        <div 
+          ref={fallbackTicketRef}
+          className="flex-1 max-w-md flex flex-col items-center justify-center text-center py-8 px-6 bg-[#1a1a2e] rounded-2xl"
+        >
           {/* Success Icon */}
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
@@ -691,13 +724,33 @@ export default function BookingFlow() {
             />
           </div>
           
-          <p className="text-white/60 text-sm mb-8 max-w-sm">
-            Show this QR code at the gate for entry. Screenshot or save this page.
+          <p className="text-white/60 text-sm mb-6 max-w-sm">
+            Show this QR code at the gate for entry.
           </p>
+          
+          {/* Save Ticket Button */}
+          <button
+            onClick={() => saveTicketToDevice(fallbackTicketRef)}
+            disabled={savingTicket}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white mb-4 transition-all disabled:opacity-70"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {savingTicket ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Download className="h-5 w-5" />
+                Save Ticket to Device
+              </>
+            )}
+          </button>
           
           <a 
             href={`/cinema/${slug}`}
-            className="px-8 py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/10 transition-colors"
+            className="w-full px-8 py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/10 transition-colors text-center block"
           >
             Back to Cinema
           </a>
@@ -1505,7 +1558,10 @@ export default function BookingFlow() {
         )}
 
         {step === 'confirmation' && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+          <div 
+            ref={ticketRef}
+            className="flex-1 flex flex-col items-center justify-center text-center py-8 px-6"
+          >
             {/* Success Icon */}
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
@@ -1542,13 +1598,33 @@ export default function BookingFlow() {
               />
             </div>
             
-            <p className="text-white/60 text-sm mb-8 max-w-sm">
-              Show this QR code at the gate for entry. Screenshot or save this page.
+            <p className="text-white/60 text-sm mb-6 max-w-sm">
+              Show this QR code at the gate for entry.
             </p>
+            
+            {/* Save Ticket Button */}
+            <button
+              onClick={() => saveTicketToDevice(ticketRef)}
+              disabled={savingTicket}
+              className="w-full max-w-xs flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white mb-4 transition-all disabled:opacity-70"
+              style={{ backgroundColor: primaryColor }}
+            >
+              {savingTicket ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Download className="h-5 w-5" />
+                  Save Ticket to Device
+                </>
+              )}
+            </button>
             
             <a 
               href={`/cinema/${slug}`}
-              className="px-8 py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/10 transition-colors"
+              className="w-full max-w-xs px-8 py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/10 transition-colors text-center block"
             >
               Back to Cinema
             </a>
