@@ -91,6 +91,36 @@ interface SelectedCombo {
   quantity: number;
 }
 
+// Utility function to save ticket as image
+const saveTicketAsImage = async (
+  elementRef: React.RefObject<HTMLDivElement>,
+  bookingReference: string,
+  setSaving: (value: boolean) => void
+) => {
+  if (!elementRef.current || !bookingReference) return;
+  
+  setSaving(true);
+  try {
+    const canvas = await html2canvas(elementRef.current, {
+      backgroundColor: '#1a1a2e',
+      scale: 2,
+      useCORS: true,
+    });
+    
+    const link = document.createElement('a');
+    link.download = `ticket-${bookingReference}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    
+    toast.success('Ticket saved to your device!');
+  } catch (error) {
+    console.error('Failed to save ticket:', error);
+    toast.error('Failed to save ticket. Please take a screenshot instead.');
+  } finally {
+    setSaving(false);
+  }
+};
+
 export default function BookingFlow() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
@@ -128,31 +158,6 @@ export default function BookingFlow() {
   
   const ticketRef = useRef<HTMLDivElement>(null);
   const fallbackTicketRef = useRef<HTMLDivElement>(null);
-
-  const saveTicketToDevice = async (targetRef: React.RefObject<HTMLDivElement>) => {
-    if (!targetRef.current || !bookingRef) return;
-    
-    setSavingTicket(true);
-    try {
-      const canvas = await html2canvas(targetRef.current, {
-        backgroundColor: '#1a1a2e',
-        scale: 2,
-        useCORS: true,
-      });
-      
-      const link = document.createElement('a');
-      link.download = `ticket-${bookingRef}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      
-      toast.success('Ticket saved to your device!');
-    } catch (error) {
-      console.error('Failed to save ticket:', error);
-      toast.error('Failed to save ticket. Please take a screenshot instead.');
-    } finally {
-      setSavingTicket(false);
-    }
-  };
 
   // Load pre-selected seats from CinemaBooking page
   useEffect(() => {
@@ -501,28 +506,21 @@ export default function BookingFlow() {
         return;
       }
       
-      // Check max uses
+      // Check usage limit
       if (data.max_uses && data.current_uses >= data.max_uses) {
         setPromoError('This promo code has reached its usage limit');
         return;
       }
       
       // Check minimum purchase
-      if (subtotal < data.min_purchase_amount) {
+      if (data.min_purchase_amount && ticketsSubtotal < data.min_purchase_amount) {
         setPromoError(`Minimum purchase of $${data.min_purchase_amount} required`);
         return;
       }
       
-      setAppliedPromo({
-        id: data.id,
-        code: data.code,
-        discount_type: data.discount_type as 'percentage' | 'fixed',
-        discount_value: data.discount_value,
-        min_purchase_amount: data.min_purchase_amount,
-      });
-      setPromoCode('');
+      setAppliedPromo(data as PromoCode);
       toast.success('Promo code applied!');
-    } catch (error) {
+    } catch (err) {
       setPromoError('Failed to apply promo code');
     } finally {
       setPromoLoading(false);
@@ -531,40 +529,13 @@ export default function BookingFlow() {
 
   const removePromoCode = () => {
     setAppliedPromo(null);
+    setPromoCode('');
     setPromoError(null);
   };
 
-  const sendConfirmationEmail = async (bookingReference: string) => {
-    try {
-      const qrCodeData = JSON.stringify({ ref: bookingReference, cinema: cinema.slug });
-      const seatLabels = selectedSeats
-        .sort((a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number)
-        .map(s => `${s.row_label}${s.seat_number}${s.seat_type === 'vip' ? ' (VIP)' : ''}`);
-
-      await supabase.functions.invoke('send-booking-confirmation', {
-        body: {
-          customerName: bookingData.customer_name,
-          customerEmail: bookingData.customer_email,
-          cinemaName: cinema.name,
-          movieTitle: showtime!.movies.title,
-          showtime: format(new Date(showtime!.start_time), 'EEEE, MMMM d, yyyy \'at\' h:mm a'),
-          screenName: showtime!.screens.name,
-          seats: seatLabels,
-          totalAmount,
-          bookingReference,
-          qrCodeData,
-        },
-      });
-      console.log('Confirmation email sent');
-    } catch (error) {
-      console.error('Failed to send confirmation email:', error);
-      // Don't fail the booking if email fails
-    }
-  };
-
   const handleBooking = async () => {
-    if (!showtime || selectedSeats.length === 0 || !cinema) return;
-
+    if (!showtime || !cinema || selectedSeats.length === 0) return;
+    
     setSubmitting(true);
     try {
       // Generate booking reference
@@ -584,24 +555,14 @@ export default function BookingFlow() {
           discount_amount: discountAmount,
           promo_code_id: appliedPromo?.id || null,
           booking_reference: bookingReference,
-          status: 'confirmed',
+          status: 'paid', // Mark as paid since no payment gateway
         })
         .select()
         .single();
 
       if (bookingError) throw bookingError;
-      
-      // Update promo code usage count if used
-      if (appliedPromo) {
-        await supabase
-          .from('promo_codes')
-          .update({ current_uses: (await supabase.from('promo_codes').select('current_uses').eq('id', appliedPromo.id).single()).data?.current_uses + 1 || 1 })
-          .eq('id', appliedPromo.id);
-      }
 
-      if (bookingError) throw bookingError;
-
-      // Create booked seats
+      // Book seats
       const seatsToBook = selectedSeats.map(seat => ({
         booking_id: booking.id,
         showtime_id: showtime.id,
@@ -617,7 +578,7 @@ export default function BookingFlow() {
 
       if (seatsError) throw seatsError;
 
-      // Create booking concessions if any selected
+      // Book concessions
       if (selectedConcessions.length > 0) {
         const concessionsToBook = selectedConcessions.map(c => ({
           booking_id: booking.id,
@@ -626,22 +587,72 @@ export default function BookingFlow() {
           unit_price: c.item.price,
         }));
 
-        const { error: concessionsError } = await supabase
-          .from('booking_concessions')
-          .insert(concessionsToBook);
-
-        if (concessionsError) {
-          console.error('Failed to save concessions:', concessionsError);
-          // Don't fail the booking for concession errors
-        }
+        await supabase.from('booking_concessions').insert(concessionsToBook);
       }
 
-      // Send confirmation email (don't await to not block UI)
-      sendConfirmationEmail(bookingReference);
+      // Book combos
+      if (selectedCombos.length > 0) {
+        const combosToBook = selectedCombos.map(c => ({
+          booking_id: booking.id,
+          combo_deal_id: c.combo.id,
+          quantity: c.quantity,
+          unit_price: c.combo.combo_price,
+        }));
+
+        await supabase.from('booking_combos').insert(combosToBook);
+      }
+
+      // Update promo code usage
+      if (appliedPromo) {
+        await supabase
+          .from('promo_codes')
+          .update({ current_uses: (appliedPromo as any).current_uses + 1 })
+          .eq('id', appliedPromo.id);
+      }
+
+      // Handle loyalty reward redemption
+      if (appliedLoyaltyReward) {
+        // Deduct points from customer
+        await supabase
+          .from('customers')
+          .update({ 
+            loyalty_points: appliedLoyaltyReward.customer.loyalty_points - appliedLoyaltyReward.reward.points_required 
+          })
+          .eq('id', appliedLoyaltyReward.customer.id);
+
+        // Record transaction
+        await supabase
+          .from('loyalty_transactions')
+          .insert({
+            organization_id: cinema.id,
+            customer_id: appliedLoyaltyReward.customer.id,
+            booking_id: booking.id,
+            transaction_type: 'redemption',
+            points: -appliedLoyaltyReward.reward.points_required,
+            reward_id: appliedLoyaltyReward.reward.id,
+            description: `Redeemed: ${appliedLoyaltyReward.reward.name}`,
+          });
+      }
+
+      // Send confirmation email
+      await supabase.functions.invoke('send-booking-confirmation', {
+        body: {
+          bookingReference,
+          customerEmail: bookingData.customer_email,
+          customerName: bookingData.customer_name,
+          movieTitle: showtime.movies.title,
+          showtime: format(new Date(showtime.start_time), 'PPp'),
+          screenName: showtime.screens.name,
+          seats: selectedSeats.map(s => `${s.row_label}${s.seat_number}`).join(', '),
+          totalAmount,
+          cinemaName: cinema.name,
+          organizationId: cinema.id,
+        },
+      });
 
       setBookingRef(bookingReference);
       setStep('confirmation');
-      toast.success('Booking confirmed! Confirmation email sent.');
+      toast.success('Booking confirmed!');
     } catch (error: any) {
       console.error('Booking error:', error);
       toast.error(error.message || 'Failed to complete booking');
@@ -650,567 +661,423 @@ export default function BookingFlow() {
     }
   };
 
-  const primaryColor = cinema?.primary_color || '#DC2626';
+  // Group seats by row
+  const seatsByRow = seatLayouts.reduce((acc, seat) => {
+    if (!acc[seat.row_label]) acc[seat.row_label] = [];
+    acc[seat.row_label].push(seat);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  // Sort seats within each row by seat number
+  Object.keys(seatsByRow).forEach(row => {
+    seatsByRow[row].sort((a: any, b: any) => a.seat_number - b.seat_number);
+  });
+
+  // Group concessions by category
+  const concessionsByCategory = concessionItems.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = [];
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, ConcessionItem[]>);
+
+  const primaryColor = cinema?.primary_color || '#8b5cf6';
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
-        <div className="animate-pulse text-white/60">Loading...</div>
-      </div>
-    );
-  }
-
-  // Allow confirmation step to render even without showtime data (for payment callbacks)
-  if ((!showtime || !cinema) && step !== 'confirmation') {
-    return (
-      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f0f1a] flex items-center justify-center">
         <div className="text-center">
-          <Film className="h-16 w-16 text-white/40 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-4">Showtime Not Found</h1>
-          <a 
-            href={`/cinema/${slug}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-medium"
-            style={{ backgroundColor: primaryColor }}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Cinema
-          </a>
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-white/60">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Special confirmation-only view when returning from payment without full data
-  if (step === 'confirmation' && (!showtime || !cinema)) {
+  if (!cinema || !showtime) {
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-4">
-        <div 
-          ref={fallbackTicketRef}
-          className="flex-1 max-w-md flex flex-col items-center justify-center text-center py-8 px-6 bg-[#1a1a2e] rounded-2xl"
-        >
-          {/* Success Icon */}
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-            style={{ backgroundColor: `${primaryColor}20` }}
-          >
-            <Check className="h-10 w-10" style={{ color: primaryColor }} />
-          </div>
-          
-          <h2 className="text-2xl font-bold text-white mb-2">Booking Confirmed!</h2>
-          <p className="text-white/60 mb-4">Your booking reference is:</p>
-          
-          <div 
-            className="text-3xl font-mono font-bold mb-4 px-6 py-3 rounded-xl bg-white/5"
-            style={{ color: primaryColor }}
-          >
-            {bookingRef}
-          </div>
+      <div 
+        ref={fallbackTicketRef}
+        className="min-h-screen flex flex-col items-center justify-center p-6"
+        style={{ backgroundColor: '#0f0f1a' }}
+      >
+        {/* If we have a booking reference from payment callback, show confirmation */}
+        {bookingRef ? (
+          <div className="text-center max-w-md mx-auto">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mb-6 mx-auto"
+              style={{ backgroundColor: `${primaryColor}20` }}
+            >
+              <Check className="h-10 w-10" style={{ color: primaryColor }} />
+            </div>
+            
+            <h2 className="text-2xl font-bold text-white mb-2">Booking Confirmed!</h2>
+            <p className="text-white/60 mb-4">Your booking reference is:</p>
+            
+            <div 
+              className="text-3xl font-mono font-bold mb-4 px-6 py-3 rounded-xl bg-white/5"
+              style={{ color: primaryColor }}
+            >
+              {bookingRef}
+            </div>
 
-          {/* Unique Reference Indicator */}
-          <div className="flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span className="text-emerald-400 text-sm font-medium">Guaranteed Unique Reference</span>
+            <div className="flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 justify-center">
+              <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span className="text-emerald-400 text-sm font-medium">Guaranteed Unique Reference</span>
+            </div>
+            
+            <div className="bg-white p-5 rounded-2xl mb-6 inline-block">
+              <QRCodeSVG
+                value={JSON.stringify({ ref: bookingRef, cinema: slug })}
+                size={180}
+                level="H"
+                includeMargin
+              />
+            </div>
+            
+            <p className="text-white/60 text-sm mb-6">
+              Show this QR code at the gate for entry. A confirmation email has been sent to you.
+            </p>
+            
+            <button
+              onClick={() => saveTicketAsImage(fallbackTicketRef, bookingRef, setSavingTicket)}
+              disabled={savingTicket}
+              className="w-full max-w-xs flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white mb-4 transition-all disabled:opacity-70 mx-auto"
+              style={{ backgroundColor: primaryColor }}
+            >
+              {savingTicket ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Download className="h-5 w-5" />
+                  Save Ticket to Device
+                </>
+              )}
+            </button>
+            
+            <a 
+              href={`/cinema/${slug}`}
+              className="w-full max-w-xs px-8 py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/10 transition-colors text-center block mx-auto"
+            >
+              Back to Cinema
+            </a>
           </div>
-          
-          {/* QR Code */}
-          <div className="bg-white p-5 rounded-2xl mb-6">
-            <QRCodeSVG
-              value={JSON.stringify({ ref: bookingRef, cinema: slug })}
-              size={180}
-              level="H"
-              includeMargin
-            />
+        ) : (
+          <div className="text-center">
+            <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-white mb-2">Showtime Not Found</h1>
+            <p className="text-white/60 mb-6">The showtime you're looking for doesn't exist or has been removed.</p>
+            <a 
+              href={`/cinema/${slug}`}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Cinema
+            </a>
           </div>
-          
-          <p className="text-white/60 text-sm mb-6 max-w-sm">
-            Show this QR code at the gate for entry.
-          </p>
-          
-          {/* Save Ticket Button */}
-          <button
-            onClick={() => saveTicketToDevice(fallbackTicketRef)}
-            disabled={savingTicket}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white mb-4 transition-all disabled:opacity-70"
-            style={{ backgroundColor: primaryColor }}
-          >
-            {savingTicket ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Download className="h-5 w-5" />
-                Save Ticket to Device
-              </>
-            )}
-          </button>
-          
-          <a 
-            href={`/cinema/${slug}`}
-            className="w-full px-8 py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/10 transition-colors text-center block"
-          >
-            Back to Cinema
-          </a>
-        </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col lg:flex-row">
-      {/* Left Panel - Movie Info & Order Summary */}
-      <div className="lg:w-2/5 xl:w-1/3 relative overflow-hidden lg:min-h-screen lg:sticky lg:top-0">
-        {/* Poster Background */}
-        {showtime.movies.poster_url && (
-          <img 
-            src={showtime.movies.poster_url} 
-            alt={showtime.movies.title}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
+    <div 
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: '#0f0f1a' }}
+    >
+      {/* Compact Header */}
+      <header className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+        <a 
+          href={`/cinema/${slug}`}
+          className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm">Back</span>
+        </a>
         
-        {/* Gradient Overlay */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: showtime.movies.poster_url 
-              ? 'linear-gradient(to bottom, rgba(26, 26, 46, 0.3) 0%, rgba(26, 26, 46, 0.8) 50%, rgba(26, 26, 46, 1) 100%)'
-              : `linear-gradient(135deg, ${primaryColor}40 0%, #1a1a2e 100%)`
-          }}
-        />
-        
-        {/* Content */}
-        <div className="relative z-10 p-6 lg:p-8 flex flex-col min-h-[300px] lg:min-h-screen">
-          {/* Back Button & Logo */}
-          <div className="flex items-center justify-between mb-6">
-            <a 
-              href={`/cinema/${slug}`}
-              className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm">Back</span>
-            </a>
-            <div className="flex items-center gap-2">
-              {cinema.logo_url ? (
-                <img src={cinema.logo_url} alt={cinema.name} className="h-8 w-auto" />
-              ) : (
-                <Film className="h-6 w-6" style={{ color: primaryColor }} />
-              )}
-              <span className="text-white/80 text-sm font-medium">{cinema.name}</span>
-            </div>
+        <div className="flex items-center gap-2">
+          <div 
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: `${primaryColor}20` }}
+          >
+            <Film className="h-4 w-4" style={{ color: primaryColor }} />
           </div>
+          <span className="text-white font-semibold text-sm">{cinema.name}</span>
+        </div>
 
-          {/* Movie Info */}
-          <div className="mt-auto">
-            <div className="flex items-center gap-2 mb-3">
+        <div className="w-16" /> {/* Spacer for centering */}
+      </header>
+
+      {/* Movie Info Banner */}
+      <div className="px-4 py-4 border-b border-white/10">
+        <div className="flex gap-3">
+          {showtime.movies.poster_url && (
+            <img
+              src={showtime.movies.poster_url}
+              alt={showtime.movies.title}
+              className="w-16 h-24 object-cover rounded-lg"
+            />
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-white font-bold text-lg truncate">{showtime.movies.title}</h2>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-white/60">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {showtime.movies.duration_minutes}min
+              </span>
               {showtime.movies.rating && (
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/20 text-white">
+                <Badge variant="outline" className="text-xs border-white/20 text-white/60">
                   {showtime.movies.rating}
-                </span>
-              )}
-              {showtime.movies.genre && (
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/10 text-white/80">
-                  {showtime.movies.genre}
-                </span>
+                </Badge>
               )}
             </div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-4 uppercase tracking-wide">
-              {showtime.movies.title}
-            </h1>
-            
-            {/* Showtime Details */}
-            <div className="flex flex-wrap gap-4 text-white/70 text-sm mb-6">
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" />
-                {showtime.movies.duration_minutes} min
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />
-                {format(new Date(showtime.start_time), 'MMM d, yyyy')}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" />
-                {format(new Date(showtime.start_time), 'h:mm a')}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" />
-                {showtime.screens.name}
-              </span>
+            <div className="flex items-center gap-2 mt-2 text-sm text-white/80">
+              <Calendar className="h-3 w-3" style={{ color: primaryColor }} />
+              <span>{format(new Date(showtime.start_time), 'EEE, MMM d')}</span>
+              <span style={{ color: primaryColor }}>•</span>
+              <span style={{ color: primaryColor }}>{format(new Date(showtime.start_time), 'h:mm a')}</span>
             </div>
-
-            {/* Order Summary Card */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-              <div className="flex items-center gap-2 mb-4">
-                <Ticket className="h-5 w-5" style={{ color: primaryColor }} />
-                <h3 className="font-semibold text-white">Order Summary</h3>
-              </div>
-              
-              {/* Selected Seats */}
-              <div className="mb-4">
-                <p className="text-white/60 text-xs uppercase tracking-wide mb-2">Selected Seats ({selectedSeats.length})</p>
-                {selectedSeats.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedSeats
-                      .sort((a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number)
-                      .map((seat) => (
-                        <span 
-                          key={`${seat.row_label}${seat.seat_number}`} 
-                          className="px-2 py-1 rounded-md text-xs font-medium"
-                          style={{ 
-                            backgroundColor: seat.seat_type === 'vip' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255,255,255,0.1)',
-                            color: seat.seat_type === 'vip' ? '#fbbf24' : 'rgba(255,255,255,0.8)'
-                          }}
-                        >
-                          {seat.row_label}{seat.seat_number}
-                          {seat.seat_type === 'vip' && ' ★'}
-                        </span>
-                      ))}
-                  </div>
-                ) : (
-                  <p className="text-white/40 text-sm">No seats selected</p>
-                )}
-              </div>
-
-              {selectedSeats.length > 0 && (
-                <div className="space-y-2 border-t border-white/10 pt-4">
-                  {/* Tickets */}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/70">Tickets × {selectedSeats.length}</span>
-                    <span className="text-white">${ticketsSubtotal.toFixed(2)}</span>
-                  </div>
-
-                  {/* Concessions */}
-                  {selectedConcessions.length > 0 && selectedConcessions.map((c) => (
-                    <div key={c.item.id} className="flex justify-between text-sm">
-                      <span className="text-white/70">{c.item.name} × {c.quantity}</span>
-                      <span className="text-white">${(c.item.price * c.quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
-
-                  {/* Combos */}
-                  {selectedCombos.length > 0 && selectedCombos.map((c) => (
-                    <div key={c.combo.id} className="flex justify-between text-sm">
-                      <span className="text-white/70">{c.combo.name} × {c.quantity}</span>
-                      <span className="text-white">${(c.combo.combo_price * c.quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
-
-                  {/* Promo Code */}
-                  {step !== 'confirmation' && (
-                    <div className="pt-2">
-                      {appliedPromo ? (
-                        <div className="flex items-center justify-between bg-green-500/10 p-2 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <Tag className="h-4 w-4 text-green-400" />
-                            <span className="text-sm font-mono text-green-400">{appliedPromo.code}</span>
-                          </div>
-                          <button 
-                            onClick={removePromoCode}
-                            className="text-white/60 hover:text-white transition-colors"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Promo code"
-                            value={promoCode}
-                            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                            className="bg-white/5 border-white/10 text-white placeholder:text-white/40 font-mono text-sm"
-                          />
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={applyPromoCode}
-                            disabled={promoLoading || !promoCode}
-                            className="border-white/20 text-white hover:bg-white/10"
-                          >
-                            Apply
-                          </Button>
-                        </div>
-                      )}
-                      {promoError && (
-                        <p className="text-xs text-red-400 mt-1">{promoError}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Loyalty Rewards Section */}
-                  {step === 'details' && cinema && bookingData.customer_email && (
-                    <div className="pt-2">
-                      <LoyaltyRedemption
-                        organizationId={cinema.id}
-                        customerEmail={bookingData.customer_email}
-                        ticketSubtotal={ticketsSubtotal}
-                        primaryColor={primaryColor}
-                        appliedReward={appliedLoyaltyReward?.reward || null}
-                        onRewardApplied={(reward, customer, discount) => {
-                          setAppliedLoyaltyReward({ reward, customer, discount });
-                        }}
-                        onRewardRemoved={() => setAppliedLoyaltyReward(null)}
-                      />
-                    </div>
-                  )}
-
-                  {promoDiscountAmount > 0 && (
-                    <div className="flex justify-between text-sm text-green-400">
-                      <span>Promo Discount</span>
-                      <span>-${promoDiscountAmount.toFixed(2)}</span>
-                    </div>
-                  )}
-
-                  {loyaltyDiscountAmount > 0 && (
-                    <div className="flex justify-between text-sm text-amber-400">
-                      <span className="flex items-center gap-1">
-                        <Gift className="h-3 w-3" />
-                        Loyalty Reward
-                      </span>
-                      <span>-${loyaltyDiscountAmount.toFixed(2)}</span>
-                    </div>
-                  )}
-
-                  <div className="border-t border-white/10 pt-3 flex justify-between font-bold">
-                    <span className="text-white">Total</span>
-                    <span style={{ color: primaryColor }}>${totalAmount.toFixed(2)}</span>
-                  </div>
-                </div>
-              )}
+            <div className="text-xs text-white/40 mt-1">
+              {showtime.screens.name}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right Panel - Booking Steps */}
-      <div className="lg:w-3/5 xl:w-2/3 p-6 lg:p-8 flex flex-col">
-        {/* Step Indicators */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {['seats', 'snacks', 'details', 'payment', 'confirmation'].filter(s => 
-            s !== 'payment' || (cinema.payment_gateway && cinema.payment_gateway !== 'none' && cinema.payment_gateway_configured)
-          ).map((s, index, arr) => {
-            const stepIndex = arr.indexOf(step);
-            const thisIndex = index;
-            const isActive = s === step;
-            const isCompleted = thisIndex < stepIndex;
-            
-            return (
-              <div key={s} className="flex items-center gap-2">
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all"
-                  style={{ 
-                    backgroundColor: isActive ? primaryColor : isCompleted ? `${primaryColor}40` : 'rgba(255,255,255,0.1)',
-                    color: isActive || isCompleted ? 'white' : 'rgba(255,255,255,0.4)'
-                  }}
-                >
-                  {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
-                </div>
-                {index < arr.length - 1 && (
-                  <div 
-                    className="w-8 h-0.5 rounded"
-                    style={{ backgroundColor: isCompleted ? `${primaryColor}60` : 'rgba(255,255,255,0.1)' }}
-                  />
+      {/* Step Indicator */}
+      <div className="px-4 py-3 border-b border-white/10">
+        <div className="flex justify-between">
+          {[
+            { key: 'seats', label: 'Seats' },
+            { key: 'snacks', label: 'Snacks' },
+            { key: 'details', label: 'Details' },
+            { key: 'payment', label: 'Payment' },
+          ].filter(s => {
+            if (s.key === 'snacks' && concessionItems.length === 0) return false;
+            if (s.key === 'payment' && (!cinema.payment_gateway || cinema.payment_gateway === 'none' || !cinema.payment_gateway_configured)) return false;
+            return true;
+          }).map((s, idx, arr) => (
+            <div key={s.key} className="flex items-center">
+              <div className={cn(
+                "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors",
+                step === s.key || (step === 'confirmation' && idx === arr.length - 1)
+                  ? "text-white" 
+                  : arr.findIndex(x => x.key === step) > idx || step === 'confirmation'
+                    ? "bg-white/20 text-white"
+                    : "bg-white/5 text-white/40"
+              )} style={step === s.key ? { backgroundColor: primaryColor } : {}}>
+                {arr.findIndex(x => x.key === step) > idx || step === 'confirmation' ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  idx + 1
                 )}
               </div>
-            );
-          })}
+              <span className={cn(
+                "ml-1.5 text-xs",
+                step === s.key ? "text-white" : "text-white/40"
+              )}>
+                {s.label}
+              </span>
+              {idx < arr.length - 1 && (
+                <div className="w-4 h-px bg-white/10 mx-2" />
+              )}
+            </div>
+          ))}
         </div>
+      </div>
 
+      {/* Content Area */}
+      <div className="flex-1 px-4 py-4 overflow-auto">
         {step === 'seats' && (
-          <div className="flex-1 flex flex-col">
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-white mb-1">Select Your Seats</h2>
-              <p className="text-white/60 text-sm flex items-center gap-2">
-                Click on available seats to select them
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  Live
-                </span>
-              </p>
+          <div className="space-y-6">
+            {/* Screen Indicator */}
+            <div className="text-center">
+              <div 
+                className="w-3/4 mx-auto h-2 rounded-t-full mb-2"
+                style={{ backgroundColor: `${primaryColor}40` }}
+              />
+              <span className="text-xs text-white/40 uppercase tracking-wider">Screen</span>
+            </div>
+
+            {/* Seat Map */}
+            <div className="overflow-x-auto pb-4">
+              <div className="inline-block min-w-full">
+                {Object.entries(seatsByRow).sort(([a], [b]) => a.localeCompare(b)).map(([row, seats]) => (
+                  <div key={row} className="flex items-center justify-center gap-1 mb-2">
+                    <span className="w-6 text-center text-xs text-white/40 font-medium">{row}</span>
+                    <div className="flex gap-1">
+                      {(seats as any[]).map((seat) => (
+                        <button
+                          key={seat.id}
+                          onClick={() => toggleSeat(seat)}
+                          disabled={!seat.is_available || isSeatBooked(seat.row_label, seat.seat_number)}
+                          className={cn(
+                            "w-7 h-7 rounded-md text-xs font-medium transition-all",
+                            getSeatClass(seat)
+                          )}
+                        >
+                          {seat.seat_number}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="w-6 text-center text-xs text-white/40 font-medium">{row}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Legend */}
-            <div className="flex flex-wrap items-center gap-4 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-white/80" />
-                <span className="text-white/60 text-xs">Available</span>
+            <div className="flex flex-wrap justify-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-secondary" />
+                <span className="text-white/60">Available</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-amber-400 ring-1 ring-amber-500/50" />
-                <span className="text-white/60 text-xs">VIP</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-primary/30" />
+                <span className="text-white/60">VIP</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full" style={{ backgroundColor: primaryColor }} />
-                <span className="text-white/60 text-xs">Selected</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-primary ring-2 ring-primary ring-offset-1" />
+                <span className="text-white/60">Selected</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-white/20" />
-                <span className="text-white/60 text-xs">Taken</span>
-              </div>
-            </div>
-
-            {/* Screen indicator */}
-            <div className="text-center mb-6">
-              <div className="text-white/40 text-xs mb-2">SCREEN</div>
-              <div 
-                className="h-1 w-3/4 mx-auto rounded-full opacity-60"
-                style={{ 
-                  background: `linear-gradient(90deg, transparent, ${primaryColor}, transparent)`,
-                  boxShadow: `0 0 20px ${primaryColor}40`
-                }}
-              />
-            </div>
-
-            {/* Seat Grid */}
-            <div className="flex-1 overflow-auto py-4">
-              <div className="flex flex-col items-center gap-1.5">
-                {Array.from({ length: showtime.screens.rows }, (_, i) => {
-                  const rowLabel = String.fromCharCode(65 + i);
-                  const rowSeats = seatLayouts
-                    .filter(s => s.row_label === rowLabel)
-                    .sort((a, b) => a.seat_number - b.seat_number);
-
-                  return (
-                    <div key={rowLabel} className="flex items-center gap-2">
-                      <span className="w-6 text-xs text-white/40 text-right">{rowLabel}</span>
-                      <div className="flex gap-1.5">
-                        {rowSeats.map((seat) => {
-                          const isBooked = isSeatBooked(seat.row_label, seat.seat_number);
-                          const isSelected = isSeatSelected(seat.row_label, seat.seat_number);
-                          const isUnavailable = !seat.is_available || seat.seat_type === 'unavailable';
-                          const isVip = seat.seat_type === 'vip';
-                          const isClickable = !isBooked && !isUnavailable;
-
-                          return (
-                            <button
-                              key={`${seat.row_label}${seat.seat_number}`}
-                              onClick={() => isClickable && toggleSeat(seat)}
-                              disabled={!isClickable}
-                              className={cn(
-                                "w-6 h-6 lg:w-7 lg:h-7 rounded-full transition-all text-xs font-medium",
-                                isUnavailable && "opacity-0 cursor-default",
-                                !isUnavailable && isBooked && "bg-white/20 cursor-not-allowed",
-                                !isUnavailable && !isBooked && !isSelected && isVip && 
-                                  "bg-amber-400 hover:bg-amber-300 cursor-pointer ring-1 ring-amber-500/50 text-amber-900",
-                                !isUnavailable && !isBooked && !isSelected && !isVip && 
-                                  "bg-white/80 hover:bg-white cursor-pointer text-gray-700",
-                                isSelected && "cursor-pointer text-white"
-                              )}
-                              style={isSelected ? { backgroundColor: primaryColor } : undefined}
-                              title={`${seat.row_label}${seat.seat_number}${isVip ? ' (VIP)' : ''}`}
-                            >
-                              {!isUnavailable && seat.seat_number}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <span className="w-6 text-xs text-white/40">{rowLabel}</span>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-destructive/50" />
+                <span className="text-white/60">Booked</span>
               </div>
             </div>
+
+            {/* Price Info */}
+            <div className="flex justify-center gap-6 text-sm">
+              <div className="text-center">
+                <span className="text-white/60">Regular</span>
+                <p className="font-bold text-white">${showtime.price}</p>
+              </div>
+              {showtime.vip_price && (
+                <div className="text-center">
+                  <span className="text-white/60">VIP</span>
+                  <p className="font-bold" style={{ color: primaryColor }}>${showtime.vip_price}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Selected Seats Summary */}
+            {selectedSeats.length > 0 && (
+              <div className="bg-white/5 rounded-xl p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-white/60 text-sm">Selected Seats</span>
+                  <span className="text-white font-medium">
+                    {selectedSeats.map(s => `${s.row_label}${s.seat_number}`).join(', ')}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-white/60 text-sm">Subtotal</span>
+                  <span className="text-lg font-bold" style={{ color: primaryColor }}>
+                    ${ticketsSubtotal.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Continue Button */}
-            <div className="mt-6">
-              <button
-                onClick={() => setStep(concessionItems.length > 0 ? 'snacks' : 'details')}
-                disabled={selectedSeats.length === 0}
-                className="w-full py-4 rounded-xl font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ 
-                  backgroundColor: selectedSeats.length > 0 ? primaryColor : 'rgba(255,255,255,0.1)',
-                }}
-              >
-                {selectedSeats.length > 0 
-                  ? `Continue ${concessionItems.length > 0 ? 'to Snacks' : 'to Details'} - $${ticketsSubtotal.toFixed(2)}`
-                  : 'Select seats to continue'
-                }
-              </button>
-            </div>
+            <button
+              onClick={() => setStep(concessionItems.length > 0 ? 'snacks' : 'details')}
+              disabled={selectedSeats.length === 0}
+              className="w-full py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ backgroundColor: selectedSeats.length > 0 ? primaryColor : 'rgba(255,255,255,0.1)' }}
+            >
+              Continue{concessionItems.length > 0 ? ' to Snacks' : ''} - {selectedSeats.length} seat{selectedSeats.length !== 1 ? 's' : ''}
+            </button>
           </div>
         )}
 
             {step === 'snacks' && (
-              <div className="bg-[#1a1a2e] rounded-2xl overflow-hidden">
-                {/* Header */}
-                <div className="p-6 border-b border-white/10">
-                  <div className="flex items-center gap-3">
+              <div className="flex flex-col h-full -mx-4 -my-4 bg-[#0a0a14]">
+                {/* Snacks Header */}
+                <div className="p-6 pb-4">
+                  <div className="flex items-center gap-3 mb-1">
                     <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: `${cinema.primary_color}20` }}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: `${primaryColor}20` }}
                     >
-                      <Popcorn className="h-6 w-6" style={{ color: cinema.primary_color }} />
+                      <Popcorn className="h-5 w-5" style={{ color: primaryColor }} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-white">Add Snacks & Drinks</h2>
-                      <p className="text-white/60 text-sm">Enhance your movie experience</p>
+                      <h2 className="text-xl font-bold text-white">Add Snacks</h2>
+                      <p className="text-white/40 text-sm">Skip the queue, pre-order your treats</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-                  {/* Combo Deals - Show first for prominence */}
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto px-6 pb-4">
+                  {/* Combo Deals Section */}
                   {availableCombos.length > 0 && (
-                    <div>
-                      <h3 className="text-white/60 text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <span>🎉</span> Combo Deals - Save More!
-                      </h3>
-                      <div className="grid gap-3">
+                    <div className="mb-8">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Gift className="h-5 w-5 text-amber-400" />
+                        <h3 className="text-lg font-semibold text-white">Combo Deals</h3>
+                        <span className="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full">Save More</span>
+                      </div>
+                      
+                      <div className="space-y-3">
                         {availableCombos.map((combo) => {
                           const quantity = getComboQuantity(combo.id);
-                          const savingsAmount = combo.original_price - combo.combo_price;
+                          const savings = combo.original_price - combo.combo_price;
                           return (
-                            <div
+                            <div 
                               key={combo.id}
-                              className="flex items-center justify-between p-4 rounded-xl transition-all"
-                              style={{ 
-                                backgroundColor: quantity > 0 ? `${cinema.primary_color}15` : 'rgba(255,255,255,0.05)',
-                                border: quantity > 0 ? `1px solid ${cinema.primary_color}40` : '1px solid rgba(255,255,255,0.1)'
-                              }}
+                              className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-2xl p-4 border border-amber-500/20"
                             >
-                              <div className="flex-1">
-                                <p className="font-semibold text-white">{combo.name}</p>
-                                <p className="text-white/50 text-xs mt-1">
-                                  {combo.combo_deal_items?.map(i => `${i.quantity}x ${i.concession_items?.name}`).join(' + ')}
-                                </p>
-                                <div className="flex items-center gap-3 mt-2">
-                                  <span className="text-white/40 text-sm line-through">${combo.original_price.toFixed(2)}</span>
-                                  <span className="font-bold text-lg" style={{ color: cinema.primary_color }}>${combo.combo_price.toFixed(2)}</span>
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">
-                                    Save ${savingsAmount.toFixed(2)}
-                                  </span>
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-semibold text-white">{combo.name}</h4>
+                                    <span className="text-xs text-amber-400 bg-amber-400/20 px-2 py-0.5 rounded-full">
+                                      Save ${savings.toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-white/50 mt-1">
+                                    {combo.combo_deal_items.map(i => 
+                                      `${i.quantity}x ${i.concession_items.name}`
+                                    ).join(' + ')}
+                                  </p>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2 ml-4">
-                                {quantity > 0 ? (
-                                  <div className="flex items-center gap-2 bg-white/10 rounded-full p-1">
+                              
+                              <div className="flex items-center justify-between mt-3">
+                                <div className="flex items-baseline gap-2">
+                                  <span className="text-xl font-bold text-amber-400">${combo.combo_price.toFixed(2)}</span>
+                                  <span className="text-sm text-white/40 line-through">${combo.original_price.toFixed(2)}</span>
+                                </div>
+                                
+                                {quantity === 0 ? (
+                                  <button
+                                    onClick={() => addCombo(combo)}
+                                    className="px-4 py-2 rounded-xl font-medium text-white transition-all"
+                                    style={{ backgroundColor: primaryColor }}
+                                  >
+                                    Add
+                                  </button>
+                                ) : (
+                                  <div className="flex items-center gap-3 bg-white/10 rounded-xl px-2 py-1">
                                     <button
                                       onClick={() => removeCombo(combo.id)}
-                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:bg-white/20 transition-colors"
                                     >
                                       <Minus className="h-4 w-4" />
                                     </button>
                                     <span className="w-6 text-center font-semibold text-white">{quantity}</span>
                                     <button
                                       onClick={() => addCombo(combo)}
-                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:bg-white/20 transition-colors"
                                     >
                                       <Plus className="h-4 w-4" />
                                     </button>
                                   </div>
-                                ) : (
-                                  <button
-                                    onClick={() => addCombo(combo)}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all"
-                                    style={{ backgroundColor: cinema.primary_color, color: 'white' }}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                    Add
-                                  </button>
                                 )}
                               </div>
                             </div>
@@ -1221,83 +1088,64 @@ export default function BookingFlow() {
                   )}
 
                   {/* Individual Items by Category */}
-                  {Object.entries(
-                    concessionItems.reduce((acc, item) => {
-                      if (!acc[item.category]) acc[item.category] = [];
-                      acc[item.category].push(item);
-                      return acc;
-                    }, {} as Record<string, ConcessionItem[]>)
-                  ).map(([category, items]) => (
-                    <div key={category}>
-                      <h3 className="text-white/60 text-xs uppercase tracking-widest mb-4 capitalize">
-                        {category}
-                      </h3>
-                      <div className="grid gap-3">
+                  {Object.entries(concessionsByCategory).map(([category, items]) => (
+                    <div key={category} className="mb-8">
+                      <h3 className="text-lg font-semibold text-white mb-4 capitalize">{category}</h3>
+                      
+                      <div className="space-y-3">
                         {items.map((item) => {
                           const quantity = getConcessionQuantity(item.id);
                           return (
-                            <div
+                            <div 
                               key={item.id}
-                              className="flex items-center gap-4 p-4 rounded-xl transition-all"
-                              style={{ 
-                                backgroundColor: quantity > 0 ? `${cinema.primary_color}10` : 'rgba(255,255,255,0.05)',
-                                border: quantity > 0 ? `1px solid ${cinema.primary_color}30` : '1px solid transparent'
-                              }}
+                              className="bg-white/5 rounded-2xl p-4 border border-white/10"
                             >
-                              {/* Image */}
-                              {item.image_url ? (
-                                <img
-                                  src={item.image_url}
-                                  alt={item.name}
-                                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                                />
-                              ) : (
-                                <div 
-                                  className="w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0"
-                                  style={{ backgroundColor: `${cinema.primary_color}20` }}
-                                >
-                                  <Popcorn className="h-6 w-6" style={{ color: cinema.primary_color }} />
-                                </div>
-                              )}
-                              
-                              {/* Details */}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-white">{item.name}</p>
-                                {item.description && (
-                                  <p className="text-white/50 text-sm line-clamp-1 mt-0.5">{item.description}</p>
+                              <div className="flex gap-4">
+                                {item.image_url && (
+                                  <img
+                                    src={item.image_url}
+                                    alt={item.name}
+                                    className="w-20 h-20 rounded-xl object-cover"
+                                  />
                                 )}
-                                <p className="font-semibold mt-1" style={{ color: cinema.primary_color }}>
-                                  ${item.price.toFixed(2)}
-                                </p>
-                              </div>
-                              
-                              {/* Quantity Controls */}
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {quantity > 0 ? (
-                                  <div className="flex items-center gap-2 bg-white/10 rounded-full p-1">
-                                    <button
-                                      onClick={() => removeConcession(item.id)}
-                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-                                    >
-                                      <Minus className="h-4 w-4" />
-                                    </button>
-                                    <span className="w-6 text-center font-semibold text-white">{quantity}</span>
-                                    <button
-                                      onClick={() => addConcession(item)}
-                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                    </button>
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-white">{item.name}</h4>
+                                  {item.description && (
+                                    <p className="text-xs text-white/50 mt-0.5 line-clamp-2">{item.description}</p>
+                                  )}
+                                  
+                                  <div className="flex items-center justify-between mt-3">
+                                    <span className="text-lg font-bold" style={{ color: primaryColor }}>
+                                      ${item.price.toFixed(2)}
+                                    </span>
+                                    
+                                    {quantity === 0 ? (
+                                      <button
+                                        onClick={() => addConcession(item)}
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all"
+                                        style={{ backgroundColor: primaryColor }}
+                                      >
+                                        <Plus className="h-5 w-5" />
+                                      </button>
+                                    ) : (
+                                      <div className="flex items-center gap-2 bg-white/10 rounded-xl px-2 py-1">
+                                        <button
+                                          onClick={() => removeConcession(item.id)}
+                                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                                        >
+                                          <Minus className="h-4 w-4" />
+                                        </button>
+                                        <span className="w-6 text-center font-semibold text-white">{quantity}</span>
+                                        <button
+                                          onClick={() => addConcession(item)}
+                                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
-                                ) : (
-                                  <button
-                                    onClick={() => addConcession(item)}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-white/80 text-sm font-medium hover:bg-white/10 hover:border-white/30 transition-all"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                    Add
-                                  </button>
-                                )}
+                                </div>
                               </div>
                             </div>
                           );
@@ -1604,7 +1452,7 @@ export default function BookingFlow() {
             
             {/* Save Ticket Button */}
             <button
-              onClick={() => saveTicketToDevice(ticketRef)}
+              onClick={() => saveTicketAsImage(ticketRef, bookingRef!, setSavingTicket)}
               disabled={savingTicket}
               className="w-full max-w-xs flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white mb-4 transition-all disabled:opacity-70"
               style={{ backgroundColor: primaryColor }}
