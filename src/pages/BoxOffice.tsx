@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { ShiftManagement } from '@/components/boxoffice/ShiftManagement';
 import { FloatingOrderSummary } from '@/components/boxoffice/FloatingOrderSummary';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface Showtime {
   id: string;
@@ -85,6 +86,7 @@ export default function BoxOffice() {
   const navigate = useNavigate();
   const { data: profile } = useUserProfile();
   const { data: organization } = useOrganization();
+  const { triggerHaptic, triggerSuccess } = useHapticFeedback();
   const printRef = useRef<HTMLDivElement>(null);
   
   const [step, setStep] = useState<Step>('showtimes');
@@ -376,6 +378,9 @@ export default function BoxOffice() {
       ? selectedShowtime.vip_price
       : selectedShowtime.price;
 
+    // Trigger haptic feedback
+    triggerHaptic(isSelected ? 'light' : 'medium');
+
     if (isSelected) {
       setSelectedSeats(prev => prev.filter(
         s => !(s.row_label === seat.row_label && s.seat_number === seat.seat_number)
@@ -392,6 +397,7 @@ export default function BoxOffice() {
 
   // Concession helpers
   const addConcession = (item: ConcessionItem) => {
+    triggerHaptic('medium');
     setSelectedConcessions(prev => {
       const existing = prev.find(c => c.item.id === item.id);
       if (existing) {
@@ -402,6 +408,7 @@ export default function BoxOffice() {
   };
 
   const removeConcession = (itemId: string) => {
+    triggerHaptic('light');
     setSelectedConcessions(prev => {
       const existing = prev.find(c => c.item.id === itemId);
       if (existing && existing.quantity > 1) {
@@ -1096,13 +1103,15 @@ export default function BoxOffice() {
                                   disabled={isBooked || isUnavailable}
                                   onClick={() => toggleSeat(seat)}
                                   className={cn(
-                                    'w-8 h-8 rounded text-xs font-medium transition-all touch-manipulation',
+                                    'w-8 h-8 rounded text-xs font-medium touch-manipulation',
                                     'flex items-center justify-center',
+                                    'transition-all duration-150 ease-out',
+                                    'active:scale-90',
                                     isUnavailable && 'bg-muted text-muted-foreground cursor-not-allowed',
                                     isBooked && 'bg-destructive/30 text-destructive cursor-not-allowed',
-                                    isSelected && 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-1',
-                                    !isBooked && !isSelected && !isUnavailable && isVip && 'bg-amber-500/20 text-amber-600 hover:bg-amber-500/30',
-                                    !isBooked && !isSelected && !isUnavailable && !isVip && 'bg-secondary hover:bg-secondary/80'
+                                    isSelected && 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-1 scale-110',
+                                    !isBooked && !isSelected && !isUnavailable && isVip && 'bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 hover:scale-105',
+                                    !isBooked && !isSelected && !isUnavailable && !isVip && 'bg-secondary hover:bg-secondary/80 hover:scale-105'
                                   )}
                                 >
                                   {seat.seat_number}
@@ -1188,8 +1197,10 @@ export default function BoxOffice() {
                                 <Card 
                                   key={item.id}
                                   className={cn(
-                                    'overflow-hidden cursor-pointer transition-all touch-manipulation',
-                                    qty > 0 && 'ring-2 ring-primary'
+                                    'overflow-hidden cursor-pointer touch-manipulation',
+                                    'transition-all duration-150 ease-out',
+                                    'hover:scale-[1.02] active:scale-95',
+                                    qty > 0 && 'ring-2 ring-primary scale-[1.02]'
                                   )}
                                   onClick={() => addConcession(item)}
                                 >
