@@ -2,13 +2,24 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, Building2, Palette, Save, Globe, CreditCard, Share2, Search, CheckCircle, XCircle, AlertTriangle, Copy, ExternalLink, FileText, Briefcase, Mail } from 'lucide-react';
+import { Loader2, Upload, Building2, Palette, Save, Globe, CreditCard, Share2, Search, CheckCircle, XCircle, AlertTriangle, Copy, ExternalLink, FileText, Briefcase, Mail, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +70,7 @@ export default function CinemaSettings() {
   const [validatingKeys, setValidatingKeys] = useState(false);
   const [keyValidation, setKeyValidation] = useState<{ valid: boolean; message: string; isTestMode?: boolean } | null>(null);
   const [verifyingDomain, setVerifyingDomain] = useState(false);
+  const [deletingDomain, setDeletingDomain] = useState(false);
   const [domainVerification, setDomainVerification] = useState<{ 
     verified: boolean; 
     status: string; 
@@ -214,6 +226,44 @@ export default function CinemaSettings() {
       });
     } finally {
       setVerifyingDomain(false);
+    }
+  };
+
+  const deleteCustomDomain = async () => {
+    if (!organization) return;
+
+    setDeletingDomain(true);
+    try {
+      // First delete any domain_records for this organization with custom type
+      const { error: recordsError } = await supabase
+        .from('domain_records')
+        .delete()
+        .eq('organization_id', organization.id)
+        .eq('domain_type', 'custom');
+
+      if (recordsError) {
+        console.error('Error deleting domain records:', recordsError);
+      }
+
+      // Update organization to remove custom_domain
+      const { error } = await supabase
+        .from('organizations')
+        .update({ custom_domain: null })
+        .eq('id', organization.id);
+
+      if (error) throw error;
+
+      // Clear form and verification state
+      setValue('custom_domain', '');
+      setDomainVerification(null);
+      
+      queryClient.invalidateQueries({ queryKey: ['organization'] });
+      toast.success('Custom domain removed successfully');
+    } catch (error: any) {
+      console.error('Error deleting custom domain:', error);
+      toast.error('Failed to remove custom domain');
+    } finally {
+      setDeletingDomain(false);
     }
   };
 
@@ -559,6 +609,47 @@ export default function CinemaSettings() {
                         </p>
                       </AlertDescription>
                     </Alert>
+                  )}
+
+                  {/* Delete Custom Domain */}
+                  {(watch('custom_domain') || organization?.custom_domain) && (
+                    <div className="pt-4 border-t">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingDomain}
+                          >
+                            {deletingDomain ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 mr-2" />
+                            )}
+                            Remove Custom Domain
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove Custom Domain?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will disconnect <strong>{watch('custom_domain') || organization?.custom_domain}</strong> from your cinema. 
+                              Your booking website will only be accessible via your default URL. You can add a new custom domain later.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={deleteCustomDomain}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remove Domain
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   )}
                 </CardContent>
               </Card>
