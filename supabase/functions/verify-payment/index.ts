@@ -18,27 +18,67 @@ const handler = async (req: Request): Promise<Response> => {
       bookingReference,
       paymentReference,
       gateway,
-      transactionId, // For Flutterwave callback
+      transactionId,
+      organizationId,
     } = await req.json();
     
-    console.log(`Verifying ${gateway} payment: ${paymentReference || transactionId}`);
+    console.log(`Verifying ${gateway} payment: ${paymentReference || transactionId} for org: ${organizationId}`);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Fetch organization's payment gateway secret key
+    let secretKey: string | null = null;
+    
+    if (organizationId) {
+      const { data: org, error: orgError } = await supabase
+        .from("organizations")
+        .select("payment_gateway_secret_key")
+        .eq("id", organizationId)
+        .single();
+
+      if (!orgError && org?.payment_gateway_secret_key) {
+        secretKey = org.payment_gateway_secret_key;
+        console.log("Using organization's payment gateway secret key");
+      }
+    }
+
+    // If no org key found, try to get it from the booking
+    if (!secretKey && bookingReference) {
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select("organization_id")
+        .eq("booking_reference", bookingReference)
+        .single();
+
+      if (booking?.organization_id) {
+        const { data: org } = await supabase
+          .from("organizations")
+          .select("payment_gateway_secret_key")
+          .eq("id", booking.organization_id)
+          .single();
+
+        if (org?.payment_gateway_secret_key) {
+          secretKey = org.payment_gateway_secret_key;
+          console.log("Using organization's payment gateway secret key from booking");
+        }
+      }
+    }
+
+    if (!secretKey) {
+      throw new Error(`Payment gateway not configured for this organization`);
+    }
+
     let verified = false;
     let paymentDetails: any = {};
 
     switch (gateway) {
       case 'stripe': {
-        const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
-        if (!STRIPE_SECRET_KEY) throw new Error("Stripe not configured");
-
         const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${paymentReference}`, {
           headers: {
-            "Authorization": `Bearer ${STRIPE_SECRET_KEY}`,
+            "Authorization": `Bearer ${secretKey}`,
           },
         });
 
@@ -53,16 +93,14 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       case 'flutterwave': {
-        const FLUTTERWAVE_SECRET_KEY = Deno.env.get("FLUTTERWAVE_SECRET_KEY");
-        if (!FLUTTERWAVE_SECRET_KEY) throw new Error("Flutterwave not configured");
-
         const response = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
           headers: {
-            "Authorization": `Bearer ${FLUTTERWAVE_SECRET_KEY}`,
+            "Authorization": `Bearer ${secretKey}`,
           },
         });
 
         const result = await response.json();
+        console.log("Flutterwave verification response:", JSON.stringify(result));
         verified = result.status === "success" && result.data?.status === "successful";
         paymentDetails = {
           status: result.data?.status,
@@ -73,12 +111,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       case 'paystack': {
-        const PAYSTACK_SECRET_KEY = Deno.env.get("PAYSTACK_SECRET_KEY");
-        if (!PAYSTACK_SECRET_KEY) throw new Error("Paystack not configured");
-
         const response = await fetch(`https://api.paystack.co/transaction/verify/${paymentReference}`, {
           headers: {
-            "Authorization": `Bearer ${PAYSTACK_SECRET_KEY}`,
+            "Authorization": `Bearer ${secretKey}`,
           },
         });
 
@@ -87,6 +122,23 @@ const handler = async (req: Request): Promise<Response> => {
         paymentDetails = {
           status: result.data?.status,
           amount: result.data?.amount / 100,
+          currency: result.data?.currency,
+        };
+        break;
+      }
+
+      case 'nomba': {
+        const response = await fetch(`https://api.nomba.com/v1/checkout/transaction/${paymentReference}`, {
+          headers: {
+            "Authorization": `Bearer ${secretKey}`,
+          },
+        });
+
+        const result = await response.json();
+        verified = result.data?.status === "successful";
+        paymentDetails = {
+          status: result.data?.status,
+          amount: result.data?.amount,
           currency: result.data?.currency,
         };
         break;
@@ -102,12 +154,13 @@ const handler = async (req: Request): Promise<Response> => {
         .from('bookings')
         .update({ 
           status: 'paid',
-          updated_at: new Date().toISOString(),
         })
         .eq('booking_reference', bookingReference);
 
       if (error) {
         console.error("Error updating booking:", error);
+      } else {
+        console.log(`Booking ${bookingReference} marked as paid`);
       }
     }
 
