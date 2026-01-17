@@ -71,14 +71,19 @@ export default function CinemaBooking() {
   const [showtimeAvailability, setShowtimeAvailability] = useState<Record<string, { booked: number; total: number }>>({});
   const [seatTypeFilter, setSeatTypeFilter] = useState<'all' | 'regular' | 'vip'>('all');
 
-  // Generate dates for the date picker (5 days)
+  // Generate dates for the date picker - only dates with active showtimes
   const dateRange = useMemo(() => {
-    const dates: Date[] = [];
-    for (let i = -1; i <= 3; i++) {
-      dates.push(addDays(startOfDay(new Date()), i));
-    }
-    return dates;
-  }, []);
+    // Get unique dates from showtimes that are in the future
+    const showtimeDates = showtimes
+      .filter(s => new Date(s.start_time) > new Date())
+      .map(s => startOfDay(new Date(s.start_time)).getTime());
+    
+    const uniqueDates = [...new Set(showtimeDates)]
+      .sort((a, b) => a - b)
+      .map(timestamp => new Date(timestamp));
+    
+    return uniqueDates;
+  }, [showtimes]);
 
   // Filter showtimes for selected date
   const filteredShowtimes = useMemo(() => {
@@ -130,6 +135,12 @@ export default function CinemaBooking() {
           .order('start_time', { ascending: true });
 
         setShowtimes(showtimesData || []);
+        
+        // Set selected date to first available date with showtimes
+        if (showtimesData && showtimesData.length > 0 && !initialShowtimeId) {
+          const firstShowtimeDate = startOfDay(new Date(showtimesData[0].start_time));
+          setSelectedDate(firstShowtimeDate);
+        }
 
         // Fetch availability for all showtimes
         if (showtimesData && showtimesData.length > 0) {
