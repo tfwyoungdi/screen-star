@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoyaltyRedemption } from '@/components/loyalty/LoyaltyRedemption';
 import { cn } from '@/lib/utils';
+import { PrintableTicket } from '@/components/booking/PrintableTicket';
 
 interface PromoCode {
   id: string;
@@ -157,6 +158,7 @@ export default function BookingFlow() {
   const [savingTicket, setSavingTicket] = useState(false);
   
   const ticketRef = useRef<HTMLDivElement>(null);
+  const printableTicketRef = useRef<HTMLDivElement>(null);
   const fallbackTicketRef = useRef<HTMLDivElement>(null);
 
   // Load pre-selected seats from CinemaBooking page
@@ -1509,7 +1511,7 @@ export default function BookingFlow() {
             
             {/* Save Ticket Button */}
             <button
-              onClick={() => saveTicketAsImage(ticketRef, bookingRef!, setSavingTicket)}
+              onClick={() => saveTicketAsImage(printableTicketRef, bookingRef!, setSavingTicket)}
               disabled={savingTicket}
               className="w-full max-w-xs flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white mb-4 transition-all disabled:opacity-70"
               style={{ backgroundColor: primaryColor }}
@@ -1526,6 +1528,25 @@ export default function BookingFlow() {
                 </>
               )}
             </button>
+
+            {/* Hidden Printable Ticket for saving */}
+            <div className="absolute -left-[9999px] top-0">
+              <PrintableTicket
+                ref={printableTicketRef}
+                cinemaName={cinema?.name || ''}
+                cinemaLogo={cinema?.logo_url}
+                primaryColor={primaryColor}
+                movieTitle={showtime?.movies.title || ''}
+                moviePoster={showtime?.movies.poster_url}
+                showtime={showtime?.start_time || ''}
+                screenName={showtime?.screens.name || ''}
+                seats={selectedSeats}
+                bookingRef={bookingRef || ''}
+                customerName={bookingData.customer_name}
+                concessions={selectedConcessions}
+                combos={selectedCombos}
+              />
+            </div>
             
             <a 
               href={`/cinema/${slug}`}
