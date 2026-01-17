@@ -80,8 +80,8 @@ const handler = async (req: Request): Promise<Response> => {
             "line_items[0][price_data][product_data][name]": `Movie Tickets - ${bookingReference}`,
             "line_items[0][quantity]": "1",
             "mode": "payment",
-            "success_url": `${returnUrl}?status=success&ref=${bookingReference}`,
-            "cancel_url": `${returnUrl}?status=cancelled&ref=${bookingReference}`,
+            "success_url": `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}status=success&ref=${bookingReference}`,
+            "cancel_url": `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}status=cancelled&ref=${bookingReference}`,
             "customer_email": customerEmail,
             "metadata[booking_reference]": bookingReference,
             "metadata[organization_id]": organizationId,
@@ -113,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
             tx_ref: txRef,
             amount: amount,
             currency: currency,
-            redirect_url: `${returnUrl}?status=callback&ref=${bookingReference}`,
+            redirect_url: `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}status=callback&ref=${bookingReference}`,
             customer: {
               email: customerEmail,
               name: customerName,
@@ -153,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
             amount: Math.round(amount * 100), // Paystack uses kobo/cents
             currency: currency,
             reference: `CIN-${bookingReference}-${Date.now()}`,
-            callback_url: `${returnUrl}?status=callback&ref=${bookingReference}`,
+            callback_url: `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}status=callback&ref=${bookingReference}`,
             metadata: {
               booking_reference: bookingReference,
               organization_id: organizationId,
@@ -188,7 +188,7 @@ const handler = async (req: Request): Promise<Response> => {
             order_reference: txRef,
             amount: amount,
             currency: currency || "NGN",
-            callback_url: `${returnUrl}?status=callback&ref=${bookingReference}`,
+            callback_url: `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}status=callback&ref=${bookingReference}`,
             customer_email: customerEmail,
             customer_name: customerName,
             description: `Movie Tickets - ${bookingReference}`,
