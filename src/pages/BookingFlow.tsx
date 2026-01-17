@@ -195,6 +195,7 @@ export default function BookingFlow() {
           paymentReference: searchParams.get('transaction_id') || searchParams.get('reference'),
           gateway: cinema.payment_gateway,
           transactionId: searchParams.get('transaction_id'),
+          organizationId: cinema.id,
         },
       });
 
