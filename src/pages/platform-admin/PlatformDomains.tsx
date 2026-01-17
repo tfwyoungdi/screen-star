@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Globe, Search, Shield, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Globe, Search, Shield, AlertTriangle, CheckCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 
@@ -75,6 +76,38 @@ export default function PlatformDomains() {
     },
     onError: () => {
       toast.error('Failed to verify domain');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (domain: { id: string; domain: string; organization_id: string }) => {
+      // Delete the domain record
+      const { error } = await supabase
+        .from('domain_records')
+        .delete()
+        .eq('id', domain.id);
+      if (error) throw error;
+      
+      // Also clear the custom_domain from the organization
+      await supabase
+        .from('organizations')
+        .update({ custom_domain: null })
+        .eq('id', domain.organization_id);
+      
+      return domain;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['platform-domains'] });
+      toast.success(`Domain "${data.domain}" deleted successfully`);
+      logAction({
+        action: 'domain_deleted',
+        target_type: 'domain_record',
+        target_id: data.id,
+        details: { domain: data.domain },
+      });
+    },
+    onError: () => {
+      toast.error('Failed to delete domain');
     },
   });
 
@@ -253,14 +286,48 @@ export default function PlatformDomains() {
                           : 'Never'}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => verifyMutation.mutate(domain.id)}
-                          disabled={verifyMutation.isPending}
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => verifyMutation.mutate(domain.id)}
+                            disabled={verifyMutation.isPending}
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Domain</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete <strong>{domain.domain}</strong>? This will remove the custom domain configuration for {(domain.organizations as any)?.name || 'this cinema'}.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteMutation.mutate({
+                                    id: domain.id,
+                                    domain: domain.domain,
+                                    organization_id: domain.organization_id,
+                                  })}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
