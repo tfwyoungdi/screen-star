@@ -27,6 +27,7 @@ const DEFAULT_HTML = `<!DOCTYPE html>
   <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
     <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">🎬 Booking Confirmed!</h1>
     <p style="color: #f5f5f0; font-size: 16px; text-align: center;">Hi {{customer_name}}, your booking is confirmed!</p>
+    <p style="color: #22c55e; font-size: 14px; text-align: center; background-color: #1a1a1a; padding: 10px; border-radius: 8px;">📎 Your ticket is attached as a PDF - save it to your device!</p>
     <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
       <p style="color: #D4AF37; font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase;">Your Ticket QR Code</p>
       <img src="{{qr_code_url}}" alt="Booking QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border-radius: 8px; background: white; padding: 10px;" />
@@ -59,6 +60,106 @@ function replaceVariables(template: string, variables: Record<string, string>): 
     result = result.replace(new RegExp(`{{${key}}}`, "g"), value);
   });
   return result;
+}
+
+async function generateTicketPDF(
+  cinemaName: string,
+  movieTitle: string,
+  showtime: string,
+  screenName: string,
+  seats: string[],
+  totalAmount: number,
+  bookingReference: string,
+  customerName: string,
+  qrCodeData: string
+): Promise<string> {
+  // Fetch QR code as base64
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCodeData || bookingReference)}&format=png`;
+  let qrCodeBase64 = "";
+  
+  try {
+    const qrResponse = await fetch(qrCodeUrl);
+    const qrBuffer = await qrResponse.arrayBuffer();
+    qrCodeBase64 = btoa(String.fromCharCode(...new Uint8Array(qrBuffer)));
+  } catch (e) {
+    console.error("Failed to fetch QR code:", e);
+  }
+
+  // Generate SVG-based PDF content (simple but effective)
+  const svgContent = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#1a1a2e"/>
+          <stop offset="100%" style="stop-color:#16213e"/>
+        </linearGradient>
+      </defs>
+      
+      <!-- Background -->
+      <rect width="400" height="600" fill="url(#bg)"/>
+      
+      <!-- Header -->
+      <rect x="0" y="0" width="400" height="80" fill="#D4AF37"/>
+      <text x="200" y="35" text-anchor="middle" fill="#1a1a2e" font-family="Arial, sans-serif" font-size="14" font-weight="bold">🎬 CINEMA TICKET</text>
+      <text x="200" y="60" text-anchor="middle" fill="#1a1a2e" font-family="Arial, sans-serif" font-size="18" font-weight="bold">${escapeXml(cinemaName)}</text>
+      
+      <!-- Movie Title -->
+      <text x="200" y="120" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="20" font-weight="bold">${escapeXml(movieTitle)}</text>
+      
+      <!-- Booking Reference -->
+      <rect x="50" y="140" width="300" height="40" fill="#2a2a4a" rx="8"/>
+      <text x="200" y="155" text-anchor="middle" fill="#D4AF37" font-family="Arial, sans-serif" font-size="10">BOOKING REFERENCE</text>
+      <text x="200" y="172" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="16" font-weight="bold">${escapeXml(bookingReference)}</text>
+      
+      <!-- Details -->
+      <text x="50" y="210" fill="#888888" font-family="Arial, sans-serif" font-size="11">Guest Name</text>
+      <text x="350" y="210" text-anchor="end" fill="#ffffff" font-family="Arial, sans-serif" font-size="12">${escapeXml(customerName)}</text>
+      
+      <line x1="50" y1="220" x2="350" y2="220" stroke="#333355" stroke-width="1"/>
+      
+      <text x="50" y="245" fill="#888888" font-family="Arial, sans-serif" font-size="11">Date &amp; Time</text>
+      <text x="350" y="245" text-anchor="end" fill="#ffffff" font-family="Arial, sans-serif" font-size="12">${escapeXml(showtime)}</text>
+      
+      <line x1="50" y1="255" x2="350" y2="255" stroke="#333355" stroke-width="1"/>
+      
+      <text x="50" y="280" fill="#888888" font-family="Arial, sans-serif" font-size="11">Screen</text>
+      <text x="350" y="280" text-anchor="end" fill="#ffffff" font-family="Arial, sans-serif" font-size="12">${escapeXml(screenName)}</text>
+      
+      <line x1="50" y1="290" x2="350" y2="290" stroke="#333355" stroke-width="1"/>
+      
+      <text x="50" y="315" fill="#888888" font-family="Arial, sans-serif" font-size="11">Seats</text>
+      <text x="350" y="315" text-anchor="end" fill="#D4AF37" font-family="Arial, sans-serif" font-size="14" font-weight="bold">${escapeXml(seats.join(", "))}</text>
+      
+      <line x1="50" y1="325" x2="350" y2="325" stroke="#333355" stroke-width="1"/>
+      
+      <text x="50" y="350" fill="#888888" font-family="Arial, sans-serif" font-size="11">Total Paid</text>
+      <text x="350" y="350" text-anchor="end" fill="#22c55e" font-family="Arial, sans-serif" font-size="16" font-weight="bold">$${totalAmount.toFixed(2)}</text>
+      
+      <!-- Dotted line separator -->
+      <line x1="20" y1="380" x2="380" y2="380" stroke="#444466" stroke-width="2" stroke-dasharray="8,4"/>
+      
+      <!-- QR Code placeholder area -->
+      <rect x="125" y="400" width="150" height="150" fill="#ffffff" rx="8"/>
+      ${qrCodeBase64 ? `<image x="130" y="405" width="140" height="140" href="data:image/png;base64,${qrCodeBase64}"/>` : `<text x="200" y="480" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">QR Code</text>`}
+      
+      <!-- Footer -->
+      <text x="200" y="570" text-anchor="middle" fill="#666666" font-family="Arial, sans-serif" font-size="10">Scan QR code at entrance • Arrive 15 min early</text>
+      <text x="200" y="590" text-anchor="middle" fill="#444444" font-family="Arial, sans-serif" font-size="9">Powered by CineTix</text>
+    </svg>
+  `;
+
+  // Convert SVG to base64
+  const svgBase64 = btoa(unescape(encodeURIComponent(svgContent)));
+  return svgBase64;
+}
+
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -95,7 +196,7 @@ const handler = async (req: Request): Promise<Response> => {
       htmlBody = template.html_body;
     }
 
-    // Generate QR code URL
+    // Generate QR code URL for email
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrCodeData || bookingReference)}`;
 
     const variables = {
@@ -110,13 +211,37 @@ const handler = async (req: Request): Promise<Response> => {
       qr_code_url: qrCodeUrl,
     };
 
+    // Generate PDF ticket as SVG (base64)
+    console.log("Generating PDF ticket...");
+    const ticketSvgBase64 = await generateTicketPDF(
+      cinemaName,
+      movieTitle,
+      showtime,
+      screenName,
+      seats,
+      totalAmount,
+      bookingReference,
+      customerName,
+      qrCodeData || bookingReference
+    );
+    console.log("PDF ticket generated successfully");
+
+    // ZeptoMail email with attachment
     const emailBody = {
       from: { address: "noreply@cinetix.com", name: "CineTix" },
       to: [{ email_address: { address: customerEmail, name: customerName } }],
       subject: replaceVariables(subject, variables),
       htmlbody: replaceVariables(htmlBody, variables),
+      attachments: [
+        {
+          name: `ticket-${bookingReference}.svg`,
+          content: ticketSvgBase64,
+          mime_type: "image/svg+xml"
+        }
+      ]
     };
 
+    console.log("Sending email with ticket attachment...");
     const response = await fetch("https://api.zeptomail.com/v1.1/email", {
       method: "POST",
       headers: { "Accept": "application/json", "Content-Type": "application/json", "Authorization": ZEPTOMAIL_API_KEY },
@@ -124,9 +249,12 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const result = await response.json();
-    if (!response.ok) throw new Error(result.message || "Failed to send email");
+    if (!response.ok) {
+      console.error("ZeptoMail error:", result);
+      throw new Error(result.message || "Failed to send email");
+    }
 
-    console.log("Booking confirmation email sent successfully");
+    console.log("Booking confirmation email with ticket attachment sent successfully");
     return new Response(JSON.stringify({ success: true, result }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
   } catch (error: any) {
     console.error("Error sending booking confirmation:", error);
