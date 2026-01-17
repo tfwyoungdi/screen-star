@@ -1420,6 +1420,12 @@ export default function BookingFlow() {
             </div>
             
             <h2 className="text-2xl font-bold text-white mb-2">Booking Confirmed!</h2>
+            
+            {/* Movie Title */}
+            {showtime && (
+              <p className="text-lg font-semibold text-white mb-1">{showtime.movies.title}</p>
+            )}
+            
             <p className="text-white/60 mb-4">Your booking reference is:</p>
             
             <div 
@@ -1428,6 +1434,30 @@ export default function BookingFlow() {
             >
               {bookingRef}
             </div>
+
+            {/* Purchased Snacks & Combos */}
+            {(selectedConcessions.length > 0 || selectedCombos.length > 0) && (
+              <div className="w-full max-w-sm mb-4 bg-white/5 rounded-xl p-4 text-left">
+                <div className="flex items-center gap-2 mb-3">
+                  <Popcorn className="h-4 w-4" style={{ color: primaryColor }} />
+                  <span className="text-white/80 text-sm font-medium">Your Order</span>
+                </div>
+                <div className="space-y-2">
+                  {selectedCombos.map((sc) => (
+                    <div key={sc.combo.id} className="flex justify-between text-sm">
+                      <span className="text-white/70">{sc.quantity}x {sc.combo.name}</span>
+                      <span className="text-white">${(sc.combo.combo_price * sc.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                  {selectedConcessions.map((sc) => (
+                    <div key={sc.item.id} className="flex justify-between text-sm">
+                      <span className="text-white/70">{sc.quantity}x {sc.item.name}</span>
+                      <span className="text-white">${(sc.item.price * sc.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Unique Reference Indicator */}
             <div className="flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
