@@ -205,6 +205,64 @@ export default function BookingFlow() {
 
       if (data.verified) {
         setBookingRef(paymentRef);
+        
+        // Fetch booked seats for this booking to restore state after redirect
+        const { data: bookingData } = await supabase
+          .from('bookings')
+          .select('id, customer_name, customer_email, customer_phone')
+          .eq('booking_reference', paymentRef)
+          .single();
+        
+        if (bookingData) {
+          // Restore customer data
+          setBookingData({
+            customer_name: bookingData.customer_name,
+            customer_email: bookingData.customer_email,
+            customer_phone: bookingData.customer_phone || '',
+          });
+          
+          // Fetch the actual booked seats
+          const { data: seatsData } = await supabase
+            .from('booked_seats')
+            .select('row_label, seat_number, seat_type, price')
+            .eq('booking_id', bookingData.id);
+          
+          if (seatsData && seatsData.length > 0) {
+            setSelectedSeats(seatsData.map(seat => ({
+              row_label: seat.row_label,
+              seat_number: seat.seat_number,
+              seat_type: seat.seat_type,
+              price: seat.price,
+            })));
+          }
+          
+          // Fetch booked concessions
+          const { data: concessionsData } = await supabase
+            .from('booking_concessions')
+            .select('quantity, unit_price, concession_items(id, name, price)')
+            .eq('booking_id', bookingData.id);
+          
+          if (concessionsData && concessionsData.length > 0) {
+            setSelectedConcessions(concessionsData.map(c => ({
+              item: c.concession_items as any,
+              quantity: c.quantity,
+            })));
+          }
+          
+          // Fetch booked combos
+          const { data: combosData } = await supabase
+            .from('booking_combos')
+            .select('quantity, unit_price, combo_deals(id, name, combo_price)')
+            .eq('booking_id', bookingData.id);
+          
+          if (combosData && combosData.length > 0) {
+            setSelectedCombos(combosData.map(c => ({
+              combo: c.combo_deals as any,
+              quantity: c.quantity,
+            })));
+          }
+        }
+        
         setStep('confirmation');
         toast.success('Payment successful! Your booking is confirmed.');
       } else {
