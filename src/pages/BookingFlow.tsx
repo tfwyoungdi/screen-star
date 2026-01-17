@@ -1421,12 +1421,38 @@ export default function BookingFlow() {
             
             <h2 className="text-2xl font-bold text-white mb-2">Booking Confirmed!</h2>
             
-            {/* Movie Title */}
+            {/* Movie Title & Details */}
             {showtime && (
-              <p className="text-lg font-semibold text-white mb-1">{showtime.movies.title}</p>
+              <div className="mb-4">
+                <p className="text-lg font-semibold text-white mb-2">{showtime.movies.title}</p>
+                <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-white/70">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" />
+                    <span>{format(new Date(showtime.start_time), 'EEE, MMM d, yyyy')}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    <span>{format(new Date(showtime.start_time), 'h:mm a')}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4" />
+                    <span>{showtime.screens.name}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Seat Numbers */}
+            {selectedSeats.length > 0 && (
+              <div className="flex items-center gap-2 mb-4 px-4 py-2 rounded-xl bg-white/5">
+                <Ticket className="h-4 w-4" style={{ color: primaryColor }} />
+                <span className="text-white/80 text-sm">
+                  Seats: {selectedSeats.map(s => `${s.row_label}${s.seat_number}`).join(', ')}
+                </span>
+              </div>
             )}
             
-            <p className="text-white/60 mb-4">Your booking reference is:</p>
+            <p className="text-white/60 mb-2">Your booking reference is:</p>
             
             <div 
               className="text-3xl font-mono font-bold mb-4 px-6 py-3 rounded-xl bg-white/5"
