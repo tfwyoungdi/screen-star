@@ -566,13 +566,13 @@ export default function CinemaSettings() {
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">Staff Portal</Badge>
                         <code className="text-sm text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">
-                          {window.location.origin}/cinema/{organization.slug}/staff
+                          {organization.slug}.cinetix.app/staff
                         </code>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyToClipboard(`${window.location.origin}/cinema/${organization.slug}/staff`)}
+                          onClick={() => copyToClipboard(`https://${organization.slug}.cinetix.app/staff`)}
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
