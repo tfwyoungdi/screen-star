@@ -317,7 +317,7 @@ export default function StaffManagement() {
   };
 
   const staffPortalUrl = organization?.slug 
-    ? `${window.location.origin}/cinema/${organization.slug}/staff`
+    ? `https://${organization.slug}.cinetix.app/staff`
     : null;
 
   return (
