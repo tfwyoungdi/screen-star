@@ -95,7 +95,7 @@ export default function CinemaSettings() {
       name: organization.name,
       primary_color: organization.primary_color || '#D97706',
       secondary_color: organization.secondary_color || '#1F2937',
-      custom_domain: organization.custom_domain || '',
+      custom_domain: organization.custom_domain?.replace('.cinetix.app', '') || '',
       about_text: (organization as any).about_text || '',
       contact_email: (organization as any).contact_email || '',
       contact_phone: (organization as any).contact_phone || '',
@@ -278,13 +278,16 @@ export default function CinemaSettings() {
         if (newLogoUrl) logoUrl = newLogoUrl;
       }
 
+      // Format custom domain with .cinetix.app suffix
+      const formattedDomain = data.custom_domain ? `${data.custom_domain}.cinetix.app` : null;
+
       const { error } = await supabase
         .from('organizations')
         .update({
           name: data.name,
           primary_color: data.primary_color,
           secondary_color: data.secondary_color,
-          custom_domain: data.custom_domain || null,
+          custom_domain: formattedDomain,
           logo_url: logoUrl,
           about_text: data.about_text || null,
           contact_email: data.contact_email || null,
@@ -428,22 +431,32 @@ export default function CinemaSettings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Globe className="h-5 w-5" />
-                    Custom Domain
+                    Public URL
                   </CardTitle>
                   <CardDescription>
-                    Connect your own domain to your cinema's booking website
+                    Your cinema's public booking website URL
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="custom_domain">Your Domain</Label>
+                    <Label htmlFor="custom_domain">Subdomain</Label>
                     <div className="flex gap-2">
-                      <Input
-                        id="custom_domain"
-                        placeholder="booking.yourcinema.com"
-                        {...register('custom_domain')}
-                        className="flex-1"
-                      />
+                      <div className="flex flex-1 items-center">
+                        <Input
+                          id="custom_domain"
+                          placeholder="yourcinema"
+                          {...register('custom_domain')}
+                          className="rounded-r-none border-r-0"
+                          onChange={(e) => {
+                            // Only allow lowercase letters, numbers, and hyphens
+                            const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                            setValue('custom_domain', value);
+                          }}
+                        />
+                        <span className="inline-flex items-center px-3 h-9 border border-input bg-muted text-muted-foreground text-sm rounded-r-md">
+                          .cinetix.app
+                        </span>
+                      </div>
                       <Button
                         type="button"
                         variant="outline"
@@ -455,9 +468,12 @@ export default function CinemaSettings() {
                         ) : (
                           <Search className="h-4 w-4 mr-2" />
                         )}
-                        Verify DNS
+                        Verify
                       </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      Your public URL will be: <strong>{watch('custom_domain') || 'yourcinema'}.cinetix.app</strong>
+                    </p>
                   </div>
 
                   {/* Verification Status */}
@@ -569,11 +585,11 @@ export default function CinemaSettings() {
                           <ExternalLink className="h-3 w-3" />
                         </Button>
                       </div>
-                      {watch('custom_domain') && (
+                      {(watch('custom_domain') || organization?.custom_domain) && (
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-xs">Custom</Badge>
+                          <Badge variant="secondary" className="text-xs">Custom URL</Badge>
                           <code className="text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
-                            {watch('custom_domain')}
+                            {watch('custom_domain') ? `${watch('custom_domain')}.cinetix.app` : organization?.custom_domain}
                           </code>
                           {domainVerification?.verified && (
                             <Badge className="bg-green-500/20 text-green-600 text-xs">Verified</Badge>
@@ -586,30 +602,6 @@ export default function CinemaSettings() {
                     </p>
                   </div>
 
-                  {watch('custom_domain') && !domainVerification?.verified && (
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription className="space-y-3">
-                        <p className="font-medium">DNS Setup Required</p>
-                        <p className="text-sm">Add these DNS records at your domain provider:</p>
-                        <div className="bg-muted rounded-md p-3 space-y-2 text-sm font-mono">
-                          <div className="grid grid-cols-3 gap-2">
-                            <span className="text-muted-foreground">Type</span>
-                            <span className="text-muted-foreground">Name</span>
-                            <span className="text-muted-foreground">Value</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <span>CNAME</span>
-                            <span>{watch('custom_domain')?.split('.')[0] || '@'}</span>
-                            <span>cinetix.app</span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          DNS changes can take up to 48 hours to propagate. Click "Verify DNS" to check your configuration.
-                        </p>
-                      </AlertDescription>
-                    </Alert>
-                  )}
 
                   {/* Delete Custom Domain */}
                   {(watch('custom_domain') || organization?.custom_domain) && (
@@ -634,8 +626,8 @@ export default function CinemaSettings() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Remove Custom Domain?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This will disconnect <strong>{watch('custom_domain') || organization?.custom_domain}</strong> from your cinema. 
-                              Your booking website will only be accessible via your default URL. You can add a new custom domain later.
+                              This will disconnect <strong>{watch('custom_domain') ? `${watch('custom_domain')}.cinetix.app` : organization?.custom_domain}</strong> from your cinema. 
+                              Your booking website will only be accessible via your default URL. You can add a new custom URL later.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
