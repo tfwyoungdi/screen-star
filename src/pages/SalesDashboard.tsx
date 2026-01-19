@@ -216,7 +216,7 @@ export default function SalesDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-primary">
-                    ${totalRevenue.toFixed(2)}
+                    ${Math.round(totalRevenue).toLocaleString()}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Last {dateRange} days
@@ -243,7 +243,7 @@ export default function SalesDashboard() {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${avgOrderValue.toFixed(2)}</div>
+                  <div className="text-2xl font-bold">${Math.round(avgOrderValue).toLocaleString()}</div>
                   <p className="text-xs text-muted-foreground">
                     Per booking
                   </p>
@@ -287,7 +287,7 @@ export default function SalesDashboard() {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                          formatter={(value: number) => [`$${Math.round(value).toLocaleString()}`, 'Revenue']}
                         />
                         <Line
                           type="monotone"
@@ -334,7 +334,7 @@ export default function SalesDashboard() {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                          formatter={(value: number) => [`$${Math.round(value).toLocaleString()}`, 'Revenue']}
                         />
                         <Bar dataKey="value" fill="hsl(38, 95%, 55%)" radius={[0, 4, 4, 0]} />
                       </BarChart>
@@ -479,7 +479,7 @@ export default function SalesDashboard() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right font-medium">
-                              ${Number(booking.total_amount).toFixed(2)}
+                              ${Math.round(Number(booking.total_amount)).toLocaleString()}
                             </TableCell>
                           </TableRow>
                         ))}
