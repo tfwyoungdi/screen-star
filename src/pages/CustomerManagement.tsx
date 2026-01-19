@@ -57,6 +57,7 @@ const DATE_FILTERS = [
   { label: '90d', value: 90 },
   { label: '6mo', value: 183 },
   { label: '1yr', value: 365 },
+  { label: 'All', value: null },
 ];
 
 export default function CustomerManagement() {
@@ -65,20 +66,24 @@ export default function CustomerManagement() {
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [dateRange, setDateRange] = useState(30);
+  const [dateRange, setDateRange] = useState<number | null>(30);
 
-  const startDate = startOfDay(subDays(new Date(), dateRange));
+  const startDate = dateRange ? startOfDay(subDays(new Date(), dateRange)) : null;
 
   const { data: customers, isLoading } = useQuery({
     queryKey: ['customers', effectiveOrgId, dateRange],
     queryFn: async () => {
       if (!effectiveOrgId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from('customers')
         .select('*')
-        .eq('organization_id', effectiveOrgId)
-        .gte('last_booking_at', startDate.toISOString())
-        .order('total_spent', { ascending: false });
+        .eq('organization_id', effectiveOrgId);
+      
+      if (startDate) {
+        query = query.gte('last_booking_at', startDate.toISOString());
+      }
+      
+      const { data, error } = await query.order('total_spent', { ascending: false });
 
       if (error) throw error;
       return data as Customer[];
