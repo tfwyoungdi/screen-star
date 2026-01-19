@@ -109,18 +109,20 @@ export default function AnalyticsDashboard() {
     enabled: !!bookings && bookings.length > 0,
   });
 
-  // Calculate metrics
-  const totalRevenue = bookings?.reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+  // Calculate metrics - only count confirmed/paid/completed bookings for revenue
+  const completedStatuses = ['confirmed', 'paid', 'completed'];
+  const revenueBookings = bookings?.filter(b => completedStatuses.includes(b.status?.toLowerCase() || '')) || [];
+  const totalRevenue = revenueBookings.reduce((sum, b) => sum + Number(b.total_amount), 0);
   const totalBookings = bookings?.length || 0;
   const totalSeats = bookedSeats?.length || 0;
   const avgTicketPrice = totalSeats > 0 ? totalRevenue / totalSeats : 0;
 
-  // Revenue by day
+  // Revenue by day (only completed bookings)
   const revenueByDay = useMemo(() => {
-    if (!bookings) return [];
+    if (!revenueBookings.length) return [];
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     return days.map((day) => {
-      const dayBookings = bookings.filter(
+      const dayBookings = revenueBookings.filter(
         (b) =>
           format(new Date(b.created_at), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
       );
@@ -131,7 +133,7 @@ export default function AnalyticsDashboard() {
         bookings: dayBookings.length,
       };
     });
-  }, [bookings, startDate, endDate]);
+  }, [revenueBookings, startDate, endDate]);
 
   // Peak hours analysis
   const peakHours = useMemo(() => {
@@ -155,12 +157,12 @@ export default function AnalyticsDashboard() {
     }));
   }, [bookings]);
 
-  // Revenue by movie
+  // Revenue by movie (only completed bookings)
   const revenueByMovie = useMemo(() => {
-    if (!bookings) return [];
+    if (!revenueBookings.length) return [];
     const movieRevenue: Record<string, number> = {};
     
-    bookings.forEach((booking) => {
+    revenueBookings.forEach((booking) => {
       const title = booking.showtimes?.movies?.title || 'Unknown';
       movieRevenue[title] = (movieRevenue[title] || 0) + Number(booking.total_amount);
     });
@@ -169,7 +171,7 @@ export default function AnalyticsDashboard() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
-  }, [bookings]);
+  }, [revenueBookings]);
 
   // Seat heatmap data
   const seatHeatmap = useMemo(() => {

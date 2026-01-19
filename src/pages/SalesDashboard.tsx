@@ -96,11 +96,14 @@ export default function SalesDashboard() {
     setCurrentPage(1);
   }, [dateRange]);
 
-  // Calculate metrics
-  const totalRevenue = bookings?.reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+  // Calculate metrics - only count confirmed/paid/completed bookings for revenue
+  const completedStatuses = ['confirmed', 'paid', 'completed'];
+  const revenueBookings = bookings?.filter(b => completedStatuses.includes(b.status?.toLowerCase() || '')) || [];
+  const totalRevenue = revenueBookings.reduce((sum, b) => sum + Number(b.total_amount), 0);
   const totalTickets = bookedSeats?.length || 0;
   const totalBookings = bookings?.length || 0;
-  const avgOrderValue = totalBookings > 0 ? totalRevenue / totalBookings : 0;
+  const completedBookingsCount = revenueBookings.length;
+  const avgOrderValue = completedBookingsCount > 0 ? totalRevenue / completedBookingsCount : 0;
 
   // Pagination calculations
   const totalPages = Math.ceil(totalBookings / ITEMS_PER_PAGE);
@@ -110,24 +113,24 @@ export default function SalesDashboard() {
     return bookings.slice(start, start + ITEMS_PER_PAGE);
   }, [bookings, currentPage]);
 
-  // Revenue by day
-  const revenueByDay = bookings?.reduce((acc, booking) => {
+  // Revenue by day (only completed bookings)
+  const revenueByDay = revenueBookings.reduce((acc, booking) => {
     const day = format(new Date(booking.created_at), 'MMM d');
     acc[day] = (acc[day] || 0) + Number(booking.total_amount);
     return acc;
-  }, {} as Record<string, number>) || {};
+  }, {} as Record<string, number>);
 
   const dailyRevenueData = Object.entries(revenueByDay).map(([day, revenue]) => ({
     day,
     revenue,
   })).reverse();
 
-  // Revenue by movie
-  const revenueByMovie = bookings?.reduce((acc, booking) => {
+  // Revenue by movie (only completed bookings)
+  const revenueByMovie = revenueBookings.reduce((acc, booking) => {
     const movieTitle = booking.showtimes?.movies?.title || 'Unknown';
     acc[movieTitle] = (acc[movieTitle] || 0) + Number(booking.total_amount);
     return acc;
-  }, {} as Record<string, number>) || {};
+  }, {} as Record<string, number>);
 
   const movieRevenueData = Object.entries(revenueByMovie)
     .map(([name, value]) => ({ name, value }))

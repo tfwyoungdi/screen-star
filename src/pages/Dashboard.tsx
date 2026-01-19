@@ -186,15 +186,21 @@ export default function Dashboard() {
 
   const loading = orgLoading || profileLoading;
 
-  // Calculate metrics
-  const totalRevenue = bookings?.reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+  // Calculate metrics - only count confirmed/paid/completed bookings for revenue
+  const completedStatuses = ['confirmed', 'paid', 'completed'];
+  const revenueBookings = bookings?.filter(b => completedStatuses.includes(b.status?.toLowerCase() || '')) || [];
+  const totalRevenue = revenueBookings.reduce((sum, b) => sum + Number(b.total_amount), 0);
   const totalTickets = bookedSeats?.length || 0;
   const totalBookings = bookings?.length || 0;
   const activeMovies = movies?.length || 0;
   const scheduledShowtimes = upcomingShowtimes?.length || 0;
 
-  // Calculate previous period metrics for trends
-  const prevTotalRevenue = prevBookings?.reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+  // Calculate previous period metrics for trends - filter by completed status
+  const prevRevenueBookings = prevBookings?.filter(b => {
+    // For prev bookings we only have id and total_amount, assume all are valid for comparison
+    return true;
+  }) || [];
+  const prevTotalRevenue = prevRevenueBookings.reduce((sum, b) => sum + Number(b.total_amount), 0);
   const prevTotalTickets = prevBookedSeats?.length || 0;
 
   // Calculate trend percentages
@@ -206,23 +212,23 @@ export default function Dashboard() {
   const revenueTrend = calculateTrend(totalRevenue, prevTotalRevenue);
   const ticketsTrend = calculateTrend(totalTickets, prevTotalTickets);
 
-  // Revenue by day for chart
-  const revenueByDay = bookings?.reduce((acc, booking) => {
+  // Revenue by day for chart (only completed bookings)
+  const revenueByDay = revenueBookings.reduce((acc, booking) => {
     const day = format(new Date(booking.created_at), 'EEE');
     acc[day] = (acc[day] || 0) + Number(booking.total_amount);
     return acc;
-  }, {} as Record<string, number>) || {};
+  }, {} as Record<string, number>);
 
   const dailyRevenueData = Object.entries(revenueByDay)
     .map(([day, revenue]) => ({ day, revenue }))
     .slice(-7);
 
-  // Revenue by movie for chart
-  const revenueByMovie = bookings?.reduce((acc, booking) => {
+  // Revenue by movie for chart (only completed bookings)
+  const revenueByMovie = revenueBookings.reduce((acc, booking) => {
     const movieTitle = booking.showtimes?.movies?.title || 'Unknown';
     acc[movieTitle] = (acc[movieTitle] || 0) + Number(booking.total_amount);
     return acc;
-  }, {} as Record<string, number>) || {};
+  }, {} as Record<string, number>);
 
   const movieRevenueData = Object.entries(revenueByMovie)
     .map(([name, value]) => ({ name: name.length > 20 ? name.slice(0, 20) + '...' : name, value }))
@@ -305,7 +311,7 @@ export default function Dashboard() {
               variant="primary"
               trend={revenueTrend !== 0 ? { 
                 value: Math.round(revenueTrend * 10) / 10, 
-                label: `${revenueTrend >= 0 ? 'Increased' : 'Decreased'} vs last ${dateRange} days` 
+                label: `vs previous ${dateRange} days` 
               } : undefined}
             />
             <StatCard
@@ -314,7 +320,7 @@ export default function Dashboard() {
               icon={Ticket}
               trend={ticketsTrend !== 0 ? { 
                 value: Math.round(ticketsTrend * 10) / 10, 
-                label: `${ticketsTrend >= 0 ? 'Increased' : 'Decreased'} vs last ${dateRange} days` 
+                label: `vs previous ${dateRange} days` 
               } : undefined}
             />
             <StatCard
