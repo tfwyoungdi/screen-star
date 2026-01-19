@@ -95,8 +95,18 @@ export function StatCard({
                 ) : (
                   <TrendingDown className="h-3 w-3" />
                 )}
-                <span>{trend.label}</span>
+                <span>{Math.abs(trend.value)}%</span>
               </div>
+            )}
+            {trend && trend.label && (
+              <p
+                className={cn(
+                  'text-xs',
+                  isPrimary ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                )}
+              >
+                {trend.label}
+              </p>
             )}
             {subtitle && !trend && (
               <p
