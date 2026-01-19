@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ChartCard } from '@/components/dashboard/ChartCard';
@@ -57,6 +58,8 @@ import {
 
 export default function AnalyticsDashboard() {
   const { data: profile } = useUserProfile();
+  const { getEffectiveOrganizationId } = useImpersonation();
+  const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [dateRange, setDateRange] = useState(30);
   const { exportToCSV, exportToPDF } = useExportReports();
 
@@ -65,9 +68,9 @@ export default function AnalyticsDashboard() {
 
   // Fetch all bookings for analytics
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
-    queryKey: ['analytics-bookings', profile?.organization_id, dateRange],
+    queryKey: ['analytics-bookings', effectiveOrgId, dateRange],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -78,7 +81,7 @@ export default function AnalyticsDashboard() {
             screens (name)
           )
         `)
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', effectiveOrgId)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
         .order('created_at', { ascending: true });
@@ -86,12 +89,12 @@ export default function AnalyticsDashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!effectiveOrgId,
   });
 
   // Fetch booked seats for heatmap
   const { data: bookedSeats } = useQuery({
-    queryKey: ['analytics-seats', profile?.organization_id, bookings],
+    queryKey: ['analytics-seats', effectiveOrgId, bookings],
     queryFn: async () => {
       if (!bookings || bookings.length === 0) return [];
       const bookingIds = bookings.map((b) => b.id);

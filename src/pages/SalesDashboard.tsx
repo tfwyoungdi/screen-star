@@ -72,9 +72,9 @@ export default function SalesDashboard() {
 
   // Fetch booked seats for ticket count
   const { data: bookedSeats } = useQuery({
-    queryKey: ['sales-seats', profile?.organization_id, dateRange],
+    queryKey: ['sales-seats', effectiveOrgId, dateRange],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!effectiveOrgId) return [];
       
       // Get booking IDs from the date range
       const bookingIds = bookings?.map(b => b.id) || [];
