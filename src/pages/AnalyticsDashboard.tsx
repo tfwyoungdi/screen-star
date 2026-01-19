@@ -60,7 +60,7 @@ export default function AnalyticsDashboard() {
   const { data: profile } = useUserProfile();
   const { getEffectiveOrganizationId } = useImpersonation();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
-  const [dateRange, setDateRange] = useState(30);
+  const [dateRange, setDateRange] = useState(7);
   const { exportToCSV, exportToPDF } = useExportReports();
 
   const startDate = startOfDay(subDays(new Date(), dateRange));
