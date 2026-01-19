@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay } from 'date-fns';
 import {
   Search,
   Users,
@@ -50,21 +50,34 @@ interface Customer {
   created_at: string;
 }
 
+const DATE_FILTERS = [
+  { label: '7d', value: 7 },
+  { label: '30d', value: 30 },
+  { label: '60d', value: 60 },
+  { label: '90d', value: 90 },
+  { label: '6mo', value: 183 },
+  { label: '1yr', value: 365 },
+];
+
 export default function CustomerManagement() {
   const { data: profile } = useUserProfile();
   const { getEffectiveOrganizationId } = useImpersonation();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [dateRange, setDateRange] = useState(30);
+
+  const startDate = startOfDay(subDays(new Date(), dateRange));
 
   const { data: customers, isLoading } = useQuery({
-    queryKey: ['customers', effectiveOrgId],
+    queryKey: ['customers', effectiveOrgId, dateRange],
     queryFn: async () => {
       if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('customers')
         .select('*')
         .eq('organization_id', effectiveOrgId)
+        .gte('last_booking_at', startDate.toISOString())
         .order('total_spent', { ascending: false });
 
       if (error) throw error;
@@ -125,6 +138,19 @@ export default function CustomerManagement() {
             <p className="text-muted-foreground text-sm mt-1">
               Manage customer profiles, loyalty points, and booking history
             </p>
+          </div>
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            {DATE_FILTERS.map((filter) => (
+              <Button
+                key={filter.value}
+                variant={dateRange === filter.value ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-none"
+                onClick={() => setDateRange(filter.value)}
+              >
+                {filter.label}
+              </Button>
+            ))}
           </div>
         </div>
 
