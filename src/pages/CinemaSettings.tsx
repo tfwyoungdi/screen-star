@@ -580,10 +580,31 @@ export default function CinemaSettings() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(`${window.location.origin}/cinema/${organization.slug}/staff`, '_blank')}
+                          onClick={() => window.open(`/cinema/${organization.slug}/staff`, '_blank')}
                         >
                           <ExternalLink className="h-3 w-3" />
                         </Button>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <p className="text-xs text-muted-foreground mb-2">Role-specific dashboards:</p>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground">Admin:</span>
+                            <code className="text-primary/80">/dashboard</code>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground">Box Office:</span>
+                            <code className="text-primary/80">/box-office</code>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground">Gate Staff:</span>
+                            <code className="text-primary/80">/gate</code>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground">Analytics:</span>
+                            <code className="text-primary/80">/analytics</code>
+                          </div>
+                        </div>
                       </div>
                       {(watch('custom_domain') || organization?.custom_domain) && (
                         <div className="flex items-center gap-2">
