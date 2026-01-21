@@ -10,7 +10,7 @@ interface CinemaHeaderProps {
   cinemaName: string;
   logoUrl: string | null;
   primaryColor: string;
-  currentPage: 'home' | 'movies' | 'about' | 'careers' | 'contact';
+  currentPage: 'home' | 'movies' | 'careers' | 'contact';
   organizationId?: string;
 }
 
@@ -27,7 +27,6 @@ export function CinemaHeader({
   const navItems = [
     { key: 'home', label: 'HOME', href: `/cinema/${slug}` },
     { key: 'movies', label: 'MOVIES', href: `/cinema/${slug}#movies` },
-    { key: 'about', label: 'ABOUT', href: `/cinema/${slug}/about` },
     { key: 'careers', label: 'CAREERS', href: `/cinema/${slug}/careers` },
     { key: 'contact', label: 'CONTACT', href: `/cinema/${slug}/contact` },
   ];
