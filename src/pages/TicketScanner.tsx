@@ -202,10 +202,7 @@ export default function TicketScanner() {
     setScanHistory(prev => [historyItem, ...prev].slice(0, 10)); // Keep only last 10
   }, []);
 
-  const startScanner = async () => {
-    setCameraError(null);
-    setTicketInfo(null);
-
+  const initializeScanner = useCallback(async () => {
     try {
       const html5QrCode = new Html5Qrcode('qr-reader', {
         formatsToSupport: SUPPORTED_FORMATS,
@@ -232,14 +229,29 @@ export default function TicketScanner() {
           // Ignore scan errors (no QR found in frame)
         }
       );
-
-      setScanning(true);
     } catch (error: any) {
       console.error('Camera error:', error);
       setCameraError(error?.message || 'Unable to access camera. Please check permissions.');
       setScanning(false);
     }
+  }, []);
+
+  const startScanner = () => {
+    setCameraError(null);
+    setTicketInfo(null);
+    setScanning(true);
   };
+
+  // Initialize the scanner after the DOM element is rendered
+  useEffect(() => {
+    if (scanning && !scannerRef.current) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        initializeScanner();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [scanning, initializeScanner]);
 
   const stopScanner = async () => {
     if (scannerRef.current) {
