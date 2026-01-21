@@ -228,17 +228,26 @@ export default function PublicCinema() {
     };
   }, [cinema?.id, queryClient]);
 
-  // Now Showing = status is 'now_showing' AND has showtimes
+  // Now Showing = movies with upcoming/active showtimes
   const movies = useMemo(() => 
-    (moviesData || []).filter(m => m.status === 'now_showing' && m.showtimes.length > 0),
+    (moviesData || []).filter(m => m.showtimes.length > 0),
     [moviesData]
   );
 
-  // Coming Soon = status is 'coming_soon' OR (status is 'now_showing' but has no showtimes yet)
-  const comingSoonMovies = useMemo(() => 
-    (moviesData || []).filter(m => m.status === 'coming_soon' || (m.status === 'now_showing' && m.showtimes.length === 0)),
-    [moviesData]
-  );
+  // Coming Soon = movies with status 'coming_soon' that have NO showtimes yet
+  // These are new movies never shown at this cinema, before release date and first showtime
+  const comingSoonMovies = useMemo(() => {
+    const today = new Date();
+    return (moviesData || []).filter(m => {
+      // Must have no showtimes (never been scheduled at this cinema)
+      if (m.showtimes.length > 0) return false;
+      // Must be marked as coming_soon status
+      if (m.status !== 'coming_soon') return false;
+      // If there's a release date, it should be in the future (optional check)
+      if (m.release_date && new Date(m.release_date) <= today) return false;
+      return true;
+    });
+  }, [moviesData]);
 
   const allMovies = useMemo(() => 
     (moviesData || []).map(m => ({ ...m, showtimes: [] })),
