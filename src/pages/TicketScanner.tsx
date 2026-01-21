@@ -154,6 +154,7 @@ export default function TicketScanner() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [lastScanType, setLastScanType] = useState<'qr' | 'barcode' | 'manual'>('manual');
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraInitializing, setCameraInitializing] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -203,6 +204,7 @@ export default function TicketScanner() {
   }, []);
 
   const initializeScanner = useCallback(async () => {
+    setCameraInitializing(true);
     try {
       const html5QrCode = new Html5Qrcode('qr-reader', {
         formatsToSupport: SUPPORTED_FORMATS,
@@ -229,9 +231,11 @@ export default function TicketScanner() {
           // Ignore scan errors (no QR found in frame)
         }
       );
+      setCameraInitializing(false);
     } catch (error: any) {
       console.error('Camera error:', error);
       setCameraError(error?.message || 'Unable to access camera. Please check permissions.');
+      setCameraInitializing(false);
       setScanning(false);
     }
   }, []);
@@ -503,6 +507,18 @@ export default function TicketScanner() {
                   </div>
                 ) : (
                   <div className="relative">
+                    {/* Camera Initializing Overlay */}
+                    {cameraInitializing && (
+                      <div className="absolute inset-0 z-20 bg-background/80 flex flex-col items-center justify-center gap-3">
+                        <div className="relative">
+                          <div className="w-12 h-12 rounded-full border-4 border-muted animate-spin border-t-primary" />
+                          <Camera className="absolute inset-0 m-auto h-5 w-5 text-primary" />
+                        </div>
+                        <p className="text-sm font-medium text-foreground">Initializing camera...</p>
+                        <p className="text-xs text-muted-foreground">Please allow camera access</p>
+                      </div>
+                    )}
+                    
                     {/* Scanner Container */}
                     <div 
                       ref={containerRef}
