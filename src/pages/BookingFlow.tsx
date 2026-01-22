@@ -552,7 +552,7 @@ export default function BookingFlow() {
     try {
       const { data, error } = await supabase
         .from('promo_codes')
-        .select('id, code, discount_type, discount_value, min_purchase_amount, max_uses, current_uses, valid_until, restricted_movie_ids, restricted_showtime_ids')
+        .select('id, code, discount_type, discount_value, min_purchase_amount, max_uses, max_uses_per_customer, current_uses, valid_until, restricted_movie_ids, restricted_showtime_ids')
         .eq('organization_id', cinema.id)
         .eq('code', promoCode.toUpperCase())
         .eq('is_active', true)
@@ -573,6 +573,21 @@ export default function BookingFlow() {
       if (data.max_uses && data.current_uses >= data.max_uses) {
         setPromoError('This promo code has reached its usage limit');
         return;
+      }
+      
+      // Check per-customer usage limit
+      if (data.max_uses_per_customer && bookingData.customer_email) {
+        const { count } = await supabase
+          .from('bookings')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', cinema.id)
+          .eq('promo_code_id', data.id)
+          .eq('customer_email', bookingData.customer_email.toLowerCase());
+        
+        if (count !== null && count >= data.max_uses_per_customer) {
+          setPromoError(`You have already used this promo code ${data.max_uses_per_customer} time(s)`);
+          return;
+        }
       }
       
       // Check minimum purchase
