@@ -475,7 +475,7 @@ export default function BoxOffice() {
     try {
       const { data, error } = await supabase
         .from('promo_codes')
-        .select('id, code, discount_type, discount_value, min_purchase_amount')
+        .select('id, code, discount_type, discount_value, min_purchase_amount, max_uses, current_uses, valid_until')
         .eq('organization_id', profile.organization_id)
         .eq('code', promoCode.toUpperCase())
         .eq('is_active', true)
@@ -483,6 +483,18 @@ export default function BoxOffice() {
       
       if (error || !data) {
         toast.error('Invalid promo code');
+        return;
+      }
+      
+      // Check if expired
+      if (data.valid_until && new Date(data.valid_until) < new Date()) {
+        toast.error('This promo code has expired');
+        return;
+      }
+      
+      // Check usage limit
+      if (data.max_uses && data.current_uses >= data.max_uses) {
+        toast.error('This promo code has reached its usage limit');
         return;
       }
       
@@ -554,6 +566,14 @@ export default function BoxOffice() {
         await supabase
           .from('booking_concessions')
           .insert(concessionsToBook);
+      }
+
+      // Update promo code usage
+      if (appliedPromo) {
+        await supabase
+          .from('promo_codes')
+          .update({ current_uses: (appliedPromo as any).current_uses + 1 })
+          .eq('id', appliedPromo.id);
       }
 
       setBookingRef(bookingReference);
