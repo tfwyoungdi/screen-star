@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -330,13 +330,11 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openAddDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Combo
-            </Button>
-          </DialogTrigger>
+        <Button onClick={openAddDialog}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Combo
+        </Button>
+        <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); }}>
           <DialogContent className="max-w-lg max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>{editingCombo ? 'Edit Combo' : 'Create Combo Deal'}</DialogTitle>
