@@ -1570,6 +1570,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           max_uses: number | null
+          max_uses_per_customer: number | null
           min_purchase_amount: number | null
           organization_id: string
           restricted_movie_ids: string[] | null
@@ -1588,6 +1589,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           max_uses?: number | null
+          max_uses_per_customer?: number | null
           min_purchase_amount?: number | null
           organization_id: string
           restricted_movie_ids?: string[] | null
@@ -1606,6 +1608,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           max_uses?: number | null
+          max_uses_per_customer?: number | null
           min_purchase_amount?: number | null
           organization_id?: string
           restricted_movie_ids?: string[] | null

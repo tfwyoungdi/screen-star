@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Plus, Loader2, Trash2, Tag, Percent, DollarSign, Calendar, Users, Film, Clock } from 'lucide-react';
+import { Plus, Loader2, Trash2, Tag, Percent, DollarSign, Calendar, Users, Film, Clock, BarChart3, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,11 +14,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PromoCodeAnalytics } from '@/components/promos/PromoCodeAnalytics';
 
 interface PromoCode {
   id: string;
@@ -27,6 +29,7 @@ interface PromoCode {
   discount_type: 'percentage' | 'fixed';
   discount_value: number;
   max_uses: number | null;
+  max_uses_per_customer: number | null;
   current_uses: number;
   min_purchase_amount: number;
   valid_from: string;
@@ -43,6 +46,7 @@ interface NewPromoCode {
   discount_type: 'percentage' | 'fixed';
   discount_value: number;
   max_uses: number | null;
+  max_uses_per_customer: number | null;
   min_purchase_amount: number;
   valid_from: string;
   valid_until: string | null;
@@ -69,12 +73,14 @@ export default function PromoCodeManagement() {
   const effectiveOrgId = getEffectiveOrganizationId(organization?.id);
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [newCode, setNewCode] = useState<NewPromoCode>({
     code: '',
     description: '',
     discount_type: 'percentage',
     discount_value: 10,
     max_uses: null,
+    max_uses_per_customer: null,
     min_purchase_amount: 0,
     valid_from: new Date().toISOString().split('T')[0],
     valid_until: null,
@@ -148,6 +154,7 @@ export default function PromoCodeManagement() {
         discount_type: promoCode.discount_type,
         discount_value: promoCode.discount_value,
         max_uses: promoCode.max_uses,
+        max_uses_per_customer: promoCode.max_uses_per_customer,
         min_purchase_amount: promoCode.min_purchase_amount,
         valid_from: promoCode.valid_from,
         valid_until: promoCode.valid_until,
@@ -159,6 +166,7 @@ export default function PromoCodeManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['promo-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['promo-codes-analytics'] });
       setIsDialogOpen(false);
       setNewCode({
         code: '',
@@ -166,6 +174,7 @@ export default function PromoCodeManagement() {
         discount_type: 'percentage',
         discount_value: 10,
         max_uses: null,
+        max_uses_per_customer: null,
         min_purchase_amount: 0,
         valid_from: new Date().toISOString().split('T')[0],
         valid_until: null,
@@ -343,7 +352,7 @@ export default function PromoCodeManagement() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Max Uses (optional)</Label>
+                    <Label>Max Uses (Total)</Label>
                     <Input
                       type="number"
                       value={newCode.max_uses || ''}
@@ -354,6 +363,22 @@ export default function PromoCodeManagement() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      <UserCheck className="h-3 w-3" />
+                      Per Customer
+                    </Label>
+                    <Input
+                      type="number"
+                      value={newCode.max_uses_per_customer || ''}
+                      onChange={(e) => setNewCode(prev => ({ ...prev, max_uses_per_customer: e.target.value ? parseInt(e.target.value) : null }))}
+                      placeholder="Unlimited"
+                      min={1}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label>Min Purchase ($)</Label>
                     <Input
                       type="number"
@@ -362,9 +387,7 @@ export default function PromoCodeManagement() {
                       min={0}
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Valid From</Label>
                     <Input
@@ -373,15 +396,15 @@ export default function PromoCodeManagement() {
                       onChange={(e) => setNewCode(prev => ({ ...prev, valid_from: e.target.value }))}
                     />
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>Valid Until (optional)</Label>
-                    <Input
-                      type="date"
-                      value={newCode.valid_until || ''}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, valid_until: e.target.value || null }))}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>Valid Until (optional)</Label>
+                  <Input
+                    type="date"
+                    value={newCode.valid_until || ''}
+                    onChange={(e) => setNewCode(prev => ({ ...prev, valid_until: e.target.value || null }))}
+                  />
                 </div>
 
                 {/* Movie/Showtime Restrictions */}
@@ -504,160 +527,188 @@ export default function PromoCodeManagement() {
           </Dialog>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Codes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{promoCodes?.length || 0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Codes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {promoCodes?.filter(p => p.is_active).length || 0}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Redemptions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {promoCodes?.reduce((sum, p) => sum + p.current_uses, 0) || 0}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Tabs for Codes and Analytics */}
+        <Tabs defaultValue="codes" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="codes" className="gap-2">
+              <Tag className="h-4 w-4" />
+              Promo Codes
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Promo Codes Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Promo Codes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {promoCodes && promoCodes.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Discount</TableHead>
-                    <TableHead>Usage</TableHead>
-                    <TableHead>Valid Period</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Active</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {promoCodes.map((promo) => (
-                    <TableRow key={promo.id}>
-                      <TableCell>
-                        <div>
-                          <span className="font-mono font-bold">{promo.code}</span>
-                          {promo.description && (
-                            <p className="text-xs text-muted-foreground">{promo.description}</p>
-                          )}
-                          {/* Show restrictions badges */}
-                          {(promo.restricted_movie_ids?.length || promo.restricted_showtime_ids?.length) ? (
-                            <div className="flex items-center gap-1 mt-1">
-                              {promo.restricted_movie_ids?.length ? (
-                                <Badge variant="outline" className="text-xs">
-                                  <Film className="h-3 w-3 mr-1" />
-                                  {promo.restricted_movie_ids.length} movie{promo.restricted_movie_ids.length > 1 ? 's' : ''}
-                                </Badge>
-                              ) : null}
-                              {promo.restricted_showtime_ids?.length ? (
-                                <Badge variant="outline" className="text-xs">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {promo.restricted_showtime_ids.length} showtime{promo.restricted_showtime_ids.length > 1 ? 's' : ''}
-                                </Badge>
+          <TabsContent value="codes" className="space-y-4">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Codes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{promoCodes?.length || 0}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Codes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-primary">
+                    {promoCodes?.filter(p => p.is_active).length || 0}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Redemptions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {promoCodes?.reduce((sum, p) => sum + p.current_uses, 0) || 0}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Promo Codes Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>All Promo Codes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {promoCodes && promoCodes.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Discount</TableHead>
+                        <TableHead>Usage</TableHead>
+                        <TableHead>Valid Period</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Active</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {promoCodes.map((promo) => (
+                        <TableRow key={promo.id}>
+                          <TableCell>
+                            <div>
+                              <span className="font-mono font-bold">{promo.code}</span>
+                              {promo.description && (
+                                <p className="text-xs text-muted-foreground">{promo.description}</p>
+                              )}
+                              {/* Show restrictions badges */}
+                              {(promo.restricted_movie_ids?.length || promo.restricted_showtime_ids?.length) ? (
+                                <div className="flex items-center gap-1 mt-1">
+                                  {promo.restricted_movie_ids?.length ? (
+                                    <Badge variant="outline" className="text-xs">
+                                      <Film className="h-3 w-3 mr-1" />
+                                      {promo.restricted_movie_ids.length} movie{promo.restricted_movie_ids.length > 1 ? 's' : ''}
+                                    </Badge>
+                                  ) : null}
+                                  {promo.restricted_showtime_ids?.length ? (
+                                    <Badge variant="outline" className="text-xs">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {promo.restricted_showtime_ids.length} showtime{promo.restricted_showtime_ids.length > 1 ? 's' : ''}
+                                    </Badge>
+                                  ) : null}
+                                </div>
                               ) : null}
                             </div>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          {promo.discount_type === 'percentage' ? (
-                            <>
-                              <Percent className="h-4 w-4 text-muted-foreground" />
-                              <span>{promo.discount_value}%</span>
-                            </>
-                          ) : (
-                            <>
-                              <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span>{promo.discount_value}</span>
-                            </>
-                          )}
-                        </div>
-                        {promo.min_purchase_amount > 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            Min: ${promo.min_purchase_amount}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span>
-                            {promo.current_uses}
-                            {promo.max_uses && ` / ${promo.max_uses}`}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>
-                            {format(new Date(promo.valid_from), 'MMM d')}
-                            {promo.valid_until && ` - ${format(new Date(promo.valid_until), 'MMM d')}`}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(promo)}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={promo.is_active}
-                          onCheckedChange={(checked) =>
-                            toggleMutation.mutate({ id: promo.id, is_active: checked })
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            if (confirm('Delete this promo code?')) {
-                              deleteMutation.mutate(promo.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-12">
-                <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No promo codes yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Create your first promo code to offer discounts to customers
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {promo.discount_type === 'percentage' ? (
+                                <>
+                                  <Percent className="h-4 w-4 text-muted-foreground" />
+                                  <span>{promo.discount_value}%</span>
+                                </>
+                              ) : (
+                                <>
+                                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                  <span>{promo.discount_value}</span>
+                                </>
+                              )}
+                            </div>
+                            {promo.min_purchase_amount > 0 && (
+                              <p className="text-xs text-muted-foreground">
+                                Min: ${promo.min_purchase_amount}
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <span>
+                                  {promo.current_uses}
+                                  {promo.max_uses && ` / ${promo.max_uses}`}
+                                </span>
+                              </div>
+                              {promo.max_uses_per_customer && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <UserCheck className="h-3 w-3" />
+                                  <span>{promo.max_uses_per_customer}/customer</span>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span>
+                                {format(new Date(promo.valid_from), 'MMM d')}
+                                {promo.valid_until && ` - ${format(new Date(promo.valid_until), 'MMM d')}`}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(promo)}</TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={promo.is_active}
+                              onCheckedChange={(checked) =>
+                                toggleMutation.mutate({ id: promo.id, is_active: checked })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                if (confirm('Delete this promo code?')) {
+                                  deleteMutation.mutate(promo.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-12">
+                    <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No promo codes yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Create your first promo code to offer discounts to customers
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <PromoCodeAnalytics organizationId={effectiveOrgId} />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
