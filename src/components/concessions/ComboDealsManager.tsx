@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Pencil, Trash2, Package, X, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { Loader2, Plus, Pencil, Trash2, Package, X, Clock, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,16 +14,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const comboSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   combo_price: z.coerce.number().min(0.01, 'Price must be greater than 0'),
-  available_from: z.string().optional(),
-  available_until: z.string().optional(),
+  available_from_time: z.string().optional(),
+  available_until_time: z.string().optional(),
+  available_from_date: z.date().optional().nullable(),
+  available_until_date: z.date().optional().nullable(),
   available_days: z.array(z.number()).optional(),
 });
 
@@ -54,6 +61,8 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
   const [selectedItemId, setSelectedItemId] = useState<string>('');
   const [timeRestricted, setTimeRestricted] = useState(false);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [availableFromDate, setAvailableFromDate] = useState<Date | undefined>();
+  const [availableUntilDate, setAvailableUntilDate] = useState<Date | undefined>();
   const queryClient = useQueryClient();
 
   const {
@@ -61,6 +70,7 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ComboFormData>({
     resolver: zodResolver(comboSchema),
@@ -151,8 +161,8 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
     try {
       const originalPrice = calculateOriginalPrice();
       const timeData = timeRestricted ? {
-        available_from: data.available_from || null,
-        available_until: data.available_until || null,
+        available_from: data.available_from_time || null,
+        available_until: data.available_until_time || null,
         available_days: selectedDays.length > 0 ? selectedDays : null,
       } : {
         available_from: null,
@@ -275,9 +285,11 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
       name: combo.name,
       description: combo.description || '',
       combo_price: combo.combo_price,
-      available_from: combo.available_from || '',
-      available_until: combo.available_until || '',
+      available_from_time: combo.available_from || '',
+      available_until_time: combo.available_until || '',
     });
+    setAvailableFromDate(undefined);
+    setAvailableUntilDate(undefined);
     setDialogOpen(true);
   };
 
@@ -287,7 +299,9 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
     setComboItems([]);
     setTimeRestricted(false);
     setSelectedDays([]);
-    reset({ name: '', description: '', combo_price: 0, available_from: '', available_until: '' });
+    setAvailableFromDate(undefined);
+    setAvailableUntilDate(undefined);
+    reset({ name: '', description: '', combo_price: 0, available_from_time: '', available_until_time: '' });
   };
 
   const openAddDialog = () => {
@@ -295,7 +309,9 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
     setComboItems([]);
     setTimeRestricted(false);
     setSelectedDays([]);
-    reset({ name: '', description: '', combo_price: 0, available_from: '', available_until: '' });
+    setAvailableFromDate(undefined);
+    setAvailableUntilDate(undefined);
+    reset({ name: '', description: '', combo_price: 0, available_from_time: '', available_until_time: '' });
     setDialogOpen(true);
   };
 
@@ -321,7 +337,7 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
               Create Combo
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>{editingCombo ? 'Edit Combo' : 'Create Combo Deal'}</DialogTitle>
               <DialogDescription>
@@ -329,12 +345,13 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Combo Name *</Label>
-                <Input {...register('name')} placeholder="Movie Night Bundle" />
-                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-              </div>
+            <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pb-2">
+                <div className="space-y-2">
+                  <Label>Combo Name *</Label>
+                  <Input {...register('name')} placeholder="Movie Night Bundle" />
+                  {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                </div>
 
               <div className="space-y-2">
                 <Label>Description</Label>
@@ -422,14 +439,70 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
 
                 {timeRestricted && (
                   <div className="space-y-4">
+                    {/* Date Range */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Available From</Label>
-                        <Input type="time" {...register('available_from')} />
+                        <Label>Start Date</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !availableFromDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {availableFromDate ? format(availableFromDate, "PPP") : "Pick date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={availableFromDate}
+                              onSelect={setAvailableFromDate}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div className="space-y-2">
-                        <Label>Available Until</Label>
-                        <Input type="time" {...register('available_until')} />
+                        <Label>End Date</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !availableUntilDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {availableUntilDate ? format(availableUntilDate, "PPP") : "Pick date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={availableUntilDate}
+                              onSelect={setAvailableUntilDate}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                    {/* Time Range */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Available From (Time)</Label>
+                        <Input type="time" {...register('available_from_time')} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Available Until (Time)</Label>
+                        <Input type="time" {...register('available_until_time')} />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -464,7 +537,8 @@ export function ComboDealsManager({ organizationId }: ComboDealsManagerProps) {
                   'Create Combo'
                 )}
               </Button>
-            </form>
+              </form>
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>
