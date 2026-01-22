@@ -1572,6 +1572,8 @@ export type Database = {
           max_uses: number | null
           min_purchase_amount: number | null
           organization_id: string
+          restricted_movie_ids: string[] | null
+          restricted_showtime_ids: string[] | null
           updated_at: string
           valid_from: string
           valid_until: string | null
@@ -1588,6 +1590,8 @@ export type Database = {
           max_uses?: number | null
           min_purchase_amount?: number | null
           organization_id: string
+          restricted_movie_ids?: string[] | null
+          restricted_showtime_ids?: string[] | null
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
@@ -1604,6 +1608,8 @@ export type Database = {
           max_uses?: number | null
           min_purchase_amount?: number | null
           organization_id?: string
+          restricted_movie_ids?: string[] | null
+          restricted_showtime_ids?: string[] | null
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
