@@ -66,7 +66,7 @@ export default function LoyaltyProgram() {
     concession_item_id: "",
   });
 
-  // Fetch loyalty settings
+  // Fetch loyalty settings (create default if none exist)
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ["loyalty-settings", organizationId],
     queryFn: async () => {
@@ -77,6 +77,28 @@ export default function LoyaltyProgram() {
         .eq("organization_id", organizationId)
         .maybeSingle();
       if (error) throw error;
+      
+      // If no settings exist, create default settings so the trigger can work
+      if (!data) {
+        const defaultSettings = {
+          organization_id: organizationId,
+          is_enabled: true,
+          points_per_dollar: 1,
+          points_per_booking: 0,
+          welcome_bonus_points: 0,
+        };
+        const { data: newData, error: insertError } = await supabase
+          .from("loyalty_settings")
+          .insert(defaultSettings)
+          .select()
+          .single();
+        if (insertError) {
+          console.error("Failed to create default loyalty settings:", insertError);
+          return null;
+        }
+        return newData as LoyaltySettings;
+      }
+      
       return data as LoyaltySettings | null;
     },
     enabled: !!organizationId,
