@@ -73,7 +73,7 @@ export default function ShowtimeManagement() {
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [customTimeInput, setCustomTimeInput] = useState('');
   const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]); // All days selected by default
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
   const [timeFilter, setTimeFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [editingShowtime, setEditingShowtime] = useState<any | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
