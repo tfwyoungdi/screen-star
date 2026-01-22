@@ -30,6 +30,7 @@ interface Showtime {
   start_time: string;
   price: number;
   vip_price: number | null;
+  movie_id: string;
   movies: {
     id: string;
     title: string;
@@ -475,7 +476,7 @@ export default function BoxOffice() {
     try {
       const { data, error } = await supabase
         .from('promo_codes')
-        .select('id, code, discount_type, discount_value, min_purchase_amount, max_uses, current_uses, valid_until')
+        .select('id, code, discount_type, discount_value, min_purchase_amount, max_uses, current_uses, valid_until, restricted_movie_ids, restricted_showtime_ids')
         .eq('organization_id', profile.organization_id)
         .eq('code', promoCode.toUpperCase())
         .eq('is_active', true)
@@ -501,6 +502,22 @@ export default function BoxOffice() {
       if (subtotal < data.min_purchase_amount) {
         toast.error(`Minimum purchase of $${data.min_purchase_amount} required`);
         return;
+      }
+      
+      // Check movie restrictions
+      if (data.restricted_movie_ids && data.restricted_movie_ids.length > 0 && selectedShowtime) {
+        if (!data.restricted_movie_ids.includes(selectedShowtime.movie_id)) {
+          toast.error('This promo code is not valid for this movie');
+          return;
+        }
+      }
+      
+      // Check showtime restrictions
+      if (data.restricted_showtime_ids && data.restricted_showtime_ids.length > 0 && selectedShowtime) {
+        if (!data.restricted_showtime_ids.includes(selectedShowtime.id)) {
+          toast.error('This promo code is not valid for this showtime');
+          return;
+        }
       }
       
       setAppliedPromo(data);

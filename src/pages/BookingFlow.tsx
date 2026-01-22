@@ -23,6 +23,8 @@ interface PromoCode {
   discount_type: 'percentage' | 'fixed';
   discount_value: number;
   min_purchase_amount: number;
+  restricted_movie_ids: string[] | null;
+  restricted_showtime_ids: string[] | null;
 }
 
 interface Showtime {
@@ -542,7 +544,7 @@ export default function BookingFlow() {
   const totalAmount = subtotal - discountAmount;
 
   const applyPromoCode = async () => {
-    if (!promoCode.trim() || !cinema) return;
+    if (!promoCode.trim() || !cinema || !showtime) return;
     
     setPromoLoading(true);
     setPromoError(null);
@@ -550,7 +552,7 @@ export default function BookingFlow() {
     try {
       const { data, error } = await supabase
         .from('promo_codes')
-        .select('id, code, discount_type, discount_value, min_purchase_amount, max_uses, current_uses, valid_until')
+        .select('id, code, discount_type, discount_value, min_purchase_amount, max_uses, current_uses, valid_until, restricted_movie_ids, restricted_showtime_ids')
         .eq('organization_id', cinema.id)
         .eq('code', promoCode.toUpperCase())
         .eq('is_active', true)
@@ -577,6 +579,30 @@ export default function BookingFlow() {
       if (data.min_purchase_amount && ticketsSubtotal < data.min_purchase_amount) {
         setPromoError(`Minimum purchase of $${data.min_purchase_amount} required`);
         return;
+      }
+      
+      // Check movie restrictions
+      if (data.restricted_movie_ids && data.restricted_movie_ids.length > 0) {
+        const movieId = showtime.movies ? (showtime as any).movie_id : null;
+        // Get the movie ID from the showtime - we need to fetch it
+        const { data: showtimeData } = await supabase
+          .from('showtimes')
+          .select('movie_id')
+          .eq('id', showtime.id)
+          .single();
+        
+        if (showtimeData && !data.restricted_movie_ids.includes(showtimeData.movie_id)) {
+          setPromoError('This promo code is not valid for this movie');
+          return;
+        }
+      }
+      
+      // Check showtime restrictions
+      if (data.restricted_showtime_ids && data.restricted_showtime_ids.length > 0) {
+        if (!data.restricted_showtime_ids.includes(showtime.id)) {
+          setPromoError('This promo code is not valid for this showtime');
+          return;
+        }
       }
       
       setAppliedPromo(data as PromoCode);

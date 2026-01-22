@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Plus, Loader2, Trash2, Tag, Percent, DollarSign, Calendar, Users } from 'lucide-react';
+import { Plus, Loader2, Trash2, Tag, Percent, DollarSign, Calendar, Users, Film, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
@@ -30,6 +33,8 @@ interface PromoCode {
   valid_until: string | null;
   is_active: boolean;
   created_at: string;
+  restricted_movie_ids: string[] | null;
+  restricted_showtime_ids: string[] | null;
 }
 
 interface NewPromoCode {
@@ -41,6 +46,21 @@ interface NewPromoCode {
   min_purchase_amount: number;
   valid_from: string;
   valid_until: string | null;
+  restricted_movie_ids: string[];
+  restricted_showtime_ids: string[];
+}
+
+interface Movie {
+  id: string;
+  title: string;
+  status: string;
+}
+
+interface Showtime {
+  id: string;
+  start_time: string;
+  movies: { title: string };
+  screens: { name: string };
 }
 
 export default function PromoCodeManagement() {
@@ -58,6 +78,45 @@ export default function PromoCodeManagement() {
     min_purchase_amount: 0,
     valid_from: new Date().toISOString().split('T')[0],
     valid_until: null,
+    restricted_movie_ids: [],
+    restricted_showtime_ids: [],
+  });
+  const [showRestrictions, setShowRestrictions] = useState(false);
+
+  // Fetch movies for restrictions
+  const { data: movies } = useQuery({
+    queryKey: ['movies-for-promos', effectiveOrgId],
+    queryFn: async () => {
+      if (!effectiveOrgId) return [];
+      const { data, error } = await supabase
+        .from('movies')
+        .select('id, title, status')
+        .eq('organization_id', effectiveOrgId)
+        .eq('is_active', true)
+        .order('title');
+      if (error) throw error;
+      return data as Movie[];
+    },
+    enabled: !!effectiveOrgId,
+  });
+
+  // Fetch upcoming showtimes for restrictions
+  const { data: showtimes } = useQuery({
+    queryKey: ['showtimes-for-promos', effectiveOrgId],
+    queryFn: async () => {
+      if (!effectiveOrgId) return [];
+      const { data, error } = await supabase
+        .from('showtimes')
+        .select('id, start_time, movies(title), screens(name)')
+        .eq('organization_id', effectiveOrgId)
+        .eq('is_active', true)
+        .gte('start_time', new Date().toISOString())
+        .order('start_time')
+        .limit(50);
+      if (error) throw error;
+      return data as Showtime[];
+    },
+    enabled: !!effectiveOrgId,
   });
 
   const { data: promoCodes, isLoading } = useQuery({
@@ -92,6 +151,8 @@ export default function PromoCodeManagement() {
         min_purchase_amount: promoCode.min_purchase_amount,
         valid_from: promoCode.valid_from,
         valid_until: promoCode.valid_until,
+        restricted_movie_ids: promoCode.restricted_movie_ids.length > 0 ? promoCode.restricted_movie_ids : null,
+        restricted_showtime_ids: promoCode.restricted_showtime_ids.length > 0 ? promoCode.restricted_showtime_ids : null,
       });
 
       if (error) throw error;
@@ -108,7 +169,10 @@ export default function PromoCodeManagement() {
         min_purchase_amount: 0,
         valid_from: new Date().toISOString().split('T')[0],
         valid_until: null,
+        restricted_movie_ids: [],
+        restricted_showtime_ids: [],
       });
+      setShowRestrictions(false);
       toast.success('Promo code created');
     },
     onError: (error: any) => {
@@ -320,6 +384,109 @@ export default function PromoCodeManagement() {
                   </div>
                 </div>
 
+                {/* Movie/Showtime Restrictions */}
+                <Collapsible open={showRestrictions} onOpenChange={setShowRestrictions}>
+                  <CollapsibleTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between">
+                      <span className="flex items-center gap-2">
+                        <Film className="h-4 w-4" />
+                        Restrict to Movies/Showtimes
+                      </span>
+                      <Badge variant="secondary" className="ml-2">
+                        {newCode.restricted_movie_ids.length + newCode.restricted_showtime_ids.length > 0 
+                          ? `${newCode.restricted_movie_ids.length + newCode.restricted_showtime_ids.length} selected`
+                          : 'Optional'}
+                      </Badge>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4 space-y-4">
+                    {/* Movie Restrictions */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Film className="h-4 w-4" />
+                        Restrict to specific movies
+                      </Label>
+                      <ScrollArea className="h-32 border rounded-md p-2">
+                        {movies && movies.length > 0 ? (
+                          <div className="space-y-2">
+                            {movies.map((movie) => (
+                              <div key={movie.id} className="flex items-center gap-2">
+                                <Checkbox
+                                  id={`movie-${movie.id}`}
+                                  checked={newCode.restricted_movie_ids.includes(movie.id)}
+                                  onCheckedChange={(checked) => {
+                                    setNewCode(prev => ({
+                                      ...prev,
+                                      restricted_movie_ids: checked 
+                                        ? [...prev.restricted_movie_ids, movie.id]
+                                        : prev.restricted_movie_ids.filter(id => id !== movie.id)
+                                    }));
+                                  }}
+                                />
+                                <label htmlFor={`movie-${movie.id}`} className="text-sm cursor-pointer flex-1">
+                                  {movie.title}
+                                  <Badge variant="outline" className="ml-2 text-xs">{movie.status}</Badge>
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No movies available</p>
+                        )}
+                      </ScrollArea>
+                    </div>
+
+                    {/* Showtime Restrictions */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Restrict to specific showtimes
+                      </Label>
+                      <ScrollArea className="h-32 border rounded-md p-2">
+                        {showtimes && showtimes.length > 0 ? (
+                          <div className="space-y-2">
+                            {showtimes.map((showtime) => (
+                              <div key={showtime.id} className="flex items-center gap-2">
+                                <Checkbox
+                                  id={`showtime-${showtime.id}`}
+                                  checked={newCode.restricted_showtime_ids.includes(showtime.id)}
+                                  onCheckedChange={(checked) => {
+                                    setNewCode(prev => ({
+                                      ...prev,
+                                      restricted_showtime_ids: checked 
+                                        ? [...prev.restricted_showtime_ids, showtime.id]
+                                        : prev.restricted_showtime_ids.filter(id => id !== showtime.id)
+                                    }));
+                                  }}
+                                />
+                                <label htmlFor={`showtime-${showtime.id}`} className="text-sm cursor-pointer flex-1">
+                                  {showtime.movies?.title} - {showtime.screens?.name}
+                                  <span className="text-muted-foreground ml-1">
+                                    ({format(new Date(showtime.start_time), 'MMM d, h:mm a')})
+                                  </span>
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No upcoming showtimes</p>
+                        )}
+                      </ScrollArea>
+                    </div>
+
+                    {(newCode.restricted_movie_ids.length > 0 || newCode.restricted_showtime_ids.length > 0) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setNewCode(prev => ({ ...prev, restricted_movie_ids: [], restricted_showtime_ids: [] }))}
+                      >
+                        Clear all restrictions
+                      </Button>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+
                 <Button
                   className="w-full"
                   onClick={() => createMutation.mutate(newCode)}
@@ -397,6 +564,23 @@ export default function PromoCodeManagement() {
                           {promo.description && (
                             <p className="text-xs text-muted-foreground">{promo.description}</p>
                           )}
+                          {/* Show restrictions badges */}
+                          {(promo.restricted_movie_ids?.length || promo.restricted_showtime_ids?.length) ? (
+                            <div className="flex items-center gap-1 mt-1">
+                              {promo.restricted_movie_ids?.length ? (
+                                <Badge variant="outline" className="text-xs">
+                                  <Film className="h-3 w-3 mr-1" />
+                                  {promo.restricted_movie_ids.length} movie{promo.restricted_movie_ids.length > 1 ? 's' : ''}
+                                </Badge>
+                              ) : null}
+                              {promo.restricted_showtime_ids?.length ? (
+                                <Badge variant="outline" className="text-xs">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {promo.restricted_showtime_ids.length} showtime{promo.restricted_showtime_ids.length > 1 ? 's' : ''}
+                                </Badge>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                       </TableCell>
                       <TableCell>
