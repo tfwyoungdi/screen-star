@@ -36,6 +36,8 @@ import ConcessionManagement from "./pages/ConcessionManagement";
 import CustomerLogin from "./pages/CustomerLogin";
 import CustomerSignup from "./pages/CustomerSignup";
 import CustomerAccount from "./pages/CustomerAccount";
+import CustomerForgotPassword from "./pages/CustomerForgotPassword";
+import CustomerResetPassword from "./pages/CustomerResetPassword";
 
 import CinemaCareers from "./pages/CinemaCareers";
 import CinemaContact from "./pages/CinemaContact";
@@ -99,6 +101,8 @@ const App = () => (
                   <Route path="/cinema/:slug/login" element={<CustomerLogin />} />
                   <Route path="/cinema/:slug/signup" element={<CustomerSignup />} />
                   <Route path="/cinema/:slug/account" element={<CustomerAccount />} />
+                  <Route path="/cinema/:slug/forgot-password" element={<CustomerForgotPassword />} />
+                  <Route path="/cinema/:slug/reset-password" element={<CustomerResetPassword />} />
               <Route
                 path="/dashboard"
                 element={

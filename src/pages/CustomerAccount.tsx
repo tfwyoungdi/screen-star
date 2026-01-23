@@ -1,14 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Gift, Star, Ticket, LogOut, Clock, History } from 'lucide-react';
+import { ArrowLeft, Loader2, Gift, Star, Ticket, LogOut, Clock, History, Mail, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface LoyaltyTransaction {
   id: string;
@@ -31,6 +33,33 @@ export default function CustomerAccount() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user, customer, loading: authLoading, signOut, refreshCustomer } = useCustomerAuth();
+  const [dismissedVerification, setDismissedVerification] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
+
+  // Check if email is verified
+  const isEmailVerified = user?.email_confirmed_at != null;
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    
+    setResendingVerification(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      
+      if (error) throw error;
+      toast.success('Verification email sent! Please check your inbox.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to resend verification email');
+    } finally {
+      setResendingVerification(false);
+    }
+  };
 
   // Fetch cinema data
   const { data: cinema, isLoading: cinemaLoading } = useQuery({
@@ -166,6 +195,45 @@ export default function CustomerAccount() {
       {/* Main Content */}
       <main className="flex-1 p-8">
         <div className="container mx-auto max-w-4xl">
+          {/* Email Verification Reminder */}
+          {!isEmailVerified && !dismissedVerification && (
+            <Alert className="mb-6 bg-amber-500/10 border-amber-500/30">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-amber-400 mt-0.5" />
+                  <div>
+                    <p className="text-amber-400 font-medium">Verify your email</p>
+                    <AlertDescription className="text-amber-400/80 text-sm mt-1">
+                      Please verify your email address to fully access your account. Check your inbox for the verification link.
+                    </AlertDescription>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResendVerification}
+                      disabled={resendingVerification}
+                      className="mt-2 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 px-0"
+                    >
+                      {resendingVerification ? (
+                        <>
+                          <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        'Resend verification email'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDismissedVerification(true)}
+                  className="text-amber-400/60 hover:text-amber-400 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </Alert>
+          )}
+
           {/* Welcome Section */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">

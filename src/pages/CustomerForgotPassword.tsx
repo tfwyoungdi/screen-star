@@ -2,29 +2,26 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Mail } from 'lucide-react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-export default function CustomerLogin() {
+export default function CustomerForgotPassword() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn, user, loading: authLoading } = useCustomerAuth();
+  const [success, setSuccess] = useState(false);
 
   // Fetch cinema data
   const { data: cinema, isLoading: cinemaLoading } = useQuery({
@@ -47,38 +44,26 @@ export default function CustomerLogin() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
   });
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user && !authLoading && cinema) {
-      navigate(`/cinema/${slug}/account`);
-    }
-  }, [user, authLoading, cinema, slug, navigate]);
-
-  const onSubmit = async (data: LoginFormData) => {
-    if (!cinema) return;
-    
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     setError(null);
-    const { error } = await signIn(data.email, data.password, cinema.id);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/cinema/${slug}/reset-password`,
+      });
 
-    if (error) {
-      if (error.message.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please try again.');
-      } else if (error.message.includes('Email not confirmed')) {
-        setError('Please verify your email before logging in.');
-      } else {
-        setError(error.message);
-      }
-      return;
+      if (error) throw error;
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
     }
-
-    navigate(`/cinema/${slug}/account`);
   };
 
-  if (cinemaLoading || authLoading) {
+  if (cinemaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0f' }}>
         <Loader2 className="h-8 w-8 animate-spin text-white" />
@@ -99,17 +84,73 @@ export default function CustomerLogin() {
     );
   }
 
+  if (success) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0a0a0f' }}>
+        <header className="border-b border-white/10 p-4">
+          <div className="container mx-auto">
+            <Link 
+              to={`/cinema/${slug}/login`} 
+              className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Login
+            </Link>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="w-full max-w-md text-center">
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{ backgroundColor: `${cinema.primary_color}20` }}
+            >
+              <Mail className="h-8 w-8" style={{ color: cinema.primary_color }} />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-4">Check Your Email</h1>
+            <p className="text-white/60 mb-8">
+              If an account exists with that email, you will receive a password reset link shortly.
+            </p>
+            
+            <div className="space-y-3">
+              <Link to={`/cinema/${slug}/login`}>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-white/20 text-white hover:bg-white/10"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Login
+                </Button>
+              </Link>
+            </div>
+
+            <p className="text-center text-xs text-white/40 mt-6">
+              Didn't receive the email? Check your spam folder or{' '}
+              <button
+                onClick={() => setSuccess(false)}
+                className="hover:underline"
+                style={{ color: cinema.primary_color }}
+              >
+                try again
+              </button>
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0a0a0f' }}>
       {/* Header */}
       <header className="border-b border-white/10 p-4">
         <div className="container mx-auto">
           <Link 
-            to={`/cinema/${slug}`} 
+            to={`/cinema/${slug}/login`} 
             className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to {cinema.name}
+            Back to Login
           </Link>
         </div>
       </header>
@@ -131,9 +172,9 @@ export default function CustomerLogin() {
                 style={{ backgroundColor: cinema.primary_color }}
               />
             )}
-            <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">Forgot Password</h1>
             <p className="text-white/60">
-              Sign in to your {cinema.name} account
+              Enter your email to reset your password
             </p>
           </div>
 
@@ -161,31 +202,6 @@ export default function CustomerLogin() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-white/80">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  {...register('password')}
-                  className={`bg-white/5 border-white/10 text-white placeholder:text-white/40 pr-10 ${
-                    errors.password ? 'border-red-500' : ''
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-sm text-red-400">{errors.password.message}</p>
-              )}
-            </div>
-
             <Button
               type="submit"
               className="w-full"
@@ -198,33 +214,22 @@ export default function CustomerLogin() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  Sending reset link...
                 </>
               ) : (
-                'Sign In'
+                'Send Reset Link'
               )}
             </Button>
 
-            <div className="text-center">
-              <Link
-                to={`/cinema/${slug}/forgot-password`}
-                className="text-sm hover:underline"
-                style={{ color: cinema.primary_color }}
+            <Link to={`/cinema/${slug}/login`} className="block">
+              <Button 
+                variant="ghost" 
+                className="w-full text-white/70 hover:text-white hover:bg-white/10"
               >
-                Forgot your password?
-              </Link>
-            </div>
-
-            <p className="text-center text-sm text-white/60">
-              Don't have an account?{' '}
-              <Link
-                to={`/cinema/${slug}/signup`}
-                className="font-medium hover:underline"
-                style={{ color: cinema.primary_color }}
-              >
-                Sign up
-              </Link>
-            </p>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Login
+              </Button>
+            </Link>
           </form>
         </div>
       </main>
