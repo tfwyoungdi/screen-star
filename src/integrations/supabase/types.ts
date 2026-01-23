@@ -599,6 +599,7 @@ export type Database = {
           total_bookings: number
           total_spent: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -614,6 +615,7 @@ export type Database = {
           total_bookings?: number
           total_spent?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -629,6 +631,7 @@ export type Database = {
           total_bookings?: number
           total_spent?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2141,8 +2144,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_old_loyalty_transactions: { Args: never; Returns: undefined }
       generate_booking_reference: { Args: never; Returns: string }
       generate_unique_slug: { Args: { cinema_name: string }; Returns: string }
+      get_customer_by_user_id: {
+        Args: { _organization_id: string; _user_id: string }
+        Returns: {
+          email: string
+          first_booking_at: string
+          full_name: string
+          id: string
+          last_booking_at: string
+          loyalty_points: number
+          organization_id: string
+          phone: string
+          total_bookings: number
+          total_spent: number
+        }[]
+      }
       get_invitation_by_token: {
         Args: { invitation_token: string }
         Returns: {

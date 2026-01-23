@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
+import { CustomerAuthProvider } from "@/hooks/useCustomerAuth";
 import { ImpersonationProvider } from "@/hooks/useImpersonation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PlatformProtectedRoute } from "@/components/auth/PlatformProtectedRoute";
@@ -32,6 +33,9 @@ import CinemaBooking from "./pages/CinemaBooking";
 import CustomerManagement from "./pages/CustomerManagement";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import ConcessionManagement from "./pages/ConcessionManagement";
+import CustomerLogin from "./pages/CustomerLogin";
+import CustomerSignup from "./pages/CustomerSignup";
+import CustomerAccount from "./pages/CustomerAccount";
 
 import CinemaCareers from "./pages/CinemaCareers";
 import CinemaContact from "./pages/CinemaContact";
@@ -68,27 +72,33 @@ const App = () => (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <TooltipProvider>
           <AuthProvider>
-            <ImpersonationProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ImpersonationBanner />
-                <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/careers" element={<Careers />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/accept-invitation" element={<AcceptInvitation />} />
-                <Route path="/cinema/:slug" element={<PublicCinema />} />
-                <Route path="/cinema/:slug/careers" element={<CinemaCareers />} />
-                <Route path="/cinema/:slug/contact" element={<CinemaContact />} />
-                <Route path="/cinema/:slug/booking" element={<CinemaBooking />} />
-                <Route path="/cinema/:slug/book" element={<BookingFlow />} />
-                <Route path="/cinema/:slug/staff" element={<StaffLogin />} />
+            <CustomerAuthProvider>
+              <ImpersonationProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <ImpersonationBanner />
+                  <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/careers" element={<Careers />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/accept-invitation" element={<AcceptInvitation />} />
+                  {/* Public Cinema Routes */}
+                  <Route path="/cinema/:slug" element={<PublicCinema />} />
+                  <Route path="/cinema/:slug/careers" element={<CinemaCareers />} />
+                  <Route path="/cinema/:slug/contact" element={<CinemaContact />} />
+                  <Route path="/cinema/:slug/booking" element={<CinemaBooking />} />
+                  <Route path="/cinema/:slug/book" element={<BookingFlow />} />
+                  <Route path="/cinema/:slug/staff" element={<StaffLogin />} />
+                  {/* Customer Auth Routes */}
+                  <Route path="/cinema/:slug/login" element={<CustomerLogin />} />
+                  <Route path="/cinema/:slug/signup" element={<CustomerSignup />} />
+                  <Route path="/cinema/:slug/account" element={<CustomerAccount />} />
               <Route
                 path="/dashboard"
                 element={
@@ -341,11 +351,12 @@ const App = () => (
                 }
               />
               
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </ImpersonationProvider>
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </ImpersonationProvider>
+          </CustomerAuthProvider>
         </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>
