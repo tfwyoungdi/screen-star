@@ -10,12 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2, Popcorn, Plus, Minus, Gift, Star, Download } from 'lucide-react';
+import { Film, Clock, Calendar, MapPin, ArrowLeft, Ticket, Check, AlertCircle, Tag, X, CreditCard, Loader2, Popcorn, Plus, Minus, Gift, Star, Download, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoyaltyRedemption } from '@/components/loyalty/LoyaltyRedemption';
 import { cn } from '@/lib/utils';
 import { PrintableTicket } from '@/components/booking/PrintableTicket';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
 interface PromoCode {
   id: string;
@@ -132,6 +133,9 @@ export default function BookingFlow() {
   const paymentRef = searchParams.get('ref');
   const fromBooking = searchParams.get('fromBooking') === 'true';
 
+  // Customer auth for auto-fill
+  const { user, customer, refreshCustomer } = useCustomerAuth();
+
   const [step, setStep] = useState<'seats' | 'snacks' | 'details' | 'payment' | 'confirmation'>('seats');
   const [showtime, setShowtime] = useState<Showtime | null>(null);
   const [seatLayouts, setSeatLayouts] = useState<any[]>([]);
@@ -162,6 +166,25 @@ export default function BookingFlow() {
   const ticketRef = useRef<HTMLDivElement>(null);
   const printableTicketRef = useRef<HTMLDivElement>(null);
   const fallbackTicketRef = useRef<HTMLDivElement>(null);
+
+  // Auto-fill booking details when customer is logged in
+  useEffect(() => {
+    if (customer && user) {
+      setBookingData(prev => ({
+        customer_name: prev.customer_name || customer.full_name || '',
+        customer_email: prev.customer_email || customer.email || user.email || '',
+        customer_phone: prev.customer_phone || customer.phone || '',
+      }));
+    }
+  }, [customer, user]);
+
+  // Refresh customer data when cinema loads
+  useEffect(() => {
+    if (cinema && user) {
+      refreshCustomer(cinema.id);
+    }
+  }, [cinema, user, refreshCustomer]);
+
 
   // Load pre-selected seats from CinemaBooking page
   useEffect(() => {
@@ -1309,6 +1332,19 @@ export default function BookingFlow() {
               <h2 className="text-xl font-bold text-white mb-1">Your Details</h2>
               <p className="text-white/60 text-sm">Enter your contact information</p>
             </div>
+
+            {/* Logged in indicator */}
+            {customer && (
+              <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
+                  <User className="h-4 w-4" style={{ color: primaryColor }} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-green-400 text-sm font-medium">Logged in as {customer.full_name}</p>
+                  <p className="text-green-400/70 text-xs">Your details have been auto-filled</p>
+                </div>
+              </div>
+            )}
 
             {/* Form */}
             <div className="space-y-5">
