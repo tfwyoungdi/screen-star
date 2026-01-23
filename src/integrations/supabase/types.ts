@@ -528,6 +528,62 @@ export type Database = {
           },
         ]
       }
+      customer_email_campaigns: {
+        Row: {
+          clicked_count: number | null
+          created_at: string
+          html_body: string
+          id: string
+          opened_count: number | null
+          organization_id: string
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string
+          template_type: string
+          total_recipients: number | null
+          updated_at: string
+        }
+        Insert: {
+          clicked_count?: number | null
+          created_at?: string
+          html_body: string
+          id?: string
+          opened_count?: number | null
+          organization_id: string
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject: string
+          template_type: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Update: {
+          clicked_count?: number | null
+          created_at?: string
+          html_body?: string
+          id?: string
+          opened_count?: number | null
+          organization_id?: string
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string
+          template_type?: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_email_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string

@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.send-bulk-announcement]
 verify_jwt = false
+
+[functions.send-customer-announcement]
+verify_jwt = false
