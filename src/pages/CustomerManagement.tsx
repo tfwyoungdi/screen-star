@@ -161,32 +161,6 @@ export default function CustomerManagement() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Total Customers"
-            value={totalCustomers}
-            icon={Users}
-            variant="primary"
-          />
-          <StatCard
-            title="Total Revenue"
-            value={Math.round(totalRevenue)}
-            prefix="$"
-            icon={DollarSign}
-          />
-          <StatCard
-            title="Avg. Spend"
-            value={Math.round(avgSpendPerCustomer)}
-            prefix="$"
-            icon={TrendingUp}
-          />
-          <StatCard
-            title="Loyalty Points"
-            value={totalLoyaltyPoints}
-            icon={Star}
-          />
-        </div>
 
         {/* Email Campaigns */}
         {effectiveOrgId && organization && (
