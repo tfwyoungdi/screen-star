@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
+import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ import {
   Award,
 } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { CustomerEmailBlast } from '@/components/customers/CustomerEmailBlast';
 
 interface Customer {
   id: string;
@@ -64,10 +66,10 @@ export default function CustomerManagement() {
   const { data: profile } = useUserProfile();
   const { getEffectiveOrganizationId } = useImpersonation();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
+  const { organization } = useOrganization();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [dateRange, setDateRange] = useState<number | null>(30);
-
   const startDate = dateRange ? startOfDay(subDays(new Date(), dateRange)) : null;
 
   const { data: customers, isLoading } = useQuery({
@@ -185,6 +187,15 @@ export default function CustomerManagement() {
             icon={Star}
           />
         </div>
+
+        {/* Email Campaigns */}
+        {effectiveOrgId && organization && (
+          <CustomerEmailBlast
+            organizationId={effectiveOrgId}
+            cinemaName={organization.name}
+            customerCount={totalCustomers}
+          />
+        )}
 
         {/* Search */}
         <div className="flex gap-4">
