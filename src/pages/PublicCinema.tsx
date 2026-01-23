@@ -359,6 +359,7 @@ export default function PublicCinema() {
         cinemaName={cinema?.name || ''}
         primaryColor={cinema?.primary_color || '#F59E0B'}
         logoUrl={cinema?.logo_url}
+        organizationId={cinema?.id}
       />
 
       {/* Now Showing */}

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Clock, Calendar, Star, ChevronLeft, ChevronRight, Search, Grid3X3 } from 'lucide-react';
+import { Play, Clock, Calendar, Star, ChevronLeft, ChevronRight, Search, Grid3X3, User, LogIn, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { CustomerLoyaltyWidget } from '@/components/loyalty/CustomerLoyaltyWidget';
 interface Movie {
   id: string;
   title: string;
@@ -22,6 +24,7 @@ interface CinemaHeroProps {
   cinemaName: string;
   primaryColor?: string;
   logoUrl?: string | null;
+  organizationId?: string;
 }
 
 const extractVideoId = (url: string): { type: 'youtube' | 'vimeo' | null; id: string | null } => {
@@ -51,9 +54,11 @@ const formatDuration = (minutes: number): string => {
   return `${hours}h ${mins}m`;
 };
 
-export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F59E0B', logoUrl }: CinemaHeroProps) {
+export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F59E0B', logoUrl, organizationId }: CinemaHeroProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, customer, loading } = useCustomerAuth();
 
   // Use all movies, even without showtimes, for hero display
   const featuredMovies = movies.filter(m => m.poster_url).slice(0, 5);
@@ -95,22 +100,127 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
                 <img src={logoUrl} alt={cinemaName} className="h-10 w-auto" />
               ) : (
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-amber-500 rotate-45 flex items-center justify-center">
-                    <div className="w-4 h-4 bg-amber-500 -rotate-45" />
+                  <div 
+                    className="w-8 h-8 rotate-45 flex items-center justify-center"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <div className="w-4 h-4 -rotate-45" style={{ backgroundColor: primaryColor }} />
                   </div>
                   <span className="text-xl font-bold text-white">{cinemaName}</span>
                 </div>
               )}
             </div>
-            <nav className="hidden md:flex items-center gap-8">
-              <Search className="h-5 w-5 text-white/70 hover:text-white cursor-pointer" />
-              <a href="#" className="text-white/90 hover:text-white font-medium">HOME</a>
-              <a href="#movies" className="text-white/70 hover:text-white">MOVIE</a>
-              <Link to={`/cinema/${cinemaSlug}/about`} className="text-white/70 hover:text-white">ABOUT</Link>
-              <Link to={`/cinema/${cinemaSlug}/careers`} className="text-white/70 hover:text-white">CAREERS</Link>
-              <Link to={`/cinema/${cinemaSlug}/contact`} className="text-white/70 hover:text-white">CONTACT</Link>
-              <Grid3X3 className="h-5 w-5 text-white/70 hover:text-white cursor-pointer" />
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#" className="text-white/90 hover:text-white font-medium text-sm">HOME</a>
+              <a href="#movies" className="text-white/70 hover:text-white text-sm">MOVIE</a>
+              <Link to={`/cinema/${cinemaSlug}/careers`} className="text-white/70 hover:text-white text-sm">CAREERS</Link>
+              <Link to={`/cinema/${cinemaSlug}/contact`} className="text-white/70 hover:text-white text-sm">CONTACT</Link>
+              
+              {/* Auth Buttons */}
+              {!loading && (
+                <>
+                  {user && customer ? (
+                    <Link to={`/cinema/${cinemaSlug}/account`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-white/70 hover:text-white hover:bg-white/10"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        My Account
+                      </Button>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Link to={`/cinema/${cinemaSlug}/login`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-white/70 hover:text-white hover:bg-white/10"
+                        >
+                          <LogIn className="h-4 w-4 mr-2" />
+                          Login
+                        </Button>
+                      </Link>
+                      <Link to={`/cinema/${cinemaSlug}/signup`}>
+                        <Button
+                          size="sm"
+                          style={{ 
+                            backgroundColor: primaryColor,
+                            color: '#000',
+                          }}
+                          className="hover:opacity-90"
+                        >
+                          Sign Up
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {organizationId && (
+                <CustomerLoyaltyWidget 
+                  organizationId={organizationId} 
+                  primaryColor={primaryColor} 
+                />
+              )}
             </nav>
+
+            {/* Mobile Menu */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/10"
+                >
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent 
+                side="right" 
+                className="w-[280px] border-white/10 p-0"
+                style={{ backgroundColor: '#0a0a0f' }}
+              >
+                <div className="flex flex-col p-4">
+                  <a href="#" className="py-3 text-white font-medium">HOME</a>
+                  <a href="#movies" className="py-3 text-white/70">MOVIE</a>
+                  <Link to={`/cinema/${cinemaSlug}/careers`} className="py-3 text-white/70">CAREERS</Link>
+                  <Link to={`/cinema/${cinemaSlug}/contact`} className="py-3 text-white/70">CONTACT</Link>
+                  
+                  {!loading && (
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      {user && customer ? (
+                        <Link to={`/cinema/${cinemaSlug}/account`} onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start text-white/70">
+                            <User className="h-5 w-5 mr-2" />
+                            My Account
+                          </Button>
+                        </Link>
+                      ) : (
+                        <>
+                          <Link to={`/cinema/${cinemaSlug}/login`} onClick={() => setMobileMenuOpen(false)}>
+                            <Button variant="ghost" className="w-full justify-start text-white/70">
+                              <LogIn className="h-5 w-5 mr-2" />
+                              Login
+                            </Button>
+                          </Link>
+                          <Link to={`/cinema/${cinemaSlug}/signup`} onClick={() => setMobileMenuOpen(false)}>
+                            <Button
+                              className="w-full mt-2"
+                              style={{ backgroundColor: primaryColor, color: '#000' }}
+                            >
+                              Sign Up
+                            </Button>
+                          </Link>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </header>
 
@@ -172,14 +282,116 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             )}
           </div>
           <nav className="hidden md:flex items-center gap-6">
-            <Search className="h-4 w-4 text-white/70 hover:text-white cursor-pointer transition-colors" />
-            <a href="#" className="text-white text-sm font-medium hover:text-amber-400 transition-colors">HOME</a>
+            <a href="#" className="text-white text-sm font-medium hover:text-white/80 transition-colors">HOME</a>
             <a href="#movies" className="text-white/70 text-sm hover:text-white font-medium transition-colors">MOVIE</a>
-            <Link to={`/cinema/${cinemaSlug}/about`} className="text-white/70 text-sm hover:text-white font-medium transition-colors">ABOUT</Link>
             <Link to={`/cinema/${cinemaSlug}/careers`} className="text-white/70 text-sm hover:text-white font-medium transition-colors">CAREERS</Link>
             <Link to={`/cinema/${cinemaSlug}/contact`} className="text-white/70 text-sm hover:text-white font-medium transition-colors">CONTACT</Link>
-            <Grid3X3 className="h-4 w-4 text-white/70 hover:text-white cursor-pointer transition-colors" />
+            
+            {/* Auth Buttons */}
+            {!loading && (
+              <>
+                {user && customer ? (
+                  <Link to={`/cinema/${cinemaSlug}/account`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white/70 hover:text-white hover:bg-white/10"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      My Account
+                    </Button>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Link to={`/cinema/${cinemaSlug}/login`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-white/70 hover:text-white hover:bg-white/10"
+                      >
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to={`/cinema/${cinemaSlug}/signup`}>
+                      <Button
+                        size="sm"
+                        style={{ 
+                          backgroundColor: primaryColor,
+                          color: '#000',
+                        }}
+                        className="hover:opacity-90"
+                      >
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+            
+            {organizationId && (
+              <CustomerLoyaltyWidget 
+                organizationId={organizationId} 
+                primaryColor={primaryColor} 
+              />
+            )}
           </nav>
+
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/10"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent 
+              side="right" 
+              className="w-[280px] border-white/10 p-0"
+              style={{ backgroundColor: '#0a0a0f' }}
+            >
+              <div className="flex flex-col p-4">
+                <a href="#" className="py-3 text-white font-medium">HOME</a>
+                <a href="#movies" className="py-3 text-white/70">MOVIE</a>
+                <Link to={`/cinema/${cinemaSlug}/careers`} className="py-3 text-white/70" onClick={() => setMobileMenuOpen(false)}>CAREERS</Link>
+                <Link to={`/cinema/${cinemaSlug}/contact`} className="py-3 text-white/70" onClick={() => setMobileMenuOpen(false)}>CONTACT</Link>
+                
+                {!loading && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    {user && customer ? (
+                      <Link to={`/cinema/${cinemaSlug}/account`} onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white/70">
+                          <User className="h-5 w-5 mr-2" />
+                          My Account
+                        </Button>
+                      </Link>
+                    ) : (
+                      <>
+                        <Link to={`/cinema/${cinemaSlug}/login`} onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start text-white/70">
+                            <LogIn className="h-5 w-5 mr-2" />
+                            Login
+                          </Button>
+                        </Link>
+                        <Link to={`/cinema/${cinemaSlug}/signup`} onClick={() => setMobileMenuOpen(false)}>
+                          <Button
+                            className="w-full mt-2"
+                            style={{ backgroundColor: primaryColor, color: '#000' }}
+                          >
+                            Sign Up
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
