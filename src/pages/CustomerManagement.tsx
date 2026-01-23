@@ -146,19 +146,6 @@ export default function CustomerManagement() {
               Manage customer profiles, loyalty points, and booking history
             </p>
           </div>
-          <div className="flex rounded-lg border border-border overflow-hidden">
-            {DATE_FILTERS.map((filter) => (
-              <Button
-                key={filter.value}
-                variant={dateRange === filter.value ? 'default' : 'ghost'}
-                size="sm"
-                className="rounded-none"
-                onClick={() => setDateRange(filter.value)}
-              >
-                {filter.label}
-              </Button>
-            ))}
-          </div>
         </div>
 
 
