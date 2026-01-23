@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, User, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { CustomerLoyaltyWidget } from '@/components/loyalty/CustomerLoyaltyWidget';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
 interface CinemaHeaderProps {
   slug: string;
@@ -23,6 +24,7 @@ export function CinemaHeader({
   organizationId
 }: CinemaHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, customer, loading } = useCustomerAuth();
 
   const navItems = [
     { key: 'home', label: 'HOME', href: `/cinema/${slug}` },
@@ -65,6 +67,50 @@ export function CinemaHeader({
                 {item.label}
               </Link>
             ))}
+            
+            {/* Auth Buttons / Account */}
+            {!loading && (
+              <>
+                {user && customer ? (
+                  <Link to={`/cinema/${slug}/account`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white/70 hover:text-white hover:bg-white/10"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      My Account
+                    </Button>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Link to={`/cinema/${slug}/login`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-white/70 hover:text-white hover:bg-white/10"
+                      >
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to={`/cinema/${slug}/signup`}>
+                      <Button
+                        size="sm"
+                        style={{ 
+                          backgroundColor: primaryColor,
+                          color: '#000',
+                        }}
+                        className="hover:opacity-90"
+                      >
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+            
             {organizationId && (
               <CustomerLoyaltyWidget 
                 organizationId={organizationId} 
@@ -128,6 +174,47 @@ export function CinemaHeader({
                     {item.label}
                   </Link>
                 ))}
+                
+                {/* Mobile Auth Links */}
+                {!loading && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    {user && customer ? (
+                      <Link
+                        to={`/cinema/${slug}/account`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2 py-3 px-2 text-white/70 hover:text-white transition-colors"
+                      >
+                        <User className="h-5 w-5" />
+                        My Account
+                      </Link>
+                    ) : (
+                      <>
+                        <Link
+                          to={`/cinema/${slug}/login`}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-2 py-3 px-2 text-white/70 hover:text-white transition-colors"
+                        >
+                          <LogIn className="h-5 w-5" />
+                          Login
+                        </Link>
+                        <Link
+                          to={`/cinema/${slug}/signup`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Button
+                            className="w-full mt-2"
+                            style={{ 
+                              backgroundColor: primaryColor,
+                              color: '#000',
+                            }}
+                          >
+                            Sign Up
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
