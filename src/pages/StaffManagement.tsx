@@ -82,12 +82,16 @@ export default function StaffManagement() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const queryClient = useQueryClient();
 
-  // Check if user is a supervisor (limited access) or admin/manager (full access)
+  // Check if user is admin (full access) or supervisor (limited - only daily access code)
   const userRoles = profile?.roles || [];
-  const isSupervisorOnly = userRoles.includes('supervisor') && 
-    !userRoles.includes('cinema_admin') && 
-    !userRoles.includes('manager');
-  const canManageStaff = userRoles.includes('cinema_admin');
+  const isAdmin = userRoles.includes('cinema_admin');
+  const isManager = userRoles.includes('manager');
+  const isSupervisor = userRoles.includes('supervisor');
+  
+  // Only cinema_admin can manage staff, supervisors only see daily access code
+  const canManageStaff = isAdmin;
+  const canViewStaffList = isAdmin || isManager;
+  const isSupervisorOnly = isSupervisor && !isAdmin && !isManager;
 
   const {
     register,
@@ -355,17 +359,19 @@ export default function StaffManagement() {
         )}
 
         {/* Supervisor-only view ends here - hide staff management features */}
-        {!isSupervisorOnly && (
+        {!isSupervisorOnly && canViewStaffList && (
           <>
-            <div className="flex items-center justify-between">
-              <div />
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Add Staff
-                  </Button>
-                </DialogTrigger>
+            {/* Only cinema_admin can add staff */}
+            {canManageStaff && (
+              <div className="flex items-center justify-between">
+                <div />
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Add Staff
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Create Staff Account</DialogTitle>
@@ -465,8 +471,9 @@ export default function StaffManagement() {
                 </DialogContent>
               </Dialog>
             </div>
+            )}
 
-        {/* Staff Portal URL */}
+            {/* Staff Portal URL */}
         {staffPortalUrl && (
           <Card>
             <CardHeader>
@@ -516,7 +523,7 @@ export default function StaffManagement() {
                       <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
+                      {canManageStaff && <TableHead className="w-[100px]">Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -542,51 +549,53 @@ export default function StaffManagement() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell>
-                          {member.role !== 'cinema_admin' && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openResetPasswordDialog(member)}>
-                                  <KeyRound className="mr-2 h-4 w-4" />
-                                  Reset Password
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openEditRoleDialog(member)}>
-                                  <Shield className="mr-2 h-4 w-4" />
-                                  Change Role
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleToggleStatus(member)}
-                                  disabled={isTogglingStatus}
-                                >
-                                  {member.is_active ? (
-                                    <>
-                                      <UserX className="mr-2 h-4 w-4" />
-                                      Deactivate
-                                    </>
-                                  ) : (
-                                    <>
-                                      <UserCheck className="mr-2 h-4 w-4" />
-                                      Reactivate
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={() => deleteStaffMember(member.id, member.email)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Remove Staff
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </TableCell>
+                        {canManageStaff && (
+                          <TableCell>
+                            {member.role !== 'cinema_admin' && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openResetPasswordDialog(member)}>
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    Reset Password
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => openEditRoleDialog(member)}>
+                                    <Shield className="mr-2 h-4 w-4" />
+                                    Change Role
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleToggleStatus(member)}
+                                    disabled={isTogglingStatus}
+                                  >
+                                    {member.is_active ? (
+                                      <>
+                                        <UserX className="mr-2 h-4 w-4" />
+                                        Deactivate
+                                      </>
+                                    ) : (
+                                      <>
+                                        <UserCheck className="mr-2 h-4 w-4" />
+                                        Reactivate
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => deleteStaffMember(member.id, member.email)}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Remove Staff
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
