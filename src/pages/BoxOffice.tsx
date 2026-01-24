@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { ShiftManagement } from '@/components/boxoffice/ShiftManagement';
 import { FloatingOrderSummary } from '@/components/boxoffice/FloatingOrderSummary';
+import { StaffClockIn } from '@/components/boxoffice/StaffClockIn';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface Showtime {
@@ -783,6 +784,33 @@ export default function BoxOffice() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show clock-in screen if no active shift
+  if (hasActiveShift === false) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="border-b bg-card">
+          <div className="h-16 flex items-center justify-between px-4 lg:px-6">
+            <div className="flex items-center gap-2">
+              <Ticket className="h-6 w-6 text-primary" />
+              <span className="font-bold text-lg">Box Office</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
+          </div>
+        </header>
+        <main className="flex-1 flex items-center justify-center p-4">
+          <StaffClockIn
+            userId={user.id}
+            organizationId={profile.organization_id}
+            onClockIn={() => setHasActiveShift(true)}
+          />
+        </main>
       </div>
     );
   }
