@@ -1448,6 +1448,23 @@ export default function BookingFlow() {
               </div>
             </div>
 
+            {/* Loyalty Rewards Redemption */}
+            <LoyaltyRedemption
+              organizationId={cinema.id}
+              customerEmail={bookingData.customer_email}
+              ticketSubtotal={ticketsSubtotal}
+              primaryColor={primaryColor}
+              onRewardApplied={(reward, customer, discountAmount) => {
+                setAppliedLoyaltyReward({ reward, customer, discount: discountAmount });
+                toast.success(`Applied ${reward.name} - Save $${discountAmount.toFixed(2)}!`);
+              }}
+              onRewardRemoved={() => {
+                setAppliedLoyaltyReward(null);
+                toast.info('Reward removed');
+              }}
+              appliedReward={appliedLoyaltyReward?.reward || null}
+            />
+
             {/* Payment Info */}
             <div className="bg-white/5 rounded-xl p-4 mb-6 flex items-start gap-3">
               <CreditCard className="h-5 w-5 text-white/60 mt-0.5" />
