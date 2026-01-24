@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { 
   History, Clock, DollarSign, CreditCard, TrendingUp, User, 
-  Calendar, ChevronDown, ChevronUp, FileText
+  Calendar, ChevronDown, ChevronUp, Ticket, ShoppingBag
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,10 @@ interface ShiftRecord {
     full_name: string;
     email: string;
   };
+  // Computed metrics
+  ticketsSold?: number;
+  concessionsSold?: number;
+  avgTransactionValue?: number;
 }
 
 export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
@@ -83,10 +87,54 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-      return shiftsData.map(shift => ({
-        ...shift,
-        profile: profileMap.get(shift.user_id),
-      })) as ShiftRecord[];
+      // Fetch shift performance metrics (tickets and concessions sold per shift)
+      const shiftIds = shiftsData.map(s => s.id);
+      
+      // Get bookings linked to each shift
+      const { data: shiftBookings } = await supabase
+        .from('bookings')
+        .select('id, shift_id, total_amount')
+        .in('shift_id', shiftIds)
+        .in('status', ['confirmed', 'paid', 'completed']);
+      
+      // Get tickets (booked seats) for those bookings
+      const bookingIds = shiftBookings?.map(b => b.id) || [];
+      const { data: bookedSeats } = await supabase
+        .from('booked_seats')
+        .select('booking_id')
+        .in('booking_id', bookingIds);
+      
+      // Get concessions for those bookings
+      const { data: concessions } = await supabase
+        .from('booking_concessions')
+        .select('booking_id, quantity')
+        .in('booking_id', bookingIds);
+      
+      // Build metrics map per shift
+      const shiftMetrics = new Map<string, { tickets: number; concessions: number }>();
+      
+      shiftIds.forEach(shiftId => {
+        const shiftBookingIds = shiftBookings?.filter(b => b.shift_id === shiftId).map(b => b.id) || [];
+        const ticketCount = bookedSeats?.filter(s => shiftBookingIds.includes(s.booking_id)).length || 0;
+        const concessionCount = concessions?.filter(c => shiftBookingIds.includes(c.booking_id))
+          .reduce((sum, c) => sum + c.quantity, 0) || 0;
+        
+        shiftMetrics.set(shiftId, { tickets: ticketCount, concessions: concessionCount });
+      });
+
+      return shiftsData.map(shift => {
+        const totalSales = (shift.total_cash_sales || 0) + (shift.total_card_sales || 0);
+        const transactions = shift.total_transactions || 0;
+        const metrics = shiftMetrics.get(shift.id);
+        
+        return {
+          ...shift,
+          profile: profileMap.get(shift.user_id),
+          ticketsSold: metrics?.tickets || 0,
+          concessionsSold: metrics?.concessions || 0,
+          avgTransactionValue: transactions > 0 ? totalSales / transactions : 0,
+        };
+      }) as ShiftRecord[];
     },
     enabled: !!organizationId,
   });
@@ -99,6 +147,8 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
       acc.totalCardSales += shift.total_card_sales || 0;
       acc.totalTransactions += shift.total_transactions || 0;
       acc.totalDifference += shift.cash_difference || 0;
+      acc.totalTickets += shift.ticketsSold || 0;
+      acc.totalConcessions += shift.concessionsSold || 0;
     }
     return acc;
   }, {
@@ -107,7 +157,13 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
     totalCardSales: 0,
     totalTransactions: 0,
     totalDifference: 0,
-  }) || { totalShifts: 0, totalCashSales: 0, totalCardSales: 0, totalTransactions: 0, totalDifference: 0 };
+    totalTickets: 0,
+    totalConcessions: 0,
+  }) || { totalShifts: 0, totalCashSales: 0, totalCardSales: 0, totalTransactions: 0, totalDifference: 0, totalTickets: 0, totalConcessions: 0 };
+
+  const avgTransactionValue = stats.totalTransactions > 0 
+    ? (stats.totalCashSales + stats.totalCardSales) / stats.totalTransactions 
+    : 0;
 
   const formatDuration = (start: string, end: string | null) => {
     if (!end) return 'In progress';
@@ -172,17 +228,46 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <TrendingUp className="h-4 w-4" />
-              Cash Variance
+              Avg Transaction
             </div>
-            <p className={`text-2xl font-bold mt-1 ${
-              stats.totalDifference > 0 ? 'text-green-600' : 
-              stats.totalDifference < 0 ? 'text-destructive' : ''
-            }`}>
-              ${stats.totalDifference.toFixed(2)}
-            </p>
+            <p className="text-2xl font-bold mt-1">${avgTransactionValue.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Ticket className="h-4 w-4" />
+              Tickets Sold
+            </div>
+            <p className="text-2xl font-bold mt-1">{stats.totalTickets}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <ShoppingBag className="h-4 w-4" />
+              Concessions Sold
+            </div>
+            <p className="text-2xl font-bold mt-1">{stats.totalConcessions}</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Cash Variance Card */}
+      <Card className="max-w-xs">
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <DollarSign className="h-4 w-4" />
+            Cash Variance
+          </div>
+          <p className={`text-2xl font-bold mt-1 ${
+            stats.totalDifference > 0 ? 'text-primary' : 
+            stats.totalDifference < 0 ? 'text-destructive' : ''
+          }`}>
+            ${stats.totalDifference.toFixed(2)}
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Shift History Table */}
       <Card>
@@ -293,6 +378,18 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
                           <div>
                             <p className="text-sm text-muted-foreground">Transactions</p>
                             <p className="font-medium">{shift.total_transactions || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Avg Transaction</p>
+                            <p className="font-medium">${(shift.avgTransactionValue || 0).toFixed(2)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Tickets Sold</p>
+                            <p className="font-medium">{shift.ticketsSold || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Concessions Sold</p>
+                            <p className="font-medium">{shift.concessionsSold || 0}</p>
                           </div>
                           {shift.notes && (
                             <div className="md:col-span-2 lg:col-span-4">

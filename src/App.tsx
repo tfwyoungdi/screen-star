@@ -48,6 +48,7 @@ import GateStaff from "./pages/GateStaff";
 import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
+import SupervisorDashboard from "./pages/SupervisorDashboard";
 import StaffLogin from "./pages/StaffLogin";
 import SupportTickets from "./pages/SupportTickets";
 import PlatformAdminLogin from "./pages/PlatformAdminLogin";
@@ -164,6 +165,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['cinema_admin', 'supervisor']}>
                     <StaffManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/supervisor"
+                element={
+                  <ProtectedRoute allowedRoles={['supervisor']}>
+                    <SupervisorDashboard />
                   </ProtectedRoute>
                 }
               />

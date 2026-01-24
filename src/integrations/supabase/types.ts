@@ -156,6 +156,7 @@ export type Database = {
           organization_id: string
           promo_code_id: string | null
           reminder_sent: boolean
+          shift_id: string | null
           showtime_id: string
           status: string
           total_amount: number
@@ -172,6 +173,7 @@ export type Database = {
           organization_id: string
           promo_code_id?: string | null
           reminder_sent?: boolean
+          shift_id?: string | null
           showtime_id: string
           status?: string
           total_amount: number
@@ -188,6 +190,7 @@ export type Database = {
           organization_id?: string
           promo_code_id?: string | null
           reminder_sent?: boolean
+          shift_id?: string | null
           showtime_id?: string
           status?: string
           total_amount?: number
@@ -212,6 +215,13 @@ export type Database = {
             columns: ["promo_code_id"]
             isOneToOne: false
             referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
             referencedColumns: ["id"]
           },
           {
