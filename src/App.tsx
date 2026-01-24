@@ -147,7 +147,7 @@ const App = () => (
               <Route
                 path="/scanner"
                 element={
-                  <ProtectedRoute allowedRoles={['cinema_admin', 'gate_staff', 'supervisor']}>
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager', 'supervisor']}>
                     <TicketScanner />
                   </ProtectedRoute>
                 }
