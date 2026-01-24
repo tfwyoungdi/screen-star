@@ -146,7 +146,7 @@ const App = () => (
               <Route
                 path="/scanner"
                 element={
-                  <ProtectedRoute allowedRoles={['cinema_admin', 'gate_staff']}>
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'gate_staff', 'supervisor']}>
                     <TicketScanner />
                   </ProtectedRoute>
                 }
@@ -162,7 +162,7 @@ const App = () => (
               <Route
                 path="/staff"
                 element={
-                  <ProtectedRoute allowedRoles={['cinema_admin']}>
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'supervisor']}>
                     <StaffManagement />
                   </ProtectedRoute>
                 }
@@ -226,7 +226,7 @@ const App = () => (
               <Route
                 path="/box-office"
                 element={
-                  <ProtectedRoute allowedRoles={['cinema_admin', 'box_office']}>
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'box_office', 'supervisor']}>
                     <BoxOffice />
                   </ProtectedRoute>
                 }
@@ -234,7 +234,7 @@ const App = () => (
               <Route
                 path="/gate"
                 element={
-                  <ProtectedRoute allowedRoles={['cinema_admin', 'gate_staff']}>
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'gate_staff', 'supervisor']}>
                     <GateStaff />
                   </ProtectedRoute>
                 }

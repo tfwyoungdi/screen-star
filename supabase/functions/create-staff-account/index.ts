@@ -10,7 +10,7 @@ interface CreateStaffRequest {
   email: string;
   password: string;
   fullName: string;
-  role: "box_office" | "gate_staff" | "manager" | "accountant";
+  role: "box_office" | "gate_staff" | "manager" | "accountant" | "supervisor";
   organizationId: string;
 }
 
