@@ -109,9 +109,36 @@ export default function BoxOffice() {
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
   const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
   const [hasActiveShift, setHasActiveShift] = useState<boolean | null>(null);
+  const [activeShiftId, setActiveShiftId] = useState<string | null>(null);
   const [showShiftPanel, setShowShiftPanel] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // Fetch active shift on mount
+  const { data: activeShift } = useQuery({
+    queryKey: ['box-office-active-shift', user?.id, profile?.organization_id],
+    queryFn: async () => {
+      if (!user?.id || !profile?.organization_id) return null;
+      const { data, error } = await supabase
+        .from('shifts')
+        .select('id')
+        .eq('organization_id', profile.organization_id)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+      
+      if (error) throw error;
+      if (data) {
+        setHasActiveShift(true);
+        setActiveShiftId(data.id);
+      } else {
+        setHasActiveShift(false);
+        setActiveShiftId(null);
+      }
+      return data;
+    },
+    enabled: !!user?.id && !!profile?.organization_id,
+  });
 
   // Fetch showtimes for selected date
   const { data: showtimes, isLoading: showtimesLoading, refetch: refetchShowtimes } = useQuery({
@@ -566,6 +593,7 @@ export default function BoxOffice() {
           promo_code_id: appliedPromo?.id || null,
           booking_reference: bookingReference,
           status: 'paid',
+          shift_id: activeShiftId,
         })
         .select()
         .single();
@@ -808,7 +836,10 @@ export default function BoxOffice() {
           <StaffClockIn
             userId={user.id}
             organizationId={profile.organization_id}
-            onClockIn={() => setHasActiveShift(true)}
+            onClockIn={(shiftId: string) => {
+              setHasActiveShift(true);
+              setActiveShiftId(shiftId);
+            }}
           />
         </main>
       </div>

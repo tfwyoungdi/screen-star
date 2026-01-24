@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 interface StaffClockInProps {
   userId: string;
   organizationId: string;
-  onClockIn: () => void;
+  onClockIn: (shiftId: string) => void;
 }
 
 export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockInProps) {
@@ -55,21 +55,25 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
       // Create shift
       const openingAmount = parseFloat(openingCash) || 0;
       
-      const { error: shiftError } = await supabase
+      const { data: shiftData, error: shiftError } = await supabase
         .from('shifts')
         .insert({
           organization_id: organizationId,
           user_id: userId,
           opening_cash: openingAmount,
           status: 'active',
-        });
+        })
+        .select('id')
+        .single();
 
       if (shiftError) throw shiftError;
+      
+      return shiftData.id;
     },
-    onSuccess: () => {
+    onSuccess: (shiftId: string) => {
       queryClient.invalidateQueries({ queryKey: ['active-shift'] });
       toast.success('Clocked in successfully!');
-      onClockIn();
+      onClockIn(shiftId);
     },
     onError: (error: any) => {
       setError(error.message || 'Failed to clock in');
