@@ -1176,6 +1176,8 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           custom_domain: string | null
+          daily_access_code: string | null
+          daily_access_code_set_at: string | null
           id: string
           is_active: boolean | null
           logo_url: string | null
@@ -1206,6 +1208,8 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           custom_domain?: string | null
+          daily_access_code?: string | null
+          daily_access_code_set_at?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
@@ -1236,6 +1240,8 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           custom_domain?: string | null
+          daily_access_code?: string | null
+          daily_access_code_set_at?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null

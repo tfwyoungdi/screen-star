@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DailyAccessCodeManager } from '@/components/boxoffice/DailyAccessCodeManager';
 import { useUserProfile, useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -330,7 +331,17 @@ export default function StaffManagement() {
               Create and manage your cinema staff accounts
             </p>
           </div>
+        </div>
 
+        {/* Daily Access Code Section */}
+        {profile?.organization_id && (
+          <div className="max-w-md">
+            <DailyAccessCodeManager organizationId={profile.organization_id} />
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <div />
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button>
