@@ -82,6 +82,13 @@ export default function StaffManagement() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const queryClient = useQueryClient();
 
+  // Check if user is a supervisor (limited access) or admin/manager (full access)
+  const userRoles = profile?.roles || [];
+  const isSupervisorOnly = userRoles.includes('supervisor') && 
+    !userRoles.includes('cinema_admin') && 
+    !userRoles.includes('manager');
+  const canManageStaff = userRoles.includes('cinema_admin');
+
   const {
     register,
     handleSubmit,
@@ -329,9 +336,13 @@ export default function StaffManagement() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Staff Management</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {isSupervisorOnly ? 'Daily Access Code' : 'Staff Management'}
+            </h1>
             <p className="text-muted-foreground">
-              Create and manage your cinema staff accounts
+              {isSupervisorOnly 
+                ? 'Generate and manage the daily staff access code' 
+                : 'Create and manage your cinema staff accounts'}
             </p>
           </div>
         </div>
@@ -343,114 +354,117 @@ export default function StaffManagement() {
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <div />
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Staff
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Staff Account</DialogTitle>
-                <DialogDescription>
-                  Create a new staff account for your cinema
-                </DialogDescription>
-              </DialogHeader>
+        {/* Supervisor-only view ends here - hide staff management features */}
+        {!isSupervisorOnly && (
+          <>
+            <div className="flex items-center justify-between">
+              <div />
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Add Staff
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create Staff Account</DialogTitle>
+                    <DialogDescription>
+                      Create a new staff account for your cinema
+                    </DialogDescription>
+                  </DialogHeader>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    {...register('fullName')}
-                    className={errors.fullName ? 'border-destructive' : ''}
-                  />
-                  {errors.fullName && (
-                    <p className="text-sm text-destructive">{errors.fullName.message}</p>
-                  )}
-                </div>
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="John Doe"
+                        {...register('fullName')}
+                        className={errors.fullName ? 'border-destructive' : ''}
+                      />
+                      {errors.fullName && (
+                        <p className="text-sm text-destructive">{errors.fullName.message}</p>
+                      )}
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="staff@example.com"
-                    {...register('email')}
-                    className={errors.email ? 'border-destructive' : ''}
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email.message}</p>
-                  )}
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="staff@example.com"
+                        {...register('email')}
+                        className={errors.email ? 'border-destructive' : ''}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-destructive">{errors.email.message}</p>
+                      )}
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      {...register('password')}
-                      className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password.message}</p>
-                  )}
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          {...register('password')}
+                          className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      {errors.password && (
+                        <p className="text-sm text-destructive">{errors.password.message}</p>
+                      )}
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select onValueChange={(value) => setValue('role', value as CreateStaffFormData['role'])}>
-                    <SelectTrigger className={errors.role ? 'border-destructive' : ''}>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(roleDescriptions).map(([role, description]) => (
-                        <SelectItem key={role} value={role}>
-                          <div className="flex flex-col">
-                            <span>{roleLabels[role]}</span>
-                            <span className="text-xs text-muted-foreground">{description}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.role && (
-                    <p className="text-sm text-destructive">{errors.role.message}</p>
-                  )}
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Role</Label>
+                      <Select onValueChange={(value) => setValue('role', value as CreateStaffFormData['role'])}>
+                        <SelectTrigger className={errors.role ? 'border-destructive' : ''}>
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(roleDescriptions).map(([role, description]) => (
+                            <SelectItem key={role} value={role}>
+                              <div className="flex flex-col">
+                                <span>{roleLabels[role]}</span>
+                                <span className="text-xs text-muted-foreground">{description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.role && (
+                        <p className="text-sm text-destructive">{errors.role.message}</p>
+                      )}
+                    </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Create Account
-                    </>
-                  )}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Create Account
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
 
         {/* Staff Portal URL */}
         {staffPortalUrl && (
@@ -517,7 +531,7 @@ export default function StaffManagement() {
                         </TableCell>
                         <TableCell>
                           {member.is_active ? (
-                            <Badge variant="outline" className="text-green-600 border-green-600">
+                            <Badge variant="default" className="bg-primary/10 text-primary border-primary/20">
                               <CheckCircle className="mr-1 h-3 w-3" />
                               Active
                             </Badge>
@@ -585,7 +599,6 @@ export default function StaffManagement() {
             </CardContent>
           </Card>
         )}
-      </div>
 
       {/* Reset Password Dialog */}
       <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
@@ -717,12 +730,15 @@ export default function StaffManagement() {
             </DialogFooter>
           </div>
         </DialogContent>
-      </Dialog>
+        </Dialog>
 
-      {/* Shift History Section */}
-      {profile?.organization_id && (
-        <ShiftHistory organizationId={profile.organization_id} />
-      )}
+            {/* Shift History Section - only for admins */}
+            {profile?.organization_id && canManageStaff && (
+              <ShiftHistory organizationId={profile.organization_id} />
+            )}
+          </>
+        )}
+      </div>
     </DashboardLayout>
   );
 }
