@@ -26,7 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AboutPageSettings } from '@/components/settings/AboutPageSettings';
-import { JobListingsSettings } from '@/components/settings/JobListingsSettings';
 import EmailTemplatesSettings from '@/components/settings/EmailTemplatesSettings';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -350,11 +349,10 @@ export default function CinemaSettings() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Tabs defaultValue="branding" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="branding">Branding</TabsTrigger>
               <TabsTrigger value="website">Website</TabsTrigger>
               <TabsTrigger value="about">Mission</TabsTrigger>
-              <TabsTrigger value="jobs">Job Listings</TabsTrigger>
               <TabsTrigger value="emails">
                 <Mail className="h-4 w-4 mr-1" />
                 Emails
@@ -852,10 +850,6 @@ export default function CinemaSettings() {
               <AboutPageSettings organization={organization as any} />
             </TabsContent>
 
-            {/* Job Listings Tab */}
-            <TabsContent value="jobs">
-              <JobListingsSettings organizationId={organization.id} />
-            </TabsContent>
 
             {/* Email Templates Tab */}
             <TabsContent value="emails">
