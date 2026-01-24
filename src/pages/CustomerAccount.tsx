@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Gift, Star, Ticket, LogOut, Clock, History, Mail, AlertCircle, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Gift, Star, Ticket, LogOut, Clock, History, Mail, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { CustomerProfileEditor } from '@/components/customer/CustomerProfileEditor';
+import { CustomerBookingHistory } from '@/components/customer/CustomerBookingHistory';
 
 interface LoyaltyTransaction {
   id: string;
@@ -268,23 +270,61 @@ export default function CustomerAccount() {
           </Card>
 
           {/* Tabs */}
-          <Tabs defaultValue="rewards" className="w-full">
-            <TabsList className="bg-white/5 border-white/10 mb-6">
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="bg-white/5 border-white/10 mb-6 flex-wrap h-auto gap-1">
+              <TabsTrigger 
+                value="profile" 
+                className="data-[state=active]:bg-white/10 text-white/70 data-[state=active]:text-white"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Profile
+              </TabsTrigger>
+              <TabsTrigger 
+                value="bookings" 
+                className="data-[state=active]:bg-white/10 text-white/70 data-[state=active]:text-white"
+              >
+                <Ticket className="h-4 w-4 mr-2" />
+                My Bookings
+              </TabsTrigger>
               <TabsTrigger 
                 value="rewards" 
                 className="data-[state=active]:bg-white/10 text-white/70 data-[state=active]:text-white"
               >
                 <Gift className="h-4 w-4 mr-2" />
-                Available Rewards
+                Rewards
               </TabsTrigger>
               <TabsTrigger 
                 value="history" 
                 className="data-[state=active]:bg-white/10 text-white/70 data-[state=active]:text-white"
               >
                 <History className="h-4 w-4 mr-2" />
-                Transaction History
+                Points History
               </TabsTrigger>
             </TabsList>
+
+            {/* Profile Tab */}
+            <TabsContent value="profile">
+              {customer && (
+                <CustomerProfileEditor
+                  customerId={customer.id}
+                  fullName={customer.full_name}
+                  phone={customer.phone}
+                  email={customer.email}
+                  primaryColor={cinema.primary_color}
+                  onUpdate={() => refreshCustomer(cinema.id)}
+                />
+              )}
+            </TabsContent>
+
+            {/* Bookings Tab */}
+            <TabsContent value="bookings">
+              {customer && (
+                <CustomerBookingHistory
+                  customerId={customer.id}
+                  primaryColor={cinema.primary_color}
+                />
+              )}
+            </TabsContent>
 
             {/* Rewards Tab */}
             <TabsContent value="rewards">
