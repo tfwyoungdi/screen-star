@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrganization } from '@/hooks/useUserProfile';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { JobListingsSettings } from '@/components/settings/JobListingsSettings';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -50,7 +53,8 @@ import {
   Download, 
   Trash2, 
   Eye,
-  Filter
+  Filter,
+  ClipboardList
 } from 'lucide-react';
 
 interface JobApplication {
@@ -80,12 +84,12 @@ const statusColors: Record<string, string> = {
 
 export default function JobApplications() {
   const { user } = useAuth();
+  const { data: organization, isLoading: orgLoading } = useOrganization();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-
   const { data: applications, isLoading } = useQuery({
     queryKey: ['job-applications'],
     queryFn: async () => {
@@ -175,7 +179,7 @@ export default function JobApplications() {
     return matchesSearch && matchesStatus;
   });
 
-  if (isLoading) {
+  if (isLoading || orgLoading) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -191,12 +195,31 @@ export default function JobApplications() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Job Applications</h1>
+            <h1 className="text-3xl font-bold">Jobs & Applications</h1>
             <p className="text-muted-foreground">
-              {applications?.length || 0} application{applications?.length !== 1 ? 's' : ''} received
+              Manage job listings and track applicants
             </p>
           </div>
         </div>
+
+        <Tabs defaultValue="applications" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="applications" className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Applications
+              {applications && applications.length > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {applications.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="listings" className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Job Listings
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="applications" className="space-y-6">
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
@@ -419,6 +442,14 @@ export default function JobApplications() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+          </TabsContent>
+
+          <TabsContent value="listings">
+            {organization && (
+              <JobListingsSettings organizationId={organization.id} />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
