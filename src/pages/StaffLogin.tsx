@@ -139,10 +139,10 @@ export default function StaffLogin() {
         throw new Error('Login failed');
       }
 
-      // Verify user belongs to this organization
+      // Verify user belongs to this organization and is active
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('organization_id, full_name')
+        .select('organization_id, full_name, is_active')
         .eq('id', authData.user.id)
         .single();
 
@@ -154,6 +154,12 @@ export default function StaffLogin() {
       if (profile.organization_id !== organization.id) {
         await supabase.auth.signOut();
         throw new Error('You are not authorized to access this cinema portal. Please use the correct staff login link.');
+      }
+
+      // Check if account is active
+      if (profile.is_active === false) {
+        await supabase.auth.signOut();
+        throw new Error('Your account has been deactivated. Please contact your administrator.');
       }
 
       // Get user's role for this organization
