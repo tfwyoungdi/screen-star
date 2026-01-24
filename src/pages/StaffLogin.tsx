@@ -103,6 +103,9 @@ export default function StaffLogin() {
       case 'accountant':
         navigate('/sales');
         break;
+      case 'supervisor':
+        navigate('/supervisor');
+        break;
       default:
         navigate('/dashboard');
     }
