@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DashboardLayout, useDashboardNotifications } from '@/components/layout/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,14 @@ export default function ContactSubmissions() {
   const { data: organization } = useOrganization();
   const queryClient = useQueryClient();
   const [selectedMessage, setSelectedMessage] = useState<ContactSubmission | null>(null);
+
+  // Get the reset function from dashboard context to clear badge when viewing messages
+  const { resetNewMessagesCount } = useDashboardNotifications();
+
+  // Reset the new messages count when viewing the page
+  useEffect(() => {
+    resetNewMessagesCount();
+  }, [resetNewMessagesCount]);
 
   const { data: submissions, isLoading } = useQuery({
     queryKey: ['contact-submissions', organization?.id],

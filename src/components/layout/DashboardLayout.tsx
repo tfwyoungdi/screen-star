@@ -1,10 +1,11 @@
-import { ReactNode } from 'react';
+import { ReactNode, createContext, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
+import { useRealtimeContactSubmissions } from '@/hooks/useRealtimeContactSubmissions';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -41,6 +42,19 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Context for sharing new messages count across the dashboard
+interface DashboardNotificationsContextType {
+  newMessagesCount: number;
+  resetNewMessagesCount: () => void;
+}
+
+const DashboardNotificationsContext = createContext<DashboardNotificationsContextType>({
+  newMessagesCount: 0,
+  resetNewMessagesCount: () => {},
+});
+
+export const useDashboardNotifications = () => useContext(DashboardNotificationsContext);
+
 const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Box Office', url: '/box-office', icon: Ticket },
@@ -53,7 +67,7 @@ const navItems = [
   { title: 'Sales', url: '/sales', icon: BarChart3 },
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
-  { title: 'Messages', url: '/messages', icon: Mail },
+  { title: 'Messages', url: '/messages', icon: Mail, showBadge: true },
   { title: 'Applications', url: '/applications', icon: Briefcase },
   { title: 'Scanner', url: '/scanner', icon: QrCode },
   { title: 'Staff', url: '/staff', icon: Users },
@@ -68,7 +82,7 @@ interface DashboardLayoutProps {
   onAddClick?: () => void;
 }
 
-function SidebarContentWrapper() {
+function SidebarContentWrapper({ newMessagesCount }: { newMessagesCount: number }) {
   const { signOut } = useAuth();
   const { data: organization, isLoading: loading } = useOrganization();
   const { isImpersonating, impersonatedOrganization } = useImpersonation();
@@ -83,6 +97,14 @@ function SidebarContentWrapper() {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  // Helper to check if a nav item should show badge
+  const getBadgeCount = (item: typeof navItems[0]) => {
+    if (item.url === '/messages' && item.showBadge) {
+      return newMessagesCount;
+    }
+    return 0;
   };
 
   return (
@@ -148,7 +170,15 @@ function SidebarContentWrapper() {
                             )}
                           />
                           {!isCollapsed && (
-                            <span className="text-sm">{item.title}</span>
+                            <span className="text-sm flex-1">{item.title}</span>
+                          )}
+                          {!isCollapsed && getBadgeCount(item) > 0 && (
+                            <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
+                              {getBadgeCount(item)}
+                            </Badge>
+                          )}
+                          {isCollapsed && getBadgeCount(item) > 0 && (
+                            <span className="absolute -top-1 -right-1 h-2 w-2 bg-destructive rounded-full" />
                           )}
                         </NavLink>
                       </SidebarMenuButton>
@@ -254,23 +284,35 @@ export function DashboardLayout({
   addButtonLabel,
   onAddClick,
 }: DashboardLayoutProps) {
-  const { isImpersonating } = useImpersonation();
+  const { isImpersonating, impersonatedOrganization } = useImpersonation();
+  const { data: organization } = useOrganization();
+  
+  // Use impersonated org if in impersonation mode
+  const effectiveOrg = isImpersonating ? impersonatedOrganization : organization;
+  
+  // Enable real-time contact message notifications
+  const { newMessagesCount, resetNewMessagesCount } = useRealtimeContactSubmissions({
+    enabled: !!effectiveOrg?.id && !isImpersonating,
+    organizationId: effectiveOrg?.id,
+  });
   
   return (
-    <SidebarProvider>
-      <div className={cn("min-h-screen flex w-full bg-background", isImpersonating && "pt-10")}>
-        <SidebarContentWrapper />
+    <DashboardNotificationsContext.Provider value={{ newMessagesCount, resetNewMessagesCount }}>
+      <SidebarProvider>
+        <div className={cn("min-h-screen flex w-full bg-background", isImpersonating && "pt-10")}>
+          <SidebarContentWrapper newMessagesCount={newMessagesCount} />
 
-        <main className="flex-1 flex flex-col min-w-0">
-          <DashboardHeader
-            showSearch={showSearch}
-            showAddButton={showAddButton}
-            addButtonLabel={addButtonLabel}
-            onAddClick={onAddClick}
-          />
-          <div className="flex-1 p-6 lg:p-8 overflow-auto">{children}</div>
-        </main>
-      </div>
-    </SidebarProvider>
+          <main className="flex-1 flex flex-col min-w-0">
+            <DashboardHeader
+              showSearch={showSearch}
+              showAddButton={showAddButton}
+              addButtonLabel={addButtonLabel}
+              onAddClick={onAddClick}
+            />
+            <div className="flex-1 p-6 lg:p-8 overflow-auto">{children}</div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </DashboardNotificationsContext.Provider>
   );
 }
