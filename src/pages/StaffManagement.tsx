@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { DailyAccessCodeManager } from '@/components/boxoffice/DailyAccessCodeManager';
+import { ShiftHistory } from '@/components/boxoffice/ShiftHistory';
 import { useUserProfile, useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -26,7 +27,7 @@ const createStaffSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   fullName: z.string().min(2, 'Full name is required'),
-  role: z.enum(['box_office', 'gate_staff', 'manager', 'accountant'] as const),
+  role: z.enum(['box_office', 'gate_staff', 'manager', 'accountant', 'supervisor'] as const),
 });
 
 const resetPasswordSchema = z.object({
@@ -46,6 +47,7 @@ const roleLabels: Record<string, string> = {
   manager: 'Manager',
   accountant: 'Accountant',
   cinema_admin: 'Cinema Admin',
+  supervisor: 'Supervisor',
 };
 
 const roleDescriptions: Record<string, string> = {
@@ -53,6 +55,7 @@ const roleDescriptions: Record<string, string> = {
   gate_staff: 'Can scan and validate tickets',
   manager: 'Can view reports and manage shows',
   accountant: 'Can view financial reports',
+  supervisor: 'Can set daily code, box office & ticket scanning',
 };
 
 interface StaffMember {
@@ -715,6 +718,11 @@ export default function StaffManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Shift History Section */}
+      {profile?.organization_id && (
+        <ShiftHistory organizationId={profile.organization_id} />
+      )}
     </DashboardLayout>
   );
 }

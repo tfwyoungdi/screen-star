@@ -151,6 +151,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       if (userRole === 'box_office') redirectPath = '/box-office';
       else if (userRole === 'gate_staff') redirectPath = '/gate';
       else if (userRole === 'accountant') redirectPath = '/sales';
+      else if (userRole === 'supervisor') redirectPath = '/box-office';
       
       return <Navigate to={redirectPath} replace />;
     }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { startOfDay, isToday } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -29,7 +30,7 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
       // Verify access code
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .select('daily_access_code')
+        .select('daily_access_code, daily_access_code_set_at')
         .eq('id', organizationId)
         .single();
 
@@ -37,6 +38,14 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
 
       if (!org.daily_access_code) {
         throw new Error('No access code has been set today. Please contact your manager.');
+      }
+
+      // Check if the code was set today (midnight expiry)
+      if (org.daily_access_code_set_at) {
+        const codeSetAt = new Date(org.daily_access_code_set_at);
+        if (!isToday(codeSetAt)) {
+          throw new Error('Yesterday\'s access code has expired. Please ask your manager to set a new code.');
+        }
       }
 
       if (org.daily_access_code !== accessCode) {
