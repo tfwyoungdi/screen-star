@@ -59,9 +59,9 @@ export default function Login() {
     const hasAllowedRole = userRoles.some(role => allowedRoles.includes(role));
 
     if (!hasAllowedRole) {
-      // Sign out and show error - staff should use staff portal
+      // Sign out and show error - only cinema admins/managers can use this login
       await supabase.auth.signOut();
-      setError('Access denied. Staff members must use the Staff Portal to login.');
+      setError("You don't have an account.");
       return;
     }
 
