@@ -27,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { 
       bookingReference,
       organizationId,
-      amount, 
+      amount: clientAmount, // Ignore client amount - we'll recalculate
       currency, 
       customerEmail, 
       customerName,
@@ -40,6 +40,58 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // SECURITY: Recalculate amount server-side from database - never trust client
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
+      .select("id, total_amount, discount_amount, organization_id, status")
+      .eq("booking_reference", bookingReference)
+      .eq("organization_id", organizationId)
+      .single();
+
+    if (bookingError || !booking) {
+      console.error("Booking not found:", bookingError);
+      throw new Error("Booking not found");
+    }
+
+    if (booking.status === 'paid') {
+      throw new Error("This booking has already been paid");
+    }
+
+    // Recalculate total from booked_seats and concessions
+    const { data: seats } = await supabase
+      .from("booked_seats")
+      .select("price")
+      .eq("booking_id", booking.id);
+
+    const { data: concessions } = await supabase
+      .from("booking_concessions")
+      .select("unit_price, quantity")
+      .eq("booking_id", booking.id);
+
+    const { data: combos } = await supabase
+      .from("booking_combos")
+      .select("unit_price, quantity")
+      .eq("booking_id", booking.id);
+
+    const seatsTotal = seats?.reduce((sum, s) => sum + Number(s.price), 0) || 0;
+    const concessionsTotal = concessions?.reduce((sum, c) => sum + (Number(c.unit_price) * c.quantity), 0) || 0;
+    const combosTotal = combos?.reduce((sum, c) => sum + (Number(c.unit_price) * c.quantity), 0) || 0;
+    const discount = Number(booking.discount_amount) || 0;
+    
+    // Server-calculated amount - this is the source of truth
+    const amount = seatsTotal + concessionsTotal + combosTotal - discount;
+
+    console.log(`Server-calculated amount: ${amount} (seats: ${seatsTotal}, concessions: ${concessionsTotal}, combos: ${combosTotal}, discount: ${discount})`);
+
+    // Update booking with verified amount if different
+    if (Math.abs(amount - Number(booking.total_amount)) > 0.01) {
+      console.warn(`Amount mismatch detected! Client: ${clientAmount}, DB: ${booking.total_amount}, Calculated: ${amount}`);
+      await supabase
+        .from("bookings")
+        .update({ total_amount: amount })
+        .eq("id", booking.id);
+    }
 
     // Fetch organization's payment configuration
     const { data: org, error: orgError } = await supabase
