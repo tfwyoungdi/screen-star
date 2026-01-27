@@ -34,10 +34,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Validate password length
-    if (password.length < 6) {
+    // Validate password strength
+    if (password.length < 8) {
       return new Response(
-        JSON.stringify({ error: "Password must be at least 6 characters" }),
+        JSON.stringify({ error: "Password must be at least 8 characters" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    // Check for password complexity (at least one uppercase, one lowercase, one number)
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    
+    if (!hasUppercase || !hasLowercase || !hasNumber) {
+      return new Response(
+        JSON.stringify({ error: "Password must contain at least one uppercase letter, one lowercase letter, and one number" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
