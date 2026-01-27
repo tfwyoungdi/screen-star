@@ -1185,6 +1185,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          currency: string | null
           custom_domain: string | null
           daily_access_code: string | null
           daily_access_code_end_time: string | null
@@ -1219,6 +1220,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          currency?: string | null
           custom_domain?: string | null
           daily_access_code?: string | null
           daily_access_code_end_time?: string | null
@@ -1253,6 +1255,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          currency?: string | null
           custom_domain?: string | null
           daily_access_code?: string | null
           daily_access_code_end_time?: string | null
