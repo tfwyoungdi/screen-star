@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Plus,
 } from 'lucide-react';
+import { getCurrencySymbol, formatCurrency } from '@/lib/currency';
 import {
   XAxis,
   Tooltip,
@@ -48,6 +49,7 @@ export default function Dashboard() {
   // Use impersonated org if in impersonation mode, otherwise use real org
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const effectiveOrg = isImpersonating ? impersonatedOrganization : organization;
+  const currencySymbol = getCurrencySymbol(effectiveOrg?.currency);
 
   const startDate = startOfDay(subDays(new Date(), dateRange));
   const endDate = endOfDay(new Date());
@@ -306,7 +308,7 @@ export default function Dashboard() {
             <StatCard
               title="Total Revenue"
               value={Math.round(totalRevenue)}
-              prefix="$"
+              prefix={currencySymbol}
               icon={DollarSign}
               variant="primary"
               trend={revenueTrend !== 0 ? { 
@@ -365,7 +367,7 @@ export default function Dashboard() {
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px',
                       }}
-                      formatter={(value: number) => [`$${value.toFixed(0)}`, 'Revenue']}
+                      formatter={(value: number) => [`${currencySymbol}${value.toFixed(0)}`, 'Revenue']}
                     />
                     <Bar
                       dataKey="revenue"
@@ -447,7 +449,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{movie.name}</p>
-                        <p className="text-xs text-muted-foreground">${movie.value.toFixed(0)} revenue</p>
+                        <p className="text-xs text-muted-foreground">{currencySymbol}{movie.value.toFixed(0)} revenue</p>
                       </div>
                     </div>
                   ))}

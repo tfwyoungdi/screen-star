@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
+import { useOrganization } from '@/hooks/useOrganization';
+import { getCurrencySymbol, formatCurrency } from '@/lib/currency';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ChartCard } from '@/components/dashboard/ChartCard';
@@ -59,9 +61,11 @@ import {
 export default function AnalyticsDashboard() {
   const { data: profile } = useUserProfile();
   const { getEffectiveOrganizationId } = useImpersonation();
+  const { organization } = useOrganization();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [dateRange, setDateRange] = useState(7);
   const { exportToCSV, exportToPDF } = useExportReports();
+  const currencySymbol = getCurrencySymbol(organization?.currency);
 
   const startDate = startOfDay(subDays(new Date(), dateRange));
   const endDate = endOfDay(new Date());
@@ -289,7 +293,7 @@ export default function AnalyticsDashboard() {
               <StatCard
                 title="Total Revenue"
                 value={Math.round(totalRevenue)}
-                prefix="$"
+                prefix={currencySymbol}
                 icon={DollarSign}
                 variant="primary"
               />
@@ -306,7 +310,7 @@ export default function AnalyticsDashboard() {
               <StatCard
                 title="Avg. Ticket Price"
                 value={Math.round(avgTicketPrice)}
-                prefix="$"
+                prefix={currencySymbol}
                 icon={TrendingUp}
               />
             </div>
@@ -338,7 +342,7 @@ export default function AnalyticsDashboard() {
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(v) => `$${v}`}
+                    tickFormatter={(v) => `${currencySymbol}${v}`}
                   />
                   <Tooltip
                     contentStyle={{
@@ -347,7 +351,7 @@ export default function AnalyticsDashboard() {
                       borderRadius: '8px',
                     }}
                     formatter={(value: number, name: string) => [
-                      `$${value.toFixed(0)}`,
+                      `${currencySymbol}${value.toFixed(0)}`,
                       name === 'projected' ? 'Forecast' : 'Revenue',
                     ]}
                   />
@@ -427,7 +431,7 @@ export default function AnalyticsDashboard() {
                       fontSize={10}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={(v) => `$${v}`}
+                      tickFormatter={(v) => `${currencySymbol}${v}`}
                     />
                     <YAxis
                       dataKey="name"
@@ -445,7 +449,7 @@ export default function AnalyticsDashboard() {
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px',
                       }}
-                      formatter={(value: number) => [`$${value.toFixed(0)}`, 'Revenue']}
+                      formatter={(value: number) => [`${currencySymbol}${value.toFixed(0)}`, 'Revenue']}
                     />
                     <Bar
                       dataKey="value"

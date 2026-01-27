@@ -32,6 +32,7 @@ import { useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { currencies } from '@/lib/currency';
 
 const cinemaSettingsSchema = z.object({
   name: z.string().min(2, 'Cinema name must be at least 2 characters'),
@@ -53,26 +54,12 @@ const cinemaSettingsSchema = z.object({
   currency: z.string().default('USD'),
 });
 
-// Common currencies for cinemas
-const currencies = [
-  { code: 'USD', name: 'US Dollar', symbol: '$' },
-  { code: 'EUR', name: 'Euro', symbol: '€' },
-  { code: 'GBP', name: 'British Pound', symbol: '£' },
-  { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
-  { code: 'GHS', name: 'Ghanaian Cedi', symbol: '₵' },
-  { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh' },
-  { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
-  { code: 'UGX', name: 'Ugandan Shilling', symbol: 'USh' },
-  { code: 'TZS', name: 'Tanzanian Shilling', symbol: 'TSh' },
-  { code: 'RWF', name: 'Rwandan Franc', symbol: 'FRw' },
-  { code: 'XOF', name: 'CFA Franc BCEAO', symbol: 'CFA' },
-  { code: 'XAF', name: 'CFA Franc BEAC', symbol: 'FCFA' },
-  { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
-  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
-  { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼' },
-  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
-  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-];
+// Use centralized currency list from lib/currency.ts
+const currencyOptions = Object.entries(currencies).map(([code, { name, symbol }]) => ({
+  code,
+  name,
+  symbol,
+}));
 
 type CinemaSettingsData = z.infer<typeof cinemaSettingsSchema>;
 
@@ -1015,7 +1002,7 @@ export default function CinemaSettings() {
                         <SelectValue placeholder="Select currency" />
                       </SelectTrigger>
                       <SelectContent>
-                        {currencies.map((currency) => (
+                        {currencyOptions.map((currency) => (
                           <SelectItem key={currency.code} value={currency.code}>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{currency.symbol}</span>
