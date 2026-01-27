@@ -7,14 +7,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Key, RefreshCw, Copy, Check, Loader2, Clock, Users } from 'lucide-react';
+import { Key, RefreshCw, Copy, Check, Loader2, Clock, Users, ChevronDown, ChevronUp, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parse, startOfDay } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface DailyAccessCodeManagerProps {
   organizationId: string;
+}
+
+interface StaffClockIn {
+  id: string;
+  full_name: string;
+  email: string;
+  started_at: string;
 }
 
 export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManagerProps) {
@@ -24,6 +33,7 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
   const [copied, setCopied] = useState(false);
   const [startTime, setStartTime] = useState('06:00');
   const [endTime, setEndTime] = useState('23:00');
+  const [showStaffList, setShowStaffList] = useState(false);
 
   // Fetch current access code
   const { data: organization, isLoading } = useQuery({
@@ -41,26 +51,51 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
     enabled: !!organizationId,
   });
 
-  // Fetch count of staff who clocked in with the current code today
-  const { data: clockInCount } = useQuery({
-    queryKey: ['access-code-usage', organizationId, organization?.daily_access_code],
-    queryFn: async () => {
-      if (!organization?.daily_access_code) return 0;
+  // Fetch staff who clocked in with the current code today
+  const { data: staffClockIns } = useQuery({
+    queryKey: ['access-code-staff', organizationId, organization?.daily_access_code],
+    queryFn: async (): Promise<StaffClockIn[]> => {
+      if (!organization?.daily_access_code) return [];
       
       const todayStart = startOfDay(new Date()).toISOString();
       
-      const { count, error } = await supabase
+      // Get shifts with current access code today
+      const { data: shifts, error: shiftsError } = await supabase
         .from('shifts')
-        .select('*', { count: 'exact', head: true })
+        .select('id, user_id, started_at')
         .eq('organization_id', organizationId)
         .eq('access_code_used', organization.daily_access_code)
-        .gte('started_at', todayStart);
+        .gte('started_at', todayStart)
+        .order('started_at', { ascending: false });
 
-      if (error) throw error;
-      return count || 0;
+      if (shiftsError) throw shiftsError;
+      if (!shifts || shifts.length === 0) return [];
+
+      // Get profile details for each staff member
+      const userIds = [...new Set(shifts.map(s => s.user_id))];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      return shifts.map(shift => {
+        const profile = profileMap.get(shift.user_id);
+        return {
+          id: shift.id,
+          full_name: profile?.full_name || 'Unknown',
+          email: profile?.email || 'N/A',
+          started_at: shift.started_at,
+        };
+      });
     },
     enabled: !!organizationId && !!organization?.daily_access_code,
   });
+
+  const clockInCount = staffClockIns?.length || 0;
 
   // Generate random 6-digit code
   const generateCode = () => {
@@ -86,7 +121,7 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-access-code'] });
-      queryClient.invalidateQueries({ queryKey: ['access-code-usage'] });
+      queryClient.invalidateQueries({ queryKey: ['access-code-staff'] });
       setShowSetDialog(false);
       setNewCode('');
       toast.success('Daily access code updated!');
@@ -113,7 +148,7 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-access-code'] });
-      queryClient.invalidateQueries({ queryKey: ['access-code-usage'] });
+      queryClient.invalidateQueries({ queryKey: ['access-code-staff'] });
       toast.success('Access code cleared - staff cannot clock in without approval');
     },
     onError: (error: any) => {
@@ -237,12 +272,54 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
                   className="shrink-0"
                 >
                   {copied ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-chart-2" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
                 </Button>
               </div>
+
+              {/* Staff Clock-In List */}
+              {clockInCount > 0 && (
+                <Collapsible open={showStaffList} onOpenChange={setShowStaffList}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between p-2 h-auto">
+                      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        {clockInCount} staff clocked in today
+                      </span>
+                      {showStaffList ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ScrollArea className="max-h-48 mt-2">
+                      <div className="space-y-2">
+                        {staffClockIns?.map((staff) => (
+                          <div
+                            key={staff.id}
+                            className="flex items-center gap-3 p-2 rounded-md bg-muted/50"
+                          >
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <User className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">{staff.full_name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{staff.email}</p>
+                            </div>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {format(new Date(staff.started_at), 'h:mm a')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
 
               <div className="flex gap-2">
                 <Button

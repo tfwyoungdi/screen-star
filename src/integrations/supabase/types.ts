@@ -2246,6 +2246,7 @@ export type Database = {
     }
     Functions: {
       delete_old_loyalty_transactions: { Args: never; Returns: undefined }
+      delete_old_shifts: { Args: never; Returns: undefined }
       generate_booking_reference: { Args: never; Returns: string }
       generate_unique_slug: { Args: { cinema_name: string }; Returns: string }
       get_customer_by_user_id: {
