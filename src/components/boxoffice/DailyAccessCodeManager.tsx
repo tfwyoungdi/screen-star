@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Key, RefreshCw, Copy, Check, Loader2, Clock } from 'lucide-react';
+import { Key, RefreshCw, Copy, Check, Loader2, Clock, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, parse } from 'date-fns';
+import { format, parse, startOfDay } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DailyAccessCodeManagerProps {
   organizationId: string;
@@ -40,6 +41,27 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
     enabled: !!organizationId,
   });
 
+  // Fetch count of staff who clocked in with the current code today
+  const { data: clockInCount } = useQuery({
+    queryKey: ['access-code-usage', organizationId, organization?.daily_access_code],
+    queryFn: async () => {
+      if (!organization?.daily_access_code) return 0;
+      
+      const todayStart = startOfDay(new Date()).toISOString();
+      
+      const { count, error } = await supabase
+        .from('shifts')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', organizationId)
+        .eq('access_code_used', organization.daily_access_code)
+        .gte('started_at', todayStart);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!organizationId && !!organization?.daily_access_code,
+  });
+
   // Generate random 6-digit code
   const generateCode = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -64,6 +86,7 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-access-code'] });
+      queryClient.invalidateQueries({ queryKey: ['access-code-usage'] });
       setShowSetDialog(false);
       setNewCode('');
       toast.success('Daily access code updated!');
@@ -90,6 +113,7 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-access-code'] });
+      queryClient.invalidateQueries({ queryKey: ['access-code-usage'] });
       toast.success('Access code cleared - staff cannot clock in without approval');
     },
     onError: (error: any) => {
@@ -157,9 +181,26 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
               <CardTitle className="text-base">Daily Access Code</CardTitle>
             </div>
             {organization?.daily_access_code && (
-              <Badge variant={isCodeSetToday ? "default" : "secondary"}>
-                {isCodeSetToday ? 'Set Today' : 'From Previous Day'}
-              </Badge>
+              <div className="flex items-center gap-2">
+                {typeof clockInCount === 'number' && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="gap-1">
+                          <Users className="h-3 w-3" />
+                          {clockInCount}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{clockInCount} staff clocked in with this code today</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                <Badge variant={isCodeSetToday ? "default" : "secondary"}>
+                  {isCodeSetToday ? 'Set Today' : 'From Previous Day'}
+                </Badge>
+              </div>
             )}
           </div>
           <CardDescription>

@@ -1783,6 +1783,7 @@ export type Database = {
       }
       shifts: {
         Row: {
+          access_code_used: string | null
           cash_difference: number | null
           closing_cash: number | null
           created_at: string
@@ -1800,6 +1801,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          access_code_used?: string | null
           cash_difference?: number | null
           closing_cash?: number | null
           created_at?: string
@@ -1817,6 +1819,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          access_code_used?: string | null
           cash_difference?: number | null
           closing_cash?: number | null
           created_at?: string
