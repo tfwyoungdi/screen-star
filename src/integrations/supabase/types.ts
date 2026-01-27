@@ -1187,7 +1187,9 @@ export type Database = {
           created_at: string
           custom_domain: string | null
           daily_access_code: string | null
+          daily_access_code_end_time: string | null
           daily_access_code_set_at: string | null
+          daily_access_code_start_time: string | null
           id: string
           is_active: boolean | null
           logo_url: string | null
@@ -1219,7 +1221,9 @@ export type Database = {
           created_at?: string
           custom_domain?: string | null
           daily_access_code?: string | null
+          daily_access_code_end_time?: string | null
           daily_access_code_set_at?: string | null
+          daily_access_code_start_time?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
@@ -1251,7 +1255,9 @@ export type Database = {
           created_at?: string
           custom_domain?: string | null
           daily_access_code?: string | null
+          daily_access_code_end_time?: string | null
           daily_access_code_set_at?: string | null
+          daily_access_code_start_time?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null

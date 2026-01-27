@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Key, RefreshCw, Copy, Check, Loader2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface DailyAccessCodeManagerProps {
   organizationId: string;
@@ -20,6 +21,8 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
   const [showSetDialog, setShowSetDialog] = useState(false);
   const [newCode, setNewCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [startTime, setStartTime] = useState('06:00');
+  const [endTime, setEndTime] = useState('23:00');
 
   // Fetch current access code
   const { data: organization, isLoading } = useQuery({
@@ -27,7 +30,7 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organizations')
-        .select('daily_access_code, daily_access_code_set_at')
+        .select('daily_access_code, daily_access_code_set_at, daily_access_code_start_time, daily_access_code_end_time')
         .eq('id', organizationId)
         .single();
 
@@ -46,12 +49,14 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
 
   // Set access code mutation
   const setCodeMutation = useMutation({
-    mutationFn: async (code: string) => {
+    mutationFn: async ({ code, start, end }: { code: string; start: string; end: string }) => {
       const { error } = await supabase
         .from('organizations')
         .update({
           daily_access_code: code,
           daily_access_code_set_at: new Date().toISOString(),
+          daily_access_code_start_time: start,
+          daily_access_code_end_time: end,
         })
         .eq('id', organizationId);
 
@@ -76,6 +81,8 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
         .update({
           daily_access_code: null,
           daily_access_code_set_at: null,
+          daily_access_code_start_time: null,
+          daily_access_code_end_time: null,
         })
         .eq('id', organizationId);
 
@@ -89,6 +96,33 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
       toast.error(error.message || 'Failed to clear access code');
     },
   });
+
+  // Helper to format time for display
+  const formatTimeDisplay = (timeStr: string | null) => {
+    if (!timeStr) return null;
+    try {
+      const date = parse(timeStr, 'HH:mm:ss', new Date());
+      return format(date, 'h:mm a');
+    } catch {
+      return timeStr;
+    }
+  };
+
+  // Generate time options for the select
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const timeValue = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const date = parse(timeValue, 'HH:mm', new Date());
+        const label = format(date, 'h:mm a');
+        options.push({ value: timeValue, label });
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
 
   const copyToClipboard = () => {
     if (organization?.daily_access_code) {
@@ -141,12 +175,19 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
                   <p className="text-3xl font-mono font-bold tracking-widest">
                     {organization.daily_access_code}
                   </p>
-                  {organization.daily_access_code_set_at && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <Clock className="h-3 w-3 inline mr-1" />
-                      Set at {format(new Date(organization.daily_access_code_set_at), 'h:mm a')}
-                    </p>
-                  )}
+                  <div className="flex flex-col gap-0.5 mt-1">
+                    {organization.daily_access_code_set_at && (
+                      <p className="text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3 inline mr-1" />
+                        Set at {format(new Date(organization.daily_access_code_set_at), 'h:mm a')}
+                      </p>
+                    )}
+                    {(organization.daily_access_code_start_time || organization.daily_access_code_end_time) && (
+                      <p className="text-xs text-muted-foreground">
+                        Valid: {formatTimeDisplay(organization.daily_access_code_start_time) || 'Any'} - {formatTimeDisplay(organization.daily_access_code_end_time) || 'Any'}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <Button
                   variant="outline"
@@ -168,6 +209,13 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
                   className="flex-1 gap-2"
                   onClick={() => {
                     generateCode();
+                    // Pre-fill with existing times if available
+                    if (organization.daily_access_code_start_time) {
+                      setStartTime(organization.daily_access_code_start_time.slice(0, 5));
+                    }
+                    if (organization.daily_access_code_end_time) {
+                      setEndTime(organization.daily_access_code_end_time.slice(0, 5));
+                    }
                     setShowSetDialog(true);
                   }}
                 >
@@ -245,6 +293,42 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
                 6-digit numeric code. You can customize or generate a random one.
               </p>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Time</Label>
+                <Select value={startTime} onValueChange={setStartTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select start time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>End Time</Label>
+                <Select value={endTime} onValueChange={setEndTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select end time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Staff can only clock in during these hours.
+            </p>
           </div>
 
           <DialogFooter>
@@ -252,7 +336,7 @@ export function DailyAccessCodeManager({ organizationId }: DailyAccessCodeManage
               Cancel
             </Button>
             <Button
-              onClick={() => setCodeMutation.mutate(newCode)}
+              onClick={() => setCodeMutation.mutate({ code: newCode, start: startTime, end: endTime })}
               disabled={setCodeMutation.isPending || newCode.length !== 6}
             >
               {setCodeMutation.isPending ? (
