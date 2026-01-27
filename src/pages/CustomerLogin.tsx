@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -62,6 +63,15 @@ export default function CustomerLogin() {
     if (!cinema) return;
     
     setError(null);
+
+    // Check rate limit before attempting login
+    const rateCheck = checkRateLimit(RATE_LIMITS.CUSTOMER_LOGIN);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setError(`Too many login attempts. Please wait ${waitTime} before trying again.`);
+      return;
+    }
+
     const { error } = await signIn(data.email, data.password, cinema.id);
 
     if (error) {

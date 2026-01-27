@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/lib/validations';
+import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 
 export default function ForgotPassword() {
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +27,15 @@ export default function ForgotPassword() {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setError(null);
+
+    // Check rate limit before sending reset email
+    const rateCheck = checkRateLimit(RATE_LIMITS.PASSWORD_RESET);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setError(`Too many reset attempts. Please wait ${waitTime} before trying again.`);
+      return;
+    }
+
     const { error } = await resetPassword(data.email);
 
     if (error) {

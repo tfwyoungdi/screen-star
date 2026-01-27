@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -74,6 +75,15 @@ export default function CustomerSignup() {
     if (!cinema) return;
     
     setError(null);
+
+    // Check rate limit before attempting signup
+    const rateCheck = checkRateLimit(RATE_LIMITS.CUSTOMER_SIGNUP);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setError(`Too many signup attempts. Please wait ${waitTime} before trying again.`);
+      return;
+    }
+
     const { error } = await signUp(data.email, data.password, data.fullName, cinema.id);
 
     if (error) {
