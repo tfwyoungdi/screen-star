@@ -24,7 +24,7 @@ export default function CustomerLogin() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn, user, loading: authLoading } = useCustomerAuth();
+  const { signIn, user, customer, loading: authLoading } = useCustomerAuth();
 
   // Fetch cinema data
   const { data: cinema, isLoading: cinemaLoading } = useQuery({
@@ -51,12 +51,12 @@ export default function CustomerLogin() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Redirect if already logged in
+  // Redirect if already logged in with customer data
   useEffect(() => {
-    if (user && !authLoading && cinema) {
+    if (!authLoading && user && customer) {
       navigate(`/cinema/${slug}/account`);
     }
-  }, [user, authLoading, cinema, slug, navigate]);
+  }, [user, authLoading, customer, slug, navigate]);
 
   const onSubmit = async (data: LoginFormData) => {
     if (!cinema) return;
