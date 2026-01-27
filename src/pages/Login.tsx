@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { loginSchema, type LoginFormData } from '@/lib/validations';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +38,30 @@ export default function Login() {
       } else {
         setError(error.message);
       }
+      return;
+    }
+
+    // Verify user has cinema_admin or manager role (only these roles can use /login)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setError('Authentication failed. Please try again.');
+      await supabase.auth.signOut();
+      return;
+    }
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    const userRoles = roles?.map(r => r.role) || [];
+    const allowedRoles = ['cinema_admin', 'manager'];
+    const hasAllowedRole = userRoles.some(role => allowedRoles.includes(role));
+
+    if (!hasAllowedRole) {
+      // Sign out and show error - staff should use staff portal
+      await supabase.auth.signOut();
+      setError('Access denied. Staff members must use the Staff Portal to login.');
       return;
     }
 
