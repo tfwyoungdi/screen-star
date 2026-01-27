@@ -24,8 +24,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import {
   Mail,
   Send,
@@ -40,6 +43,7 @@ import {
   Megaphone,
   Loader2,
   CheckCircle2,
+  CalendarIcon,
 } from 'lucide-react';
 
 interface Movie {
@@ -125,6 +129,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Limited Time Offer</p>
       <h2 style="color: #b45309; margin: 0; font-size: 32px;">{{offer_title}}</h2>
       <p style="color: #92400e; margin: 10px 0 0 0;">{{discount_text}}</p>
+      <p style="color: #78350f; font-size: 13px; margin: 15px 0 0 0; font-weight: 600;">{{offer_validity}}</p>
     </div>
     <p style="color: #6b7280; line-height: 1.6;">{{offer_details}}</p>
     <a href="#" style="display: inline-block; background: #f59e0b; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">Claim Offer</a>
@@ -209,6 +214,8 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
   const [offerTitle, setOfferTitle] = useState<string>('');
   const [discountText, setDiscountText] = useState<string>('');
   const [offerDetails, setOfferDetails] = useState<string>('');
+  const [offerStartDate, setOfferStartDate] = useState<Date | undefined>(undefined);
+  const [offerEndDate, setOfferEndDate] = useState<Date | undefined>(undefined);
   
   // General update fields
   const [updateTitle, setUpdateTitle] = useState<string>('');
@@ -326,6 +333,8 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
     setOfferTitle('');
     setDiscountText('');
     setOfferDetails('');
+    setOfferStartDate(undefined);
+    setOfferEndDate(undefined);
     setUpdateTitle('');
     setUpdateMessage('');
     setRewardName('');
@@ -378,9 +387,22 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
     }
   };
 
-  const updateSpecialOfferTemplate = (title: string, discount: string, details: string) => {
+  const getOfferValidityText = (startDate?: Date, endDate?: Date) => {
+    if (startDate && endDate) {
+      return `Valid from ${format(startDate, 'MMM d, yyyy')} to ${format(endDate, 'MMM d, yyyy')}`;
+    } else if (startDate) {
+      return `Valid from ${format(startDate, 'MMM d, yyyy')}`;
+    } else if (endDate) {
+      return `Valid until ${format(endDate, 'MMM d, yyyy')}`;
+    }
+    return '';
+  };
+
+  const updateSpecialOfferTemplate = (title: string, discount: string, details: string, startDate?: Date, endDate?: Date) => {
     const template = emailTemplates.find((t) => t.id === 'special_offer');
     if (template) {
+      const validityText = getOfferValidityText(startDate, endDate);
+      
       setSubject(
         template.subject
           .replace(/\{\{offer_title\}\}/g, title || 'Special Offer')
@@ -392,6 +414,7 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
           .replace(/\{\{offer_title\}\}/g, title || 'Special Offer')
           .replace(/\{\{discount_text\}\}/g, discount || 'Your next movie ticket!')
           .replace(/\{\{offer_details\}\}/g, details || 'Use this exclusive discount on your next visit. Hurry, this offer won\'t last forever!')
+          .replace(/\{\{offer_validity\}\}/g, validityText)
       );
     }
   };
@@ -444,10 +467,12 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
         .replace(/\{\{movie_poster\}\}/g, posterHtml)
         .replace(/\{\{movie_description\}\}/g, movieDescription || 'Now showing in all screens');
     } else if (selectedTemplate === 'special_offer') {
+      const validityText = getOfferValidityText(offerStartDate, offerEndDate);
       preview = preview
         .replace(/\{\{offer_title\}\}/g, offerTitle || '20% OFF')
         .replace(/\{\{discount_text\}\}/g, discountText || 'Your next movie ticket!')
-        .replace(/\{\{offer_details\}\}/g, offerDetails || 'Use this exclusive discount on your next visit. Hurry, this offer won\'t last forever!');
+        .replace(/\{\{offer_details\}\}/g, offerDetails || 'Use this exclusive discount on your next visit. Hurry, this offer won\'t last forever!')
+        .replace(/\{\{offer_validity\}\}/g, validityText);
     } else if (selectedTemplate === 'general_update') {
       preview = preview
         .replace(/\{\{update_title\}\}/g, updateTitle || 'Important Update')
@@ -689,7 +714,7 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                       value={offerTitle}
                       onChange={(e) => {
                         setOfferTitle(e.target.value);
-                        updateSpecialOfferTemplate(e.target.value, discountText, offerDetails);
+                        updateSpecialOfferTemplate(e.target.value, discountText, offerDetails, offerStartDate, offerEndDate);
                       }}
                     />
                     <p className="text-xs text-muted-foreground">
@@ -703,12 +728,79 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                       value={discountText}
                       onChange={(e) => {
                         setDiscountText(e.target.value);
-                        updateSpecialOfferTemplate(offerTitle, e.target.value, offerDetails);
+                        updateSpecialOfferTemplate(offerTitle, e.target.value, offerDetails, offerStartDate, offerEndDate);
                       }}
                     />
                     <p className="text-xs text-muted-foreground">
                       Short text below the offer title
                     </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Start Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !offerStartDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {offerStartDate ? format(offerStartDate, "PPP") : <span>Pick start date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={offerStartDate}
+                            onSelect={(date) => {
+                              setOfferStartDate(date);
+                              updateSpecialOfferTemplate(offerTitle, discountText, offerDetails, date, offerEndDate);
+                            }}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <p className="text-xs text-muted-foreground">
+                        When the offer starts
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !offerEndDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {offerEndDate ? format(offerEndDate, "PPP") : <span>Pick end date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={offerEndDate}
+                            onSelect={(date) => {
+                              setOfferEndDate(date);
+                              updateSpecialOfferTemplate(offerTitle, discountText, offerDetails, offerStartDate, date);
+                            }}
+                            disabled={(date) => offerStartDate ? date < offerStartDate : false}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <p className="text-xs text-muted-foreground">
+                        When the offer expires
+                      </p>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Offer Description</Label>
@@ -717,7 +809,7 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                       value={offerDetails}
                       onChange={(e) => {
                         setOfferDetails(e.target.value);
-                        updateSpecialOfferTemplate(offerTitle, discountText, e.target.value);
+                        updateSpecialOfferTemplate(offerTitle, discountText, e.target.value, offerStartDate, offerEndDate);
                       }}
                       className="min-h-[80px]"
                     />
