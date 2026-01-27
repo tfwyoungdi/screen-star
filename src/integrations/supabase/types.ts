@@ -141,6 +141,13 @@ export type Database = {
             referencedRelation: "concession_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "booking_concessions_concession_item_id_fkey"
+            columns: ["concession_item_id"]
+            isOneToOne: false
+            referencedRelation: "concession_items_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bookings: {
@@ -389,6 +396,13 @@ export type Database = {
             referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cinema_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       combo_deal_items: {
@@ -423,6 +437,13 @@ export type Database = {
             columns: ["concession_item_id"]
             isOneToOne: false
             referencedRelation: "concession_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_deal_items_concession_item_id_fkey"
+            columns: ["concession_item_id"]
+            isOneToOne: false
+            referencedRelation: "concession_items_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1010,6 +1031,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "inventory_history_concession_item_id_fkey"
+            columns: ["concession_item_id"]
+            isOneToOne: false
+            referencedRelation: "concession_items_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_history_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -1198,6 +1226,13 @@ export type Database = {
             columns: ["concession_item_id"]
             isOneToOne: false
             referencedRelation: "concession_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_rewards_concession_item_id_fkey"
+            columns: ["concession_item_id"]
+            isOneToOne: false
+            referencedRelation: "concession_items_public"
             referencedColumns: ["id"]
           },
           {
@@ -2246,6 +2281,42 @@ export type Database = {
         }
         Relationships: []
       }
+      security_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          organization_id: string | null
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shifts: {
         Row: {
           access_code_used: string | null
@@ -2715,6 +2786,70 @@ export type Database = {
       }
     }
     Views: {
+      concession_items_public: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string | null
+          image_url: string | null
+          is_available: boolean | null
+          name: string | null
+          organization_id: string | null
+          price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string | null
+          image_url?: string | null
+          is_available?: boolean | null
+          name?: string | null
+          organization_id?: string | null
+          price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string | null
+          image_url?: string | null
+          is_available?: boolean | null
+          name?: string | null
+          organization_id?: string | null
+          price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concession_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concession_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concession_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations_public: {
         Row: {
           about_text: string | null
@@ -2865,6 +3000,72 @@ export type Database = {
           social_instagram?: string | null
           social_twitter?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      platform_settings_public: {
+        Row: {
+          enable_promotions: boolean | null
+          id: string | null
+          logo_url: string | null
+          maintenance_message: string | null
+          maintenance_mode: boolean | null
+          platform_name: string | null
+          primary_color: string | null
+        }
+        Insert: {
+          enable_promotions?: boolean | null
+          id?: string | null
+          logo_url?: string | null
+          maintenance_message?: string | null
+          maintenance_mode?: boolean | null
+          platform_name?: string | null
+          primary_color?: string | null
+        }
+        Update: {
+          enable_promotions?: boolean | null
+          id?: string | null
+          logo_url?: string | null
+          maintenance_message?: string | null
+          maintenance_mode?: boolean | null
+          platform_name?: string | null
+          primary_color?: string | null
+        }
+        Relationships: []
+      }
+      subscription_plans_public: {
+        Row: {
+          created_at: string | null
+          features: Json | null
+          id: string | null
+          is_active: boolean | null
+          max_screens: number | null
+          max_staff: number | null
+          name: string | null
+          price_monthly: number | null
+          price_yearly: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          features?: Json | null
+          id?: string | null
+          is_active?: boolean | null
+          max_screens?: number | null
+          max_staff?: number | null
+          name?: string | null
+          price_monthly?: number | null
+          price_yearly?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          features?: Json | null
+          id?: string | null
+          is_active?: boolean | null
+          max_screens?: number | null
+          max_staff?: number | null
+          name?: string | null
+          price_monthly?: number | null
+          price_yearly?: number | null
         }
         Relationships: []
       }
