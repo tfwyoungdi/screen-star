@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CinemaHeader } from '@/components/public/CinemaHeader';
-import { Film, ArrowLeft, MapPin, Phone, Mail, Clock, Send, CheckCircle, Facebook, Instagram, Twitter } from 'lucide-react';
+import { Film, ArrowLeft, MapPin, Phone, Mail, Clock, Send, CheckCircle, Facebook, Instagram, Twitter, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-
+import { checkRateLimit, RATE_LIMITS, formatWaitTime } from '@/lib/rateLimiter';
 interface CinemaData {
   id: string;
   name: string;
@@ -66,8 +67,20 @@ export default function CinemaContact() {
     resolver: zodResolver(contactSchema),
   });
 
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+
   const onSubmit = async (data: ContactFormData) => {
     if (!cinema) return;
+
+    // Check rate limit before submission
+    const rateCheck = checkRateLimit(RATE_LIMITS.CONTACT_FORM);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setRateLimitError(`Too many submissions. Please wait ${waitTime} before trying again.`);
+      toast.error(`Please wait ${waitTime} before submitting again.`);
+      return;
+    }
+    setRateLimitError(null);
 
     try {
       const { error } = await supabase
@@ -293,6 +306,12 @@ export default function CinemaContact() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <h2 className="text-xl font-semibold text-white mb-6">Send a Message</h2>
                   
+                  {rateLimitError && (
+                    <Alert variant="destructive" className="bg-red-500/10 border-red-500/30">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>{rateLimitError}</AlertDescription>
+                    </Alert>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-white/80">Name</Label>
                     <Input

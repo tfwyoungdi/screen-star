@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Loader2, CheckCircle2, User, Mail, Phone, FileText, Upload, X } from 'lucide-react';
+import { Loader2, CheckCircle2, User, Mail, Phone, FileText, Upload, X, AlertTriangle } from 'lucide-react';
+import { checkRateLimit, RATE_LIMITS, formatWaitTime } from '@/lib/rateLimiter';
 
 const applicationSchema = z.object({
   applicant_name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
@@ -50,6 +52,7 @@ export function JobApplicationForm({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -87,6 +90,16 @@ export function JobApplicationForm({
   };
 
   const onSubmit = async (data: ApplicationFormData) => {
+    // Check rate limit before submission
+    const rateCheck = checkRateLimit(RATE_LIMITS.JOB_APPLICATION);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setRateLimitError(`Too many submissions. Please wait ${waitTime} before trying again.`);
+      toast.error(`Please wait ${waitTime} before submitting again.`);
+      return;
+    }
+    setRateLimitError(null);
+
     setIsSubmitting(true);
     setUploadProgress(0);
 
@@ -189,6 +202,13 @@ export function JobApplicationForm({
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {rateLimitError && (
+              <Alert variant="destructive" className="bg-red-500/10 border-red-500/30">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{rateLimitError}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="applicant_name" className="text-white/80 flex items-center gap-2">
                 <User className="h-4 w-4" />
