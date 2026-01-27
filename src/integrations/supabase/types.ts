@@ -2558,6 +2558,15 @@ export type Database = {
           total_spent: number
         }[]
       }
+      get_daily_access_code: {
+        Args: { _org_id: string }
+        Returns: {
+          daily_access_code: string
+          daily_access_code_end_time: string
+          daily_access_code_set_at: string
+          daily_access_code_start_time: string
+        }[]
+      }
       get_invitation_by_token: {
         Args: { invitation_token: string }
         Returns: {
@@ -2603,6 +2612,10 @@ export type Database = {
           p_expected_total: number
         }
         Returns: Json
+      }
+      validate_daily_access_code: {
+        Args: { _code: string; _org_id: string }
+        Returns: boolean
       }
     }
     Enums: {
