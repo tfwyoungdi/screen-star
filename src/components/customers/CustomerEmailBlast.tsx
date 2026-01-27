@@ -109,7 +109,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       name: 'Special Offer',
       description: 'Share discounts and promotions',
       icon: <Gift className="h-5 w-5" />,
-      subject: '🎁 Exclusive Offer Just for You, {{customer_name}}!',
+      subject: '🎁 {{offer_title}} - Exclusive for {{customer_name}}!',
       html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -123,10 +123,10 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
     <p style="color: #6b7280; line-height: 1.6;">As a valued customer of {{cinema_name}}, we have an exclusive offer just for you!</p>
     <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; border: 2px dashed #f59e0b;">
       <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Limited Time Offer</p>
-      <h2 style="color: #b45309; margin: 0; font-size: 32px;">20% OFF</h2>
-      <p style="color: #92400e; margin: 10px 0 0 0;">Your next movie ticket!</p>
+      <h2 style="color: #b45309; margin: 0; font-size: 32px;">{{offer_title}}</h2>
+      <p style="color: #92400e; margin: 10px 0 0 0;">{{discount_text}}</p>
     </div>
-    <p style="color: #6b7280; line-height: 1.6;">Use this exclusive discount on your next visit. Hurry, this offer won't last forever!</p>
+    <p style="color: #6b7280; line-height: 1.6;">{{offer_details}}</p>
     <a href="#" style="display: inline-block; background: #f59e0b; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">Claim Offer</a>
     <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">Happy movie watching!<br><strong>{{cinema_name}}</strong></p>
   </div>
@@ -138,21 +138,21 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       name: 'General Update',
       description: 'Share news and updates',
       icon: <Megaphone className="h-5 w-5" />,
-      subject: '📢 Important Update from {{cinema_name}}',
+      subject: '📢 {{update_title}} - {{cinema_name}}',
       html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
   <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
     ${logoHtml}
-    <h1 style="color: white; margin: 0; font-size: 28px;">📢 Important Update</h1>
+    <h1 style="color: white; margin: 0; font-size: 28px;">📢 {{update_title}}</h1>
   </div>
   <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <p style="font-size: 18px; color: #374151;">Dear {{customer_name}},</p>
     <p style="color: #6b7280; line-height: 1.6;">We have some exciting news to share with you from {{cinema_name}}!</p>
     <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
       <p style="color: #374151; line-height: 1.8; margin: 0;">
-        [Your update message here]
+        {{update_message}}
       </p>
     </div>
     <p style="color: #6b7280; line-height: 1.6;">Thank you for being part of our cinema family. We look forward to seeing you soon!</p>
@@ -167,7 +167,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       name: 'Loyalty Reward',
       description: 'Reward your loyal customers',
       icon: <Sparkles className="h-5 w-5" />,
-      subject: '⭐ {{customer_name}}, You\'ve Earned a Reward!',
+      subject: '⭐ {{customer_name}}, You\'ve Earned: {{reward_name}}!',
       html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -181,10 +181,10 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
     <p style="color: #6b7280; line-height: 1.6;">Your loyalty to {{cinema_name}} has earned you a special reward!</p>
     <div style="background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center;">
       <p style="color: #7c3aed; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Your Reward</p>
-      <h2 style="color: #5b21b6; margin: 0; font-size: 24px;">🍿 Free Popcorn</h2>
-      <p style="color: #7c3aed; margin: 10px 0 0 0;">On your next visit!</p>
+      <h2 style="color: #5b21b6; margin: 0; font-size: 24px;">{{reward_name}}</h2>
+      <p style="color: #7c3aed; margin: 10px 0 0 0;">{{reward_description}}</p>
     </div>
-    <p style="color: #6b7280; line-height: 1.6;">Simply show this email at the concession stand to claim your reward. Thank you for being an amazing customer!</p>
+    <p style="color: #6b7280; line-height: 1.6;">{{reward_instructions}}</p>
     <a href="#" style="display: inline-block; background: #8b5cf6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">View My Rewards</a>
     <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">With appreciation,<br><strong>{{cinema_name}}</strong></p>
   </div>
@@ -204,7 +204,20 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
   const [selectedMovieId, setSelectedMovieId] = useState<string>('');
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [movieDescription, setMovieDescription] = useState<string>('');
-
+  
+  // Special offer fields
+  const [offerTitle, setOfferTitle] = useState<string>('');
+  const [discountText, setDiscountText] = useState<string>('');
+  const [offerDetails, setOfferDetails] = useState<string>('');
+  
+  // General update fields
+  const [updateTitle, setUpdateTitle] = useState<string>('');
+  const [updateMessage, setUpdateMessage] = useState<string>('');
+  
+  // Loyalty reward fields
+  const [rewardName, setRewardName] = useState<string>('');
+  const [rewardDescription, setRewardDescription] = useState<string>('');
+  const [rewardInstructions, setRewardInstructions] = useState<string>('');
   // Generate templates with cinema logo
   const emailTemplates = generateEmailTemplates(cinemaLogoUrl);
 
@@ -310,6 +323,14 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
     setSelectedMovieId('');
     setSelectedMovie(null);
     setMovieDescription('');
+    setOfferTitle('');
+    setDiscountText('');
+    setOfferDetails('');
+    setUpdateTitle('');
+    setUpdateMessage('');
+    setRewardName('');
+    setRewardDescription('');
+    setRewardInstructions('');
     setActiveTab('templates');
   };
 
@@ -328,62 +349,117 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
     if (movie) {
       setSelectedMovieId(movieId);
       setSelectedMovie(movie);
-      
-      if (selectedTemplate === 'new_movie') {
-        const template = emailTemplates.find((t) => t.id === 'new_movie');
-        if (template) {
-          // Generate movie poster HTML with larger size (300px)
-          const posterHtml = movie.poster_url
-            ? `<img src="${movie.poster_url}" alt="${movie.title}" style="max-width: 300px; width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
-            : '';
-          
-          setSubject(template.subject.replace(/\{\{movie_title\}\}/g, movie.title).replace(/\{\{cinema_name\}\}/g, cinemaName));
-          setHtmlBody(
-            template.html
-              .replace(/\{\{movie_title\}\}/g, movie.title)
-              .replace(/\{\{cinema_name\}\}/g, cinemaName)
-              .replace(/\{\{movie_poster\}\}/g, posterHtml)
-              .replace(/\{\{movie_description\}\}/g, movieDescription || 'Now showing in all screens')
-          );
-        }
-      }
+      updateNewMovieTemplate(movie, movieDescription);
     }
   };
 
-  // Update HTML when description changes
+  const updateNewMovieTemplate = (movie: Movie, description: string) => {
+    const template = emailTemplates.find((t) => t.id === 'new_movie');
+    if (template) {
+      const posterHtml = movie.poster_url
+        ? `<img src="${movie.poster_url}" alt="${movie.title}" style="max-width: 300px; width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
+        : '';
+      
+      setSubject(template.subject.replace(/\{\{movie_title\}\}/g, movie.title).replace(/\{\{cinema_name\}\}/g, cinemaName));
+      setHtmlBody(
+        template.html
+          .replace(/\{\{movie_title\}\}/g, movie.title)
+          .replace(/\{\{cinema_name\}\}/g, cinemaName)
+          .replace(/\{\{movie_poster\}\}/g, posterHtml)
+          .replace(/\{\{movie_description\}\}/g, description || 'Now showing in all screens')
+      );
+    }
+  };
+
   const handleDescriptionChange = (description: string) => {
     setMovieDescription(description);
     if (selectedTemplate === 'new_movie' && selectedMovie) {
-      const template = emailTemplates.find((t) => t.id === 'new_movie');
-      if (template) {
-        const posterHtml = selectedMovie.poster_url
-          ? `<img src="${selectedMovie.poster_url}" alt="${selectedMovie.title}" style="max-width: 300px; width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
-          : '';
-        
-        setHtmlBody(
-          template.html
-            .replace(/\{\{movie_title\}\}/g, selectedMovie.title)
-            .replace(/\{\{cinema_name\}\}/g, cinemaName)
-            .replace(/\{\{movie_poster\}\}/g, posterHtml)
-            .replace(/\{\{movie_description\}\}/g, description || 'Now showing in all screens')
-        );
-      }
+      updateNewMovieTemplate(selectedMovie, description);
+    }
+  };
+
+  const updateSpecialOfferTemplate = (title: string, discount: string, details: string) => {
+    const template = emailTemplates.find((t) => t.id === 'special_offer');
+    if (template) {
+      setSubject(
+        template.subject
+          .replace(/\{\{offer_title\}\}/g, title || 'Special Offer')
+          .replace(/\{\{cinema_name\}\}/g, cinemaName)
+      );
+      setHtmlBody(
+        template.html
+          .replace(/\{\{cinema_name\}\}/g, cinemaName)
+          .replace(/\{\{offer_title\}\}/g, title || 'Special Offer')
+          .replace(/\{\{discount_text\}\}/g, discount || 'Your next movie ticket!')
+          .replace(/\{\{offer_details\}\}/g, details || 'Use this exclusive discount on your next visit. Hurry, this offer won\'t last forever!')
+      );
+    }
+  };
+
+  const updateGeneralUpdateTemplate = (title: string, message: string) => {
+    const template = emailTemplates.find((t) => t.id === 'general_update');
+    if (template) {
+      setSubject(
+        template.subject
+          .replace(/\{\{update_title\}\}/g, title || 'Important Update')
+          .replace(/\{\{cinema_name\}\}/g, cinemaName)
+      );
+      setHtmlBody(
+        template.html
+          .replace(/\{\{cinema_name\}\}/g, cinemaName)
+          .replace(/\{\{update_title\}\}/g, title || 'Important Update')
+          .replace(/\{\{update_message\}\}/g, message || 'We have exciting news to share with you!')
+      );
+    }
+  };
+
+  const updateLoyaltyRewardTemplate = (name: string, description: string, instructions: string) => {
+    const template = emailTemplates.find((t) => t.id === 'loyalty_reward');
+    if (template) {
+      setSubject(
+        template.subject
+          .replace(/\{\{reward_name\}\}/g, name || 'Special Reward')
+          .replace(/\{\{cinema_name\}\}/g, cinemaName)
+      );
+      setHtmlBody(
+        template.html
+          .replace(/\{\{cinema_name\}\}/g, cinemaName)
+          .replace(/\{\{reward_name\}\}/g, name || '🍿 Special Reward')
+          .replace(/\{\{reward_description\}\}/g, description || 'On your next visit!')
+          .replace(/\{\{reward_instructions\}\}/g, instructions || 'Simply show this email at the concession stand to claim your reward. Thank you for being an amazing customer!')
+      );
     }
   };
 
   const getPreviewHtml = () => {
-    const movieTitle = selectedMovie?.title || 'The Amazing Movie';
-    const posterHtml = selectedMovie?.poster_url
-      ? `<img src="${selectedMovie.poster_url}" alt="${movieTitle}" style="max-width: 300px; width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
-      : '';
-    const description = movieDescription || 'Now showing in all screens';
+    let preview = htmlBody.replace(/\{\{customer_name\}\}/g, 'John Doe').replace(/\{\{cinema_name\}\}/g, cinemaName);
     
-    return htmlBody
-      .replace(/\{\{customer_name\}\}/g, 'John Doe')
-      .replace(/\{\{cinema_name\}\}/g, cinemaName)
-      .replace(/\{\{movie_title\}\}/g, movieTitle)
-      .replace(/\{\{movie_poster\}\}/g, posterHtml)
-      .replace(/\{\{movie_description\}\}/g, description);
+    if (selectedTemplate === 'new_movie') {
+      const movieTitle = selectedMovie?.title || 'The Amazing Movie';
+      const posterHtml = selectedMovie?.poster_url
+        ? `<img src="${selectedMovie.poster_url}" alt="${movieTitle}" style="max-width: 300px; width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
+        : '';
+      preview = preview
+        .replace(/\{\{movie_title\}\}/g, movieTitle)
+        .replace(/\{\{movie_poster\}\}/g, posterHtml)
+        .replace(/\{\{movie_description\}\}/g, movieDescription || 'Now showing in all screens');
+    } else if (selectedTemplate === 'special_offer') {
+      preview = preview
+        .replace(/\{\{offer_title\}\}/g, offerTitle || '20% OFF')
+        .replace(/\{\{discount_text\}\}/g, discountText || 'Your next movie ticket!')
+        .replace(/\{\{offer_details\}\}/g, offerDetails || 'Use this exclusive discount on your next visit. Hurry, this offer won\'t last forever!');
+    } else if (selectedTemplate === 'general_update') {
+      preview = preview
+        .replace(/\{\{update_title\}\}/g, updateTitle || 'Important Update')
+        .replace(/\{\{update_message\}\}/g, updateMessage || 'We have exciting news to share with you!');
+    } else if (selectedTemplate === 'loyalty_reward') {
+      preview = preview
+        .replace(/\{\{reward_name\}\}/g, rewardName || '🍿 Free Popcorn')
+        .replace(/\{\{reward_description\}\}/g, rewardDescription || 'On your next visit!')
+        .replace(/\{\{reward_instructions\}\}/g, rewardInstructions || 'Simply show this email at the concession stand to claim your reward. Thank you for being an amazing customer!');
+    }
+    
+    return preview;
   };
 
   // Calculate analytics
@@ -558,10 +634,11 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
             </TabsContent>
 
             <TabsContent value="customize" className="mt-4 space-y-4">
+              {/* New Movie Announcement Fields */}
               {selectedTemplate === 'new_movie' && (
                 <>
                   <div className="space-y-2">
-                    <Label>Select Movie</Label>
+                    <Label>Select Movie *</Label>
                     <Select value={selectedMovieId} onValueChange={handleMovieSelect}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a movie..." />
@@ -601,6 +678,140 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                   </div>
                 </>
               )}
+
+              {/* Special Offer Fields */}
+              {selectedTemplate === 'special_offer' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Offer Title *</Label>
+                    <Input
+                      placeholder="e.g., 20% OFF, Buy 1 Get 1 Free, Half Price Tuesday..."
+                      value={offerTitle}
+                      onChange={(e) => {
+                        setOfferTitle(e.target.value);
+                        updateSpecialOfferTemplate(e.target.value, discountText, offerDetails);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      The main offer headline (appears prominently in the email)
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Discount Details</Label>
+                    <Input
+                      placeholder="e.g., Your next movie ticket!, On all screenings, Valid this weekend..."
+                      value={discountText}
+                      onChange={(e) => {
+                        setDiscountText(e.target.value);
+                        updateSpecialOfferTemplate(offerTitle, e.target.value, offerDetails);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Short text below the offer title
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Offer Description</Label>
+                    <Textarea
+                      placeholder="Describe how customers can use this offer, any terms & conditions..."
+                      value={offerDetails}
+                      onChange={(e) => {
+                        setOfferDetails(e.target.value);
+                        updateSpecialOfferTemplate(offerTitle, discountText, e.target.value);
+                      }}
+                      className="min-h-[80px]"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Additional details about the offer
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* General Update Fields */}
+              {selectedTemplate === 'general_update' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Update Title *</Label>
+                    <Input
+                      placeholder="e.g., New Opening Hours, Renovations Complete, Special Event..."
+                      value={updateTitle}
+                      onChange={(e) => {
+                        setUpdateTitle(e.target.value);
+                        updateGeneralUpdateTemplate(e.target.value, updateMessage);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      The headline for your announcement
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Update Message *</Label>
+                    <Textarea
+                      placeholder="Write your announcement message here..."
+                      value={updateMessage}
+                      onChange={(e) => {
+                        setUpdateMessage(e.target.value);
+                        updateGeneralUpdateTemplate(updateTitle, e.target.value);
+                      }}
+                      className="min-h-[120px]"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      The main content of your update
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Loyalty Reward Fields */}
+              {selectedTemplate === 'loyalty_reward' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Reward Name *</Label>
+                    <Input
+                      placeholder="e.g., 🍿 Free Popcorn, 🎟️ Free Ticket, 🥤 Free Drink..."
+                      value={rewardName}
+                      onChange={(e) => {
+                        setRewardName(e.target.value);
+                        updateLoyaltyRewardTemplate(e.target.value, rewardDescription, rewardInstructions);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      The name of the reward being offered
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Reward Description</Label>
+                    <Input
+                      placeholder="e.g., On your next visit!, Valid for 30 days..."
+                      value={rewardDescription}
+                      onChange={(e) => {
+                        setRewardDescription(e.target.value);
+                        updateLoyaltyRewardTemplate(rewardName, e.target.value, rewardInstructions);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Short text below the reward name
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Redemption Instructions</Label>
+                    <Textarea
+                      placeholder="Explain how customers can redeem this reward..."
+                      value={rewardInstructions}
+                      onChange={(e) => {
+                        setRewardInstructions(e.target.value);
+                        updateLoyaltyRewardTemplate(rewardName, rewardDescription, e.target.value);
+                      }}
+                      className="min-h-[80px]"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Instructions for claiming the reward
+                    </p>
+                  </div>
+                </>
+              )}
+
               <div className="space-y-2">
                 <Label>Subject Line</Label>
                 <Input
@@ -618,11 +829,8 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                   placeholder="HTML content..."
                   value={htmlBody}
                   onChange={(e) => setHtmlBody(e.target.value)}
-                  className="min-h-[300px] font-mono text-sm"
+                  className="min-h-[200px] font-mono text-sm"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Variables: {'{{customer_name}}'}, {'{{cinema_name}}'}, {'{{movie_title}}'}, {'{{movie_description}}'}
-                </p>
               </div>
             </TabsContent>
 
