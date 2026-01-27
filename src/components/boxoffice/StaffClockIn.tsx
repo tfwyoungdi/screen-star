@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { DollarSign, PlayCircle, Loader2, Key, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { checkRateLimit, formatWaitTime } from '@/lib/rateLimiter';
 
 interface StaffClockInProps {
   userId: string;
@@ -22,10 +23,24 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
   const [openingCash, setOpeningCash] = useState('');
   const [error, setError] = useState('');
 
+  // Rate limit config for access code validation (5 attempts per 10 minutes)
+  const ACCESS_CODE_RATE_LIMIT = {
+    maxRequests: 5,
+    windowMs: 10 * 60 * 1000,
+    storageKey: 'rl_access_code',
+  };
+
   // Clock in mutation
   const clockInMutation = useMutation({
     mutationFn: async () => {
       setError('');
+      
+      // Check rate limit before attempting
+      const rateCheck = checkRateLimit(ACCESS_CODE_RATE_LIMIT);
+      if (rateCheck.isLimited) {
+        const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+        throw new Error(`Too many attempts. Please wait ${waitTime} before trying again.`);
+      }
       
       // Verify access code
       const { data: org, error: orgError } = await supabase

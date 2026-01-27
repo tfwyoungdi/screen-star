@@ -12,6 +12,7 @@ import {
   AlertTriangle, Building2 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { checkRateLimit, RATE_LIMITS, formatWaitTime } from '@/lib/rateLimiter';
 
 export default function StaffLogin() {
   const { slug } = useParams<{ slug: string }>();
@@ -121,6 +122,14 @@ export default function StaffLogin() {
 
     if (!organization) {
       setError('Invalid cinema portal');
+      return;
+    }
+
+    // Check rate limit before attempting login
+    const rateCheck = checkRateLimit(RATE_LIMITS.LOGIN);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setError(`Too many login attempts. Please wait ${waitTime} before trying again.`);
       return;
     }
 

@@ -105,9 +105,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // SECURITY: Revoke all active sessions when deactivating a user
+    if (!isActive) {
+      try {
+        console.log(`Revoking sessions for deactivated user: ${userId}`);
+        await supabaseAdmin.auth.admin.signOut(userId, 'global');
+        console.log(`Successfully revoked all sessions for user: ${userId}`);
+      } catch (sessionError) {
+        // Log but don't fail the deactivation if session revocation fails
+        console.error('Failed to revoke user sessions:', sessionError);
+      }
+    }
+
     return new Response(JSON.stringify({ 
       success: true,
-      message: isActive ? 'Staff member reactivated' : 'Staff member deactivated'
+      message: isActive ? 'Staff member reactivated' : 'Staff member deactivated',
+      sessionsRevoked: !isActive
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
