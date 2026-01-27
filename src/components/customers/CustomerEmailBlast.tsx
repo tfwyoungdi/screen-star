@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
@@ -42,9 +42,16 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+interface Movie {
+  id: string;
+  title: string;
+  poster_url: string | null;
+}
+
 interface CustomerEmailBlastProps {
   organizationId: string;
   cinemaName: string;
+  cinemaLogoUrl: string | null;
   customerCount: number;
 }
 
@@ -57,25 +64,33 @@ interface EmailTemplate {
   html: string;
 }
 
-const EMAIL_TEMPLATES: EmailTemplate[] = [
-  {
-    id: 'new_movie',
-    name: 'New Movie Announcement',
-    description: 'Announce a new movie release',
-    icon: <Film className="h-5 w-5" />,
-    subject: '🎬 Now Showing: {{movie_title}} at {{cinema_name}}!',
-    html: `<!DOCTYPE html>
+// Function to generate email templates with dynamic logo
+const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
+  const logoHtml = logoUrl 
+    ? `<img src="${logoUrl}" alt="Cinema Logo" style="max-width: 120px; max-height: 60px; margin-bottom: 15px;" />`
+    : '';
+
+  return [
+    {
+      id: 'new_movie',
+      name: 'New Movie Announcement',
+      description: 'Announce a new movie release',
+      icon: <Film className="h-5 w-5" />,
+      subject: '🎬 Now Showing: {{movie_title}} at {{cinema_name}}!',
+      html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
   <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+    ${logoHtml}
     <h1 style="color: white; margin: 0; font-size: 28px;">🎬 New Movie Alert!</h1>
   </div>
   <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <p style="font-size: 18px; color: #374151;">Hi {{customer_name}},</p>
     <p style="color: #6b7280; line-height: 1.6;">We're excited to announce a brand new movie is now showing at {{cinema_name}}!</p>
     <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center;">
-      <h2 style="color: #1f2937; margin: 0 0 10px 0;">{{movie_title}}</h2>
+      {{movie_poster}}
+      <h2 style="color: #1f2937; margin: 10px 0;">{{movie_title}}</h2>
       <p style="color: #6b7280; margin: 0;">Now showing in all screens</p>
     </div>
     <p style="color: #6b7280; line-height: 1.6;">Don't miss out on this cinematic experience. Book your tickets now and get the best seats!</p>
@@ -84,18 +99,19 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
   </div>
 </body>
 </html>`,
-  },
-  {
-    id: 'special_offer',
-    name: 'Special Offer',
-    description: 'Share discounts and promotions',
-    icon: <Gift className="h-5 w-5" />,
-    subject: '🎁 Exclusive Offer Just for You, {{customer_name}}!',
-    html: `<!DOCTYPE html>
+    },
+    {
+      id: 'special_offer',
+      name: 'Special Offer',
+      description: 'Share discounts and promotions',
+      icon: <Gift className="h-5 w-5" />,
+      subject: '🎁 Exclusive Offer Just for You, {{customer_name}}!',
+      html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
   <div style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+    ${logoHtml}
     <h1 style="color: white; margin: 0; font-size: 28px;">🎁 Special Offer!</h1>
   </div>
   <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -112,18 +128,19 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
   </div>
 </body>
 </html>`,
-  },
-  {
-    id: 'general_update',
-    name: 'General Update',
-    description: 'Share news and updates',
-    icon: <Megaphone className="h-5 w-5" />,
-    subject: '📢 Important Update from {{cinema_name}}',
-    html: `<!DOCTYPE html>
+    },
+    {
+      id: 'general_update',
+      name: 'General Update',
+      description: 'Share news and updates',
+      icon: <Megaphone className="h-5 w-5" />,
+      subject: '📢 Important Update from {{cinema_name}}',
+      html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
   <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+    ${logoHtml}
     <h1 style="color: white; margin: 0; font-size: 28px;">📢 Important Update</h1>
   </div>
   <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -140,18 +157,19 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
   </div>
 </body>
 </html>`,
-  },
-  {
-    id: 'loyalty_reward',
-    name: 'Loyalty Reward',
-    description: 'Reward your loyal customers',
-    icon: <Sparkles className="h-5 w-5" />,
-    subject: '⭐ {{customer_name}}, You\'ve Earned a Reward!',
-    html: `<!DOCTYPE html>
+    },
+    {
+      id: 'loyalty_reward',
+      name: 'Loyalty Reward',
+      description: 'Reward your loyal customers',
+      icon: <Sparkles className="h-5 w-5" />,
+      subject: '⭐ {{customer_name}}, You\'ve Earned a Reward!',
+      html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
   <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+    ${logoHtml}
     <h1 style="color: white; margin: 0; font-size: 28px;">⭐ Loyalty Reward!</h1>
   </div>
   <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -168,17 +186,38 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
   </div>
 </body>
 </html>`,
-  },
-];
+    },
+  ];
+};
 
-export function CustomerEmailBlast({ organizationId, cinemaName, customerCount }: CustomerEmailBlastProps) {
+export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, customerCount }: CustomerEmailBlastProps) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('templates');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
-  const [movieTitle, setMovieTitle] = useState('');
+  const [selectedMovieId, setSelectedMovieId] = useState<string>('');
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+
+  // Generate templates with cinema logo
+  const emailTemplates = generateEmailTemplates(cinemaLogoUrl);
+
+  // Fetch movies for selection
+  const { data: movies } = useQuery({
+    queryKey: ['movies-for-email', organizationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('movies')
+        .select('id, title, poster_url')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true)
+        .order('title');
+      if (error) throw error;
+      return data as Movie[];
+    },
+    enabled: !!organizationId,
+  });
 
   // Fetch past campaigns
   const { data: campaigns, isLoading: campaignsLoading } = useQuery({
@@ -263,12 +302,13 @@ export function CustomerEmailBlast({ organizationId, cinemaName, customerCount }
     setSelectedTemplate('');
     setSubject('');
     setHtmlBody('');
-    setMovieTitle('');
+    setSelectedMovieId('');
+    setSelectedMovie(null);
     setActiveTab('templates');
   };
 
   const handleTemplateSelect = (templateId: string) => {
-    const template = EMAIL_TEMPLATES.find((t) => t.id === templateId);
+    const template = emailTemplates.find((t) => t.id === templateId);
     if (template) {
       setSelectedTemplate(templateId);
       setSubject(template.subject.replace(/\{\{cinema_name\}\}/g, cinemaName));
@@ -277,22 +317,43 @@ export function CustomerEmailBlast({ organizationId, cinemaName, customerCount }
     }
   };
 
-  const updateHtmlWithMovieTitle = (title: string) => {
-    setMovieTitle(title);
-    if (selectedTemplate === 'new_movie') {
-      const template = EMAIL_TEMPLATES.find((t) => t.id === 'new_movie');
-      if (template) {
-        setSubject(template.subject.replace(/\{\{movie_title\}\}/g, title).replace(/\{\{cinema_name\}\}/g, cinemaName));
-        setHtmlBody(template.html.replace(/\{\{movie_title\}\}/g, title).replace(/\{\{cinema_name\}\}/g, cinemaName));
+  const handleMovieSelect = (movieId: string) => {
+    const movie = movies?.find((m) => m.id === movieId);
+    if (movie) {
+      setSelectedMovieId(movieId);
+      setSelectedMovie(movie);
+      
+      if (selectedTemplate === 'new_movie') {
+        const template = emailTemplates.find((t) => t.id === 'new_movie');
+        if (template) {
+          // Generate movie poster HTML
+          const posterHtml = movie.poster_url
+            ? `<img src="${movie.poster_url}" alt="${movie.title}" style="max-width: 200px; border-radius: 8px; margin-bottom: 10px;" />`
+            : '';
+          
+          setSubject(template.subject.replace(/\{\{movie_title\}\}/g, movie.title).replace(/\{\{cinema_name\}\}/g, cinemaName));
+          setHtmlBody(
+            template.html
+              .replace(/\{\{movie_title\}\}/g, movie.title)
+              .replace(/\{\{cinema_name\}\}/g, cinemaName)
+              .replace(/\{\{movie_poster\}\}/g, posterHtml)
+          );
+        }
       }
     }
   };
 
   const getPreviewHtml = () => {
+    const movieTitle = selectedMovie?.title || 'The Amazing Movie';
+    const posterHtml = selectedMovie?.poster_url
+      ? `<img src="${selectedMovie.poster_url}" alt="${movieTitle}" style="max-width: 200px; border-radius: 8px; margin-bottom: 10px;" />`
+      : '';
+    
     return htmlBody
       .replace(/\{\{customer_name\}\}/g, 'John Doe')
       .replace(/\{\{cinema_name\}\}/g, cinemaName)
-      .replace(/\{\{movie_title\}\}/g, movieTitle || 'The Amazing Movie');
+      .replace(/\{\{movie_title\}\}/g, movieTitle)
+      .replace(/\{\{movie_poster\}\}/g, posterHtml);
   };
 
   // Calculate analytics
@@ -442,7 +503,7 @@ export function CustomerEmailBlast({ organizationId, cinemaName, customerCount }
 
             <TabsContent value="templates" className="mt-4">
               <div className="grid grid-cols-2 gap-3">
-                {EMAIL_TEMPLATES.map((template) => (
+                {emailTemplates.map((template) => (
                   <button
                     key={template.id}
                     onClick={() => handleTemplateSelect(template.id)}
@@ -469,12 +530,31 @@ export function CustomerEmailBlast({ organizationId, cinemaName, customerCount }
             <TabsContent value="customize" className="mt-4 space-y-4">
               {selectedTemplate === 'new_movie' && (
                 <div className="space-y-2">
-                  <Label>Movie Title</Label>
-                  <Input
-                    placeholder="Enter movie title..."
-                    value={movieTitle}
-                    onChange={(e) => updateHtmlWithMovieTitle(e.target.value)}
-                  />
+                  <Label>Select Movie</Label>
+                  <Select value={selectedMovieId} onValueChange={handleMovieSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a movie..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {movies?.map((movie) => (
+                        <SelectItem key={movie.id} value={movie.id}>
+                          <div className="flex items-center gap-2">
+                            {movie.poster_url && (
+                              <img 
+                                src={movie.poster_url} 
+                                alt={movie.title} 
+                                className="w-6 h-8 object-cover rounded"
+                              />
+                            )}
+                            <span>{movie.title}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {movies?.length === 0 && (
+                    <p className="text-xs text-destructive">No active movies found. Add movies first.</p>
+                  )}
                 </div>
               )}
               <div className="space-y-2">
