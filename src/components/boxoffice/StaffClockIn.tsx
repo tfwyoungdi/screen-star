@@ -80,6 +80,7 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
           user_id: userId,
           opening_cash: openingAmount,
           status: 'active',
+          access_code_used: accessCode,
         })
         .select('id')
         .single();
