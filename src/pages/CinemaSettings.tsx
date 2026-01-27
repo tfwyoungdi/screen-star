@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AboutPageSettings } from '@/components/settings/AboutPageSettings';
 import EmailTemplatesSettings from '@/components/settings/EmailTemplatesSettings';
@@ -49,7 +50,29 @@ const cinemaSettingsSchema = z.object({
   payment_gateway: z.enum(['none', 'stripe', 'flutterwave', 'paystack', 'nomba']),
   payment_gateway_public_key: z.string().optional(),
   payment_gateway_secret_key: z.string().optional(),
+  currency: z.string().default('USD'),
 });
+
+// Common currencies for cinemas
+const currencies = [
+  { code: 'USD', name: 'US Dollar', symbol: '$' },
+  { code: 'EUR', name: 'Euro', symbol: '€' },
+  { code: 'GBP', name: 'British Pound', symbol: '£' },
+  { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
+  { code: 'GHS', name: 'Ghanaian Cedi', symbol: '₵' },
+  { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh' },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
+  { code: 'UGX', name: 'Ugandan Shilling', symbol: 'USh' },
+  { code: 'TZS', name: 'Tanzanian Shilling', symbol: 'TSh' },
+  { code: 'RWF', name: 'Rwandan Franc', symbol: 'FRw' },
+  { code: 'XOF', name: 'CFA Franc BCEAO', symbol: 'CFA' },
+  { code: 'XAF', name: 'CFA Franc BEAC', symbol: 'FCFA' },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
+  { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼' },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+];
 
 type CinemaSettingsData = z.infer<typeof cinemaSettingsSchema>;
 
@@ -107,10 +130,12 @@ export default function CinemaSettings() {
       payment_gateway: (organization as any).payment_gateway || 'none',
       payment_gateway_public_key: (organization as any).payment_gateway_public_key || '',
       payment_gateway_secret_key: (organization as any).payment_gateway_secret_key || '',
+      currency: (organization as any).currency || 'USD',
     } : undefined,
   });
 
   const selectedGateway = watch('payment_gateway');
+  const selectedCurrency = watch('currency');
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -301,6 +326,7 @@ export default function CinemaSettings() {
           payment_gateway_public_key: data.payment_gateway_public_key || null,
           payment_gateway_secret_key: data.payment_gateway_secret_key || null,
           payment_gateway_configured: data.payment_gateway !== 'none' && !!data.payment_gateway_public_key && !!data.payment_gateway_secret_key,
+          currency: data.currency || 'USD',
         })
         .eq('id', organization.id);
 
@@ -978,6 +1004,35 @@ export default function CinemaSettings() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Currency Selection */}
+                  <div className="space-y-3">
+                    <Label>Default Currency</Label>
+                    <Select
+                      value={selectedCurrency}
+                      onValueChange={(value) => setValue('currency', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{currency.symbol}</span>
+                              <span>{currency.code}</span>
+                              <span className="text-muted-foreground">- {currency.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      This currency will be used for all ticket prices and payments
+                    </p>
+                  </div>
+
+                  <Separator />
+
                   <div className="space-y-3">
                     <Label>Select Payment Provider</Label>
                     <Select
