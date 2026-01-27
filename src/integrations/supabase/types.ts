@@ -14,2572 +14,3795 @@ export type Database = {
   }
   public: {
     Tables: {
-      booked_seats: {
+      admin_activity_logs: {
         Row: {
-          booking_id: string
+          action_type: string
+          admin_id: string
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_type: string | null
           id: string
-          price: number
-          row_label: string
-          seat_number: number
-          seat_type: string
-          showtime_id: string
+          ip_address: string | null
+          metadata: Json | null
         }
         Insert: {
-          booking_id: string
+          action_type: string
+          admin_id: string
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
-          price: number
-          row_label: string
-          seat_number: number
-          seat_type?: string
-          showtime_id: string
+          ip_address?: string | null
+          metadata?: Json | null
         }
         Update: {
-          booking_id?: string
+          action_type?: string
+          admin_id?: string
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
-          price?: number
-          row_label?: string
-          seat_number?: number
-          seat_type?: string
-          showtime_id?: string
+          ip_address?: string | null
+          metadata?: Json | null
         }
         Relationships: [
           {
-            foreignKeyName: "booked_seats_booking_id_fkey"
-            columns: ["booking_id"]
+            foreignKeyName: "admin_activity_logs_admin_id_fkey"
+            columns: ["admin_id"]
             isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booked_seats_showtime_id_fkey"
-            columns: ["showtime_id"]
-            isOneToOne: false
-            referencedRelation: "showtimes"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      booking_combos: {
+      campaign_analytics: {
         Row: {
-          booking_id: string
-          combo_deal_id: string
+          campaign_id: string
           created_at: string
+          date: string
+          donations_amount: number
+          donations_count: number
+          hour: number | null
           id: string
-          quantity: number
-          unit_price: number
+          shares_count: number
+          source: string | null
+          unique_visitors: number
+          views: number
         }
         Insert: {
-          booking_id: string
-          combo_deal_id: string
+          campaign_id: string
           created_at?: string
+          date?: string
+          donations_amount?: number
+          donations_count?: number
+          hour?: number | null
           id?: string
-          quantity?: number
-          unit_price: number
+          shares_count?: number
+          source?: string | null
+          unique_visitors?: number
+          views?: number
         }
         Update: {
-          booking_id?: string
-          combo_deal_id?: string
+          campaign_id?: string
           created_at?: string
+          date?: string
+          donations_amount?: number
+          donations_count?: number
+          hour?: number | null
           id?: string
-          quantity?: number
-          unit_price?: number
+          shares_count?: number
+          source?: string | null
+          unique_visitors?: number
+          views?: number
         }
         Relationships: [
           {
-            foreignKeyName: "booking_combos_booking_id_fkey"
-            columns: ["booking_id"]
+            foreignKeyName: "campaign_analytics_campaign_id_fkey"
+            columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_combos_combo_deal_id_fkey"
-            columns: ["combo_deal_id"]
-            isOneToOne: false
-            referencedRelation: "combo_deals"
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
       }
-      booking_concessions: {
+      campaign_updates: {
         Row: {
-          booking_id: string
-          concession_item_id: string
+          campaign_id: string
+          content: string
           created_at: string
           id: string
-          quantity: number
-          unit_price: number
-        }
-        Insert: {
-          booking_id: string
-          concession_item_id: string
-          created_at?: string
-          id?: string
-          quantity?: number
-          unit_price: number
-        }
-        Update: {
-          booking_id?: string
-          concession_item_id?: string
-          created_at?: string
-          id?: string
-          quantity?: number
-          unit_price?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_concessions_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_concessions_concession_item_id_fkey"
-            columns: ["concession_item_id"]
-            isOneToOne: false
-            referencedRelation: "concession_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bookings: {
-        Row: {
-          booking_reference: string
-          created_at: string
-          customer_email: string
-          customer_id: string | null
-          customer_name: string
-          customer_phone: string | null
-          discount_amount: number | null
-          id: string
-          organization_id: string
-          promo_code_id: string | null
-          reminder_sent: boolean
-          shift_id: string | null
-          showtime_id: string
-          status: string
-          total_amount: number
-        }
-        Insert: {
-          booking_reference: string
-          created_at?: string
-          customer_email: string
-          customer_id?: string | null
-          customer_name: string
-          customer_phone?: string | null
-          discount_amount?: number | null
-          id?: string
-          organization_id: string
-          promo_code_id?: string | null
-          reminder_sent?: boolean
-          shift_id?: string | null
-          showtime_id: string
-          status?: string
-          total_amount: number
-        }
-        Update: {
-          booking_reference?: string
-          created_at?: string
-          customer_email?: string
-          customer_id?: string | null
-          customer_name?: string
-          customer_phone?: string | null
-          discount_amount?: number | null
-          id?: string
-          organization_id?: string
-          promo_code_id?: string | null
-          reminder_sent?: boolean
-          shift_id?: string | null
-          showtime_id?: string
-          status?: string
-          total_amount?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bookings_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_promo_code_id_fkey"
-            columns: ["promo_code_id"]
-            isOneToOne: false
-            referencedRelation: "promo_codes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_shift_id_fkey"
-            columns: ["shift_id"]
-            isOneToOne: false
-            referencedRelation: "shifts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_showtime_id_fkey"
-            columns: ["showtime_id"]
-            isOneToOne: false
-            referencedRelation: "showtimes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      cinema_jobs: {
-        Row: {
-          created_at: string
-          department: string
-          description: string | null
-          id: string
-          is_active: boolean
-          location: string
-          organization_id: string
+          image_url: string | null
           title: string
-          type: string
           updated_at: string
         }
         Insert: {
+          campaign_id: string
+          content: string
           created_at?: string
-          department: string
-          description?: string | null
           id?: string
-          is_active?: boolean
-          location?: string
-          organization_id: string
+          image_url?: string | null
           title: string
-          type?: string
           updated_at?: string
         }
         Update: {
+          campaign_id?: string
+          content?: string
           created_at?: string
-          department?: string
-          description?: string | null
           id?: string
-          is_active?: boolean
-          location?: string
-          organization_id?: string
+          image_url?: string | null
           title?: string
-          type?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "cinema_jobs_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "campaign_updates_campaign_id_fkey"
+            columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cinema_jobs_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
       }
-      cinema_subscriptions: {
-        Row: {
-          billing_email: string | null
-          cancelled_at: string | null
-          created_at: string
-          current_period_end: string
-          current_period_start: string
-          discount_expires_at: string | null
-          discount_percentage: number | null
-          id: string
-          organization_id: string
-          plan_id: string
-          status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          trial_ends_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          billing_email?: string | null
-          cancelled_at?: string | null
-          created_at?: string
-          current_period_end: string
-          current_period_start?: string
-          discount_expires_at?: string | null
-          discount_percentage?: number | null
-          id?: string
-          organization_id: string
-          plan_id: string
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          trial_ends_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          billing_email?: string | null
-          cancelled_at?: string | null
-          created_at?: string
-          current_period_end?: string
-          current_period_start?: string
-          discount_expires_at?: string | null
-          discount_percentage?: number | null
-          id?: string
-          organization_id?: string
-          plan_id?: string
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          trial_ends_at?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cinema_subscriptions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cinema_subscriptions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cinema_subscriptions_plan_id_fkey"
-            columns: ["plan_id"]
-            isOneToOne: false
-            referencedRelation: "subscription_plans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      combo_deal_items: {
-        Row: {
-          combo_deal_id: string
-          concession_item_id: string
-          id: string
-          quantity: number
-        }
-        Insert: {
-          combo_deal_id: string
-          concession_item_id: string
-          id?: string
-          quantity?: number
-        }
-        Update: {
-          combo_deal_id?: string
-          concession_item_id?: string
-          id?: string
-          quantity?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "combo_deal_items_combo_deal_id_fkey"
-            columns: ["combo_deal_id"]
-            isOneToOne: false
-            referencedRelation: "combo_deals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "combo_deal_items_concession_item_id_fkey"
-            columns: ["concession_item_id"]
-            isOneToOne: false
-            referencedRelation: "concession_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      combo_deals: {
-        Row: {
-          available_days: number[] | null
-          available_from: string | null
-          available_until: string | null
-          combo_price: number
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean
-          name: string
-          organization_id: string
-          original_price: number
-          updated_at: string
-        }
-        Insert: {
-          available_days?: number[] | null
-          available_from?: string | null
-          available_until?: string | null
-          combo_price: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          name: string
-          organization_id: string
-          original_price: number
-          updated_at?: string
-        }
-        Update: {
-          available_days?: number[] | null
-          available_from?: string | null
-          available_until?: string | null
-          combo_price?: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          name?: string
-          organization_id?: string
-          original_price?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "combo_deals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "combo_deals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      concession_items: {
+      campaigns: {
         Row: {
           category: string
+          created_at: string
+          creator_id: string
+          currency: string
+          current_amount: number
+          custom_slug: string | null
+          description: string | null
+          donor_count: number
+          end_date: string | null
+          goal_amount: number
+          id: string
+          image_url: string | null
+          is_featured: boolean
+          short_description: string | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          creator_id: string
+          currency?: string
+          current_amount?: number
+          custom_slug?: string | null
+          description?: string | null
+          donor_count?: number
+          end_date?: string | null
+          goal_amount?: number
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean
+          short_description?: string | null
+          start_date?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          creator_id?: string
+          currency?: string
+          current_amount?: number
+          custom_slug?: string | null
+          description?: string | null
+          donor_count?: number
+          end_date?: string | null
+          goal_amount?: number
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean
+          short_description?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_moderation: {
+        Row: {
+          content_type: string
+          content_url: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_by: string
+          updated_at: string
+        }
+        Insert: {
+          content_type: string
+          content_url: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by: string
+          updated_at?: string
+        }
+        Update: {
+          content_type?: string
+          content_url?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_moderation_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_moderation_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contest_analytics: {
+        Row: {
+          contest_id: string
+          created_at: string
+          date: string
+          hour: number | null
+          id: string
+          unique_voters: number
+          votes_count: number
+          votes_revenue: number
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string
+          date?: string
+          hour?: number | null
+          id?: string
+          unique_voters?: number
+          votes_count?: number
+          votes_revenue?: number
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string
+          date?: string
+          hour?: number | null
+          id?: string
+          unique_voters?: number
+          votes_count?: number
+          votes_revenue?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_analytics_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contest_auto_posts: {
+        Row: {
+          contest_id: string
+          created_at: string
+          custom_message: string | null
+          id: string
+          is_active: boolean
+          last_posted_at: string | null
+          next_post_at: string | null
+          organization_id: string
+          platform: string
+          post_type: string
+          schedule_interval: string
+          updated_at: string
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string
+          custom_message?: string | null
+          id?: string
+          is_active?: boolean
+          last_posted_at?: string | null
+          next_post_at?: string | null
+          organization_id: string
+          platform?: string
+          post_type?: string
+          schedule_interval?: string
+          updated_at?: string
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string
+          custom_message?: string | null
+          id?: string
+          is_active?: boolean
+          last_posted_at?: string | null
+          next_post_at?: string | null
+          organization_id?: string
+          platform?: string
+          post_type?: string
+          schedule_interval?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_auto_posts_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contest_categories: {
+        Row: {
+          contest_id: string
           created_at: string
           description: string | null
           display_order: number | null
           id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_categories_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contestants: {
+        Row: {
+          bio: string | null
+          category_id: string | null
+          contest_id: string
+          country: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          is_public_votes: boolean
+          name: string
+          performance: string | null
+          photo_url: string | null
+          state: string | null
+          updated_at: string
+          vote_count: number
+        }
+        Insert: {
+          bio?: string | null
+          category_id?: string | null
+          contest_id: string
+          country?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_public_votes?: boolean
+          name: string
+          performance?: string | null
+          photo_url?: string | null
+          state?: string | null
+          updated_at?: string
+          vote_count?: number
+        }
+        Update: {
+          bio?: string | null
+          category_id?: string | null
+          contest_id?: string
+          country?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_public_votes?: boolean
+          name?: string
+          performance?: string | null
+          photo_url?: string | null
+          state?: string | null
+          updated_at?: string
+          vote_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contestants_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "contest_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contestants_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contests: {
+        Row: {
+          brand_logo_url: string | null
+          brand_primary_color: string | null
+          brand_secondary_color: string | null
+          category: string
+          commission_rate: number | null
+          contest_type: string
+          created_at: string
+          custom_slug: string | null
+          description: string | null
+          end_date: string
+          id: string
           image_url: string | null
-          is_available: boolean
-          low_stock_threshold: number | null
+          is_active: boolean
+          is_featured: boolean
+          is_live_voting: boolean
+          organization_id: string | null
+          start_date: string
+          stream_platform: string | null
+          stream_url: string | null
+          title: string
+          total_votes: number
+          updated_at: string
+          vote_currency: string
+          vote_price: number
+        }
+        Insert: {
+          brand_logo_url?: string | null
+          brand_primary_color?: string | null
+          brand_secondary_color?: string | null
+          category: string
+          commission_rate?: number | null
+          contest_type?: string
+          created_at?: string
+          custom_slug?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          is_live_voting?: boolean
+          organization_id?: string | null
+          start_date: string
+          stream_platform?: string | null
+          stream_url?: string | null
+          title: string
+          total_votes?: number
+          updated_at?: string
+          vote_currency?: string
+          vote_price?: number
+        }
+        Update: {
+          brand_logo_url?: string | null
+          brand_primary_color?: string | null
+          brand_secondary_color?: string | null
+          category?: string
+          commission_rate?: number | null
+          contest_type?: string
+          created_at?: string
+          custom_slug?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          is_live_voting?: boolean
+          organization_id?: string | null
+          start_date?: string
+          stream_platform?: string | null
+          stream_url?: string | null
+          title?: string
+          total_votes?: number
+          updated_at?: string
+          vote_currency?: string
+          vote_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donations: {
+        Row: {
+          amount: number
+          campaign_id: string
+          created_at: string
+          currency: string
+          donor_id: string | null
+          donor_message: string | null
+          guest_email: string | null
+          guest_name: string | null
+          id: string
+          is_anonymous: boolean
+          net_amount: number | null
+          payment_method: string
+          platform_commission: number | null
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          campaign_id: string
+          created_at?: string
+          currency?: string
+          donor_id?: string | null
+          donor_message?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          is_anonymous?: boolean
+          net_amount?: number | null
+          payment_method: string
+          platform_commission?: number | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          campaign_id?: string
+          created_at?: string
+          currency?: string
+          donor_id?: string | null
+          donor_message?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          is_anonymous?: boolean
+          net_amount?: number | null
+          payment_method?: string
+          platform_commission?: number | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donations_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_auto_posts: {
+        Row: {
+          created_at: string
+          custom_message: string | null
+          event_id: string
+          id: string
+          is_active: boolean
+          last_posted_at: string | null
+          next_post_at: string | null
+          organization_id: string
+          platform: string
+          post_type: string
+          schedule_interval: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_message?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean
+          last_posted_at?: string | null
+          next_post_at?: string | null
+          organization_id: string
+          platform?: string
+          post_type?: string
+          schedule_interval?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_message?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          last_posted_at?: string | null
+          next_post_at?: string | null
+          organization_id?: string
+          platform?: string
+          post_type?: string
+          schedule_interval?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_auto_posts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_auto_posts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_templates: {
+        Row: {
+          created_at: string
+          id: string
           name: string
           organization_id: string
-          price: number
-          stock_quantity: number | null
-          track_inventory: boolean | null
+          template_data: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          template_data: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          template_data?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          address: string | null
+          category: string
+          commission_rate: number | null
+          created_at: string
+          currency: string
+          custom_slug: string | null
+          description: string | null
+          event_date: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_featured: boolean
+          logo_url: string | null
+          organization_id: string | null
+          stream_platform: string | null
+          stream_url: string | null
+          title: string
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          address?: string | null
+          category: string
+          commission_rate?: number | null
+          created_at?: string
+          currency?: string
+          custom_slug?: string | null
+          description?: string | null
+          event_date: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          logo_url?: string | null
+          organization_id?: string | null
+          stream_platform?: string | null
+          stream_url?: string | null
+          title: string
+          updated_at?: string
+          venue: string
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          commission_rate?: number | null
+          created_at?: string
+          currency?: string
+          custom_slug?: string | null
+          description?: string | null
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          logo_url?: string | null
+          organization_id?: string | null
+          stream_platform?: string | null
+          stream_url?: string | null
+          title?: string
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorite_contestants: {
+        Row: {
+          contestant_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          contestant_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          contestant_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_contestants_contestant_id_fkey"
+            columns: ["contestant_id"]
+            isOneToOne: false
+            referencedRelation: "contestants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_fields: {
+        Row: {
+          conditional_logic: Json | null
+          created_at: string
+          description: string | null
+          display_order: number
+          field_type: string
+          form_id: string
+          id: string
+          is_required: boolean
+          label: string
+          options: Json | null
+          page_number: number | null
+          placeholder: string | null
+          updated_at: string
+          validation_rules: Json | null
+        }
+        Insert: {
+          conditional_logic?: Json | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          field_type: string
+          form_id: string
+          id?: string
+          is_required?: boolean
+          label: string
+          options?: Json | null
+          page_number?: number | null
+          placeholder?: string | null
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Update: {
+          conditional_logic?: Json | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          field_type?: string
+          form_id?: string
+          id?: string
+          is_required?: boolean
+          label?: string
+          options?: Json | null
+          page_number?: number | null
+          placeholder?: string | null
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_responses: {
+        Row: {
+          form_id: string
+          id: string
+          payment_amount: number | null
+          payment_reference: string | null
+          payment_status: string | null
+          respondent_email: string | null
+          respondent_name: string | null
+          response_data: Json
+          status: string
+          submitted_at: string
+        }
+        Insert: {
+          form_id: string
+          id?: string
+          payment_amount?: number | null
+          payment_reference?: string | null
+          payment_status?: string | null
+          respondent_email?: string | null
+          respondent_name?: string | null
+          response_data: Json
+          status?: string
+          submitted_at?: string
+        }
+        Update: {
+          form_id?: string
+          id?: string
+          payment_amount?: number | null
+          payment_reference?: string | null
+          payment_status?: string | null
+          respondent_email?: string | null
+          respondent_name?: string | null
+          response_data?: Json
+          status?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_responses_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submission_rate_limits: {
+        Row: {
+          form_id: string
+          id: string
+          ip_hash: string
+          submitted_at: string
+        }
+        Insert: {
+          form_id: string
+          id?: string
+          ip_hash: string
+          submitted_at?: string
+        }
+        Update: {
+          form_id?: string
+          id?: string
+          ip_hash?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submission_rate_limits_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_templates: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          fields_data: Json
+          id: string
+          is_public: boolean | null
+          name: string
+          template_data: Json
           updated_at: string
         }
         Insert: {
           category?: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
-          display_order?: number | null
+          fields_data?: Json
           id?: string
-          image_url?: string | null
-          is_available?: boolean
-          low_stock_threshold?: number | null
+          is_public?: boolean | null
           name: string
-          organization_id: string
-          price: number
-          stock_quantity?: number | null
-          track_inventory?: boolean | null
+          template_data?: Json
           updated_at?: string
         }
         Update: {
           category?: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
-          display_order?: number | null
+          fields_data?: Json
           id?: string
-          image_url?: string | null
-          is_available?: boolean
-          low_stock_threshold?: number | null
+          is_public?: boolean | null
           name?: string
-          organization_id?: string
-          price?: number
-          stock_quantity?: number | null
-          track_inventory?: boolean | null
+          template_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      forms: {
+        Row: {
+          allow_multiple_submissions: boolean
+          confirmation_message: string | null
+          created_at: string
+          custom_slug: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          is_accepting_responses: boolean
+          is_active: boolean
+          logo_url: string | null
+          payment_amount: number | null
+          payment_currency: string | null
+          requires_payment: boolean | null
+          start_date: string | null
+          title: string
+          total_pages: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_multiple_submissions?: boolean
+          confirmation_message?: string | null
+          created_at?: string
+          custom_slug?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_accepting_responses?: boolean
+          is_active?: boolean
+          logo_url?: string | null
+          payment_amount?: number | null
+          payment_currency?: string | null
+          requires_payment?: boolean | null
+          start_date?: string | null
+          title: string
+          total_pages?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_multiple_submissions?: boolean
+          confirmation_message?: string | null
+          created_at?: string
+          custom_slug?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_accepting_responses?: boolean
+          is_active?: boolean
+          logo_url?: string | null
+          payment_amount?: number | null
+          payment_currency?: string | null
+          requires_payment?: boolean | null
+          start_date?: string | null
+          title?: string
+          total_pages?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fraud_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata: Json | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "concession_items_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "fraud_alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "concession_items_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      contact_submissions: {
+      fraud_rules: {
+        Row: {
+          auto_block: boolean
+          auto_flag: boolean
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          rule_name: string
+          rule_type: string
+          severity: string
+          threshold_unit: string | null
+          threshold_value: number
+          updated_at: string
+        }
+        Insert: {
+          auto_block?: boolean
+          auto_flag?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          rule_name: string
+          rule_type: string
+          severity?: string
+          threshold_unit?: string | null
+          threshold_value: number
+          updated_at?: string
+        }
+        Update: {
+          auto_block?: boolean
+          auto_flag?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          rule_name?: string
+          rule_type?: string
+          severity?: string
+          threshold_unit?: string | null
+          threshold_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      influencer_clicks: {
+        Row: {
+          clicked_at: string
+          conversion_amount: number | null
+          converted: boolean
+          converted_at: string | null
+          id: string
+          ip_hash: string | null
+          link_id: string
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          conversion_amount?: number | null
+          converted?: boolean
+          converted_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          link_id: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          conversion_amount?: number | null
+          converted?: boolean
+          converted_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          link_id?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_links: {
+        Row: {
+          code: string
+          commission_currency: string | null
+          commission_type: string
+          commission_value: number
+          contest_id: string | null
+          created_at: string
+          discount_type: string | null
+          discount_value: number | null
+          event_id: string | null
+          id: string
+          influencer_email: string | null
+          influencer_user_id: string | null
+          is_active: boolean
+          name: string
+          organization_id: string
+          total_clicks: number
+          total_commission: number
+          total_conversions: number
+          total_revenue: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          commission_currency?: string | null
+          commission_type?: string
+          commission_value?: number
+          contest_id?: string | null
+          created_at?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          event_id?: string | null
+          id?: string
+          influencer_email?: string | null
+          influencer_user_id?: string | null
+          is_active?: boolean
+          name: string
+          organization_id: string
+          total_clicks?: number
+          total_commission?: number
+          total_conversions?: number
+          total_revenue?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          commission_currency?: string | null
+          commission_type?: string
+          commission_value?: number
+          contest_id?: string | null
+          created_at?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          event_id?: string | null
+          id?: string
+          influencer_email?: string | null
+          influencer_user_id?: string | null
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          total_clicks?: number
+          total_commission?: number
+          total_conversions?: number
+          total_revenue?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_links_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_links_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_payouts: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          amount: number
+          bank_name: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          influencer_user_id: string
+          payment_method: string
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          status: string | null
+          updated_at: string
+          usdt_address: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          amount: number
+          bank_name?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          influencer_user_id: string
+          payment_method: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string
+          usdt_address?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          amount?: number
+          bank_name?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          influencer_user_id?: string
+          payment_method?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string
+          usdt_address?: string | null
+        }
+        Relationships: []
+      }
+      influencer_profiles: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          paid_earnings: number | null
+          payment_method: string | null
+          pending_earnings: number | null
+          total_earnings: number | null
+          updated_at: string
+          usdt_address: string | null
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          paid_earnings?: number | null
+          payment_method?: string | null
+          pending_earnings?: number | null
+          total_earnings?: number | null
+          updated_at?: string
+          usdt_address?: string | null
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          paid_earnings?: number | null
+          payment_method?: string | null
+          pending_earnings?: number | null
+          total_earnings?: number | null
+          updated_at?: string
+          usdt_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          attempted_at: string
+          email: string
+          id: string
+          ip_hash: string | null
+          success: boolean
+        }
+        Insert: {
+          attempted_at?: string
+          email: string
+          id?: string
+          ip_hash?: string | null
+          success?: boolean
+        }
+        Update: {
+          attempted_at?: string
+          email?: string
+          id?: string
+          ip_hash?: string | null
+          success?: boolean
+        }
+        Relationships: []
+      }
+      nomination_categories: {
         Row: {
           created_at: string
-          email: string
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          nomination_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          nomination_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          nomination_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nomination_categories_nomination_id_fkey"
+            columns: ["nomination_id"]
+            isOneToOne: false
+            referencedRelation: "nominations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nomination_submissions: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          nominee_name: string
+          submitter_email: string | null
+          submitter_name: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          nominee_name: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          nominee_name?: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nomination_submissions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "nomination_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nominations: {
+        Row: {
+          created_at: string
+          custom_slug: string | null
+          description: string | null
+          end_date: string
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          organization_id: string
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_slug?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          organization_id: string
+          start_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_slug?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          organization_id?: string
+          start_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_campaign_milestones: boolean
+          email_donation_updates: boolean
+          email_new_donations: boolean
+          email_weekly_summary: boolean
+          id: string
+          push_campaign_milestones: boolean
+          push_donation_updates: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_campaign_milestones?: boolean
+          email_donation_updates?: boolean
+          email_new_donations?: boolean
+          email_weekly_summary?: boolean
+          id?: string
+          push_campaign_milestones?: boolean
+          push_donation_updates?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_campaign_milestones?: boolean
+          email_donation_updates?: boolean
+          email_new_donations?: boolean
+          email_weekly_summary?: boolean
+          id?: string
+          push_campaign_milestones?: boolean
+          push_donation_updates?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
           id: string
           is_read: boolean
           message: string
-          name: string
-          organization_id: string
-          subject: string
+          reference_id: string | null
+          title: string
+          type: string
+          user_id: string
         }
         Insert: {
           created_at?: string
-          email: string
           id?: string
           is_read?: boolean
           message: string
-          name: string
-          organization_id: string
-          subject: string
+          reference_id?: string | null
+          title: string
+          type: string
+          user_id: string
         }
         Update: {
           created_at?: string
-          email?: string
           id?: string
           is_read?: boolean
           message?: string
-          name?: string
-          organization_id?: string
-          subject?: string
+          reference_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "contact_submissions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_submissions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      customer_email_campaigns: {
+      organization_approvals: {
         Row: {
-          clicked_count: number | null
+          blacklist_reason: string | null
+          blacklisted_at: string | null
           created_at: string
-          html_body: string
           id: string
-          opened_count: number | null
+          is_blacklisted: boolean
           organization_id: string
-          sent_at: string | null
-          sent_count: number | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          special_commission_rate: number | null
           status: string
-          subject: string
-          template_type: string
-          total_recipients: number | null
+          ticket_commission_rate: number | null
           updated_at: string
+          vote_commission_rate: number | null
         }
         Insert: {
-          clicked_count?: number | null
+          blacklist_reason?: string | null
+          blacklisted_at?: string | null
           created_at?: string
-          html_body: string
           id?: string
-          opened_count?: number | null
+          is_blacklisted?: boolean
           organization_id: string
-          sent_at?: string | null
-          sent_count?: number | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          special_commission_rate?: number | null
           status?: string
-          subject: string
-          template_type: string
-          total_recipients?: number | null
+          ticket_commission_rate?: number | null
           updated_at?: string
+          vote_commission_rate?: number | null
         }
         Update: {
-          clicked_count?: number | null
+          blacklist_reason?: string | null
+          blacklisted_at?: string | null
           created_at?: string
-          html_body?: string
           id?: string
-          opened_count?: number | null
+          is_blacklisted?: boolean
           organization_id?: string
-          sent_at?: string | null
-          sent_count?: number | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          special_commission_rate?: number | null
           status?: string
-          subject?: string
-          template_type?: string
-          total_recipients?: number | null
+          ticket_commission_rate?: number | null
           updated_at?: string
+          vote_commission_rate?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "customer_email_campaigns_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "customer_email_campaigns_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customers: {
-        Row: {
-          created_at: string
-          email: string
-          first_booking_at: string | null
-          full_name: string
-          id: string
-          last_booking_at: string | null
-          loyalty_points: number
-          notes: string | null
-          organization_id: string
-          phone: string | null
-          total_bookings: number
-          total_spent: number
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          first_booking_at?: string | null
-          full_name: string
-          id?: string
-          last_booking_at?: string | null
-          loyalty_points?: number
-          notes?: string | null
-          organization_id: string
-          phone?: string | null
-          total_bookings?: number
-          total_spent?: number
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          first_booking_at?: string | null
-          full_name?: string
-          id?: string
-          last_booking_at?: string | null
-          loyalty_points?: number
-          notes?: string | null
-          organization_id?: string
-          phone?: string | null
-          total_bookings?: number
-          total_spent?: number
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customers_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "customers_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      domain_records: {
-        Row: {
-          created_at: string
-          dns_verification_token: string | null
-          dns_verified: boolean | null
-          domain: string
-          domain_type: string
-          error_message: string | null
-          id: string
-          is_primary: boolean | null
-          last_checked_at: string | null
-          organization_id: string
-          ssl_status: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          dns_verification_token?: string | null
-          dns_verified?: boolean | null
-          domain: string
-          domain_type: string
-          error_message?: string | null
-          id?: string
-          is_primary?: boolean | null
-          last_checked_at?: string | null
-          organization_id: string
-          ssl_status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          dns_verification_token?: string | null
-          dns_verified?: boolean | null
-          domain?: string
-          domain_type?: string
-          error_message?: string | null
-          id?: string
-          is_primary?: boolean | null
-          last_checked_at?: string | null
-          organization_id?: string
-          ssl_status?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "domain_records_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "domain_records_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      email_analytics: {
-        Row: {
-          booking_id: string | null
-          clicked_at: string | null
-          clicked_count: number | null
-          created_at: string
-          email_type: string
-          id: string
-          opened_at: string | null
-          opened_count: number | null
-          organization_id: string
-          recipient_email: string
-          sent_at: string
-          subject: string | null
-          tracking_id: string
-        }
-        Insert: {
-          booking_id?: string | null
-          clicked_at?: string | null
-          clicked_count?: number | null
-          created_at?: string
-          email_type: string
-          id?: string
-          opened_at?: string | null
-          opened_count?: number | null
-          organization_id: string
-          recipient_email: string
-          sent_at?: string
-          subject?: string | null
-          tracking_id?: string
-        }
-        Update: {
-          booking_id?: string | null
-          clicked_at?: string | null
-          clicked_count?: number | null
-          created_at?: string
-          email_type?: string
-          id?: string
-          opened_at?: string | null
-          opened_count?: number | null
-          organization_id?: string
-          recipient_email?: string
-          sent_at?: string
-          subject?: string | null
-          tracking_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "email_analytics_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "email_analytics_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "email_analytics_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      email_templates: {
-        Row: {
-          created_at: string
-          html_body: string
-          id: string
-          is_active: boolean
-          organization_id: string
-          subject: string
-          template_type: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          html_body: string
-          id?: string
-          is_active?: boolean
-          organization_id: string
-          subject: string
-          template_type: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          html_body?: string
-          id?: string
-          is_active?: boolean
-          organization_id?: string
-          subject?: string
-          template_type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "email_templates_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "email_templates_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      inventory_history: {
-        Row: {
-          change_amount: number
-          change_type: string
-          concession_item_id: string
-          created_at: string
-          created_by: string | null
-          id: string
-          new_quantity: number
-          notes: string | null
-          organization_id: string
-          previous_quantity: number | null
-        }
-        Insert: {
-          change_amount: number
-          change_type: string
-          concession_item_id: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          new_quantity: number
-          notes?: string | null
-          organization_id: string
-          previous_quantity?: number | null
-        }
-        Update: {
-          change_amount?: number
-          change_type?: string
-          concession_item_id?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          new_quantity?: number
-          notes?: string | null
-          organization_id?: string
-          previous_quantity?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "inventory_history_concession_item_id_fkey"
-            columns: ["concession_item_id"]
-            isOneToOne: false
-            referencedRelation: "concession_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inventory_history_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inventory_history_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      job_applications: {
-        Row: {
-          applicant_email: string
-          applicant_name: string
-          applicant_phone: string | null
-          cover_letter: string | null
-          created_at: string
-          id: string
-          job_id: string
-          organization_id: string
-          resume_url: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          applicant_email: string
-          applicant_name: string
-          applicant_phone?: string | null
-          cover_letter?: string | null
-          created_at?: string
-          id?: string
-          job_id: string
-          organization_id: string
-          resume_url?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          applicant_email?: string
-          applicant_name?: string
-          applicant_phone?: string | null
-          cover_letter?: string | null
-          created_at?: string
-          id?: string
-          job_id?: string
-          organization_id?: string
-          resume_url?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "job_applications_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "cinema_jobs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "job_applications_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "job_applications_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      low_stock_notifications: {
-        Row: {
-          created_at: string
-          id: string
-          items: Json
-          notified_email: string | null
-          organization_id: string
-          sent_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          items: Json
-          notified_email?: string | null
-          organization_id: string
-          sent_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          items?: Json
-          notified_email?: string | null
-          organization_id?: string
-          sent_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "low_stock_notifications_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "low_stock_notifications_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      loyalty_rewards: {
-        Row: {
-          concession_item_id: string | null
-          created_at: string
-          description: string | null
-          discount_value: number | null
-          id: string
-          is_active: boolean
-          name: string
-          organization_id: string
-          points_required: number
-          reward_type: string
-          updated_at: string
-        }
-        Insert: {
-          concession_item_id?: string | null
-          created_at?: string
-          description?: string | null
-          discount_value?: number | null
-          id?: string
-          is_active?: boolean
-          name: string
-          organization_id: string
-          points_required: number
-          reward_type: string
-          updated_at?: string
-        }
-        Update: {
-          concession_item_id?: string | null
-          created_at?: string
-          description?: string | null
-          discount_value?: number | null
-          id?: string
-          is_active?: boolean
-          name?: string
-          organization_id?: string
-          points_required?: number
-          reward_type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loyalty_rewards_concession_item_id_fkey"
-            columns: ["concession_item_id"]
-            isOneToOne: false
-            referencedRelation: "concession_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_rewards_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_rewards_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      loyalty_settings: {
-        Row: {
-          created_at: string
-          id: string
-          is_enabled: boolean
-          organization_id: string
-          points_per_booking: number | null
-          points_per_dollar: number | null
-          updated_at: string
-          welcome_bonus_points: number | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          organization_id: string
-          points_per_booking?: number | null
-          points_per_dollar?: number | null
-          updated_at?: string
-          welcome_bonus_points?: number | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          organization_id?: string
-          points_per_booking?: number | null
-          points_per_dollar?: number | null
-          updated_at?: string
-          welcome_bonus_points?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loyalty_settings_organization_id_fkey"
+            foreignKeyName: "organization_approvals_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
-            referencedRelation: "organizations"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "loyalty_settings_organization_id_fkey"
+            foreignKeyName: "organization_approvals_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_settings: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          account_number_encrypted: string | null
+          bank_name: string | null
+          company_address: string | null
+          company_email: string | null
+          company_name: string | null
+          company_phone: string | null
+          created_at: string
+          default_currency: string
+          id: string
+          organization_id: string
+          preferred_payout_method: string | null
+          updated_at: string
+          usdt_address: string | null
+          usdt_address_encrypted: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          account_number_encrypted?: string | null
+          bank_name?: string | null
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          default_currency?: string
+          id?: string
+          organization_id: string
+          preferred_payout_method?: string | null
+          updated_at?: string
+          usdt_address?: string | null
+          usdt_address_encrypted?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          account_number_encrypted?: string | null
+          bank_name?: string | null
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          default_currency?: string
+          id?: string
+          organization_id?: string
+          preferred_payout_method?: string | null
+          updated_at?: string
+          usdt_address?: string | null
+          usdt_address_encrypted?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
-            referencedRelation: "organizations_public"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      loyalty_transactions: {
+      organization_social_accounts: {
         Row: {
-          booking_id: string | null
+          access_token: string | null
+          account_name: string | null
           created_at: string
-          customer_id: string
-          description: string | null
           id: string
+          is_connected: boolean
           organization_id: string
-          points: number
-          reward_id: string | null
-          transaction_type: string
+          platform: string
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
         }
         Insert: {
-          booking_id?: string | null
+          access_token?: string | null
+          account_name?: string | null
           created_at?: string
-          customer_id: string
-          description?: string | null
           id?: string
+          is_connected?: boolean
           organization_id: string
-          points: number
-          reward_id?: string | null
-          transaction_type: string
+          platform: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
         }
         Update: {
-          booking_id?: string | null
+          access_token?: string | null
+          account_name?: string | null
           created_at?: string
-          customer_id?: string
-          description?: string | null
           id?: string
+          is_connected?: boolean
           organization_id?: string
-          points?: number
-          reward_id?: string | null
-          transaction_type?: string
+          platform?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "loyalty_transactions_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_transactions_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_transactions_organization_id_fkey"
+            foreignKeyName: "organization_social_accounts_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_transactions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_transactions_reward_id_fkey"
-            columns: ["reward_id"]
-            isOneToOne: false
-            referencedRelation: "loyalty_rewards"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      movies: {
+      organization_webhooks: {
         Row: {
           created_at: string
-          description: string | null
-          duration_minutes: number
-          genre: string | null
+          events: string[]
+          failure_count: number
           id: string
           is_active: boolean
+          last_triggered_at: string | null
+          name: string
           organization_id: string
-          poster_url: string | null
-          rating: string | null
-          release_date: string | null
-          status: string
-          title: string
-          trailer_url: string | null
+          secret: string | null
           updated_at: string
+          url: string
         }
         Insert: {
           created_at?: string
-          description?: string | null
-          duration_minutes: number
-          genre?: string | null
+          events?: string[]
+          failure_count?: number
           id?: string
           is_active?: boolean
+          last_triggered_at?: string | null
+          name: string
           organization_id: string
-          poster_url?: string | null
-          rating?: string | null
-          release_date?: string | null
-          status?: string
-          title: string
-          trailer_url?: string | null
+          secret?: string | null
           updated_at?: string
+          url: string
         }
         Update: {
           created_at?: string
-          description?: string | null
-          duration_minutes?: number
-          genre?: string | null
+          events?: string[]
+          failure_count?: number
           id?: string
           is_active?: boolean
-          organization_id?: string
-          poster_url?: string | null
-          rating?: string | null
-          release_date?: string | null
-          status?: string
-          title?: string
-          trailer_url?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "movies_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "movies_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      organizations: {
-        Row: {
-          about_text: string | null
-          address: string | null
-          contact_email: string | null
-          contact_phone: string | null
-          created_at: string
-          currency: string | null
-          custom_domain: string | null
-          daily_access_code: string | null
-          daily_access_code_end_time: string | null
-          daily_access_code_set_at: string | null
-          daily_access_code_start_time: string | null
-          id: string
-          is_active: boolean | null
-          logo_url: string | null
-          mission_text: string | null
-          name: string
-          payment_gateway: string | null
-          payment_gateway_configured: boolean | null
-          payment_gateway_public_key: string | null
-          payment_gateway_secret_key: string | null
-          primary_color: string | null
-          secondary_color: string | null
-          seo_description: string | null
-          seo_title: string | null
-          slug: string
-          social_facebook: string | null
-          social_instagram: string | null
-          social_twitter: string | null
-          subscription_plan: string | null
-          suspended_at: string | null
-          suspended_reason: string | null
-          updated_at: string
-          values_json: Json | null
-        }
-        Insert: {
-          about_text?: string | null
-          address?: string | null
-          contact_email?: string | null
-          contact_phone?: string | null
-          created_at?: string
-          currency?: string | null
-          custom_domain?: string | null
-          daily_access_code?: string | null
-          daily_access_code_end_time?: string | null
-          daily_access_code_set_at?: string | null
-          daily_access_code_start_time?: string | null
-          id?: string
-          is_active?: boolean | null
-          logo_url?: string | null
-          mission_text?: string | null
-          name: string
-          payment_gateway?: string | null
-          payment_gateway_configured?: boolean | null
-          payment_gateway_public_key?: string | null
-          payment_gateway_secret_key?: string | null
-          primary_color?: string | null
-          secondary_color?: string | null
-          seo_description?: string | null
-          seo_title?: string | null
-          slug: string
-          social_facebook?: string | null
-          social_instagram?: string | null
-          social_twitter?: string | null
-          subscription_plan?: string | null
-          suspended_at?: string | null
-          suspended_reason?: string | null
-          updated_at?: string
-          values_json?: Json | null
-        }
-        Update: {
-          about_text?: string | null
-          address?: string | null
-          contact_email?: string | null
-          contact_phone?: string | null
-          created_at?: string
-          currency?: string | null
-          custom_domain?: string | null
-          daily_access_code?: string | null
-          daily_access_code_end_time?: string | null
-          daily_access_code_set_at?: string | null
-          daily_access_code_start_time?: string | null
-          id?: string
-          is_active?: boolean | null
-          logo_url?: string | null
-          mission_text?: string | null
+          last_triggered_at?: string | null
           name?: string
-          payment_gateway?: string | null
-          payment_gateway_configured?: boolean | null
-          payment_gateway_public_key?: string | null
-          payment_gateway_secret_key?: string | null
-          primary_color?: string | null
-          secondary_color?: string | null
-          seo_description?: string | null
-          seo_title?: string | null
-          slug?: string
-          social_facebook?: string | null
-          social_instagram?: string | null
-          social_twitter?: string | null
-          subscription_plan?: string | null
-          suspended_at?: string | null
-          suspended_reason?: string | null
-          updated_at?: string
-          values_json?: Json | null
-        }
-        Relationships: []
-      }
-      page_views: {
-        Row: {
-          created_at: string
-          id: string
-          organization_id: string
-          page_path: string
-          referrer: string | null
-          user_agent: string | null
-          visitor_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          organization_id: string
-          page_path: string
-          referrer?: string | null
-          user_agent?: string | null
-          visitor_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
           organization_id?: string
-          page_path?: string
-          referrer?: string | null
-          user_agent?: string | null
-          visitor_id?: string | null
+          secret?: string | null
+          updated_at?: string
+          url?: string
         }
         Relationships: [
           {
-            foreignKeyName: "page_views_organization_id_fkey"
+            foreignKeyName: "organization_webhooks_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "page_views_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      platform_announcement_campaigns: {
+      payouts: {
         Row: {
-          clicked_count: number | null
+          account_name: string | null
+          account_number: string | null
+          account_number_encrypted: string | null
+          amount: number
+          bank_name: string | null
           created_at: string
-          created_by: string | null
-          filter_criteria: Json | null
-          html_body: string
+          currency: string
           id: string
-          opened_count: number | null
-          scheduled_at: string | null
-          sent_at: string | null
-          sent_count: number | null
+          organization_id: string
+          payment_method: string
+          processed_at: string | null
+          reference_id: string | null
           status: string
-          subject: string
-          title: string
-          total_recipients: number | null
           updated_at: string
+          usdt_address: string | null
+          usdt_address_encrypted: string | null
         }
         Insert: {
-          clicked_count?: number | null
+          account_name?: string | null
+          account_number?: string | null
+          account_number_encrypted?: string | null
+          amount: number
+          bank_name?: string | null
           created_at?: string
-          created_by?: string | null
-          filter_criteria?: Json | null
-          html_body: string
+          currency?: string
           id?: string
-          opened_count?: number | null
-          scheduled_at?: string | null
-          sent_at?: string | null
-          sent_count?: number | null
+          organization_id: string
+          payment_method?: string
+          processed_at?: string | null
+          reference_id?: string | null
           status?: string
-          subject: string
-          title: string
-          total_recipients?: number | null
           updated_at?: string
+          usdt_address?: string | null
+          usdt_address_encrypted?: string | null
         }
         Update: {
-          clicked_count?: number | null
+          account_name?: string | null
+          account_number?: string | null
+          account_number_encrypted?: string | null
+          amount?: number
+          bank_name?: string | null
           created_at?: string
-          created_by?: string | null
-          filter_criteria?: Json | null
-          html_body?: string
+          currency?: string
           id?: string
-          opened_count?: number | null
-          scheduled_at?: string | null
-          sent_at?: string | null
-          sent_count?: number | null
+          organization_id?: string
+          payment_method?: string
+          processed_at?: string | null
+          reference_id?: string | null
           status?: string
-          subject?: string
-          title?: string
-          total_recipients?: number | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      platform_audit_logs: {
-        Row: {
-          action: string
-          admin_user_id: string
-          created_at: string
-          details: Json | null
-          id: string
-          ip_address: string | null
-          target_id: string | null
-          target_type: string | null
-          user_agent: string | null
-        }
-        Insert: {
-          action: string
-          admin_user_id: string
-          created_at?: string
-          details?: Json | null
-          id?: string
-          ip_address?: string | null
-          target_id?: string | null
-          target_type?: string | null
-          user_agent?: string | null
-        }
-        Update: {
-          action?: string
-          admin_user_id?: string
-          created_at?: string
-          details?: Json | null
-          id?: string
-          ip_address?: string | null
-          target_id?: string | null
-          target_type?: string | null
-          user_agent?: string | null
-        }
-        Relationships: []
-      }
-      platform_email_analytics: {
-        Row: {
-          clicked_at: string | null
-          created_at: string
-          email_type: string
-          id: string
-          metadata: Json | null
-          opened_at: string | null
-          recipient_email: string
-          recipient_organization_id: string | null
-          sent_at: string
-          status: string
-          subject: string
-          tracking_id: string | null
-        }
-        Insert: {
-          clicked_at?: string | null
-          created_at?: string
-          email_type: string
-          id?: string
-          metadata?: Json | null
-          opened_at?: string | null
-          recipient_email: string
-          recipient_organization_id?: string | null
-          sent_at?: string
-          status?: string
-          subject: string
-          tracking_id?: string | null
-        }
-        Update: {
-          clicked_at?: string | null
-          created_at?: string
-          email_type?: string
-          id?: string
-          metadata?: Json | null
-          opened_at?: string | null
-          recipient_email?: string
-          recipient_organization_id?: string | null
-          sent_at?: string
-          status?: string
-          subject?: string
-          tracking_id?: string | null
+          usdt_address?: string | null
+          usdt_address_encrypted?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "platform_email_analytics_recipient_organization_id_fkey"
-            columns: ["recipient_organization_id"]
+            foreignKeyName: "payouts_organization_id_fkey"
+            columns: ["organization_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_email_analytics_recipient_organization_id_fkey"
-            columns: ["recipient_organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
       platform_settings: {
         Row: {
+          category: string
           created_at: string
-          email_templates: Json | null
-          enable_cinema_gateways: boolean | null
-          enable_custom_domains: boolean | null
-          enable_promotions: boolean | null
-          enable_wallet_feature: boolean | null
+          description: string | null
           id: string
-          logo_url: string | null
-          maintenance_message: string | null
-          maintenance_mode: boolean | null
-          platform_name: string
-          primary_color: string | null
-          sla_email_html_body: string | null
-          sla_email_subject: string | null
-          sla_escalation_email: string | null
-          sla_escalation_enabled: boolean | null
-          sla_response_time_high: number | null
-          sla_response_time_low: number | null
-          sla_response_time_medium: number | null
-          sla_response_time_urgent: number | null
-          support_email: string | null
+          setting_key: string
+          setting_type: string
+          setting_value: string | null
           updated_at: string
         }
         Insert: {
+          category?: string
           created_at?: string
-          email_templates?: Json | null
-          enable_cinema_gateways?: boolean | null
-          enable_custom_domains?: boolean | null
-          enable_promotions?: boolean | null
-          enable_wallet_feature?: boolean | null
+          description?: string | null
           id?: string
-          logo_url?: string | null
-          maintenance_message?: string | null
-          maintenance_mode?: boolean | null
-          platform_name?: string
-          primary_color?: string | null
-          sla_email_html_body?: string | null
-          sla_email_subject?: string | null
-          sla_escalation_email?: string | null
-          sla_escalation_enabled?: boolean | null
-          sla_response_time_high?: number | null
-          sla_response_time_low?: number | null
-          sla_response_time_medium?: number | null
-          sla_response_time_urgent?: number | null
-          support_email?: string | null
+          setting_key: string
+          setting_type?: string
+          setting_value?: string | null
           updated_at?: string
         }
         Update: {
+          category?: string
           created_at?: string
-          email_templates?: Json | null
-          enable_cinema_gateways?: boolean | null
-          enable_custom_domains?: boolean | null
-          enable_promotions?: boolean | null
-          enable_wallet_feature?: boolean | null
+          description?: string | null
           id?: string
-          logo_url?: string | null
-          maintenance_message?: string | null
-          maintenance_mode?: boolean | null
-          platform_name?: string
-          primary_color?: string | null
-          sla_email_html_body?: string | null
-          sla_email_subject?: string | null
-          sla_escalation_email?: string | null
-          sla_escalation_enabled?: boolean | null
-          sla_response_time_high?: number | null
-          sla_response_time_low?: number | null
-          sla_response_time_medium?: number | null
-          sla_response_time_urgent?: number | null
-          support_email?: string | null
+          setting_key?: string
+          setting_type?: string
+          setting_value?: string | null
           updated_at?: string
         }
         Relationships: []
       }
-      platform_transactions: {
-        Row: {
-          booking_id: string | null
-          commission_amount: number
-          created_at: string
-          gateway_transaction_id: string | null
-          gross_amount: number
-          id: string
-          metadata: Json | null
-          net_amount: number
-          organization_id: string
-          payment_gateway: string | null
-          payment_status: string
-          transaction_type: string
-        }
-        Insert: {
-          booking_id?: string | null
-          commission_amount?: number
-          created_at?: string
-          gateway_transaction_id?: string | null
-          gross_amount: number
-          id?: string
-          metadata?: Json | null
-          net_amount: number
-          organization_id: string
-          payment_gateway?: string | null
-          payment_status?: string
-          transaction_type: string
-        }
-        Update: {
-          booking_id?: string | null
-          commission_amount?: number
-          created_at?: string
-          gateway_transaction_id?: string | null
-          gross_amount?: number
-          id?: string
-          metadata?: Json | null
-          net_amount?: number
-          organization_id?: string
-          payment_gateway?: string | null
-          payment_status?: string
-          transaction_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "platform_transactions_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_transactions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_transactions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
+          account_type_selected: boolean
           avatar_url: string | null
           created_at: string
-          email: string
-          full_name: string
+          email: string | null
+          fraud_score: number
+          full_name: string | null
           id: string
-          is_active: boolean | null
-          organization_id: string | null
+          is_suspended: boolean
+          phone: string | null
+          suspended_at: string | null
+          suspended_reason: string | null
           updated_at: string
         }
         Insert: {
+          account_type_selected?: boolean
           avatar_url?: string | null
           created_at?: string
-          email: string
-          full_name: string
+          email?: string | null
+          fraud_score?: number
+          full_name?: string | null
           id: string
-          is_active?: boolean | null
-          organization_id?: string | null
+          is_suspended?: boolean
+          phone?: string | null
+          suspended_at?: string | null
+          suspended_reason?: string | null
           updated_at?: string
         }
         Update: {
+          account_type_selected?: boolean
           avatar_url?: string | null
           created_at?: string
-          email?: string
-          full_name?: string
+          email?: string | null
+          fraud_score?: number
+          full_name?: string | null
           id?: string
-          is_active?: boolean | null
-          organization_id?: string | null
+          is_suspended?: boolean
+          phone?: string | null
+          suspended_at?: string | null
+          suspended_reason?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      promo_code_usage: {
+        Row: {
+          contest_id: string | null
+          created_at: string
+          discount_amount: number
+          email: string | null
+          event_id: string | null
+          final_amount: number
+          id: string
+          order_amount: number
+          order_type: string
+          promo_code_id: string
+          ticket_type_id: string | null
+          transaction_reference: string | null
+          user_id: string
+        }
+        Insert: {
+          contest_id?: string | null
+          created_at?: string
+          discount_amount: number
+          email?: string | null
+          event_id?: string | null
+          final_amount: number
+          id?: string
+          order_amount: number
+          order_type: string
+          promo_code_id: string
+          ticket_type_id?: string | null
+          transaction_reference?: string | null
+          user_id: string
+        }
+        Update: {
+          contest_id?: string | null
+          created_at?: string
+          discount_amount?: number
+          email?: string | null
+          event_id?: string | null
+          final_amount?: number
+          id?: string
+          order_amount?: number
+          order_type?: string
+          promo_code_id?: string
+          ticket_type_id?: string | null
+          transaction_reference?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "promo_code_usage_contest_id_fkey"
+            columns: ["contest_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "contests"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "profiles_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "promo_code_usage_event_id_fkey"
+            columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_usage_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_usage_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_types"
             referencedColumns: ["id"]
           },
         ]
       }
       promo_codes: {
         Row: {
+          applicable_to: string
           code: string
+          contest_id: string | null
           created_at: string
-          current_uses: number | null
-          description: string | null
+          current_uses: number
           discount_type: string
           discount_value: number
+          event_id: string | null
           id: string
-          is_active: boolean | null
+          is_active: boolean
           max_uses: number | null
-          max_uses_per_customer: number | null
-          min_purchase_amount: number | null
           organization_id: string
-          restricted_movie_ids: string[] | null
-          restricted_showtime_ids: string[] | null
+          ticket_type_id: string | null
           updated_at: string
           valid_from: string
           valid_until: string | null
         }
         Insert: {
+          applicable_to?: string
           code: string
+          contest_id?: string | null
           created_at?: string
-          current_uses?: number | null
-          description?: string | null
-          discount_type: string
+          current_uses?: number
+          discount_type?: string
           discount_value: number
+          event_id?: string | null
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           max_uses?: number | null
-          max_uses_per_customer?: number | null
-          min_purchase_amount?: number | null
           organization_id: string
-          restricted_movie_ids?: string[] | null
-          restricted_showtime_ids?: string[] | null
+          ticket_type_id?: string | null
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
         }
         Update: {
+          applicable_to?: string
           code?: string
+          contest_id?: string | null
           created_at?: string
-          current_uses?: number | null
-          description?: string | null
+          current_uses?: number
           discount_type?: string
           discount_value?: number
+          event_id?: string | null
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           max_uses?: number | null
-          max_uses_per_customer?: number | null
-          min_purchase_amount?: number | null
           organization_id?: string
-          restricted_movie_ids?: string[] | null
-          restricted_showtime_ids?: string[] | null
+          ticket_type_id?: string | null
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "promo_codes_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "promo_codes_contest_id_fkey"
+            columns: ["contest_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_codes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "promo_codes_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_codes_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_types"
             referencedColumns: ["id"]
           },
         ]
       }
-      scan_logs: {
+      qr_scan_logs: {
         Row: {
-          booking_id: string | null
-          booking_reference: string
-          created_at: string
-          customer_name: string | null
+          event_id: string
           id: string
-          is_valid: boolean
-          movie_title: string | null
-          organization_id: string
-          result_message: string
-          scan_method: string
+          scan_result: string
+          scanned_at: string
           scanned_by: string | null
-          screen_name: string | null
-          seats_info: string | null
-          shift_id: string | null
-          showtime_start: string | null
+          ticket_id: string
         }
         Insert: {
-          booking_id?: string | null
-          booking_reference: string
-          created_at?: string
-          customer_name?: string | null
+          event_id: string
           id?: string
-          is_valid: boolean
-          movie_title?: string | null
-          organization_id: string
-          result_message: string
-          scan_method?: string
+          scan_result?: string
+          scanned_at?: string
           scanned_by?: string | null
-          screen_name?: string | null
-          seats_info?: string | null
-          shift_id?: string | null
-          showtime_start?: string | null
+          ticket_id: string
         }
         Update: {
-          booking_id?: string | null
-          booking_reference?: string
-          created_at?: string
-          customer_name?: string | null
+          event_id?: string
           id?: string
-          is_valid?: boolean
-          movie_title?: string | null
-          organization_id?: string
-          result_message?: string
-          scan_method?: string
+          scan_result?: string
+          scanned_at?: string
           scanned_by?: string | null
-          screen_name?: string | null
-          seats_info?: string | null
-          shift_id?: string | null
-          showtime_start?: string | null
+          ticket_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "scan_logs_booking_id_fkey"
-            columns: ["booking_id"]
+            foreignKeyName: "qr_scan_logs_event_id_fkey"
+            columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "bookings"
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "scan_logs_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "qr_scan_logs_scanned_by_fkey"
+            columns: ["scanned_by"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "scan_logs_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "qr_scan_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
             isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "scan_logs_shift_id_fkey"
-            columns: ["shift_id"]
+            foreignKeyName: "qr_scan_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
             isOneToOne: false
-            referencedRelation: "shifts"
+            referencedRelation: "tickets_public"
             referencedColumns: ["id"]
           },
         ]
       }
-      screens: {
+      refunds: {
         Row: {
-          columns: number
+          amount: number
           created_at: string
           id: string
-          name: string
-          organization_id: string
-          rows: number
-          updated_at: string
-        }
-        Insert: {
-          columns?: number
-          created_at?: string
-          id?: string
-          name: string
-          organization_id: string
-          rows?: number
-          updated_at?: string
-        }
-        Update: {
-          columns?: number
-          created_at?: string
-          id?: string
-          name?: string
-          organization_id?: string
-          rows?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "screens_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "screens_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      seat_layouts: {
-        Row: {
-          id: string
-          is_available: boolean
-          row_label: string
-          screen_id: string
-          seat_number: number
-          seat_type: string
-        }
-        Insert: {
-          id?: string
-          is_available?: boolean
-          row_label: string
-          screen_id: string
-          seat_number: number
-          seat_type?: string
-        }
-        Update: {
-          id?: string
-          is_available?: boolean
-          row_label?: string
-          screen_id?: string
-          seat_number?: number
-          seat_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seat_layouts_screen_id_fkey"
-            columns: ["screen_id"]
-            isOneToOne: false
-            referencedRelation: "screens"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      shifts: {
-        Row: {
-          access_code_used: string | null
-          cash_difference: number | null
-          closing_cash: number | null
-          created_at: string
-          ended_at: string | null
-          expected_cash: number | null
-          id: string
-          notes: string | null
-          opening_cash: number
-          organization_id: string
-          started_at: string
+          original_transaction_id: string
+          original_transaction_type: string
+          processed_at: string | null
+          processed_by: string | null
+          reason: string
+          rejection_reason: string | null
           status: string
-          total_card_sales: number | null
-          total_cash_sales: number | null
-          total_transactions: number | null
+          updated_at: string
           user_id: string
         }
         Insert: {
-          access_code_used?: string | null
-          cash_difference?: number | null
-          closing_cash?: number | null
+          amount: number
           created_at?: string
-          ended_at?: string | null
-          expected_cash?: number | null
           id?: string
-          notes?: string | null
-          opening_cash?: number
-          organization_id: string
-          started_at?: string
+          original_transaction_id: string
+          original_transaction_type: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason: string
+          rejection_reason?: string | null
           status?: string
-          total_card_sales?: number | null
-          total_cash_sales?: number | null
-          total_transactions?: number | null
+          updated_at?: string
           user_id: string
         }
         Update: {
-          access_code_used?: string | null
-          cash_difference?: number | null
-          closing_cash?: number | null
+          amount?: number
           created_at?: string
-          ended_at?: string | null
-          expected_cash?: number | null
           id?: string
-          notes?: string | null
-          opening_cash?: number
-          organization_id?: string
-          started_at?: string
+          original_transaction_id?: string
+          original_transaction_type?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string
+          rejection_reason?: string | null
           status?: string
-          total_card_sales?: number | null
-          total_cash_sales?: number | null
-          total_transactions?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_post_logs: {
+        Row: {
+          content: string | null
+          contest_id: string
+          engagement_clicks: number | null
+          engagement_impressions: number | null
+          error_message: string | null
+          id: string
+          organization_id: string
+          platform: string
+          post_type: string
+          posted_at: string
+          status: string
+        }
+        Insert: {
+          content?: string | null
+          contest_id: string
+          engagement_clicks?: number | null
+          engagement_impressions?: number | null
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          platform: string
+          post_type: string
+          posted_at?: string
+          status?: string
+        }
+        Update: {
+          content?: string | null
+          contest_id?: string
+          engagement_clicks?: number | null
+          engagement_impressions?: number | null
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          platform?: string
+          post_type?: string
+          posted_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_logs_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_ticket_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_staff_reply: boolean
+          message: string
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_staff_reply?: boolean
+          message: string
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_staff_reply?: boolean
+          message?: string
+          ticket_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "shifts_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "shifts_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "support_ticket_messages_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      showtimes: {
+      support_tickets: {
         Row: {
+          assigned_to: string | null
+          category: string
           created_at: string
+          description: string
           id: string
-          is_active: boolean
-          movie_id: string
-          organization_id: string
-          price: number
-          screen_id: string
-          start_time: string
-          vip_price: number | null
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
         }
         Insert: {
+          assigned_to?: string | null
+          category?: string
           created_at?: string
+          description: string
           id?: string
-          is_active?: boolean
-          movie_id: string
-          organization_id: string
-          price: number
-          screen_id: string
-          start_time: string
-          vip_price?: number | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
         }
         Update: {
+          assigned_to?: string | null
+          category?: string
           created_at?: string
+          description?: string
           id?: string
-          is_active?: boolean
-          movie_id?: string
-          organization_id?: string
-          price?: number
-          screen_id?: string
-          start_time?: string
-          vip_price?: number | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "showtimes_movie_id_fkey"
-            columns: ["movie_id"]
+            foreignKeyName: "support_tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "movies"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "showtimes_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "showtimes_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "showtimes_screen_id_fkey"
-            columns: ["screen_id"]
-            isOneToOne: false
-            referencedRelation: "screens"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      staff_invitations: {
+      team_members: {
         Row: {
           accepted_at: string | null
           created_at: string
           email: string
-          expires_at: string
           id: string
-          invited_by: string
+          invited_at: string
+          name: string | null
           organization_id: string
-          role: Database["public"]["Enums"]["app_role"]
-          token: string
+          permissions: Json | null
+          role: string
+          status: string
+          updated_at: string
+          user_id: string | null
         }
         Insert: {
           accepted_at?: string | null
           created_at?: string
           email: string
-          expires_at?: string
           id?: string
-          invited_by: string
+          invited_at?: string
+          name?: string | null
           organization_id: string
-          role: Database["public"]["Enums"]["app_role"]
-          token?: string
+          permissions?: Json | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Update: {
           accepted_at?: string | null
           created_at?: string
           email?: string
+          id?: string
+          invited_at?: string
+          name?: string | null
+          organization_id?: string
+          permissions?: Json | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_transfers: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          expires_at: string
+          from_user_id: string
+          id: string
+          status: string
+          ticket_id: string
+          to_user_email: string
+          to_user_id: string
+          transfer_code: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
           expires_at?: string
+          from_user_id: string
           id?: string
-          invited_by?: string
-          organization_id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          token?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "staff_invitations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "staff_invitations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_notification_log: {
-        Row: {
-          id: string
-          metadata: Json | null
-          notification_type: string
-          organization_id: string
-          sent_at: string
-        }
-        Insert: {
-          id?: string
-          metadata?: Json | null
-          notification_type: string
-          organization_id: string
-          sent_at?: string
+          status?: string
+          ticket_id: string
+          to_user_email: string
+          to_user_id: string
+          transfer_code: string
         }
         Update: {
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          from_user_id?: string
           id?: string
-          metadata?: Json | null
-          notification_type?: string
-          organization_id?: string
-          sent_at?: string
+          status?: string
+          ticket_id?: string
+          to_user_email?: string
+          to_user_id?: string
+          transfer_code?: string
         }
         Relationships: [
           {
-            foreignKeyName: "subscription_notification_log_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "ticket_transfers_ticket_id_fkey"
+            columns: ["ticket_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "subscription_notification_log_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "ticket_transfers_ticket_id_fkey"
+            columns: ["ticket_id"]
             isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "tickets_public"
             referencedColumns: ["id"]
           },
         ]
       }
-      subscription_plans: {
+      ticket_types: {
         Row: {
-          allow_custom_domain: boolean | null
-          allow_own_gateway: boolean | null
-          commission_percentage: number | null
           created_at: string
+          currency: string
           description: string | null
-          features: Json | null
+          event_id: string
           id: string
-          is_active: boolean | null
-          max_locations: number | null
-          max_screens: number | null
-          max_staff: number | null
           name: string
-          per_ticket_fee: number | null
-          price_monthly: number
-          price_yearly: number | null
-          slug: string
-          sort_order: number | null
-          updated_at: string
+          price: number
+          quantity_available: number
+          quantity_sold: number
         }
         Insert: {
-          allow_custom_domain?: boolean | null
-          allow_own_gateway?: boolean | null
-          commission_percentage?: number | null
           created_at?: string
+          currency?: string
           description?: string | null
-          features?: Json | null
+          event_id: string
           id?: string
-          is_active?: boolean | null
-          max_locations?: number | null
-          max_screens?: number | null
-          max_staff?: number | null
           name: string
-          per_ticket_fee?: number | null
-          price_monthly?: number
-          price_yearly?: number | null
-          slug: string
-          sort_order?: number | null
-          updated_at?: string
+          price: number
+          quantity_available: number
+          quantity_sold?: number
         }
         Update: {
-          allow_custom_domain?: boolean | null
-          allow_own_gateway?: boolean | null
-          commission_percentage?: number | null
           created_at?: string
+          currency?: string
           description?: string | null
-          features?: Json | null
+          event_id?: string
           id?: string
-          is_active?: boolean | null
-          max_locations?: number | null
-          max_screens?: number | null
-          max_staff?: number | null
           name?: string
-          per_ticket_fee?: number | null
-          price_monthly?: number
-          price_yearly?: number | null
-          slug?: string
-          sort_order?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      support_tickets: {
-        Row: {
-          assigned_to: string | null
-          category: string | null
-          created_at: string
-          description: string
-          first_response_at: string | null
-          id: string
-          internal_notes: string | null
-          organization_id: string | null
-          priority: string
-          resolved_at: string | null
-          sla_breached: boolean | null
-          status: string
-          subject: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_to?: string | null
-          category?: string | null
-          created_at?: string
-          description: string
-          first_response_at?: string | null
-          id?: string
-          internal_notes?: string | null
-          organization_id?: string | null
-          priority?: string
-          resolved_at?: string | null
-          sla_breached?: boolean | null
-          status?: string
-          subject: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_to?: string | null
-          category?: string | null
-          created_at?: string
-          description?: string
-          first_response_at?: string | null
-          id?: string
-          internal_notes?: string | null
-          organization_id?: string | null
-          priority?: string
-          resolved_at?: string | null
-          sla_breached?: boolean | null
-          status?: string
-          subject?: string
-          updated_at?: string
+          price?: number
+          quantity_available?: number
+          quantity_sold?: number
         }
         Relationships: [
           {
-            foreignKeyName: "support_tickets_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "ticket_types_event_id_fkey"
+            columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_tickets_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
       }
-      system_health_logs: {
+      tickets: {
         Row: {
-          details: Json | null
-          error_count: number | null
+          amount_paid: number
+          created_at: string
+          event_id: string
+          guest_email: string | null
+          guest_name: string | null
           id: string
-          metric_type: string
-          recorded_at: string
-          response_time_ms: number | null
+          net_amount: number | null
+          payment_method: string
+          payment_reference_id: string | null
+          platform_commission: number | null
+          qr_code: string
+          quantity: number
           status: string
+          ticket_type_id: string
+          transaction_id: string | null
+          user_id: string | null
         }
         Insert: {
-          details?: Json | null
-          error_count?: number | null
+          amount_paid: number
+          created_at?: string
+          event_id: string
+          guest_email?: string | null
+          guest_name?: string | null
           id?: string
-          metric_type: string
-          recorded_at?: string
-          response_time_ms?: number | null
-          status: string
+          net_amount?: number | null
+          payment_method: string
+          payment_reference_id?: string | null
+          platform_commission?: number | null
+          qr_code: string
+          quantity?: number
+          status?: string
+          ticket_type_id: string
+          transaction_id?: string | null
+          user_id?: string | null
         }
         Update: {
-          details?: Json | null
-          error_count?: number | null
+          amount_paid?: number
+          created_at?: string
+          event_id?: string
+          guest_email?: string | null
+          guest_name?: string | null
           id?: string
-          metric_type?: string
-          recorded_at?: string
-          response_time_ms?: number | null
+          net_amount?: number | null
+          payment_method?: string
+          payment_reference_id?: string | null
+          platform_commission?: number | null
+          qr_code?: string
+          quantity?: number
           status?: string
+          ticket_type_id?: string
+          transaction_id?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
           created_at: string
           id: string
-          organization_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          organization_id?: string | null
-          role: Database["public"]["Enums"]["app_role"]
+          role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          organization_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
+        Relationships: []
+      }
+      user_vote_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_vote_date: string | null
+          longest_streak: number
+          total_streak_bonuses_earned: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_vote_date?: string | null
+          longest_streak?: number
+          total_streak_bonuses_earned?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_vote_date?: string | null
+          longest_streak?: number
+          total_streak_bonuses_earned?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      votes: {
+        Row: {
+          amount_paid: number
+          contest_id: string
+          contestant_id: string
+          created_at: string
+          currency: string | null
+          guest_email: string | null
+          guest_name: string | null
+          id: string
+          net_amount: number | null
+          payment_method: string
+          platform_commission: number | null
+          quantity: number
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_paid: number
+          contest_id: string
+          contestant_id: string
+          created_at?: string
+          currency?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          net_amount?: number | null
+          payment_method: string
+          platform_commission?: number | null
+          quantity?: number
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          contest_id?: string
+          contestant_id?: string
+          created_at?: string
+          currency?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          net_amount?: number | null
+          payment_method?: string
+          platform_commission?: number | null
+          quantity?: number
+          transaction_id?: string | null
+          user_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "user_roles_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "votes_contest_id_fkey"
+            columns: ["contest_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "contests"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_roles_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "votes_contestant_id_fkey"
+            columns: ["contestant_id"]
             isOneToOne: false
-            referencedRelation: "organizations_public"
+            referencedRelation: "contestants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          amount: number
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_used: boolean
+          used_by: string | null
+        }
+        Insert: {
+          amount: number
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          used_by?: string | null
+        }
+        Update: {
+          amount?: number
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          used_by?: string | null
+        }
+        Relationships: []
+      }
+      wallet_currency_balances: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          wallet_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency: string
+          id?: string
+          updated_at?: string
+          wallet_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_currency_balances_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          status: string
+          type: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          status?: string
+          type: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          balance: number
+          balance_currency: string
+          created_at: string
+          id: string
+          low_balance_threshold: number | null
+          referral_code: string | null
+          referral_earnings: number
+          referred_by: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          balance_currency?: string
+          created_at?: string
+          id?: string
+          low_balance_threshold?: number | null
+          referral_code?: string | null
+          referral_earnings?: number
+          referred_by?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          balance_currency?: string
+          created_at?: string
+          id?: string
+          low_balance_threshold?: number | null
+          referral_code?: string | null
+          referral_earnings?: number
+          referred_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          response_body: string | null
+          response_status: number | null
+          success: boolean
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload: Json
+          response_body?: string | null
+          response_status?: number | null
+          success?: boolean
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          response_body?: string | null
+          response_status?: number | null
+          success?: boolean
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "organization_webhooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "organization_webhooks_safe"
             referencedColumns: ["id"]
           },
         ]
       }
     }
     Views: {
-      organizations_public: {
+      donations_public: {
         Row: {
-          about_text: string | null
-          address: string | null
-          contact_email: string | null
-          contact_phone: string | null
+          amount: number | null
+          campaign_id: string | null
+          created_at: string | null
+          currency: string | null
+          donor_id: string | null
+          donor_message: string | null
+          guest_email: string | null
+          guest_name: string | null
+          id: string | null
+          is_anonymous: boolean | null
+          payment_method: string | null
+          status: string | null
+        }
+        Insert: {
+          amount?: number | null
+          campaign_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          donor_id?: string | null
+          donor_message?: string | null
+          guest_email?: never
+          guest_name?: never
+          id?: string | null
+          is_anonymous?: boolean | null
+          payment_method?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number | null
+          campaign_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          donor_id?: string | null
+          donor_message?: string | null
+          guest_email?: never
+          guest_name?: never
+          id?: string | null
+          is_anonymous?: boolean | null
+          payment_method?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donations_safe: {
+        Row: {
+          amount: number | null
+          campaign_id: string | null
+          created_at: string | null
+          currency: string | null
+          donor_id: string | null
+          donor_message: string | null
+          id: string | null
+          is_anonymous: boolean | null
+          payment_method: string | null
+          status: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          campaign_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          donor_id?: never
+          donor_message?: never
+          id?: string | null
+          is_anonymous?: boolean | null
+          payment_method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          campaign_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          donor_id?: never
+          donor_message?: never
+          id?: string | null
+          is_anonymous?: boolean | null
+          payment_method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donations_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_links_public: {
+        Row: {
+          code: string | null
+          commission_currency: string | null
+          commission_type: string | null
+          commission_value: number | null
+          contest_id: string | null
+          created_at: string | null
+          discount_type: string | null
+          discount_value: number | null
+          event_id: string | null
+          id: string | null
+          is_active: boolean | null
+          organization_id: string | null
+          total_clicks: number | null
+          total_conversions: number | null
+        }
+        Insert: {
+          code?: string | null
+          commission_currency?: string | null
+          commission_type?: string | null
+          commission_value?: number | null
+          contest_id?: string | null
+          created_at?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          event_id?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          organization_id?: string | null
+          total_clicks?: number | null
+          total_conversions?: number | null
+        }
+        Update: {
+          code?: string | null
+          commission_currency?: string | null
+          commission_type?: string | null
+          commission_value?: number | null
+          contest_id?: string | null
+          created_at?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          event_id?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          organization_id?: string | null
+          total_clicks?: number | null
+          total_conversions?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_links_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_links_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_payouts_safe: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          amount: number | null
+          bank_name: string | null
           created_at: string | null
           currency: string | null
           id: string | null
-          is_active: boolean | null
-          logo_url: string | null
-          mission_text: string | null
-          name: string | null
-          payment_gateway: string | null
-          payment_gateway_configured: boolean | null
-          payment_gateway_public_key: string | null
-          primary_color: string | null
-          secondary_color: string | null
-          seo_description: string | null
-          seo_title: string | null
-          slug: string | null
-          social_facebook: string | null
-          social_instagram: string | null
-          social_twitter: string | null
+          influencer_user_id: string | null
+          payment_method: string | null
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          status: string | null
+          updated_at: string | null
+          usdt_address: string | null
         }
         Insert: {
-          about_text?: string | null
-          address?: string | null
-          contact_email?: string | null
-          contact_phone?: string | null
+          account_name?: never
+          account_number?: never
+          amount?: number | null
+          bank_name?: never
           created_at?: string | null
           currency?: string | null
           id?: string | null
-          is_active?: boolean | null
-          logo_url?: string | null
-          mission_text?: string | null
-          name?: string | null
-          payment_gateway?: string | null
-          payment_gateway_configured?: boolean | null
-          payment_gateway_public_key?: string | null
-          primary_color?: string | null
-          secondary_color?: string | null
-          seo_description?: string | null
-          seo_title?: string | null
-          slug?: string | null
-          social_facebook?: string | null
-          social_instagram?: string | null
-          social_twitter?: string | null
+          influencer_user_id?: string | null
+          payment_method?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          usdt_address?: never
         }
         Update: {
-          about_text?: string | null
-          address?: string | null
-          contact_email?: string | null
-          contact_phone?: string | null
+          account_name?: never
+          account_number?: never
+          amount?: number | null
+          bank_name?: never
           created_at?: string | null
           currency?: string | null
           id?: string | null
-          is_active?: boolean | null
-          logo_url?: string | null
-          mission_text?: string | null
-          name?: string | null
-          payment_gateway?: string | null
-          payment_gateway_configured?: boolean | null
-          payment_gateway_public_key?: string | null
-          primary_color?: string | null
-          secondary_color?: string | null
-          seo_description?: string | null
-          seo_title?: string | null
-          slug?: string | null
-          social_facebook?: string | null
-          social_instagram?: string | null
-          social_twitter?: string | null
+          influencer_user_id?: string | null
+          payment_method?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          usdt_address?: never
         }
         Relationships: []
       }
+      influencer_profiles_safe: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          paid_earnings: number | null
+          payment_method: string | null
+          pending_earnings: number | null
+          total_earnings: number | null
+          updated_at: string | null
+          usdt_address: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_name?: never
+          account_number?: never
+          bank_name?: never
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          paid_earnings?: number | null
+          payment_method?: string | null
+          pending_earnings?: number | null
+          total_earnings?: number | null
+          updated_at?: string | null
+          usdt_address?: never
+          user_id?: string | null
+        }
+        Update: {
+          account_name?: never
+          account_number?: never
+          bank_name?: never
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          paid_earnings?: number | null
+          payment_method?: string | null
+          pending_earnings?: number | null
+          total_earnings?: number | null
+          updated_at?: string | null
+          usdt_address?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      organization_settings_admin: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          account_number_decrypted: string | null
+          account_number_encrypted: string | null
+          bank_name: string | null
+          company_address: string | null
+          company_email: string | null
+          company_name: string | null
+          company_phone: string | null
+          created_at: string | null
+          default_currency: string | null
+          id: string | null
+          organization_id: string | null
+          preferred_payout_method: string | null
+          updated_at: string | null
+          usdt_address: string | null
+          usdt_address_decrypted: string | null
+          usdt_address_encrypted: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          account_number_decrypted?: never
+          account_number_encrypted?: string | null
+          bank_name?: string | null
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          id?: string | null
+          organization_id?: string | null
+          preferred_payout_method?: string | null
+          updated_at?: string | null
+          usdt_address?: string | null
+          usdt_address_decrypted?: never
+          usdt_address_encrypted?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          account_number_decrypted?: never
+          account_number_encrypted?: string | null
+          bank_name?: string | null
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          id?: string | null
+          organization_id?: string | null
+          preferred_payout_method?: string | null
+          updated_at?: string | null
+          usdt_address?: string | null
+          usdt_address_decrypted?: never
+          usdt_address_encrypted?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_settings_safe: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
+          company_address: string | null
+          company_email: string | null
+          company_name: string | null
+          company_phone: string | null
+          created_at: string | null
+          default_currency: string | null
+          id: string | null
+          organization_id: string | null
+          preferred_payout_method: string | null
+          updated_at: string | null
+          usdt_address: string | null
+        }
+        Insert: {
+          account_name?: never
+          account_number?: never
+          bank_name?: never
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          id?: string | null
+          organization_id?: string | null
+          preferred_payout_method?: string | null
+          updated_at?: string | null
+          usdt_address?: never
+        }
+        Update: {
+          account_name?: never
+          account_number?: never
+          bank_name?: never
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          id?: string | null
+          organization_id?: string | null
+          preferred_payout_method?: string | null
+          updated_at?: string | null
+          usdt_address?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_social_accounts_safe: {
+        Row: {
+          account_name: string | null
+          created_at: string | null
+          id: string | null
+          is_connected: boolean | null
+          organization_id: string | null
+          platform: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_connected?: boolean | null
+          organization_id?: string | null
+          platform?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_connected?: boolean | null
+          organization_id?: string | null
+          platform?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_social_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_webhooks_safe: {
+        Row: {
+          created_at: string | null
+          events: string[] | null
+          failure_count: number | null
+          id: string | null
+          is_active: boolean | null
+          last_triggered_at: string | null
+          name: string | null
+          organization_id: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          events?: string[] | null
+          failure_count?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name?: string | null
+          organization_id?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          events?: string[] | null
+          failure_count?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name?: string | null
+          organization_id?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_webhooks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts_admin: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          account_number_decrypted: string | null
+          account_number_encrypted: string | null
+          amount: number | null
+          bank_name: string | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          organization_id: string | null
+          payment_method: string | null
+          processed_at: string | null
+          reference_id: string | null
+          status: string | null
+          updated_at: string | null
+          usdt_address: string | null
+          usdt_address_decrypted: string | null
+          usdt_address_encrypted: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          account_number_decrypted?: never
+          account_number_encrypted?: string | null
+          amount?: number | null
+          bank_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          organization_id?: string | null
+          payment_method?: string | null
+          processed_at?: string | null
+          reference_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          usdt_address?: string | null
+          usdt_address_decrypted?: never
+          usdt_address_encrypted?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          account_number_decrypted?: never
+          account_number_encrypted?: string | null
+          amount?: number | null
+          bank_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          organization_id?: string | null
+          payment_method?: string | null
+          processed_at?: string | null
+          reference_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          usdt_address?: string | null
+          usdt_address_decrypted?: never
+          usdt_address_encrypted?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts_safe: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          amount: number | null
+          bank_name: string | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          organization_id: string | null
+          payment_method: string | null
+          processed_at: string | null
+          reference_id: string | null
+          status: string | null
+          updated_at: string | null
+          usdt_address: string | null
+        }
+        Insert: {
+          account_name?: never
+          account_number?: never
+          amount?: number | null
+          bank_name?: never
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          organization_id?: string | null
+          payment_method?: string | null
+          processed_at?: string | null
+          reference_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          usdt_address?: never
+        }
+        Update: {
+          account_name?: never
+          account_number?: never
+          amount?: number | null
+          bank_name?: never
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          organization_id?: string | null
+          payment_method?: string | null
+          processed_at?: string | null
+          reference_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          usdt_address?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets_public: {
+        Row: {
+          amount_paid: number | null
+          created_at: string | null
+          event_id: string | null
+          guest_email: string | null
+          guest_name: string | null
+          id: string | null
+          net_amount: number | null
+          payment_method: string | null
+          payment_reference_id: string | null
+          platform_commission: number | null
+          qr_code: string | null
+          quantity: number | null
+          status: string | null
+          ticket_type_id: string | null
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          created_at?: string | null
+          event_id?: string | null
+          guest_email?: never
+          guest_name?: never
+          id?: string | null
+          net_amount?: number | null
+          payment_method?: string | null
+          payment_reference_id?: string | null
+          platform_commission?: number | null
+          qr_code?: string | null
+          quantity?: number | null
+          status?: string | null
+          ticket_type_id?: string | null
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          created_at?: string | null
+          event_id?: string | null
+          guest_email?: never
+          guest_name?: never
+          id?: string | null
+          net_amount?: number | null
+          payment_method?: string | null
+          payment_reference_id?: string | null
+          platform_commission?: number | null
+          qr_code?: string | null
+          quantity?: number | null
+          status?: string | null
+          ticket_type_id?: string | null
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      votes_public: {
+        Row: {
+          amount_paid: number | null
+          contest_id: string | null
+          contestant_id: string | null
+          created_at: string | null
+          currency: string | null
+          guest_email: string | null
+          guest_name: string | null
+          id: string | null
+          net_amount: number | null
+          payment_method: string | null
+          platform_commission: number | null
+          quantity: number | null
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          contest_id?: string | null
+          contestant_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          guest_email?: never
+          guest_name?: never
+          id?: string | null
+          net_amount?: number | null
+          payment_method?: string | null
+          platform_commission?: number | null
+          quantity?: number | null
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          contest_id?: string | null
+          contestant_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          guest_email?: never
+          guest_name?: never
+          id?: string | null
+          net_amount?: number | null
+          payment_method?: string | null
+          platform_commission?: number | null
+          quantity?: number | null
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_contestant_id_fkey"
+            columns: ["contestant_id"]
+            isOneToOne: false
+            referencedRelation: "contestants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      delete_old_loyalty_transactions: { Args: never; Returns: undefined }
-      delete_old_shifts: { Args: never; Returns: undefined }
-      generate_booking_reference: { Args: never; Returns: string }
-      generate_unique_slug: { Args: { cinema_name: string }; Returns: string }
-      get_customer_by_user_id: {
-        Args: { _organization_id: string; _user_id: string }
+      check_login_rate_limit: {
+        Args: { p_email: string; p_ip_hash?: string }
+        Returns: Json
+      }
+      clear_login_attempts: { Args: { p_email: string }; Returns: undefined }
+      decrypt_banking_data: {
+        Args: { encrypted_data: string }
+        Returns: string
+      }
+      encrypt_banking_data: { Args: { plain_text: string }; Returns: string }
+      get_admin_statistics: { Args: never; Returns: Json }
+      get_referral_leaderboard: {
+        Args: { limit_count?: number }
         Returns: {
-          email: string
-          first_booking_at: string
-          full_name: string
-          id: string
-          last_booking_at: string
-          loyalty_points: number
-          organization_id: string
-          phone: string
-          total_bookings: number
-          total_spent: number
+          avatar_url: string
+          display_name: string
+          referral_count: number
+          total_earnings: number
+          user_id: string
         }[]
       }
-      get_daily_access_code: {
-        Args: { _org_id: string }
-        Returns: {
-          daily_access_code: string
-          daily_access_code_end_time: string
-          daily_access_code_set_at: string
-          daily_access_code_start_time: string
-        }[]
-      }
-      get_invitation_by_token: {
-        Args: { invitation_token: string }
-        Returns: {
-          accepted_at: string
-          email: string
-          expires_at: string
-          id: string
-          organization_id: string
-          organization_name: string
-          role: Database["public"]["Enums"]["app_role"]
-        }[]
-      }
-      get_user_organization: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2587,46 +3810,38 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_cinema_admin: {
-        Args: { _org_id: string; _user_id: string }
-        Returns: boolean
+      record_login_attempt: {
+        Args: { p_email: string; p_ip_hash?: string; p_success: boolean }
+        Returns: undefined
       }
-      is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
-      is_supervisor: {
-        Args: { org_id: string; user_id: string }
-        Returns: boolean
-      }
-      use_promo_code: {
-        Args: {
-          p_customer_email: string
-          p_organization_id: string
-          p_promo_code_id: string
-          p_ticket_total: number
-        }
+      redeem_voucher_safely: {
+        Args: { p_user_id: string; p_voucher_id: string }
         Returns: Json
       }
-      validate_booking_totals: {
+      send_notification: {
         Args: {
-          p_booking_id: string
-          p_expected_discount: number
-          p_expected_total: number
+          p_message: string
+          p_reference_id?: string
+          p_title: string
+          p_type: string
+          p_user_id: string
         }
-        Returns: Json
+        Returns: string
       }
-      validate_daily_access_code: {
-        Args: { _code: string; _org_id: string }
-        Returns: boolean
+      set_account_type: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      track_campaign_view: {
+        Args: { p_campaign_id: string; p_source?: string }
+        Returns: undefined
       }
     }
     Enums: {
-      app_role:
-        | "cinema_admin"
-        | "box_office"
-        | "gate_staff"
-        | "manager"
-        | "accountant"
-        | "platform_admin"
-        | "supervisor"
+      app_role: "admin" | "moderator" | "user" | "organization" | "influencer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2754,15 +3969,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: [
-        "cinema_admin",
-        "box_office",
-        "gate_staff",
-        "manager",
-        "accountant",
-        "platform_admin",
-        "supervisor",
-      ],
+      app_role: ["admin", "moderator", "user", "organization", "influencer"],
     },
   },
 } as const
