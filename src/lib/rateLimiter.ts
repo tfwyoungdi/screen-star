@@ -85,14 +85,55 @@ export const RATE_LIMITS = {
 } as const;
 
 /**
+ * Validate rate limit entry structure to prevent XSS/tampering attacks
+ * Only accepts properly structured objects with valid numeric values
+ */
+function isValidEntry(entry: unknown): entry is RateLimitEntry {
+  if (typeof entry !== 'object' || entry === null) return false;
+  const e = entry as Record<string, unknown>;
+  
+  // Strict type checking - must be finite positive numbers
+  if (typeof e.count !== 'number' || !Number.isFinite(e.count) || e.count < 0) return false;
+  if (typeof e.resetAt !== 'number' || !Number.isFinite(e.resetAt) || e.resetAt < 0) return false;
+  
+  // Ensure count is within reasonable bounds (prevent overflow attacks)
+  if (e.count > 10000) return false;
+  
+  return true;
+}
+
+/**
  * Get the current rate limit entry from storage
+ * Validates data to prevent localStorage XSS/tampering attacks
  */
 function getEntry(storageKey: string): RateLimitEntry | null {
   try {
     const stored = localStorage.getItem(storageKey);
     if (!stored) return null;
-    return JSON.parse(stored) as RateLimitEntry;
+    
+    // Limit size to prevent parsing large malicious payloads (DoS prevention)
+    if (stored.length > 200) {
+      localStorage.removeItem(storageKey);
+      return null;
+    }
+    
+    const parsed = JSON.parse(stored);
+    
+    // Validate structure before use
+    if (!isValidEntry(parsed)) {
+      // Clear corrupted/tampered data
+      localStorage.removeItem(storageKey);
+      return null;
+    }
+    
+    return parsed;
   } catch {
+    // Clear corrupted data on parse error
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      // Ignore removal errors
+    }
     return null;
   }
 }
