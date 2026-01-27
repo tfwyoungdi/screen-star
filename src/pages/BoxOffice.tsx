@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -497,9 +498,16 @@ export default function BoxOffice() {
     }
   };
 
-  // Apply promo code
+  // Apply promo code with rate limiting
   const applyPromo = async () => {
     if (!promoCode.trim() || !profile?.organization_id) return;
+    
+    // Rate limit promo code validation attempts
+    const rateLimit = checkRateLimit(RATE_LIMITS.PROMO_CODE);
+    if (rateLimit.isLimited) {
+      toast.error(`Too many attempts. Please wait ${formatWaitTime(rateLimit.resetInSeconds)}`);
+      return;
+    }
     
     try {
       const { data, error } = await supabase
@@ -571,7 +579,7 @@ export default function BoxOffice() {
     }
   };
 
-  // Process booking
+  // Process booking with atomic promo code handling (prevents race conditions)
   const processBooking = async (paymentMethod: 'cash' | 'card') => {
     if (!selectedShowtime || selectedSeats.length === 0 || !profile?.organization_id) return;
 
@@ -579,6 +587,39 @@ export default function BoxOffice() {
     try {
       const { data: refData } = await supabase.rpc('generate_booking_reference');
       const bookingReference = refData as string;
+
+      // SECURITY: Use atomic promo code usage if applied (prevents race conditions)
+      let serverPromoDiscount = 0;
+      let serverDiscountAmount = discountAmount;
+      let serverTotalAmount = totalAmount;
+      
+      if (appliedPromo) {
+        const { data: promoResult, error: promoError } = await supabase.rpc('use_promo_code', {
+          p_promo_code_id: appliedPromo.id,
+          p_customer_email: (bookingData.customer_email || 'walkin@boxoffice.local').toLowerCase(),
+          p_organization_id: profile.organization_id,
+          p_ticket_total: subtotal,
+        });
+        
+        if (promoError) {
+          console.error('Promo code error:', promoError);
+          toast.error('Failed to apply promo code. Please try again.');
+          setIsProcessing(false);
+          return;
+        }
+        
+        const result = promoResult as { success: boolean; error?: string; discount?: number };
+        if (!result.success) {
+          toast.error(result.error || 'Promo code is no longer valid');
+          setAppliedPromo(null);
+          setIsProcessing(false);
+          return;
+        }
+        
+        serverPromoDiscount = result.discount || 0;
+        serverDiscountAmount = serverPromoDiscount;
+        serverTotalAmount = subtotal - serverDiscountAmount;
+      }
 
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
@@ -588,8 +629,8 @@ export default function BoxOffice() {
           customer_name: bookingData.customer_name || 'Walk-in Customer',
           customer_email: bookingData.customer_email || 'walkin@boxoffice.local',
           customer_phone: bookingData.customer_phone || null,
-          total_amount: totalAmount,
-          discount_amount: discountAmount,
+          total_amount: serverTotalAmount,
+          discount_amount: serverDiscountAmount,
           promo_code_id: appliedPromo?.id || null,
           booking_reference: bookingReference,
           status: 'paid',
@@ -629,13 +670,7 @@ export default function BoxOffice() {
           .insert(concessionsToBook);
       }
 
-      // Update promo code usage
-      if (appliedPromo) {
-        await supabase
-          .from('promo_codes')
-          .update({ current_uses: (appliedPromo as any).current_uses + 1 })
-          .eq('id', appliedPromo.id);
-      }
+      // Promo code usage already handled atomically above (no race condition)
 
       setBookingRef(bookingReference);
       setStep('confirmation');
