@@ -154,6 +154,7 @@ export default function CustomerManagement() {
           <CustomerEmailBlast
             organizationId={effectiveOrgId}
             cinemaName={organization.name}
+            cinemaLogoUrl={organization.logo_url}
             customerCount={totalCustomers}
           />
         )}
