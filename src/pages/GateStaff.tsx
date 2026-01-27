@@ -174,6 +174,23 @@ export default function GateStaff() {
     if (!profile?.organization_id) return;
     
     try {
+      const normalizedRef = (info.booking?.booking_reference || reference).toUpperCase();
+      
+      // Check if this booking reference was already logged as a valid scan
+      const { data: existingLogs } = await supabase
+        .from('scan_logs')
+        .select('id, is_valid')
+        .eq('organization_id', profile.organization_id)
+        .eq('booking_reference', normalizedRef)
+        .eq('is_valid', true)
+        .limit(1);
+
+      // If a valid scan already exists, skip logging to prevent duplicates
+      if (existingLogs && existingLogs.length > 0 && info.isValid) {
+        console.log(`Duplicate valid scan skipped for: ${normalizedRef}`);
+        return;
+      }
+
       const seatsInfo = info.seats?.length > 0 
         ? info.seats.map(s => `${s.row_label}${s.seat_number}`).join(', ')
         : null;
@@ -182,7 +199,7 @@ export default function GateStaff() {
         organization_id: profile.organization_id,
         scanned_by: profile.id,
         booking_id: info.booking?.id || null,
-        booking_reference: info.booking?.booking_reference || reference.toUpperCase(),
+        booking_reference: normalizedRef,
         customer_name: info.booking?.customer_name || null,
         movie_title: info.showtime?.movie_title || null,
         showtime_start: info.showtime?.start_time || null,
