@@ -29,7 +29,7 @@ export default function SupervisorDashboard() {
       title: 'Ticket Scanner',
       description: 'Scan and validate customer tickets',
       icon: ScanLine,
-      path: '/scanner',
+      path: '/gate',
       color: 'bg-chart-2/10 text-chart-2',
     },
   ];
