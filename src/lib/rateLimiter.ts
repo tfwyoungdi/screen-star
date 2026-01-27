@@ -46,11 +46,35 @@ export const RATE_LIMITS = {
     windowMs: 15 * 60 * 1000,
     storageKey: 'rl_login',
   },
+  // Customer login: 5 per 15 minutes (separate from staff)
+  CUSTOMER_LOGIN: {
+    maxRequests: 5,
+    windowMs: 15 * 60 * 1000,
+    storageKey: 'rl_cust_login',
+  },
+  // Signup attempts: 3 per 30 minutes
+  SIGNUP: {
+    maxRequests: 3,
+    windowMs: 30 * 60 * 1000,
+    storageKey: 'rl_signup',
+  },
+  // Customer signup: 3 per 30 minutes
+  CUSTOMER_SIGNUP: {
+    maxRequests: 3,
+    windowMs: 30 * 60 * 1000,
+    storageKey: 'rl_cust_signup',
+  },
   // Password reset: 3 per 30 minutes
   PASSWORD_RESET: {
     maxRequests: 3,
     windowMs: 30 * 60 * 1000,
     storageKey: 'rl_pwd_reset',
+  },
+  // Customer password reset: 3 per 30 minutes
+  CUSTOMER_PASSWORD_RESET: {
+    maxRequests: 3,
+    windowMs: 30 * 60 * 1000,
+    storageKey: 'rl_cust_pwd_reset',
   },
 } as const;
 

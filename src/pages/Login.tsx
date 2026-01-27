@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { loginSchema, type LoginFormData } from '@/lib/validations';
 import { supabase } from '@/integrations/supabase/client';
+import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +29,15 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
+
+    // Check rate limit before attempting login
+    const rateCheck = checkRateLimit(RATE_LIMITS.LOGIN);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setError(`Too many login attempts. Please wait ${waitTime} before trying again.`);
+      return;
+    }
+
     const { error } = await signIn(data.email, data.password);
     
     if (error) {

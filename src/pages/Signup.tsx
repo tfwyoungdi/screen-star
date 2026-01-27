@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { signupSchema, type SignupFormData } from '@/lib/validations';
+import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
@@ -41,6 +42,14 @@ export default function Signup() {
   const onSubmit = async (data: SignupFormData) => {
     setError(null);
     setSuccess(null);
+
+    // Check rate limit before attempting signup
+    const rateCheck = checkRateLimit(RATE_LIMITS.SIGNUP);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setError(`Too many registration attempts. Please wait ${waitTime} before trying again.`);
+      return;
+    }
 
     const { error, organizationSlug } = await signUp(
       data.email,

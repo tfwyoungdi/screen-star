@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -50,6 +51,14 @@ export default function CustomerForgotPassword() {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setError(null);
+
+    // Check rate limit before sending reset email
+    const rateCheck = checkRateLimit(RATE_LIMITS.CUSTOMER_PASSWORD_RESET);
+    if (rateCheck.isLimited) {
+      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+      setError(`Too many reset attempts. Please wait ${waitTime} before trying again.`);
+      return;
+    }
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
