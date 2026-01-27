@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Loader2, DollarSign, Ticket, TrendingUp, Calendar, Film, Users, Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getCurrencySymbol, formatCurrency } from '@/lib/currency';
+import { useOrganization } from '@/hooks/useOrganization';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -34,11 +36,13 @@ const ITEMS_PER_PAGE = 10;
 export default function SalesDashboard() {
   const { data: profile } = useUserProfile();
   const { getEffectiveOrganizationId } = useImpersonation();
+  const { organization } = useOrganization();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const { exportToCSV, exportToPDF } = useExportReports();
   const [dateRange, setDateRange] = useState('7');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const currencySymbol = getCurrencySymbol(organization?.currency);
 
   const startDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
   const endDate = endOfDay(new Date());
@@ -219,7 +223,7 @@ export default function SalesDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-primary">
-                    ${Math.round(totalRevenue).toLocaleString()}
+                    {currencySymbol}{Math.round(totalRevenue).toLocaleString()}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Last {dateRange} days
@@ -246,7 +250,7 @@ export default function SalesDashboard() {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${Math.round(avgOrderValue).toLocaleString()}</div>
+                  <div className="text-2xl font-bold">{currencySymbol}{Math.round(avgOrderValue).toLocaleString()}</div>
                   <p className="text-xs text-muted-foreground">
                     Per booking
                   </p>
@@ -290,7 +294,7 @@ export default function SalesDashboard() {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`$${Math.round(value).toLocaleString()}`, 'Revenue']}
+                          formatter={(value: number) => [`${currencySymbol}${Math.round(value).toLocaleString()}`, 'Revenue']}
                         />
                         <Line
                           type="monotone"
@@ -337,7 +341,7 @@ export default function SalesDashboard() {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`$${Math.round(value).toLocaleString()}`, 'Revenue']}
+                          formatter={(value: number) => [`${currencySymbol}${Math.round(value).toLocaleString()}`, 'Revenue']}
                         />
                         <Bar dataKey="value" fill="hsl(38, 95%, 55%)" radius={[0, 4, 4, 0]} />
                       </BarChart>
@@ -482,7 +486,7 @@ export default function SalesDashboard() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right font-medium">
-                              ${Math.round(Number(booking.total_amount)).toLocaleString()}
+                              {currencySymbol}{Math.round(Number(booking.total_amount)).toLocaleString()}
                             </TableCell>
                           </TableRow>
                         ))}
