@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { startOfDay, isToday } from 'date-fns';
+import { isToday, parse, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
       // Verify access code
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .select('daily_access_code, daily_access_code_set_at')
+        .select('daily_access_code, daily_access_code_set_at, daily_access_code_start_time, daily_access_code_end_time')
         .eq('id', organizationId)
         .single();
 
@@ -50,6 +50,24 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
 
       if (org.daily_access_code !== accessCode) {
         throw new Error('Invalid access code. Please check with your manager.');
+      }
+
+      // Check if current time is within the valid time range
+      const now = new Date();
+      const currentTimeStr = format(now, 'HH:mm:ss');
+      
+      if (org.daily_access_code_start_time) {
+        if (currentTimeStr < org.daily_access_code_start_time) {
+          const startDisplay = format(parse(org.daily_access_code_start_time, 'HH:mm:ss', new Date()), 'h:mm a');
+          throw new Error(`Access code is not valid yet. It becomes active at ${startDisplay}.`);
+        }
+      }
+      
+      if (org.daily_access_code_end_time) {
+        if (currentTimeStr > org.daily_access_code_end_time) {
+          const endDisplay = format(parse(org.daily_access_code_end_time, 'HH:mm:ss', new Date()), 'h:mm a');
+          throw new Error(`Access code has expired. It was valid until ${endDisplay}.`);
+        }
       }
 
       // Create shift
