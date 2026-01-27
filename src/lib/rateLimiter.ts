@@ -76,6 +76,12 @@ export const RATE_LIMITS = {
     windowMs: 30 * 60 * 1000,
     storageKey: 'rl_cust_pwd_reset',
   },
+  // Promo code validation: 10 per 5 minutes
+  PROMO_CODE: {
+    maxRequests: 10,
+    windowMs: 5 * 60 * 1000,
+    storageKey: 'rl_promo',
+  },
 } as const;
 
 /**

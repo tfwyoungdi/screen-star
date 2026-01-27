@@ -17,6 +17,7 @@ import { LoyaltyRedemption } from '@/components/loyalty/LoyaltyRedemption';
 import { cn } from '@/lib/utils';
 import { PrintableTicket } from '@/components/booking/PrintableTicket';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 
 interface PromoCode {
   id: string;
@@ -569,6 +570,13 @@ export default function BookingFlow() {
   const applyPromoCode = async () => {
     if (!promoCode.trim() || !cinema || !showtime) return;
     
+    // Rate limit promo code validation attempts
+    const rateLimit = checkRateLimit(RATE_LIMITS.PROMO_CODE);
+    if (rateLimit.isLimited) {
+      setPromoError(`Too many attempts. Please wait ${formatWaitTime(rateLimit.resetInSeconds)}`);
+      return;
+    }
+    
     setPromoLoading(true);
     setPromoError(null);
     
@@ -661,13 +669,67 @@ export default function BookingFlow() {
   const handleBooking = async () => {
     if (!showtime || !cinema || selectedSeats.length === 0) return;
     
+    // Rate limit booking creation attempts
+    const rateLimit = checkRateLimit(RATE_LIMITS.BOOKING);
+    if (rateLimit.isLimited) {
+      toast.error(`Too many booking attempts. Please wait ${formatWaitTime(rateLimit.resetInSeconds)}`);
+      return;
+    }
+    
     setSubmitting(true);
     try {
+      // SECURITY: Verify showtime belongs to this cinema (cross-tenant validation)
+      const { data: validShowtime, error: showtimeError } = await supabase
+        .from('showtimes')
+        .select('id, organization_id')
+        .eq('id', showtime.id)
+        .eq('organization_id', cinema.id)
+        .eq('is_active', true)
+        .single();
+      
+      if (showtimeError || !validShowtime) {
+        toast.error('Invalid showtime. Please refresh and try again.');
+        setSubmitting(false);
+        return;
+      }
+      
       // Generate booking reference
       const { data: refData } = await supabase.rpc('generate_booking_reference');
       const bookingReference = refData as string;
 
-      // Create booking
+      // SECURITY: Use atomic promo code usage if applied (prevents race conditions)
+      let serverPromoDiscount = 0;
+      if (appliedPromo) {
+        const { data: promoResult, error: promoError } = await supabase.rpc('use_promo_code', {
+          p_promo_code_id: appliedPromo.id,
+          p_customer_email: bookingData.customer_email.toLowerCase(),
+          p_organization_id: cinema.id,
+          p_ticket_total: ticketsSubtotal,
+        });
+        
+        if (promoError) {
+          console.error('Promo code error:', promoError);
+          toast.error('Failed to apply promo code. Please try again.');
+          setSubmitting(false);
+          return;
+        }
+        
+        const result = promoResult as { success: boolean; error?: string; discount?: number };
+        if (!result.success) {
+          toast.error(result.error || 'Promo code is no longer valid');
+          setAppliedPromo(null);
+          setSubmitting(false);
+          return;
+        }
+        
+        serverPromoDiscount = result.discount || 0;
+      }
+
+      // Use server-validated discount for total calculation
+      const serverDiscountAmount = serverPromoDiscount + loyaltyDiscountAmount;
+      const serverTotalAmount = subtotal - serverDiscountAmount;
+
+      // Create booking with server-validated amounts
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
@@ -676,8 +738,8 @@ export default function BookingFlow() {
           customer_name: bookingData.customer_name,
           customer_email: bookingData.customer_email,
           customer_phone: bookingData.customer_phone || null,
-          total_amount: totalAmount,
-          discount_amount: discountAmount,
+          total_amount: serverTotalAmount,
+          discount_amount: serverDiscountAmount,
           promo_code_id: appliedPromo?.id || null,
           booking_reference: bookingReference,
           status: 'paid', // Mark as paid since no payment gateway
@@ -727,13 +789,7 @@ export default function BookingFlow() {
         await supabase.from('booking_combos').insert(combosToBook);
       }
 
-      // Update promo code usage
-      if (appliedPromo) {
-        await supabase
-          .from('promo_codes')
-          .update({ current_uses: (appliedPromo as any).current_uses + 1 })
-          .eq('id', appliedPromo.id);
-      }
+      // Promo code usage already handled atomically above
 
       // Handle loyalty reward redemption
       if (appliedLoyaltyReward) {
