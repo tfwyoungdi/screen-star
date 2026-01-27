@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -65,8 +65,12 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const refreshCustomer = async (organizationId: string) => {
-    if (!user) {
+  const refreshCustomer = useCallback(async (organizationId: string) => {
+    // Get the current session to ensure we have the latest user
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const currentUser = currentSession?.user;
+    
+    if (!currentUser) {
       setCustomer(null);
       return;
     }
@@ -74,7 +78,7 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .rpc('get_customer_by_user_id', {
-          _user_id: user.id,
+          _user_id: currentUser.id,
           _organization_id: organizationId,
         });
 
@@ -89,7 +93,7 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
       console.error('Error fetching customer data:', error);
       setCustomer(null);
     }
-  };
+  }, []);
 
   const signUp = async (
     email: string,
