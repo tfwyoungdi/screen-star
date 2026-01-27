@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Validate password strength
+    // Validate password strength (same as cinema admin signup requirements)
     if (password.length < 8) {
       return new Response(
         JSON.stringify({ error: "Password must be at least 8 characters" }),
@@ -46,6 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /\d/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     
     if (!hasUppercase || !hasLowercase || !hasNumber) {
       return new Response(
@@ -53,6 +54,10 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+    
+    // Log password strength (special chars recommended but not required)
+    const specialCharNote = hasSpecial ? "yes" : "no (recommended)";
+    console.log(`Staff account creation for ${email} - special char: ${specialCharNote}`);
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
