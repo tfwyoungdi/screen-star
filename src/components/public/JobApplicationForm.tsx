@@ -17,10 +17,10 @@ import { toast } from 'sonner';
 import { Loader2, CheckCircle2, User, Mail, Phone, FileText, Upload, X } from 'lucide-react';
 
 const applicationSchema = z.object({
-  applicant_name: z.string().min(2, 'Name must be at least 2 characters'),
-  applicant_email: z.string().email('Please enter a valid email'),
-  applicant_phone: z.string().optional(),
-  cover_letter: z.string().optional(),
+  applicant_name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
+  applicant_email: z.string().trim().email('Please enter a valid email').max(255, 'Email must be less than 255 characters'),
+  applicant_phone: z.string().trim().max(20, 'Phone must be less than 20 characters').optional(),
+  cover_letter: z.string().trim().max(5000, 'Cover letter must be less than 5000 characters').optional(),
 });
 
 type ApplicationFormData = z.infer<typeof applicationSchema>;
