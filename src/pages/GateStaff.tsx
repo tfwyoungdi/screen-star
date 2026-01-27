@@ -149,14 +149,12 @@ export default function GateStaff() {
     };
   }, []);
 
-  const addToHistory = useCallback((info: TicketInfo) => {
-    if (!info.booking?.booking_reference) return;
-    
+  const addToHistory = useCallback((info: TicketInfo, reference: string, scanMethod: 'qr' | 'manual') => {
     const historyItem: ScanHistoryItem = {
       id: crypto.randomUUID(),
-      reference: info.booking.booking_reference,
-      customerName: info.booking.customer_name,
-      movieTitle: info.showtime.movie_title || 'Unknown',
+      reference: info.booking?.booking_reference || reference,
+      customerName: info.booking?.customer_name || 'Unknown',
+      movieTitle: info.showtime?.movie_title || 'Unknown',
       isValid: info.isValid,
       timestamp: new Date(),
     };
@@ -167,6 +165,38 @@ export default function GateStaff() {
       valid: info.isValid ? prev.valid + 1 : prev.valid
     }));
   }, []);
+
+  const logScanToDatabase = useCallback(async (
+    info: TicketInfo, 
+    reference: string, 
+    scanMethod: 'qr' | 'manual'
+  ) => {
+    if (!profile?.organization_id) return;
+    
+    try {
+      const seatsInfo = info.seats?.length > 0 
+        ? info.seats.map(s => `${s.row_label}${s.seat_number}`).join(', ')
+        : null;
+
+      await supabase.from('scan_logs').insert({
+        organization_id: profile.organization_id,
+        scanned_by: profile.id,
+        booking_id: info.booking?.id || null,
+        booking_reference: info.booking?.booking_reference || reference.toUpperCase(),
+        customer_name: info.booking?.customer_name || null,
+        movie_title: info.showtime?.movie_title || null,
+        showtime_start: info.showtime?.start_time || null,
+        screen_name: info.showtime?.screen_name || null,
+        seats_info: seatsInfo,
+        is_valid: info.isValid,
+        result_message: info.message,
+        scan_method: scanMethod,
+      });
+    } catch (error) {
+      console.error('Failed to log scan to database:', error);
+      // Don't block the UI flow if logging fails
+    }
+  }, [profile?.organization_id, profile?.id]);
 
   const startScanner = async () => {
     setTicketInfo(null);
@@ -186,7 +216,7 @@ export default function GateStaff() {
           aspectRatio: 1,
         },
         (decodedText) => {
-          handleScan(decodedText);
+          handleScan(decodedText, 'qr');
           stopScanner();
         },
         () => {}
@@ -209,7 +239,7 @@ export default function GateStaff() {
     setScanning(false);
   };
 
-  const handleScan = async (reference: string) => {
+  const handleScan = async (reference: string, scanMethod: 'qr' | 'manual' = 'qr') => {
     if (!profile?.organization_id) return;
     
     setLoading(true);
@@ -247,6 +277,8 @@ export default function GateStaff() {
           message: 'Booking not found',
         };
         setTicketInfo(invalidResult);
+        addToHistory(invalidResult, bookingRef, scanMethod);
+        logScanToDatabase(invalidResult, bookingRef, scanMethod);
         if (soundEnabled) playErrorSound();
         triggerHaptic('error');
         return;
@@ -295,7 +327,8 @@ export default function GateStaff() {
       };
 
       setTicketInfo(result);
-      addToHistory(result);
+      addToHistory(result, bookingRef, scanMethod);
+      logScanToDatabase(result, bookingRef, scanMethod);
       
       if (soundEnabled) {
         if (isValid) playSuccessSound();
@@ -320,6 +353,8 @@ export default function GateStaff() {
         message: 'Error validating',
       };
       setTicketInfo(errorResult);
+      addToHistory(errorResult, reference, scanMethod);
+      logScanToDatabase(errorResult, reference, scanMethod);
       if (soundEnabled) playErrorSound();
       triggerHaptic('error');
     } finally {
@@ -330,7 +365,7 @@ export default function GateStaff() {
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (manualRef.trim()) {
-      handleScan(manualRef.trim());
+      handleScan(manualRef.trim(), 'manual');
       setManualRef('');
     }
   };

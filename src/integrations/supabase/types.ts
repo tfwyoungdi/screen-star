@@ -1708,6 +1708,82 @@ export type Database = {
           },
         ]
       }
+      scan_logs: {
+        Row: {
+          booking_id: string | null
+          booking_reference: string
+          created_at: string
+          customer_name: string | null
+          id: string
+          is_valid: boolean
+          movie_title: string | null
+          organization_id: string
+          result_message: string
+          scan_method: string
+          scanned_by: string | null
+          screen_name: string | null
+          seats_info: string | null
+          shift_id: string | null
+          showtime_start: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          booking_reference: string
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          is_valid: boolean
+          movie_title?: string | null
+          organization_id: string
+          result_message: string
+          scan_method?: string
+          scanned_by?: string | null
+          screen_name?: string | null
+          seats_info?: string | null
+          shift_id?: string | null
+          showtime_start?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          booking_reference?: string
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          is_valid?: boolean
+          movie_title?: string | null
+          organization_id?: string
+          result_message?: string
+          scan_method?: string
+          scanned_by?: string | null
+          screen_name?: string | null
+          seats_info?: string | null
+          shift_id?: string | null
+          showtime_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_logs_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       screens: {
         Row: {
           columns: number
