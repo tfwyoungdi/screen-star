@@ -65,10 +65,14 @@ interface EmailTemplate {
 }
 
 // Function to generate email templates with dynamic logo
+// Using a neutral dark header (#1f2937) ensures logo visibility regardless of logo colors
 const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
   const logoHtml = logoUrl 
-    ? `<img src="${logoUrl}" alt="Cinema Logo" style="max-width: 120px; max-height: 60px; margin-bottom: 15px;" />`
+    ? `<img src="${logoUrl}" alt="Cinema Logo" style="max-width: 150px; max-height: 70px; margin-bottom: 15px;" />`
     : '';
+
+  // Neutral dark header background that works with any logo color
+  const headerBg = '#1f2937';
 
   return [
     {
@@ -81,7 +85,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
-  <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+  <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
     ${logoHtml}
     <h1 style="color: white; margin: 0; font-size: 28px;">🎬 New Movie Alert!</h1>
   </div>
@@ -91,7 +95,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
     <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center;">
       {{movie_poster}}
       <h2 style="color: #1f2937; margin: 10px 0;">{{movie_title}}</h2>
-      <p style="color: #6b7280; margin: 0;">Now showing in all screens</p>
+      <p style="color: #6b7280; margin: 10px 0 0 0;">{{movie_description}}</p>
     </div>
     <p style="color: #6b7280; line-height: 1.6;">Don't miss out on this cinematic experience. Book your tickets now and get the best seats!</p>
     <a href="#" style="display: inline-block; background: #6366f1; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">Book Now</a>
@@ -110,7 +114,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
-  <div style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+  <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
     ${logoHtml}
     <h1 style="color: white; margin: 0; font-size: 28px;">🎁 Special Offer!</h1>
   </div>
@@ -139,7 +143,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
-  <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+  <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
     ${logoHtml}
     <h1 style="color: white; margin: 0; font-size: 28px;">📢 Important Update</h1>
   </div>
@@ -168,7 +172,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
-  <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+  <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
     ${logoHtml}
     <h1 style="color: white; margin: 0; font-size: 28px;">⭐ Loyalty Reward!</h1>
   </div>
@@ -199,6 +203,7 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
   const [htmlBody, setHtmlBody] = useState('');
   const [selectedMovieId, setSelectedMovieId] = useState<string>('');
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [movieDescription, setMovieDescription] = useState<string>('');
 
   // Generate templates with cinema logo
   const emailTemplates = generateEmailTemplates(cinemaLogoUrl);
@@ -304,6 +309,7 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
     setHtmlBody('');
     setSelectedMovieId('');
     setSelectedMovie(null);
+    setMovieDescription('');
     setActiveTab('templates');
   };
 
@@ -326,9 +332,9 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
       if (selectedTemplate === 'new_movie') {
         const template = emailTemplates.find((t) => t.id === 'new_movie');
         if (template) {
-          // Generate movie poster HTML
+          // Generate movie poster HTML with larger size (300px)
           const posterHtml = movie.poster_url
-            ? `<img src="${movie.poster_url}" alt="${movie.title}" style="max-width: 200px; border-radius: 8px; margin-bottom: 10px;" />`
+            ? `<img src="${movie.poster_url}" alt="${movie.title}" style="max-width: 300px; width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
             : '';
           
           setSubject(template.subject.replace(/\{\{movie_title\}\}/g, movie.title).replace(/\{\{cinema_name\}\}/g, cinemaName));
@@ -337,8 +343,30 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
               .replace(/\{\{movie_title\}\}/g, movie.title)
               .replace(/\{\{cinema_name\}\}/g, cinemaName)
               .replace(/\{\{movie_poster\}\}/g, posterHtml)
+              .replace(/\{\{movie_description\}\}/g, movieDescription || 'Now showing in all screens')
           );
         }
+      }
+    }
+  };
+
+  // Update HTML when description changes
+  const handleDescriptionChange = (description: string) => {
+    setMovieDescription(description);
+    if (selectedTemplate === 'new_movie' && selectedMovie) {
+      const template = emailTemplates.find((t) => t.id === 'new_movie');
+      if (template) {
+        const posterHtml = selectedMovie.poster_url
+          ? `<img src="${selectedMovie.poster_url}" alt="${selectedMovie.title}" style="max-width: 300px; width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
+          : '';
+        
+        setHtmlBody(
+          template.html
+            .replace(/\{\{movie_title\}\}/g, selectedMovie.title)
+            .replace(/\{\{cinema_name\}\}/g, cinemaName)
+            .replace(/\{\{movie_poster\}\}/g, posterHtml)
+            .replace(/\{\{movie_description\}\}/g, description || 'Now showing in all screens')
+        );
       }
     }
   };
@@ -346,14 +374,16 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
   const getPreviewHtml = () => {
     const movieTitle = selectedMovie?.title || 'The Amazing Movie';
     const posterHtml = selectedMovie?.poster_url
-      ? `<img src="${selectedMovie.poster_url}" alt="${movieTitle}" style="max-width: 200px; border-radius: 8px; margin-bottom: 10px;" />`
+      ? `<img src="${selectedMovie.poster_url}" alt="${movieTitle}" style="max-width: 300px; width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
       : '';
+    const description = movieDescription || 'Now showing in all screens';
     
     return htmlBody
       .replace(/\{\{customer_name\}\}/g, 'John Doe')
       .replace(/\{\{cinema_name\}\}/g, cinemaName)
       .replace(/\{\{movie_title\}\}/g, movieTitle)
-      .replace(/\{\{movie_poster\}\}/g, posterHtml);
+      .replace(/\{\{movie_poster\}\}/g, posterHtml)
+      .replace(/\{\{movie_description\}\}/g, description);
   };
 
   // Calculate analytics
@@ -529,33 +559,47 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
 
             <TabsContent value="customize" className="mt-4 space-y-4">
               {selectedTemplate === 'new_movie' && (
-                <div className="space-y-2">
-                  <Label>Select Movie</Label>
-                  <Select value={selectedMovieId} onValueChange={handleMovieSelect}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a movie..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {movies?.map((movie) => (
-                        <SelectItem key={movie.id} value={movie.id}>
-                          <div className="flex items-center gap-2">
-                            {movie.poster_url && (
-                              <img 
-                                src={movie.poster_url} 
-                                alt={movie.title} 
-                                className="w-6 h-8 object-cover rounded"
-                              />
-                            )}
-                            <span>{movie.title}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {movies?.length === 0 && (
-                    <p className="text-xs text-destructive">No active movies found. Add movies first.</p>
-                  )}
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label>Select Movie</Label>
+                    <Select value={selectedMovieId} onValueChange={handleMovieSelect}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a movie..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {movies?.map((movie) => (
+                          <SelectItem key={movie.id} value={movie.id}>
+                            <div className="flex items-center gap-2">
+                              {movie.poster_url && (
+                                <img 
+                                  src={movie.poster_url} 
+                                  alt={movie.title} 
+                                  className="w-6 h-8 object-cover rounded"
+                                />
+                              )}
+                              <span>{movie.title}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {movies?.length === 0 && (
+                      <p className="text-xs text-destructive">No active movies found. Add movies first.</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Movie Description</Label>
+                    <Textarea
+                      placeholder="Enter a brief description about this movie (e.g., genre, stars, synopsis)..."
+                      value={movieDescription}
+                      onChange={(e) => handleDescriptionChange(e.target.value)}
+                      className="min-h-[80px]"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      This description will appear below the movie title in the email
+                    </p>
+                  </div>
+                </>
               )}
               <div className="space-y-2">
                 <Label>Subject Line</Label>
@@ -577,7 +621,7 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                   className="min-h-[300px] font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Variables: {'{{customer_name}}'}, {'{{cinema_name}}'}, {'{{movie_title}}'}
+                  Variables: {'{{customer_name}}'}, {'{{cinema_name}}'}, {'{{movie_title}}'}, {'{{movie_description}}'}
                 </p>
               </div>
             </TabsContent>
