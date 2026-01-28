@@ -101,9 +101,9 @@ export default function CinemaBooking() {
 
   const fetchData = async () => {
     try {
-      // Fetch cinema
+      // Fetch cinema using public view (no RLS restrictions for anonymous users)
       const { data: cinemaData, error: cinemaError } = await supabase
-        .from('organizations')
+        .from('organizations_public')
         .select('*')
         .eq('slug', slug)
         .eq('is_active', true)
