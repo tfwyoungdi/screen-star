@@ -121,7 +121,9 @@ export default function CinemaBooking() {
           .from('movies')
           .select('*')
           .eq('id', movieId)
-          .single();
+          .eq('organization_id', cinemaData.id)
+          .eq('is_active', true)
+          .maybeSingle();
         setMovie(movieData);
 
         // Fetch showtimes for this movie
