@@ -14,7 +14,8 @@ import {
   Film, Clock, Ticket, DollarSign, Search, 
   Check, X, ArrowLeft, Plus, Minus, Tag, 
   CreditCard, Loader2, LogOut, Receipt, RefreshCw,
-  Popcorn, Phone, Printer, User, ClipboardList, Calendar
+  Popcorn, Phone, Printer, User, ClipboardList, Calendar,
+  Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -25,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShiftManagement } from '@/components/boxoffice/ShiftManagement';
 import { FloatingOrderSummary } from '@/components/boxoffice/FloatingOrderSummary';
 import { StaffClockIn } from '@/components/boxoffice/StaffClockIn';
+import { OnlineTicketActivation } from '@/components/boxoffice/OnlineTicketActivation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface Showtime {
@@ -112,6 +114,7 @@ export default function BoxOffice() {
   const [hasActiveShift, setHasActiveShift] = useState<boolean | null>(null);
   const [activeShiftId, setActiveShiftId] = useState<string | null>(null);
   const [showShiftPanel, setShowShiftPanel] = useState(false);
+  const [showActivationPanel, setShowActivationPanel] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
@@ -633,7 +636,7 @@ export default function BoxOffice() {
           discount_amount: serverDiscountAmount,
           promo_code_id: appliedPromo?.id || null,
           booking_reference: bookingReference,
-          status: 'paid',
+          status: 'activated',
           shift_id: activeShiftId,
         })
         .select()
@@ -942,15 +945,31 @@ export default function BoxOffice() {
             </div>
 
             <Button 
+              variant={showActivationPanel ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => {
+                setShowActivationPanel(!showActivationPanel);
+                setShowShiftPanel(false);
+              }}
+              className="gap-2"
+            >
+              <Globe className="h-4 w-4" />
+              <span className="hidden sm:inline">Online</span>
+            </Button>
+
+            <Button 
               variant={showShiftPanel ? "default" : "outline"} 
               size="sm" 
-              onClick={() => setShowShiftPanel(!showShiftPanel)}
+              onClick={() => {
+                setShowShiftPanel(!showShiftPanel);
+                setShowActivationPanel(false);
+              }}
               className="gap-2"
             >
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Shift</span>
               {hasActiveShift && (
-                <span className="h-2 w-2 bg-green-500 rounded-full" />
+                <span className="h-2 w-2 rounded-full bg-primary" />
               )}
             </Button>
 
@@ -1033,6 +1052,20 @@ export default function BoxOffice() {
               organizationId={profile.organization_id}
               onShiftChange={setHasActiveShift}
             />
+          </div>
+        )}
+
+        {/* Online Ticket Activation Panel */}
+        {showActivationPanel && profile?.organization_id && (
+          <div className="mb-6 max-w-lg">
+            <Card>
+              <CardContent className="pt-4">
+                <OnlineTicketActivation 
+                  activeShiftId={activeShiftId}
+                  onActivated={() => refetchSales()}
+                />
+              </CardContent>
+            </Card>
           </div>
         )}
 
