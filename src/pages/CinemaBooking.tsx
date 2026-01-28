@@ -102,61 +102,102 @@ export default function CinemaBooking() {
   const fetchData = async () => {
     try {
       // Fetch cinema
-      const { data: cinemaData } = await supabase
+      const { data: cinemaData, error: cinemaError } = await supabase
         .from('organizations')
         .select('*')
         .eq('slug', slug)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
+
+      if (cinemaError) throw cinemaError;
 
       if (!cinemaData) {
+        setCinema(null);
+        setMovie(null);
+        setShowtimes([]);
+        setSelectedShowtime(null);
         setLoading(false);
         return;
       }
       setCinema(cinemaData);
 
-      // Fetch movie if movieId provided
-      if (movieId) {
-        const { data: movieData } = await supabase
-          .from('movies')
-          .select('*')
-          .eq('id', movieId)
+      // Determine which movie we should load.
+      // Preferred: explicit ?movie=...
+      // Fallback: if a showtime is provided without a movie, derive movie_id from the showtime.
+      let resolvedMovieId: string | null = movieId;
+
+      if (!resolvedMovieId && initialShowtimeId) {
+        const { data: showtimeFromParam, error: showtimeFromParamError } = await supabase
+          .from('showtimes')
+          .select(`*, movies (*), screens (*)`)
+          .eq('id', initialShowtimeId)
           .eq('organization_id', cinemaData.id)
           .eq('is_active', true)
           .maybeSingle();
-        setMovie(movieData);
 
-        // Fetch showtimes for this movie
-        const { data: showtimesData } = await supabase
-          .from('showtimes')
-          .select(`*, movies (*), screens (*)`)
-          .eq('movie_id', movieId)
-          .eq('organization_id', cinemaData.id)
-          .eq('is_active', true)
-          .gte('start_time', new Date().toISOString())
-          .order('start_time', { ascending: true });
+        if (showtimeFromParamError) throw showtimeFromParamError;
 
-        setShowtimes(showtimesData || []);
-        
-        // Set selected date to first available date with showtimes
-        if (showtimesData && showtimesData.length > 0 && !initialShowtimeId) {
-          const firstShowtimeDate = startOfDay(new Date(showtimesData[0].start_time));
-          setSelectedDate(firstShowtimeDate);
+        if (showtimeFromParam?.movie_id) {
+          resolvedMovieId = showtimeFromParam.movie_id;
+          setSelectedShowtime(showtimeFromParam);
+          setSelectedDate(startOfDay(new Date(showtimeFromParam.start_time)));
+          await fetchSeatsForShowtime(showtimeFromParam);
         }
+      }
 
-        // Fetch availability for all showtimes
-        if (showtimesData && showtimesData.length > 0) {
-          await fetchShowtimeAvailability(showtimesData);
-        }
+      if (!resolvedMovieId) {
+        // Nothing to show on this page without a movie.
+        setMovie(null);
+        setShowtimes([]);
+        setSelectedShowtime(null);
+        setLoading(false);
+        return;
+      }
 
-        // If initialShowtimeId provided, select it
-        if (initialShowtimeId && showtimesData) {
-          const initialShowtime = showtimesData.find(s => s.id === initialShowtimeId);
-          if (initialShowtime) {
-            setSelectedShowtime(initialShowtime);
-            setSelectedDate(startOfDay(new Date(initialShowtime.start_time)));
-            await fetchSeatsForShowtime(initialShowtime);
-          }
+      // Fetch movie if movieId provided
+      const { data: movieData, error: movieError } = await supabase
+        .from('movies')
+        .select('*')
+        .eq('id', resolvedMovieId)
+        .eq('organization_id', cinemaData.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (movieError) throw movieError;
+      setMovie(movieData);
+
+      // Fetch showtimes for this movie
+      const { data: showtimesData, error: showtimesError } = await supabase
+        .from('showtimes')
+        .select(`*, movies (*), screens (*)`)
+        .eq('movie_id', resolvedMovieId)
+        .eq('organization_id', cinemaData.id)
+        .eq('is_active', true)
+        .gte('start_time', new Date().toISOString())
+        .order('start_time', { ascending: true });
+
+      if (showtimesError) throw showtimesError;
+
+      setShowtimes(showtimesData || []);
+      
+      // Set selected date to first available date with showtimes
+      if (showtimesData && showtimesData.length > 0 && !initialShowtimeId) {
+        const firstShowtimeDate = startOfDay(new Date(showtimesData[0].start_time));
+        setSelectedDate(firstShowtimeDate);
+      }
+
+      // Fetch availability for all showtimes
+      if (showtimesData && showtimesData.length > 0) {
+        await fetchShowtimeAvailability(showtimesData);
+      }
+
+      // If initialShowtimeId provided, select it (or keep what we selected from param)
+      if (initialShowtimeId && showtimesData) {
+        const initialShowtime = showtimesData.find(s => s.id === initialShowtimeId);
+        if (initialShowtime) {
+          setSelectedShowtime(initialShowtime);
+          setSelectedDate(startOfDay(new Date(initialShowtime.start_time)));
+          await fetchSeatsForShowtime(initialShowtime);
         }
       }
     } catch (error) {
