@@ -93,10 +93,10 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("id", booking.id);
     }
 
-    // Fetch organization's payment configuration
+    // Fetch organization's payment configuration (public info only)
     const { data: org, error: orgError } = await supabase
       .from("organizations")
-      .select("payment_gateway, payment_gateway_secret_key, payment_gateway_configured")
+      .select("payment_gateway, payment_gateway_configured")
       .eq("id", organizationId)
       .single();
 
@@ -105,12 +105,24 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Organization not found");
     }
 
-    if (!org.payment_gateway_configured || !org.payment_gateway_secret_key) {
+    if (!org.payment_gateway_configured) {
+      throw new Error("Payment gateway not configured. Please configure your payment settings in the dashboard.");
+    }
+
+    // SECURITY: Fetch secret key from LOCKED-DOWN secrets table (service role only)
+    const { data: secrets, error: secretsError } = await supabase
+      .from("organization_secrets")
+      .select("payment_gateway_secret_key")
+      .eq("organization_id", organizationId)
+      .single();
+
+    if (secretsError || !secrets?.payment_gateway_secret_key) {
+      console.error("Error fetching payment secrets:", secretsError);
       throw new Error("Payment gateway not configured. Please configure your payment settings in the dashboard.");
     }
 
     const gateway = org.payment_gateway;
-    const secretKey = org.payment_gateway_secret_key;
+    const secretKey = secrets.payment_gateway_secret_key;
 
     console.log(`Using ${gateway} gateway for payment processing`);
 

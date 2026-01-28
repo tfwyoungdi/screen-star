@@ -682,9 +682,12 @@ export default function EmailTemplatesSettings() {
                     <DialogHeader>
                       <DialogTitle>Email Preview</DialogTitle>
                     </DialogHeader>
-                    <div
-                      className="border rounded-lg overflow-hidden"
-                      dangerouslySetInnerHTML={{ __html: previewHtml }}
+                    {/* SECURITY: Use sandboxed iframe to prevent stored XSS from HTML templates */}
+                    <iframe
+                      className="border rounded-lg w-full min-h-[400px]"
+                      sandbox="allow-same-origin"
+                      srcDoc={previewHtml}
+                      title="Email Preview"
                     />
                   </DialogContent>
                 </Dialog>
