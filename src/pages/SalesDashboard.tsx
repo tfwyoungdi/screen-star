@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { Loader2, DollarSign, Ticket, TrendingUp, Calendar, Film, Users, Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCurrencySymbol, formatCurrency } from '@/lib/currency';
+import { DATE_RANGE_OPTIONS, DateRangeValue, getDateRange, getDateRangeLabel } from '@/lib/dateRanges';
 import { useOrganization } from '@/hooks/useOrganization';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,13 +40,12 @@ export default function SalesDashboard() {
   const { organization } = useOrganization();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const { exportToCSV, exportToPDF } = useExportReports();
-  const [dateRange, setDateRange] = useState('7');
+  const [dateRange, setDateRange] = useState<DateRangeValue>('7');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const currencySymbol = getCurrencySymbol(organization?.currency);
 
-  const startDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
-  const endDate = endOfDay(new Date());
+  const { startDate, endDate } = getDateRange(dateRange);
 
   // Fetch bookings for analytics
   const { data: bookings, isLoading: bookingsLoading, isRefetching, refetch, dataUpdatedAt } = useQuery({
@@ -194,15 +194,16 @@ export default function SalesDashboard() {
               <FileText className="h-4 w-4 mr-2" />
               PDF
             </Button>
-            <Select value={dateRange} onValueChange={setDateRange}>
+            <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeValue)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="14">Last 14 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
+                {DATE_RANGE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -226,7 +227,7 @@ export default function SalesDashboard() {
                     {currencySymbol}{Math.round(totalRevenue).toLocaleString()}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Last {dateRange} days
+                    {getDateRangeLabel(dateRange)}
                   </p>
                 </CardContent>
               </Card>
