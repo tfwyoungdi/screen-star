@@ -116,7 +116,7 @@ const App = () => (
               <Route
                 path="/movies"
                 element={
-                  <ProtectedRoute allowedRoles={['cinema_admin']}>
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager']}>
                     <MovieManagement />
                   </ProtectedRoute>
                 }
