@@ -219,6 +219,13 @@ export default function GateStaff() {
     setTicketInfo(null);
 
     try {
+      // First, explicitly request camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      // Stop the stream immediately - we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+
       const html5QrCode = new Html5Qrcode('gate-qr-reader', {
         formatsToSupport: SUPPORTED_FORMATS,
         verbose: false,
@@ -229,7 +236,7 @@ export default function GateStaff() {
         { facingMode: 'environment' },
         {
           fps: 15,
-          qrbox: { width: 300, height: 300 },
+          qrbox: { width: 280, height: 280 },
           aspectRatio: 1,
         },
         (decodedText) => {
@@ -241,7 +248,40 @@ export default function GateStaff() {
 
       setScanning(true);
     } catch (error: any) {
-      toast.error('Unable to access camera');
+      console.error('Camera access error:', error);
+      
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        toast.error('Camera permission denied. Please allow camera access in your browser settings and refresh the page.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        toast.error('No camera found on this device.');
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        toast.error('Camera is in use by another app. Please close other apps using the camera.');
+      } else if (error.name === 'OverconstrainedError') {
+        toast.error('Camera constraints not supported. Trying alternative...');
+        // Try with any camera
+        try {
+          const html5QrCode = new Html5Qrcode('gate-qr-reader', {
+            formatsToSupport: SUPPORTED_FORMATS,
+            verbose: false,
+          });
+          scannerRef.current = html5QrCode;
+          await html5QrCode.start(
+            { facingMode: 'user' },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+              handleScan(decodedText, 'qr');
+              stopScanner();
+            },
+            () => {}
+          );
+          setScanning(true);
+          return;
+        } catch {
+          toast.error('Unable to access any camera.');
+        }
+      } else {
+        toast.error('Unable to access camera. Make sure you are using HTTPS and have granted camera permissions.');
+      }
       setScanning(false);
     }
   };
@@ -408,14 +448,19 @@ export default function GateStaff() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Compact Header */}
-      <header className="h-14 border-b bg-card flex items-center justify-between px-4 sticky top-0 z-50">
+      <header className="h-16 border-b bg-card flex items-center justify-between px-4 sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <QrCode className="h-6 w-6 text-primary" />
-          <span className="font-bold">Gate Scanner</span>
-          {organization && (
-            <Badge variant="outline" className="hidden sm:inline-flex text-xs">
-              {organization.name}
-            </Badge>
+          {organization?.logo_url ? (
+            <img 
+              src={organization.logo_url} 
+              alt={organization.name} 
+              className="h-10 w-auto max-w-[120px] object-contain"
+            />
+          ) : (
+            <>
+              <QrCode className="h-6 w-6 text-primary" />
+              <span className="font-bold">{organization?.name || 'Gate Scanner'}</span>
+            </>
           )}
         </div>
         <div className="flex items-center gap-2">
