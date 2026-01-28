@@ -23,6 +23,7 @@ import MovieManagement from "./pages/MovieManagement";
 import ScreenManagement from "./pages/ScreenManagement";
 import ShowtimeManagement from "./pages/ShowtimeManagement";
 import SalesDashboard from "./pages/SalesDashboard";
+import AccountantDashboard from "./pages/AccountantDashboard";
 import TicketScanner from "./pages/TicketScanner";
 import PromoCodeManagement from "./pages/PromoCodeManagement";
 import LoyaltyProgram from "./pages/LoyaltyProgram";
@@ -139,8 +140,16 @@ const App = () => (
               <Route
                 path="/sales"
                 element={
-                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager', 'accountant']}>
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager']}>
                     <SalesDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/accountant"
+                element={
+                  <ProtectedRoute allowedRoles={['accountant']}>
+                    <AccountantDashboard />
                   </ProtectedRoute>
                 }
               />
