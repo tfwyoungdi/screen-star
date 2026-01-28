@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile, useOrganization } from '@/hooks/useUserProfile';
 import { DailyAccessCodeManager } from '@/components/boxoffice/DailyAccessCodeManager';
+import { OnlineActivationStats } from '@/components/boxoffice/OnlineActivationStats';
 
 export default function SupervisorDashboard() {
   const navigate = useNavigate();
@@ -87,6 +88,11 @@ export default function SupervisorDashboard() {
             </Card>
           ))}
         </div>
+
+        {/* Online Activation Stats */}
+        {profile?.organization_id && (
+          <OnlineActivationStats organizationId={profile.organization_id} />
+        )}
 
         {/* Daily Access Code Section */}
         <Card>
