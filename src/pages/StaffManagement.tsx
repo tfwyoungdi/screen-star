@@ -164,7 +164,19 @@ export default function StaffManagement() {
 
       if (error) {
         console.error('Error creating staff:', error);
-        toast.error(error.message || 'Failed to create staff account');
+        // Parse the actual error message from the edge function response
+        let errorMessage = 'Failed to create staff account';
+        if (error.context?.body) {
+          try {
+            const errorBody = typeof error.context.body === 'string' 
+              ? JSON.parse(error.context.body) 
+              : error.context.body;
+            errorMessage = errorBody.error || errorMessage;
+          } catch {
+            // If parsing fails, use default message
+          }
+        }
+        toast.error(errorMessage);
         return;
       }
 
