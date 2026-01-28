@@ -164,7 +164,12 @@ export default function StaffManagement() {
 
       // Check for error in result first (edge function returns error in body)
       if (result?.error) {
-        toast.error(result.error);
+        // Provide user-friendly messages for common errors
+        if (result.error === 'Unauthorized') {
+          toast.error('Your session has expired. Please log in again.');
+        } else {
+          toast.error(result.error);
+        }
         return;
       }
 
