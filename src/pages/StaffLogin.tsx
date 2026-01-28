@@ -25,14 +25,15 @@ export default function StaffLogin() {
   const [error, setError] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Fetch organization by slug to verify it exists
+  // Fetch organization by slug to verify it exists (using public view for unauthenticated access)
   const { data: organization, isLoading: orgLoading, error: orgError } = useQuery({
     queryKey: ['staff-login-org', slug],
     queryFn: async () => {
       if (!slug) throw new Error('No cinema specified');
       
+      // Use organizations_public view which is accessible without authentication
       const { data, error } = await supabase
-        .from('organizations')
+        .from('organizations_public')
         .select('id, name, logo_url, primary_color')
         .eq('slug', slug)
         .eq('is_active', true)
