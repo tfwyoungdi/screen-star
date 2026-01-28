@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { AccountantLayout } from '@/components/layout/AccountantLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
@@ -250,7 +250,7 @@ export default function AccountantDashboard() {
   };
 
   return (
-    <DashboardLayout>
+    <AccountantLayout>
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -754,6 +754,6 @@ export default function AccountantDashboard() {
           </Tabs>
         )}
       </div>
-    </DashboardLayout>
+    </AccountantLayout>
   );
 }
