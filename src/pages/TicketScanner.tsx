@@ -338,6 +338,13 @@ export default function TicketScanner() {
       } else if (booking.status === 'cancelled') {
         isValid = false;
         message = 'Booking has been cancelled.';
+      } else if (booking.status === 'paid') {
+        // Online ticket not yet activated at box office
+        isValid = false;
+        message = 'Online ticket not activated. Please visit the box office first.';
+      } else if (booking.status !== 'activated' && booking.status !== 'confirmed') {
+        isValid = false;
+        message = `Invalid ticket status: ${booking.status}`;
       } else if (hoursDiff < -3) {
         isValid = false;
         message = 'Showtime has passed. Ticket expired.';
