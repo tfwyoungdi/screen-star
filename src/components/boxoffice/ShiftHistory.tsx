@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { 
   History, Clock, DollarSign, CreditCard, TrendingUp, User, 
-  Calendar, ChevronDown, ChevronUp, Ticket, ShoppingBag
+  Calendar, ChevronDown, ChevronUp, Ticket, ShoppingBag, Globe
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OnlineActivationStats } from './OnlineActivationStats';
 
 interface ShiftHistoryProps {
   organizationId: string;
@@ -195,6 +196,9 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
 
   return (
     <div className="space-y-6">
+      {/* Online Activation Stats */}
+      <OnlineActivationStats organizationId={organizationId} compact />
+
       {/* Summary Stats */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>

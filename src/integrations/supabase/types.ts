@@ -152,6 +152,8 @@ export type Database = {
       }
       bookings: {
         Row: {
+          activated_at: string | null
+          activated_by: string | null
           booking_reference: string
           created_at: string
           customer_email: string
@@ -169,6 +171,8 @@ export type Database = {
           total_amount: number
         }
         Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
           booking_reference: string
           created_at?: string
           customer_email: string
@@ -186,6 +190,8 @@ export type Database = {
           total_amount: number
         }
         Update: {
+          activated_at?: string | null
+          activated_by?: string | null
           booking_reference?: string
           created_at?: string
           customer_email?: string

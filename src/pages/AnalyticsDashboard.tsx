@@ -12,6 +12,7 @@ import { ChartCard } from '@/components/dashboard/ChartCard';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useExportReports } from '@/hooks/useExportReports';
+import { OnlineActivationStats } from '@/components/boxoffice/OnlineActivationStats';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -518,6 +519,11 @@ export default function AnalyticsDashboard() {
                 </div>
               )}
             </ChartCard>
+
+            {/* Online Ticket Activation Stats */}
+            {effectiveOrgId && (
+              <OnlineActivationStats organizationId={effectiveOrgId} />
+            )}
           </>
         )}
       </div>

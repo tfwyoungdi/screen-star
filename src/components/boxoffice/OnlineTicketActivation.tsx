@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +51,7 @@ interface OnlineTicketActivationProps {
 
 export function OnlineTicketActivation({ activeShiftId, onActivated }: OnlineTicketActivationProps) {
   const { data: profile } = useUserProfile();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isActivating, setIsActivating] = useState(false);
 
@@ -109,6 +111,8 @@ export function OnlineTicketActivation({ activeShiftId, onActivated }: OnlineTic
         .update({ 
           status: 'activated',
           shift_id: activeShiftId,
+          activated_by: user?.id,
+          activated_at: new Date().toISOString(),
         })
         .eq('id', booking.id)
         .eq('status', 'paid');
