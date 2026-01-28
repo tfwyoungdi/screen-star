@@ -4,7 +4,7 @@ import {
   Loader2, DollarSign, Ticket, TrendingUp, Calendar, 
   Download, FileText, ChevronLeft, ChevronRight, 
   CreditCard, Banknote, Receipt, PieChart as PieChartIcon,
-  ArrowUpRight, ArrowDownRight
+  ArrowUpRight, ArrowDownRight, Users
 } from 'lucide-react';
 import { getCurrencySymbol, formatCurrency } from '@/lib/currency';
 import { useOrganization } from '@/hooks/useOrganization';
@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useExportReports } from '@/hooks/useExportReports';
 import { DataRefreshIndicator } from '@/components/dashboard/DataRefreshIndicator';
+import { StaffRevenueTab } from '@/components/accountant/StaffRevenueTab';
 import {
   BarChart,
   Bar,
@@ -47,18 +48,41 @@ export default function AccountantDashboard() {
   const { organization } = useOrganization();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const { exportToCSV, exportToPDF } = useExportReports();
-  const [dateRange, setDateRange] = useState('30');
+  const [dateRange, setDateRange] = useState('today');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const currencySymbol = getCurrencySymbol(organization?.currency);
 
-  const startDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
-  const endDate = endOfDay(new Date());
-
-  // Previous period for comparison
-  const prevStartDate = startOfDay(subDays(startDate, parseInt(dateRange)));
-  const prevEndDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
+  // Calculate date range based on selection
+  const { startDate, endDate, prevStartDate, prevEndDate } = useMemo(() => {
+    const now = new Date();
+    if (dateRange === 'today') {
+      return {
+        startDate: startOfDay(now),
+        endDate: endOfDay(now),
+        prevStartDate: startOfDay(subDays(now, 1)),
+        prevEndDate: endOfDay(subDays(now, 1)),
+      };
+    } else if (dateRange === 'yesterday') {
+      const yesterday = subDays(now, 1);
+      return {
+        startDate: startOfDay(yesterday),
+        endDate: endOfDay(yesterday),
+        prevStartDate: startOfDay(subDays(now, 2)),
+        prevEndDate: endOfDay(subDays(now, 2)),
+      };
+    } else {
+      const days = parseInt(dateRange);
+      const start = startOfDay(subDays(now, days));
+      return {
+        startDate: start,
+        endDate: endOfDay(now),
+        prevStartDate: startOfDay(subDays(start, days)),
+        prevEndDate: startOfDay(subDays(now, days)),
+      };
+    }
+  }, [dateRange]);
 
   // Fetch current period bookings
   const { data: bookings, isLoading: bookingsLoading, isRefetching, refetch, dataUpdatedAt } = useQuery({
@@ -289,6 +313,8 @@ export default function AccountantDashboard() {
                 <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
                 <SelectItem value="7">Last 7 days</SelectItem>
                 <SelectItem value="14">Last 14 days</SelectItem>
                 <SelectItem value="30">Last 30 days</SelectItem>
@@ -307,6 +333,10 @@ export default function AccountantDashboard() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="staff">
+                <Users className="h-4 w-4 mr-1" />
+                Staff Revenue
+              </TabsTrigger>
               <TabsTrigger value="transactions">Transactions</TabsTrigger>
               <TabsTrigger value="reconciliation">Reconciliation</TabsTrigger>
             </TabsList>
@@ -548,6 +578,16 @@ export default function AccountantDashboard() {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="staff" className="space-y-6">
+              {effectiveOrgId && (
+                <StaffRevenueTab
+                  organizationId={effectiveOrgId}
+                  currency={organization?.currency}
+                  dateRange={dateRange}
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="transactions" className="space-y-6">
