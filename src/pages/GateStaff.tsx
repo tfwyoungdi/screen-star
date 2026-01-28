@@ -424,15 +424,22 @@ export default function GateStaff() {
 
       if (booking.status === 'used') {
         isValid = false;
-        message = 'Already used';
+        message = '⛔ Already Scanned';
       } else if (booking.status === 'cancelled') {
         isValid = false;
         message = 'Cancelled';
+      } else if (booking.status === 'paid') {
+        // Online tickets need activation at box office before entry
+        isValid = false;
+        message = 'Not Activated – Send to Box Office';
+      } else if (booking.status === 'pending') {
+        isValid = false;
+        message = 'Payment Pending';
       } else if (hoursDiff < -3) {
         isValid = false;
         message = 'Expired';
       } else if (hoursDiff > 2) {
-        message = `Show in ${Math.round(hoursDiff)}h`;
+        message = `✓ Entry OK – Show in ${Math.round(hoursDiff)}h`;
       }
 
       const result: TicketInfo = {
