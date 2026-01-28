@@ -218,9 +218,20 @@ export default function GateStaff() {
   const startScanner = async () => {
     if (scanning) return;
     setTicketInfo(null);
+
+    // Preflight: common mobile failure modes
+    if (!window.isSecureContext && window.location.protocol !== 'https:') {
+      toast.error('Camera requires HTTPS. Please open the site using https://', { duration: 6000 });
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error('Camera is not supported in this browser. Please use Safari or Chrome.', { duration: 6000 });
+      return;
+    }
+
     // Mount the QR reader element *before* starting html5-qrcode
     setScanning(true);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 80));
 
     try {
       const html5QrCode = new Html5Qrcode('gate-qr-reader', {
@@ -256,7 +267,7 @@ export default function GateStaff() {
       } else if (error.name === 'OverconstrainedError') {
         // Try selecting an available camera explicitly (more reliable on mobile)
         try {
-          toast.message('Trying another camera…');
+          toast('Trying another camera…');
           const cameras = await Html5Qrcode.getCameras();
           const preferred =
             cameras.find((c) => /back|rear|environment/i.test(c.label)) ?? cameras[0];
@@ -296,7 +307,10 @@ export default function GateStaff() {
           { duration: 6000 }
         );
       }
-      setScanning(false);
+      // Ensure we clean up any partially created scanner instance
+      try {
+        await stopScanner();
+      } catch {}
     }
   };
 
@@ -304,8 +318,14 @@ export default function GateStaff() {
     if (scannerRef.current) {
       try {
         await scannerRef.current.stop();
-        scannerRef.current = null;
       } catch (error) {}
+
+      try {
+        // html5-qrcode recommends clear() to remove the video element & listeners
+        await (scannerRef.current as any).clear?.();
+      } catch (error) {}
+
+      scannerRef.current = null;
     }
     setScanning(false);
   };
