@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization, useUserProfile } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
 import { useRealtimeBookings, useRealtimeShowtimes, useRealtimeMovies } from '@/hooks/useRealtimeDashboard';
+import { DATE_RANGE_OPTIONS, DateRangeValue, getDateRange, getDateRangeLabel } from '@/lib/dateRanges';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +19,13 @@ import { WebsiteStatsWidget } from '@/components/dashboard/WebsiteStatsWidget';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { WelcomeTour, useTour } from '@/components/dashboard/WelcomeTour';
 import { DataRefreshIndicator } from '@/components/dashboard/DataRefreshIndicator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   DollarSign,
   Ticket,
@@ -44,19 +52,22 @@ export default function Dashboard() {
   const { isImpersonating, impersonatedOrganization, getEffectiveOrganizationId } = useImpersonation();
   const { showTour, setShowTour } = useTour();
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const dateRange = 7;
+  const [dateRange, setDateRange] = useState<DateRangeValue>('7');
 
   // Use impersonated org if in impersonation mode, otherwise use real org
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const effectiveOrg = isImpersonating ? impersonatedOrganization : organization;
   const currencySymbol = getCurrencySymbol(effectiveOrg?.currency);
 
-  const startDate = startOfDay(subDays(new Date(), dateRange));
-  const endDate = endOfDay(new Date());
+  const { startDate, endDate } = getDateRange(dateRange);
   
-  // Previous period for trend calculation
-  const prevStartDate = startOfDay(subDays(new Date(), dateRange * 2));
-  const prevEndDate = endOfDay(subDays(new Date(), dateRange + 1));
+  // Previous period for trend calculation - double the current range
+  const days = dateRange === 'lifetime' ? 365 : dateRange === 'today' ? 1 : dateRange === 'yesterday' ? 1 : parseInt(dateRange);
+  const { startDate: prevStartDate, endDate: prevEndDate } = getDateRange(
+    dateRange === 'lifetime' ? 'lifetime' : 
+    dateRange === 'today' ? 'yesterday' : 
+    String(days * 2) as DateRangeValue
+  );
 
   // Real-time subscriptions
   const { newBookingsCount, resetNewBookingsCount } = useRealtimeBookings({
@@ -293,6 +304,18 @@ export default function Dashboard() {
                 isRefetching={isRefetching}
                 onRefresh={() => refetch()}
               />
+              <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeValue)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Period" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DATE_RANGE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button onClick={() => navigate('/movies')} className="gap-2" data-tour="movies">
                 <Plus className="h-4 w-4" />
                 Add Movie
@@ -313,7 +336,7 @@ export default function Dashboard() {
               variant="primary"
               trend={revenueTrend !== 0 ? { 
                 value: Math.round(revenueTrend * 10) / 10, 
-                label: `vs previous ${dateRange} days` 
+                label: `vs previous period` 
               } : undefined}
             />
             <StatCard
@@ -322,7 +345,7 @@ export default function Dashboard() {
               icon={Ticket}
               trend={ticketsTrend !== 0 ? { 
                 value: Math.round(ticketsTrend * 10) / 10, 
-                label: `vs previous ${dateRange} days` 
+                label: `vs previous period` 
               } : undefined}
             />
             <StatCard

@@ -5,6 +5,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
 import { useOrganization } from '@/hooks/useOrganization';
 import { getCurrencySymbol, formatCurrency } from '@/lib/currency';
+import { DATE_RANGE_OPTIONS, DateRangeValue, getDateRange, getDateRangeLabel } from '@/lib/dateRanges';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ChartCard } from '@/components/dashboard/ChartCard';
@@ -18,15 +19,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   format,
-  subDays,
-  startOfDay,
-  endOfDay,
   eachDayOfInterval,
-  eachHourOfInterval,
-  startOfHour,
   getHours,
-  parseISO,
 } from 'date-fns';
 import {
   DollarSign,
@@ -63,12 +65,11 @@ export default function AnalyticsDashboard() {
   const { getEffectiveOrganizationId } = useImpersonation();
   const { organization } = useOrganization();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
-  const [dateRange, setDateRange] = useState(7);
+  const [dateRange, setDateRange] = useState<DateRangeValue>('7');
   const { exportToCSV, exportToPDF } = useExportReports();
   const currencySymbol = getCurrencySymbol(organization?.currency);
 
-  const startDate = startOfDay(subDays(new Date(), dateRange));
-  const endDate = endOfDay(new Date());
+  const { startDate, endDate } = getDateRange(dateRange);
 
   // Fetch all bookings for analytics
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
@@ -226,7 +227,7 @@ export default function AnalyticsDashboard() {
 
   const handleExportPDF = () => {
     if (!bookings) return;
-    exportToPDF(bookings, `Analytics Report - Last ${dateRange} Days`);
+    exportToPDF(bookings, `Analytics Report - ${getDateRangeLabel(dateRange)}`);
   };
 
   const loading = bookingsLoading;
@@ -243,19 +244,18 @@ export default function AnalyticsDashboard() {
             </p>
           </div>
           <div className="flex gap-2">
-            <div className="flex rounded-lg border border-border overflow-hidden">
-              {[7, 14, 30, 90].map((days) => (
-                <Button
-                  key={days}
-                  variant={dateRange === days ? 'default' : 'ghost'}
-                  size="sm"
-                  className="rounded-none"
-                  onClick={() => setDateRange(days)}
-                >
-                  {days}d
-                </Button>
-              ))}
-            </div>
+            <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeValue)}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                {DATE_RANGE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">

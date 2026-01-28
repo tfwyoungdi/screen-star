@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, DollarSign, ShoppingBag, Star } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { DATE_RANGE_OPTIONS, DateRangeValue, getDateRange, getDateRangeLabel } from '@/lib/dateRanges';
 
 interface ConcessionAnalyticsProps {
   organizationId: string;
@@ -13,11 +16,37 @@ interface ConcessionAnalyticsProps {
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps) {
+  const [dateRange, setDateRange] = useState<DateRangeValue>('30');
+  const { startDate, endDate } = getDateRange(dateRange);
+
   // Fetch sales data
   const { data: salesData, isLoading } = useQuery({
-    queryKey: ['concession-analytics', organizationId],
+    queryKey: ['concession-analytics', organizationId, dateRange],
     queryFn: async () => {
-      // Get all booking concessions with item details
+      // First get bookings in the date range
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString());
+
+      if (bookingsError) throw bookingsError;
+
+      const bookingIds = bookings?.map(b => b.id) || [];
+      
+      if (bookingIds.length === 0) {
+        return {
+          topItems: [],
+          categoryData: [],
+          totalRevenue: 0,
+          totalQuantity: 0,
+          avgOrderValue: 0,
+          bestSeller: 'N/A',
+        };
+      }
+
+      // Get all booking concessions with item details for those bookings
       const { data: concessions, error } = await supabase
         .from('booking_concessions')
         .select(`
@@ -30,6 +59,7 @@ export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps
             organization_id
           )
         `)
+        .in('booking_id', bookingIds)
         .eq('concession_items.organization_id', organizationId);
 
       if (error) throw error;
@@ -105,6 +135,22 @@ export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps
 
   return (
     <div className="space-y-6">
+      {/* Date Range Filter */}
+      <div className="flex justify-end">
+        <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeValue)}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Select period" />
+          </SelectTrigger>
+          <SelectContent>
+            {DATE_RANGE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -114,7 +160,7 @@ export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${salesData?.totalRevenue.toFixed(2) || '0.00'}</div>
-            <p className="text-xs text-muted-foreground">From concession sales</p>
+            <p className="text-xs text-muted-foreground">{getDateRangeLabel(dateRange)}</p>
           </CardContent>
         </Card>
 
