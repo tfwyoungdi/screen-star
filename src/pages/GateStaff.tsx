@@ -113,6 +113,37 @@ export default function GateStaff() {
   const [todayStats, setTodayStats] = useState({ scanned: 0, valid: 0 });
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
+  const waitForElement = useCallback((id: string, timeoutMs = 1500) => {
+    return new Promise<void>((resolve, reject) => {
+      const start = performance.now();
+      const tick = () => {
+        const el = document.getElementById(id);
+        if (el) return resolve();
+        if (performance.now() - start >= timeoutMs) {
+          return reject(new Error(`Element #${id} not found after ${timeoutMs}ms`));
+        }
+        requestAnimationFrame(tick);
+      };
+      tick();
+    });
+  }, []);
+
+  const normalizeCameraError = useCallback((err: any) => {
+    // html5-qrcode sometimes rejects with a string, and sometimes with a DOMException.
+    if (!err) return { name: 'UnknownError', message: 'Unknown error', raw: '' };
+
+    if (typeof err === 'string') {
+      const raw = err;
+      const nameMatch = raw.match(/^(\w+Error)/) ?? raw.match(/\b(\w+Error)\b/);
+      const name = nameMatch?.[1] ?? 'UnknownError';
+      return { name, message: raw, raw };
+    }
+
+    const name = err?.name ?? err?.error?.name ?? 'UnknownError';
+    const message = err?.message ?? err?.error?.message ?? String(err);
+    return { name, message, raw: String(err) };
+  }, []);
+
   // Load history from localStorage
   useEffect(() => {
     const savedHistory = localStorage.getItem('gateStaffHistory');
@@ -231,9 +262,16 @@ export default function GateStaff() {
 
     // Mount the QR reader element *before* starting html5-qrcode
     setScanning(true);
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 80));
-
     try {
+      await waitForElement('gate-qr-reader', 1500);
+    } catch (e) {
+      console.error('QR reader mount timeout:', e);
+      toast.error('Scanner failed to start (UI not ready). Please reload and try again.', { duration: 6000 });
+      setScanning(false);
+      return;
+    }
+
+    const createAndStart = async (cameraConfig: any, fps = 15, qrbox: any = { width: 280, height: 280 }) => {
       const html5QrCode = new Html5Qrcode('gate-qr-reader', {
         formatsToSupport: SUPPORTED_FORMATS,
         verbose: false,
@@ -241,31 +279,32 @@ export default function GateStaff() {
       scannerRef.current = html5QrCode;
 
       await html5QrCode.start(
-        { facingMode: { ideal: 'environment' } },
-        {
-          fps: 15,
-          qrbox: { width: 280, height: 280 },
-        },
+        cameraConfig,
+        { fps, qrbox },
         (decodedText) => {
           handleScan(decodedText, 'qr');
           stopScanner();
         },
         () => {}
       );
+    };
+
+    try {
+      await createAndStart({ facingMode: { ideal: 'environment' } });
     } catch (error: any) {
-      console.error('Camera access error:', error);
-      
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        toast.error(
-          'Camera permission denied. Go to your browser settings → Site settings → Camera and allow access for this site.',
-          { duration: 6000 }
-        );
-      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        toast.error('No camera found on this device.');
-      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-        toast.error('Camera is in use by another app. Please close other apps using the camera.');
-      } else if (error.name === 'OverconstrainedError') {
-        // Try selecting an available camera explicitly (more reliable on mobile)
+      const normalized = normalizeCameraError(error);
+      console.error('Camera access error:', { error, normalized });
+
+      // If the first attempt fails for *any* non-permission/security reason, try selecting a camera explicitly.
+      const shouldTryFallback = ![
+        'NotAllowedError',
+        'PermissionDeniedError',
+        'SecurityError',
+        'NotReadableError',
+        'TrackStartError',
+      ].includes(normalized.name);
+
+      if (shouldTryFallback) {
         try {
           toast('Trying another camera…');
           const cameras = await Html5Qrcode.getCameras();
@@ -274,36 +313,32 @@ export default function GateStaff() {
 
           if (!preferred) throw new Error('No cameras available');
 
-          const html5QrCode = new Html5Qrcode('gate-qr-reader', {
-            formatsToSupport: SUPPORTED_FORMATS,
-            verbose: false,
-          });
-          scannerRef.current = html5QrCode;
-
-          await html5QrCode.start(
-            { deviceId: { exact: preferred.id } },
-            { fps: 12, qrbox: 250 },
-            (decodedText) => {
-              handleScan(decodedText, 'qr');
-              stopScanner();
-            },
-            () => {}
-          );
+          await createAndStart({ deviceId: { exact: preferred.id } }, 12, 250);
           return;
         } catch (fallbackError) {
-          console.error('Camera fallback error:', fallbackError);
-          toast.error('Unable to access camera on this device. Please try another browser (Safari/Chrome) or use manual entry.', {
-            duration: 6000,
-          });
+          const fallbackNormalized = normalizeCameraError(fallbackError);
+          console.error('Camera fallback error:', { fallbackError, fallbackNormalized });
+          // fall through to user-facing error handling below
         }
-     } else if (error.name === 'SecurityError') {
+      }
+
+      if (normalized.name === 'NotAllowedError' || normalized.name === 'PermissionDeniedError') {
+        toast.error(
+          'Camera permission denied. Go to your browser settings → Site settings → Camera and allow access for this site.',
+          { duration: 6000 }
+        );
+      } else if (normalized.name === 'NotFoundError' || normalized.name === 'DevicesNotFoundError') {
+        toast.error('No camera found on this device.');
+      } else if (normalized.name === 'NotReadableError' || normalized.name === 'TrackStartError') {
+        toast.error('Camera is in use by another app. Please close other apps using the camera.');
+      } else if (normalized.name === 'SecurityError') {
         toast.error(
           'Camera access blocked. This site must be accessed via HTTPS. Please check the URL starts with https://',
           { duration: 6000 }
         );
       } else {
         toast.error(
-          `Camera error: ${error?.message || 'Unknown error'}. Try reloading the page or use manual entry.`,
+          `Camera error (${normalized.name}): ${normalized.message || 'Unknown error'}. Try reloading the page or use manual entry.`,
           { duration: 6000 }
         );
       }
