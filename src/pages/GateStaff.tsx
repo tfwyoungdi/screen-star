@@ -216,16 +216,13 @@ export default function GateStaff() {
   }, [profile?.organization_id, profile?.id]);
 
   const startScanner = async () => {
+    if (scanning) return;
     setTicketInfo(null);
+    // Mount the QR reader element *before* starting html5-qrcode
+    setScanning(true);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
     try {
-      // First, explicitly request camera permission
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      // Stop the stream immediately - we just needed permission
-      stream.getTracks().forEach(track => track.stop());
-
       const html5QrCode = new Html5Qrcode('gate-qr-reader', {
         formatsToSupport: SUPPORTED_FORMATS,
         verbose: false,
@@ -233,11 +230,10 @@ export default function GateStaff() {
       scannerRef.current = html5QrCode;
 
       await html5QrCode.start(
-        { facingMode: 'environment' },
+        { facingMode: { ideal: 'environment' } },
         {
           fps: 15,
           qrbox: { width: 280, height: 280 },
-          aspectRatio: 1,
         },
         (decodedText) => {
           handleScan(decodedText, 'qr');
@@ -245,42 +241,60 @@ export default function GateStaff() {
         },
         () => {}
       );
-
-      setScanning(true);
     } catch (error: any) {
       console.error('Camera access error:', error);
       
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        toast.error('Camera permission denied. Please allow camera access in your browser settings and refresh the page.');
+        toast.error(
+          'Camera permission denied. Go to your browser settings → Site settings → Camera and allow access for this site.',
+          { duration: 6000 }
+        );
       } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
         toast.error('No camera found on this device.');
       } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
         toast.error('Camera is in use by another app. Please close other apps using the camera.');
       } else if (error.name === 'OverconstrainedError') {
-        toast.error('Camera constraints not supported. Trying alternative...');
-        // Try with any camera
+        // Try selecting an available camera explicitly (more reliable on mobile)
         try {
+          toast.message('Trying another camera…');
+          const cameras = await Html5Qrcode.getCameras();
+          const preferred =
+            cameras.find((c) => /back|rear|environment/i.test(c.label)) ?? cameras[0];
+
+          if (!preferred) throw new Error('No cameras available');
+
           const html5QrCode = new Html5Qrcode('gate-qr-reader', {
             formatsToSupport: SUPPORTED_FORMATS,
             verbose: false,
           });
           scannerRef.current = html5QrCode;
+
           await html5QrCode.start(
-            { facingMode: 'user' },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
+            { deviceId: { exact: preferred.id } },
+            { fps: 12, qrbox: 250 },
             (decodedText) => {
               handleScan(decodedText, 'qr');
               stopScanner();
             },
             () => {}
           );
-          setScanning(true);
           return;
-        } catch {
-          toast.error('Unable to access any camera.');
+        } catch (fallbackError) {
+          console.error('Camera fallback error:', fallbackError);
+          toast.error('Unable to access camera on this device. Please try another browser (Safari/Chrome) or use manual entry.', {
+            duration: 6000,
+          });
         }
+     } else if (error.name === 'SecurityError') {
+        toast.error(
+          'Camera access blocked. This site must be accessed via HTTPS. Please check the URL starts with https://',
+          { duration: 6000 }
+        );
       } else {
-        toast.error('Unable to access camera. Make sure you are using HTTPS and have granted camera permissions.');
+        toast.error(
+          `Camera error: ${error?.message || 'Unknown error'}. Try reloading the page or use manual entry.`,
+          { duration: 6000 }
+        );
       }
       setScanning(false);
     }
