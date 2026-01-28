@@ -56,13 +56,18 @@ export function OnlineTicketActivation({ activeShiftId, onActivated }: OnlineTic
   const [selectedBooking, setSelectedBooking] = useState<OnlineBooking | null>(null);
   const [isActivating, setIsActivating] = useState(false);
 
-  // Fetch pending online bookings (status = 'paid')
+  // Only search when reference code is entered (minimum 3 characters)
+  const shouldSearch = searchQuery.trim().length >= 3;
+
+  // Fetch booking by reference code
   const { data: pendingBookings, isLoading, refetch } = useQuery({
     queryKey: ['pending-online-bookings', profile?.organization_id, searchQuery],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!profile?.organization_id || !shouldSearch) return [];
       
-      let query = supabase
+      const search = searchQuery.trim().toUpperCase();
+      
+      const { data, error } = await supabase
         .from('bookings')
         .select(`
           id,
@@ -85,23 +90,15 @@ export function OnlineTicketActivation({ activeShiftId, onActivated }: OnlineTic
           )
         `)
         .eq('organization_id', profile.organization_id)
-        .eq('status', 'paid') // Only online tickets awaiting activation
+        .eq('status', 'paid')
+        .ilike('booking_reference', `%${search}%`)
         .order('created_at', { ascending: false })
-        .limit(50);
-      
-      // Apply search filter
-      if (searchQuery.trim()) {
-        const search = searchQuery.trim().toUpperCase();
-        query = query.or(`booking_reference.ilike.%${search}%,customer_name.ilike.%${search}%,customer_email.ilike.%${search}%,customer_phone.ilike.%${search}%`);
-      }
-      
-      const { data, error } = await query;
+        .limit(10);
       
       if (error) throw error;
       return data as OnlineBooking[];
     },
-    enabled: !!profile?.organization_id,
-    refetchInterval: 30000,
+    enabled: !!profile?.organization_id && shouldSearch,
   });
 
   const activateTicket = async (booking: OnlineBooking) => {
@@ -148,24 +145,35 @@ export function OnlineTicketActivation({ activeShiftId, onActivated }: OnlineTic
       <div className="flex items-center gap-2">
         <Globe className="h-5 w-5 text-primary" />
         <h3 className="font-semibold">Online Ticket Activation</h3>
-        <Badge variant="secondary" className="ml-auto">
-          {pendingBookings?.length || 0} pending
-        </Badge>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by reference, name, email, or phone..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search by Reference Code */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-muted-foreground">
+          Enter Booking Reference Code
+        </label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="e.g., ABC123..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
+            className="pl-10 font-mono uppercase"
+          />
+        </div>
+        {searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
+          <p className="text-xs text-muted-foreground">Enter at least 3 characters to search</p>
+        )}
       </div>
 
-      {/* Pending Bookings List */}
-      {isLoading ? (
+      {/* Results - only shown when searching */}
+      {!shouldSearch ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <Ticket className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <p>Enter a booking reference code</p>
+          <p className="text-sm">Type the reference to find and activate tickets</p>
+        </div>
+      ) : isLoading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -185,7 +193,7 @@ export function OnlineTicketActivation({ activeShiftId, onActivated }: OnlineTic
                   className={cn(
                     "cursor-pointer transition-all hover:shadow-md",
                     selectedBooking?.id === booking.id && "ring-2 ring-primary",
-                    isUrgent && "border-amber-500",
+                    isUrgent && "border-destructive",
                     isPast && "opacity-60"
                   )}
                   onClick={() => setSelectedBooking(booking)}
@@ -254,9 +262,9 @@ export function OnlineTicketActivation({ activeShiftId, onActivated }: OnlineTic
         </ScrollArea>
       ) : (
         <div className="text-center py-8 text-muted-foreground">
-          <Ticket className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p>No pending online tickets</p>
-          <p className="text-sm">Online purchases will appear here for activation</p>
+          <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <p>No ticket found</p>
+          <p className="text-sm">Check the reference code and try again</p>
         </div>
       )}
 
