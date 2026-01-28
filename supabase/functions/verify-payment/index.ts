@@ -29,24 +29,13 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Fetch organization's payment gateway secret key
+    // Fetch organization's payment gateway secret key from LOCKED-DOWN secrets table
+    // This table is only accessible via service role (edge functions)
     let secretKey: string | null = null;
+    let targetOrgId = organizationId;
     
-    if (organizationId) {
-      const { data: org, error: orgError } = await supabase
-        .from("organizations")
-        .select("payment_gateway_secret_key")
-        .eq("id", organizationId)
-        .single();
-
-      if (!orgError && org?.payment_gateway_secret_key) {
-        secretKey = org.payment_gateway_secret_key;
-        console.log("Using organization's payment gateway secret key");
-      }
-    }
-
-    // If no org key found, try to get it from the booking
-    if (!secretKey && bookingReference) {
+    // If no org ID provided, try to get it from the booking
+    if (!targetOrgId && bookingReference) {
       const { data: booking } = await supabase
         .from("bookings")
         .select("organization_id")
@@ -54,16 +43,21 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
 
       if (booking?.organization_id) {
-        const { data: org } = await supabase
-          .from("organizations")
-          .select("payment_gateway_secret_key")
-          .eq("id", booking.organization_id)
-          .single();
+        targetOrgId = booking.organization_id;
+      }
+    }
 
-        if (org?.payment_gateway_secret_key) {
-          secretKey = org.payment_gateway_secret_key;
-          console.log("Using organization's payment gateway secret key from booking");
-        }
+    if (targetOrgId) {
+      // SECURITY: Fetch from organization_secrets table (service role only)
+      const { data: secrets, error: secretsError } = await supabase
+        .from("organization_secrets")
+        .select("payment_gateway_secret_key")
+        .eq("organization_id", targetOrgId)
+        .single();
+
+      if (!secretsError && secrets?.payment_gateway_secret_key) {
+        secretKey = secrets.payment_gateway_secret_key;
+        console.log("Using organization's payment gateway secret key from secure storage");
       }
     }
 

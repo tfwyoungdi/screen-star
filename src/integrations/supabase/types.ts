@@ -1465,6 +1465,52 @@ export type Database = {
           },
         ]
       }
+      organization_secrets: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          payment_gateway_secret_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          payment_gateway_secret_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          payment_gateway_secret_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_secrets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_secrets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_secrets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           about_text: string | null
@@ -2067,6 +2113,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limit_entries: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
       }
       scan_logs: {
         Row: {
@@ -3071,6 +3141,11 @@ export type Database = {
       }
     }
     Functions: {
+      check_rate_limit: {
+        Args: { _key: string; _max_requests: number; _window_seconds: number }
+        Returns: Json
+      }
+      cleanup_rate_limits: { Args: never; Returns: undefined }
       delete_old_loyalty_transactions: { Args: never; Returns: undefined }
       delete_old_shifts: { Args: never; Returns: undefined }
       generate_booking_reference: { Args: never; Returns: string }

@@ -311,11 +311,31 @@ export default function CinemaSettings() {
           seo_description: data.seo_description || null,
           payment_gateway: data.payment_gateway,
           payment_gateway_public_key: data.payment_gateway_public_key || null,
-          payment_gateway_secret_key: data.payment_gateway_secret_key || null,
+          // SECURITY: Do NOT store secret key in main organizations table
+          // It's stored in organization_secrets (edge function only access)
           payment_gateway_configured: data.payment_gateway !== 'none' && !!data.payment_gateway_public_key && !!data.payment_gateway_secret_key,
           currency: data.currency || 'USD',
         })
         .eq('id', organization.id);
+
+      if (error) throw error;
+
+      // SECURITY: Store secret key in locked-down secrets table
+      // This table only allows service_role access (edge functions)
+      if (data.payment_gateway_secret_key) {
+        const { error: secretError } = await supabase
+          .from('organization_secrets')
+          .upsert({
+            organization_id: organization.id,
+            payment_gateway_secret_key: data.payment_gateway_secret_key,
+          }, { onConflict: 'organization_id' });
+
+        if (secretError) {
+          console.error('Error saving payment secret:', secretError);
+          // Don't fail the whole update, but warn user
+          toast.warning('Settings saved, but there was an issue saving payment credentials. Please contact support.');
+        }
+      }
 
       if (error) throw error;
 
