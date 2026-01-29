@@ -66,6 +66,7 @@ import PlatformReports from "./pages/platform-admin/PlatformReports";
 import PlatformAuditLogs from "./pages/platform-admin/PlatformAuditLogs";
 import PlatformSLA from "./pages/platform-admin/PlatformSLA";
 import PlatformCommunications from "./pages/platform-admin/PlatformCommunications";
+import PlatformCustomers from "./pages/platform-admin/PlatformCustomers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -369,6 +370,14 @@ const App = () => (
                 element={
                   <PlatformProtectedRoute>
                     <PlatformCommunications />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/customers"
+                element={
+                  <PlatformProtectedRoute>
+                    <PlatformCustomers />
                   </PlatformProtectedRoute>
                 }
               />

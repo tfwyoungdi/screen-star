@@ -19,6 +19,7 @@ import {
   ScrollText,
   Timer,
   Mail,
+  UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +30,7 @@ interface PlatformLayoutProps {
 const navItems = [
   { title: 'Dashboard', href: '/platform-admin', icon: LayoutDashboard },
   { title: 'Cinemas', href: '/platform-admin/cinemas', icon: Building2 },
+  { title: 'Customers', href: '/platform-admin/customers', icon: UserCircle },
   { title: 'Subscription Plans', href: '/platform-admin/plans', icon: CreditCard },
   { title: 'Transactions', href: '/platform-admin/transactions', icon: Receipt },
   { title: 'Domains', href: '/platform-admin/domains', icon: Globe },
