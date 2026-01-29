@@ -3223,6 +3223,10 @@ export type Database = {
         }
         Returns: Json
       }
+      validate_booking_insert: {
+        Args: { _organization_id: string; _showtime_id: string }
+        Returns: boolean
+      }
       validate_booking_totals: {
         Args: {
           p_booking_id: string
