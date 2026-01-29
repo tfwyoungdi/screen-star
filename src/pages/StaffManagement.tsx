@@ -749,7 +749,7 @@ export default function StaffManagement() {
 
             {/* Shift History Section - only for admins */}
             {profile?.organization_id && canManageStaff && (
-              <ShiftHistory organizationId={profile.organization_id} />
+              <ShiftHistory organizationId={profile.organization_id} currency={organization?.currency} />
             )}
           </>
         )}

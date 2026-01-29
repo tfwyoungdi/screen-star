@@ -7,9 +7,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Globe, User, CheckCircle2, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
+import { formatCurrency } from '@/lib/currency';
 
 interface OnlineActivationStatsProps {
   organizationId: string;
+  currency?: string | null;
   compact?: boolean;
 }
 
@@ -19,7 +21,7 @@ interface StaffActivation {
   count: number;
 }
 
-export function OnlineActivationStats({ organizationId, compact = false }: OnlineActivationStatsProps) {
+export function OnlineActivationStats({ organizationId, currency, compact = false }: OnlineActivationStatsProps) {
   const [dateRange, setDateRange] = useState('7days');
 
   const getDateFilter = () => {
@@ -184,7 +186,7 @@ export function OnlineActivationStats({ organizationId, compact = false }: Onlin
               <TrendingUp className="h-4 w-4" />
               Revenue Activated
             </div>
-            <p className="text-2xl font-bold">${(stats?.totalRevenue || 0).toFixed(2)}</p>
+            <p className="text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0, currency)}</p>
           </div>
         </div>
 

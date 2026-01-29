@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserProfile, useOrganization } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -67,6 +67,7 @@ const BUFFER_MINUTES = 15; // Buffer between showtimes for cleaning/previews
 
 export default function ShowtimeManagement() {
   const { data: profile } = useUserProfile();
+  const { data: organization } = useOrganization();
   const { getEffectiveOrganizationId, isImpersonating } = useImpersonation();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -918,6 +919,7 @@ export default function ShowtimeManagement() {
                 showtimes={showtimes}
                 screens={screens}
                 bookingCounts={bookingCounts}
+                currency={organization?.currency}
                 onShowtimeClick={handleEditShowtime}
                 onShowtimeMove={handleShowtimeMove}
                 onAddShowtime={handleAddShowtimeFromCalendar}
