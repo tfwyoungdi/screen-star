@@ -104,8 +104,9 @@ export default function PublicCinema() {
   const { data: cinema, isLoading: cinemaLoading, isError: cinemaError } = useQuery({
     queryKey: ['public-cinema', slug],
     queryFn: async () => {
+      // Use organizations_public view to avoid RLS permission denied errors for anonymous users
       const { data, error } = await supabase
-        .from('organizations')
+        .from('organizations_public')
         .select('id, name, slug, logo_url, primary_color, secondary_color, about_text, contact_email, contact_phone, address, social_facebook, social_instagram, social_twitter')
         .eq('slug', slug)
         .eq('is_active', true)
