@@ -40,7 +40,7 @@ export default function SalesDashboard() {
   const { organization } = useOrganization();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const { exportToCSV, exportToPDF } = useExportReports();
-  const [dateRange, setDateRange] = useState<DateRangeValue>('7');
+  const [dateRange, setDateRange] = useState<DateRangeValue>('today');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const currencySymbol = getCurrencySymbol(organization?.currency);

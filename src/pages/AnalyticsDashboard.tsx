@@ -66,7 +66,7 @@ export default function AnalyticsDashboard() {
   const { getEffectiveOrganizationId } = useImpersonation();
   const { organization } = useOrganization();
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
-  const [dateRange, setDateRange] = useState<DateRangeValue>('7');
+  const [dateRange, setDateRange] = useState<DateRangeValue>('today');
   const { exportToCSV, exportToPDF } = useExportReports();
   const currencySymbol = getCurrencySymbol(organization?.currency);
 

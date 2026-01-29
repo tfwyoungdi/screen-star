@@ -16,7 +16,7 @@ interface ConcessionAnalyticsProps {
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps) {
-  const [dateRange, setDateRange] = useState<DateRangeValue>('30');
+  const [dateRange, setDateRange] = useState<DateRangeValue>('today');
   const { startDate, endDate } = getDateRange(dateRange);
 
   // Fetch sales data
