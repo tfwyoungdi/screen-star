@@ -52,7 +52,7 @@ export default function Dashboard() {
   const { isImpersonating, impersonatedOrganization, getEffectiveOrganizationId } = useImpersonation();
   const { showTour, setShowTour } = useTour();
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [dateRange, setDateRange] = useState<DateRangeValue>('7');
+  const [dateRange, setDateRange] = useState<DateRangeValue>('today');
 
   // Use impersonated org if in impersonation mode, otherwise use real org
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
