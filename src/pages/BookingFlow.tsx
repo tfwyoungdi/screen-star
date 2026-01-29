@@ -363,12 +363,13 @@ export default function BookingFlow() {
   const fetchData = async () => {
     try {
       // Fetch cinema
+      // Use organizations_public view to avoid permission denied errors for anonymous users
       const { data: cinemaData } = await supabase
-        .from('organizations')
+        .from('organizations_public')
         .select('*')
         .eq('slug', slug)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (!cinemaData) {
         setLoading(false);
@@ -385,8 +386,10 @@ export default function BookingFlow() {
           screens (id, name, rows, columns)
         `)
         .eq('id', showtimeId)
+        // SECURITY: scope showtime to the resolved cinema to prevent cross-tenant access
+        .eq('organization_id', cinemaData.id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (!showtimeData) {
         setLoading(false);

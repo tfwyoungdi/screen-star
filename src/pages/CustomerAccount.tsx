@@ -68,7 +68,8 @@ export default function CustomerAccount() {
     queryKey: ['cinema', slug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('organizations')
+        // Use organizations_public view to avoid permission denied errors for anonymous users
+        .from('organizations_public')
         .select('id, name, logo_url, primary_color')
         .eq('slug', slug)
         .eq('is_active', true)
