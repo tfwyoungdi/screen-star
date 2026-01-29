@@ -12,9 +12,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { format, differenceInDays, addDays, isAfter, isBefore } from 'date-fns';
 import { toast } from 'sonner';
-import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck } from 'lucide-react';
+import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
@@ -22,17 +23,27 @@ import { useImpersonation } from '@/hooks/useImpersonation';
 
 type Organization = Tables<'organizations'>;
 
+interface CinemaWithSubscription extends Organization {
+  subscription?: {
+    id: string;
+    status: string;
+    current_period_start: string;
+    current_period_end: string;
+    plan_name: string | null;
+  } | null;
+}
+
 export default function PlatformCinemas() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { logAction } = usePlatformAuditLog();
   const { startImpersonation } = useImpersonation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCinema, setSelectedCinema] = useState<Organization | null>(null);
+  const [selectedCinema, setSelectedCinema] = useState<CinemaWithSubscription | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
 
   const { data: cinemas, isLoading } = useQuery({
-    queryKey: ['all-cinemas', searchQuery],
+    queryKey: ['all-cinemas-with-subscriptions', searchQuery],
     queryFn: async () => {
       let query = supabase
         .from('organizations')
@@ -43,11 +54,49 @@ export default function PlatformCinemas() {
         query = query.or(`name.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`);
       }
 
-      const { data, error } = await query;
+      const { data: orgs, error } = await query;
       if (error) throw error;
-      return data as Organization[];
+
+      // Fetch subscriptions for all organizations
+      const { data: subscriptions } = await supabase
+        .from('cinema_subscriptions')
+        .select(`
+          id,
+          organization_id,
+          status,
+          current_period_start,
+          current_period_end,
+          subscription_plans (name)
+        `);
+
+      // Create a map for quick lookup
+      const subscriptionMap = new Map();
+      subscriptions?.forEach((sub: any) => {
+        subscriptionMap.set(sub.organization_id, {
+          id: sub.id,
+          status: sub.status,
+          current_period_start: sub.current_period_start,
+          current_period_end: sub.current_period_end,
+          plan_name: sub.subscription_plans?.name || null,
+        });
+      });
+
+      // Combine organizations with subscriptions
+      return (orgs || []).map((org) => ({
+        ...org,
+        subscription: subscriptionMap.get(org.id) || null,
+      })) as CinemaWithSubscription[];
     },
   });
+
+  // Get cinemas expiring within 5 days
+  const expiringCinemas = cinemas?.filter((cinema) => {
+    if (!cinema.subscription?.current_period_end) return false;
+    const expiryDate = new Date(cinema.subscription.current_period_end);
+    const now = new Date();
+    const daysUntilExpiry = differenceInDays(expiryDate, now);
+    return daysUntilExpiry >= 0 && daysUntilExpiry <= 5 && cinema.subscription.status === 'active';
+  }) || [];
 
   const suspendMutation = useMutation({
     mutationFn: async ({ id, suspend, reason }: { id: string; suspend: boolean; reason?: string }) => {
@@ -68,7 +117,7 @@ export default function PlatformCinemas() {
       return data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['all-cinemas'] });
+      queryClient.invalidateQueries({ queryKey: ['all-cinemas-with-subscriptions'] });
       toast.success(variables.suspend ? 'Cinema suspended' : 'Cinema reactivated');
       
       // Audit log
@@ -91,7 +140,7 @@ export default function PlatformCinemas() {
     },
   });
 
-  const handleSuspend = (cinema: Organization) => {
+  const handleSuspend = (cinema: CinemaWithSubscription) => {
     if (!suspendReason.trim()) {
       toast.error('Please provide a reason for suspension');
       return;
@@ -99,11 +148,11 @@ export default function PlatformCinemas() {
     suspendMutation.mutate({ id: cinema.id, suspend: true, reason: suspendReason });
   };
 
-  const handleReactivate = (cinema: Organization) => {
+  const handleReactivate = (cinema: CinemaWithSubscription) => {
     suspendMutation.mutate({ id: cinema.id, suspend: false });
   };
 
-  const handleImpersonate = (cinema: Organization) => {
+  const handleImpersonate = (cinema: CinemaWithSubscription) => {
     startImpersonation(cinema);
     
     // Log the impersonation action
@@ -122,6 +171,31 @@ export default function PlatformCinemas() {
     navigate('/dashboard');
   };
 
+  const getSubscriptionBadge = (cinema: CinemaWithSubscription) => {
+    if (!cinema.subscription) {
+      return <Badge variant="outline" className="text-muted-foreground">No Subscription</Badge>;
+    }
+
+    const { status, current_period_end } = cinema.subscription;
+    const expiryDate = new Date(current_period_end);
+    const now = new Date();
+    const daysUntilExpiry = differenceInDays(expiryDate, now);
+
+    if (status === 'cancelled' || isBefore(expiryDate, now)) {
+      return <Badge variant="destructive">Expired</Badge>;
+    }
+
+    if (daysUntilExpiry <= 5) {
+      return (
+        <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20">
+          Expires in {daysUntilExpiry} day{daysUntilExpiry !== 1 ? 's' : ''}
+        </Badge>
+      );
+    }
+
+    return <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Active</Badge>;
+  };
+
   const activeCinemas = cinemas?.filter((c) => c.is_active).length || 0;
   const suspendedCinemas = cinemas?.filter((c) => !c.is_active).length || 0;
 
@@ -135,8 +209,36 @@ export default function PlatformCinemas() {
           </p>
         </div>
 
+        {/* Expiring Subscriptions Alert */}
+        {expiringCinemas.length > 0 && (
+          <Alert className="border-amber-500/50 bg-amber-500/10">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-600">Subscriptions Expiring Soon</AlertTitle>
+            <AlertDescription className="text-amber-600/80">
+              {expiringCinemas.length} cinema{expiringCinemas.length !== 1 ? 's have' : ' has'} subscription{expiringCinemas.length !== 1 ? 's' : ''} expiring within 5 days:
+              <ul className="mt-2 space-y-1">
+                {expiringCinemas.map((cinema) => {
+                  const daysLeft = differenceInDays(
+                    new Date(cinema.subscription!.current_period_end),
+                    new Date()
+                  );
+                  return (
+                    <li key={cinema.id} className="flex items-center gap-2">
+                      <span className="font-medium">{cinema.name}</span>
+                      <span className="text-sm">
+                        - Expires {format(new Date(cinema.subscription!.current_period_end), 'MMM d, yyyy')} 
+                        ({daysLeft} day{daysLeft !== 1 ? 's' : ''} left)
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
@@ -176,6 +278,19 @@ export default function PlatformCinemas() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-amber-500/10">
+                  <CalendarClock className="h-6 w-6 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{expiringCinemas.length}</p>
+                  <p className="text-sm text-muted-foreground">Expiring Soon</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search & Table */}
@@ -205,76 +320,101 @@ export default function PlatformCinemas() {
                 ))}
               </div>
             ) : cinemas && cinemas.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cinema</TableHead>
-                    <TableHead>Slug</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cinemas.map((cinema) => (
-                    <TableRow key={cinema.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {cinema.logo_url ? (
-                            <img
-                              src={cinema.logo_url}
-                              alt={cinema.name}
-                              className="w-10 h-10 rounded-lg object-cover"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                              <Building2 className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <span className="font-medium">{cinema.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{cinema.slug}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {cinema.contact_email || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {cinema.is_active ? (
-                          <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">
-                            Active
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive">Suspended</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(cinema.created_at), 'MMM d, yyyy')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedCinema(cinema)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            asChild
-                          >
-                            <a href={`/cinema/${cinema.slug}`} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cinema</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Subscribed</TableHead>
+                      <TableHead>Expires</TableHead>
+                      <TableHead>Subscription</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {cinemas.map((cinema) => (
+                      <TableRow key={cinema.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {cinema.logo_url ? (
+                              <img
+                                src={cinema.logo_url}
+                                alt={cinema.name}
+                                className="w-10 h-10 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                                <Building2 className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-medium">{cinema.name}</span>
+                              <p className="text-xs text-muted-foreground">{cinema.slug}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {cinema.subscription?.plan_name ? (
+                            <Badge variant="outline">{cinema.subscription.plan_name}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {cinema.subscription?.current_period_start
+                            ? format(new Date(cinema.subscription.current_period_start), 'MMM d, yyyy')
+                            : '-'}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {cinema.subscription?.current_period_end ? (
+                            <span className={
+                              differenceInDays(new Date(cinema.subscription.current_period_end), new Date()) <= 5
+                                ? 'text-amber-600 font-medium'
+                                : 'text-muted-foreground'
+                            }>
+                              {format(new Date(cinema.subscription.current_period_end), 'MMM d, yyyy')}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{getSubscriptionBadge(cinema)}</TableCell>
+                        <TableCell>
+                          {cinema.is_active ? (
+                            <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">
+                              Active
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive">Suspended</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedCinema(cinema)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                            >
+                              <a href={`/cinema/${cinema.slug}`} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
               <div className="text-center py-12">
                 <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -325,6 +465,49 @@ export default function PlatformCinemas() {
                     <Label className="text-muted-foreground">Address</Label>
                     <p className="font-medium">{selectedCinema.address || '-'}</p>
                   </div>
+                </div>
+
+                {/* Subscription Details */}
+                <div className="rounded-lg border p-4 space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <CalendarClock className="h-4 w-4" />
+                    Subscription Details
+                  </h4>
+                  {selectedCinema.subscription ? (
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <Label className="text-muted-foreground">Plan</Label>
+                        <p className="font-medium">{selectedCinema.subscription.plan_name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground">Status</Label>
+                        <p className="font-medium capitalize">{selectedCinema.subscription.status}</p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground">Subscribed Date</Label>
+                        <p className="font-medium">
+                          {format(new Date(selectedCinema.subscription.current_period_start), 'MMMM d, yyyy')}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground">Expiry Date</Label>
+                        <p className={`font-medium ${
+                          differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date()) <= 5
+                            ? 'text-amber-600'
+                            : ''
+                        }`}>
+                          {format(new Date(selectedCinema.subscription.current_period_end), 'MMMM d, yyyy')}
+                          {differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date()) <= 5 && (
+                            <span className="text-xs ml-1">
+                              ({differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date())} days left)
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No subscription found for this cinema.</p>
+                  )}
                 </div>
 
                 {!selectedCinema.is_active && selectedCinema.suspended_reason && (
