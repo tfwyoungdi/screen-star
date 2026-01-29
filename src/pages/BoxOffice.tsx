@@ -1064,6 +1064,7 @@ export default function BoxOffice() {
                 <OnlineTicketActivation 
                   activeShiftId={activeShiftId}
                   onActivated={() => refetchSales()}
+                  currency={organization?.currency}
                 />
               </CardContent>
             </Card>
