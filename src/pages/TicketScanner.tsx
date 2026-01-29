@@ -381,6 +381,20 @@ export default function TicketScanner() {
       if (isValid) {
         playSuccessSound();
         triggerHaptic('success');
+        
+        // Auto-mark as used if valid (matches GateStaff behavior)
+        if (booking.status !== 'used') {
+          await supabase
+            .from('bookings')
+            .update({ status: 'used' })
+            .eq('id', booking.id);
+          
+          // Update local state to reflect the change
+          result.booking.status = 'used';
+          result.isValid = false;
+          result.message = 'Entry granted. Ticket marked as used.';
+          setTicketInfo({ ...result });
+        }
       } else {
         playErrorSound();
         triggerHaptic('error');
@@ -737,12 +751,6 @@ export default function TicketScanner() {
 
               {/* Actions */}
               <div className="flex gap-3">
-                {ticketInfo.isValid && ticketInfo.booking?.status === 'confirmed' && (
-                  <Button onClick={markAsUsed} size="lg" className="flex-1 gap-2">
-                    <Ticket className="h-5 w-5" />
-                    Grant Entry
-                  </Button>
-                )}
                 <Button 
                   onClick={resetScanner} 
                   variant="outline" 
