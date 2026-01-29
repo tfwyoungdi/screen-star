@@ -1153,39 +1153,42 @@ export default function BoxOffice() {
                 <p className="text-muted-foreground">There are no scheduled showtimes for today.</p>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {showtimesByMovie.map(({ movie, showtimes: movieShowtimes }) => (
                   <Card 
                     key={movie.id}
                     className="overflow-hidden"
                   >
-                    <div className="aspect-[3/4] relative bg-muted">
-                      {movie.poster_url ? (
-                        <img 
-                          src={movie.poster_url} 
-                          alt={movie.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Film className="h-16 w-16 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-4">
-                        <h3 className="font-bold text-white line-clamp-2">{movie.title}</h3>
-                        <div className="flex items-center gap-2 mt-1">
+                    <div className="flex gap-3 p-3">
+                      {/* Smaller poster on the left */}
+                      <div className="w-20 h-28 flex-shrink-0 relative bg-muted rounded-md overflow-hidden">
+                        {movie.poster_url ? (
+                          <img 
+                            src={movie.poster_url} 
+                            alt={movie.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Film className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Movie info and showtimes on the right */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm line-clamp-2 mb-1">{movie.title}</h3>
+                        <div className="flex items-center gap-2 mb-3">
                           {movie.rating && (
                             <Badge variant="secondary" className="text-xs">{movie.rating}</Badge>
                           )}
-                          <span className="text-white/80 text-sm">{movie.duration_minutes} min</span>
+                          <span className="text-muted-foreground text-xs">{movie.duration_minutes} min</span>
                         </div>
-                      </div>
-                    </div>
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground mb-2">Select a showtime:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {movieShowtimes.map((showtime) => {
-                          const { availableSeats, isSoldOut, isLowAvailability } = getShowtimeAvailability(showtime);
+                        
+                        {/* Showtimes grid */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {movieShowtimes.map((showtime) => {
+                            const { availableSeats, isSoldOut, isLowAvailability } = getShowtimeAvailability(showtime);
                           
                           return (
                             <Button
@@ -1224,15 +1227,17 @@ export default function BoxOffice() {
                               )}
                             </Button>
                           );
-                        })}
+                          })}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                          <span>From {formatCurrency(Math.min(...movieShowtimes.map(s => s.price)), organization?.currency)}</span>
+                          {movieShowtimes.some(s => s.vip_price) && (
+                            <span className="border-l pl-2">VIP {formatCurrency(Math.min(...movieShowtimes.filter(s => s.vip_price).map(s => s.vip_price!)), organization?.currency)}</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t text-sm text-muted-foreground">
-                        <span>From {formatCurrency(Math.min(...movieShowtimes.map(s => s.price)), organization?.currency)}</span>
-                        {movieShowtimes.some(s => s.vip_price) && (
-                          <span>VIP from {formatCurrency(Math.min(...movieShowtimes.filter(s => s.vip_price).map(s => s.vip_price!)), organization?.currency)}</span>
-                        )}
-                      </div>
-                    </CardContent>
+                    </div>
                   </Card>
                 ))}
               </div>
