@@ -141,12 +141,12 @@ export default function AnalyticsDashboard() {
     });
   }, [revenueBookings, startDate, endDate]);
 
-  // Peak hours analysis
+  // Peak hours analysis - only count completed bookings for accurate revenue
   const peakHours = useMemo(() => {
-    if (!bookings) return [];
+    if (!revenueBookings.length) return [];
     const hourCounts: Record<number, { count: number; revenue: number }> = {};
     
-    bookings.forEach((booking) => {
+    revenueBookings.forEach((booking) => {
       const hour = getHours(new Date(booking.created_at));
       if (!hourCounts[hour]) {
         hourCounts[hour] = { count: 0, revenue: 0 };
@@ -161,7 +161,7 @@ export default function AnalyticsDashboard() {
       bookings: hourCounts[i]?.count || 0,
       revenue: hourCounts[i]?.revenue || 0,
     }));
-  }, [bookings]);
+  }, [revenueBookings]);
 
   // Revenue by movie (only completed bookings)
   const revenueByMovie = useMemo(() => {
