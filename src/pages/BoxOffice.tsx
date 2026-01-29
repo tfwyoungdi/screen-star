@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
+import { getCurrencySymbol, formatCurrency } from '@/lib/currency';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -257,7 +258,7 @@ export default function BoxOffice() {
         .eq('organization_id', profile.organization_id)
         .gte('created_at', startOfDay(today).toISOString())
         .lte('created_at', endOfDay(today).toISOString())
-        .in('status', ['confirmed', 'paid']);
+        .in('status', ['confirmed', 'paid', 'activated', 'used']);
 
       if (error) throw error;
       const revenue = data?.reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
@@ -554,7 +555,7 @@ export default function BoxOffice() {
       }
       
       if (subtotal < data.min_purchase_amount) {
-        toast.error(`Minimum purchase of $${data.min_purchase_amount} required`);
+        toast.error(`Minimum purchase of ${formatCurrency(data.min_purchase_amount, organization?.currency)} required`);
         return;
       }
       
@@ -777,7 +778,7 @@ export default function BoxOffice() {
           ${selectedConcessions.map(c => `
             <div class="row">
               <span>${c.item.name} x${c.quantity}</span>
-              <span>$${(c.item.price * c.quantity).toFixed(2)}</span>
+              <span>${getCurrencySymbol(organization?.currency)}${(c.item.price * c.quantity).toFixed(2)}</span>
             </div>
           `).join('')}
         ` : ''}
@@ -786,7 +787,7 @@ export default function BoxOffice() {
         
         <div class="row total">
           <span>TOTAL PAID:</span>
-          <span>$${totalAmount.toFixed(2)}</span>
+          <span>${getCurrencySymbol(organization?.currency)}${totalAmount.toFixed(2)}</span>
         </div>
         
         <div class="cut-line"></div>
@@ -939,8 +940,8 @@ export default function BoxOffice() {
               </div>
               <div className="w-px h-4 bg-border" />
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold">${todaysSales?.revenue.toFixed(2) || '0.00'}</span>
+                <span className="text-sm font-bold text-primary">{getCurrencySymbol(organization?.currency)}</span>
+                <span className="text-sm font-bold">{todaysSales?.revenue.toFixed(2) || '0.00'}</span>
               </div>
             </div>
 
@@ -1226,9 +1227,9 @@ export default function BoxOffice() {
                         })}
                       </div>
                       <div className="flex items-center justify-between mt-3 pt-3 border-t text-sm text-muted-foreground">
-                        <span>From ${Math.min(...movieShowtimes.map(s => s.price)).toFixed(2)}</span>
+                        <span>From {formatCurrency(Math.min(...movieShowtimes.map(s => s.price)), organization?.currency)}</span>
                         {movieShowtimes.some(s => s.vip_price) && (
-                          <span>VIP from ${Math.min(...movieShowtimes.filter(s => s.vip_price).map(s => s.vip_price!)).toFixed(2)}</span>
+                          <span>VIP from {formatCurrency(Math.min(...movieShowtimes.filter(s => s.vip_price).map(s => s.vip_price!)), organization?.currency)}</span>
                         )}
                       </div>
                     </CardContent>
@@ -1345,7 +1346,7 @@ export default function BoxOffice() {
                       </div>
                       <div className="flex justify-between mt-3 font-bold">
                         <span>Tickets</span>
-                        <span>${ticketsSubtotal.toFixed(2)}</span>
+                        <span>{formatCurrency(ticketsSubtotal, organization?.currency)}</span>
                       </div>
                     </div>
                   )}
@@ -1404,7 +1405,7 @@ export default function BoxOffice() {
                                   <CardContent className="p-1.5">
                                     <h4 className="font-medium text-[10px] line-clamp-1">{item.name}</h4>
                                     <div className="flex items-center justify-between mt-0.5">
-                                      <span className="text-primary font-bold text-xs">${item.price.toFixed(2)}</span>
+                                      <span className="text-primary font-bold text-xs">{formatCurrency(item.price, organization?.currency)}</span>
                                       {qty > 0 && (
                                         <Button 
                                           variant="outline" 
@@ -1441,12 +1442,12 @@ export default function BoxOffice() {
                       {selectedConcessions.map(c => (
                         <div key={c.item.id} className="flex justify-between text-sm">
                           <span className="text-muted-foreground">{c.item.name} × {c.quantity}</span>
-                          <span>${(c.item.price * c.quantity).toFixed(2)}</span>
+                          <span>{formatCurrency(c.item.price * c.quantity, organization?.currency)}</span>
                         </div>
                       ))}
                       <div className="flex justify-between font-bold pt-2">
                         <span>Snacks</span>
-                        <span>${concessionsSubtotal.toFixed(2)}</span>
+                        <span>{formatCurrency(concessionsSubtotal, organization?.currency)}</span>
                       </div>
                     </div>
                   )}
@@ -1459,6 +1460,7 @@ export default function BoxOffice() {
               selectedSeats={selectedSeats}
               selectedConcessions={selectedConcessions}
               subtotal={subtotal}
+              currency={organization?.currency}
               onContinue={() => setStep('customer')}
             />
           </div>
@@ -1563,7 +1565,7 @@ export default function BoxOffice() {
                       <Badge variant="secondary">
                         {appliedPromo.discount_type === 'percentage' 
                           ? `${appliedPromo.discount_value}% off` 
-                          : `$${appliedPromo.discount_value} off`}
+                          : `${formatCurrency(appliedPromo.discount_value, organization?.currency)} off`}
                       </Badge>
                     </div>
                     <Button 
@@ -1597,24 +1599,24 @@ export default function BoxOffice() {
               <CardContent className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tickets × {selectedSeats.length}</span>
-                  <span>${ticketsSubtotal.toFixed(2)}</span>
+                  <span>{formatCurrency(ticketsSubtotal, organization?.currency)}</span>
                 </div>
                 {selectedConcessions.map(c => (
                   <div key={c.item.id} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{c.item.name} × {c.quantity}</span>
-                    <span>${(c.item.price * c.quantity).toFixed(2)}</span>
+                    <span>{formatCurrency(c.item.price * c.quantity, organization?.currency)}</span>
                   </div>
                 ))}
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-primary">
                     <span>Discount</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                    <span>-{formatCurrency(discountAmount, organization?.currency)}</span>
                   </div>
                 )}
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span>${totalAmount.toFixed(2)}</span>
+                    <span>{formatCurrency(totalAmount, organization?.currency)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1641,7 +1643,7 @@ export default function BoxOffice() {
             <Card>
               <CardContent className="p-6 text-center">
                 <div className="text-4xl font-bold text-primary mb-2">
-                  ${totalAmount.toFixed(2)}
+                  {formatCurrency(totalAmount, organization?.currency)}
                 </div>
                 <p className="text-muted-foreground">
                   {selectedSeats.length} ticket{selectedSeats.length > 1 ? 's' : ''}
@@ -1733,17 +1735,17 @@ export default function BoxOffice() {
                   {selectedConcessions.length > 0 && (
                     <div className="pt-2 border-t">
                       <p className="text-muted-foreground mb-1">Concessions:</p>
-                      {selectedConcessions.map(c => (
-                        <div key={c.item.id} className="flex justify-between text-sm">
-                          <span>{c.item.name} × {c.quantity}</span>
-                          <span>${(c.item.price * c.quantity).toFixed(2)}</span>
+                        {selectedConcessions.map(c => (
+                          <div key={c.item.id} className="flex justify-between text-sm">
+                            <span>{c.item.name} × {c.quantity}</span>
+                            <span>{formatCurrency(c.item.price * c.quantity, organization?.currency)}</span>
                         </div>
                       ))}
                     </div>
                   )}
                   <div className="flex justify-between font-bold pt-2 border-t">
                     <span>Total Paid</span>
-                    <span>${totalAmount.toFixed(2)}</span>
+                    <span>{formatCurrency(totalAmount, organization?.currency)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1781,7 +1783,7 @@ export default function BoxOffice() {
           </div>
           <div className="w-px h-8 bg-border" />
           <div className="text-center">
-            <p className="text-2xl font-bold text-primary">${todaysSales?.revenue.toFixed(2) || '0.00'}</p>
+            <p className="text-2xl font-bold text-primary">{formatCurrency(todaysSales?.revenue || 0, organization?.currency)}</p>
             <p className="text-xs text-muted-foreground">Revenue</p>
           </div>
         </div>

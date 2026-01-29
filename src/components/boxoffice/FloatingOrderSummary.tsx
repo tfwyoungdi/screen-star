@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 interface SelectedSeat {
   row_label: string;
@@ -27,6 +28,7 @@ interface FloatingOrderSummaryProps {
   selectedSeats: SelectedSeat[];
   selectedConcessions: SelectedConcession[];
   subtotal: number;
+  currency?: string | null;
   onContinue: () => void;
 }
 
@@ -34,6 +36,7 @@ export function FloatingOrderSummary({
   selectedSeats,
   selectedConcessions,
   subtotal,
+  currency,
   onContinue,
 }: FloatingOrderSummaryProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +62,7 @@ export function FloatingOrderSummary({
                   <div className="flex items-center gap-2 text-sm font-medium mb-2">
                     <Ticket className="h-4 w-4 text-primary" />
                     <span>Seats ({selectedSeats.length})</span>
-                    <span className="ml-auto text-primary">${seatTotal.toFixed(2)}</span>
+                    <span className="ml-auto text-primary">{formatCurrency(seatTotal, currency)}</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {selectedSeats.map((seat, idx) => (
@@ -78,13 +81,13 @@ export function FloatingOrderSummary({
                   <div className="flex items-center gap-2 text-sm font-medium mb-2">
                     <Popcorn className="h-4 w-4 text-primary" />
                     <span>Snacks ({selectedConcessions.reduce((sum, c) => sum + c.quantity, 0)})</span>
-                    <span className="ml-auto text-primary">${snackTotal.toFixed(2)}</span>
+                    <span className="ml-auto text-primary">{formatCurrency(snackTotal, currency)}</span>
                   </div>
                   <div className="space-y-1">
                     {selectedConcessions.map((concession) => (
                       <div key={concession.item.id} className="flex justify-between text-xs text-muted-foreground">
                         <span>{concession.quantity}x {concession.item.name}</span>
-                        <span>${(concession.item.price * concession.quantity).toFixed(2)}</span>
+                        <span>{formatCurrency(concession.item.price * concession.quantity, currency)}</span>
                       </div>
                     ))}
                   </div>
@@ -115,7 +118,7 @@ export function FloatingOrderSummary({
 
             <div className="flex-1 text-right">
               <span className="text-sm text-muted-foreground">Total: </span>
-              <span className="text-lg font-bold text-primary">${subtotal.toFixed(2)}</span>
+              <span className="text-lg font-bold text-primary">{formatCurrency(subtotal, currency)}</span>
             </div>
 
             <Button 
