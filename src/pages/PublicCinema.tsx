@@ -33,7 +33,7 @@ interface Showtime {
   id: string;
   start_time: string;
   price: number;
-  screens: { name: string; rows: number; columns: number };
+  screens?: { name: string; rows: number; columns: number } | null;
   bookedCount: number;
   capacity: number;
 }
@@ -120,9 +120,9 @@ export default function PublicCinema() {
   });
 
   // Fetch movies with showtimes
-  const { data: moviesData, isLoading: moviesLoading } = useQuery({
+  const { data: moviesData, isLoading: moviesLoading } = useQuery<MovieWithShowtimes[]>({
     queryKey: ['public-movies', cinema?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<MovieWithShowtimes[]> => {
       if (!cinema?.id) return [];
       
       const { data: moviesResult } = await supabase
@@ -136,13 +136,47 @@ export default function PublicCinema() {
       // Fetch ALL showtimes for each movie with screen capacity
       const moviesWithShowtimes = await Promise.all(
         moviesResult.map(async (movie) => {
-          const { data: showtimes } = await supabase
+          type ShowtimeRow = {
+            id: string;
+            start_time: string;
+            price: number;
+            screens?: { name: string; rows: number; columns: number } | null;
+          };
+
+          // First try with screen join; if it fails (e.g. permissions), retry without join so showtimes still load.
+          const primary = await supabase
             .from('showtimes')
             .select('id, start_time, price, screens (name, rows, columns)')
+            // SECURITY: Ensure showtimes belong to the same cinema (prevents cross-tenant leakage)
+            .eq('organization_id', cinema.id)
             .eq('movie_id', movie.id)
             .eq('is_active', true)
             .gte('start_time', new Date().toISOString())
             .order('start_time');
+
+          let showtimesError = primary.error;
+          let showtimes: ShowtimeRow[] = (primary.data as ShowtimeRow[] | null) ?? [];
+
+          if (showtimesError) {
+            console.warn('[PublicCinema] showtimes query failed; retrying without screens join', showtimesError);
+
+            const retry = await supabase
+              .from('showtimes')
+              .select('id, start_time, price')
+              .eq('organization_id', cinema.id)
+              .eq('movie_id', movie.id)
+              .eq('is_active', true)
+              .gte('start_time', new Date().toISOString())
+              .order('start_time');
+
+            showtimesError = retry.error;
+            showtimes = (retry.data as ShowtimeRow[] | null) ?? [];
+          }
+
+          if (showtimesError) {
+            // Keep the page functional (empty showtimes) but preserve the real error for debugging.
+            console.error('[PublicCinema] showtimes query failed', showtimesError);
+          }
 
           if (!showtimes || showtimes.length === 0) {
             return { ...movie, showtimes: [] };
