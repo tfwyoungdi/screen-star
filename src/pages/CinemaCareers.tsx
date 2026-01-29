@@ -46,7 +46,8 @@ export default function CinemaCareers() {
     queryKey: ['public-cinema-careers', slug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('organizations')
+        // Use organizations_public view to avoid permission denied errors for anonymous users
+        .from('organizations_public')
         .select('id, name, slug, logo_url, primary_color, contact_email')
         .eq('slug', slug)
         .eq('is_active', true)
