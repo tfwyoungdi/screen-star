@@ -17,6 +17,7 @@ interface DraggableConcessionRowProps {
   isSelected?: boolean;
   onSelectionChange?: (id: string, selected: boolean) => void;
   showSelection?: boolean;
+  currencySymbol?: string;
 }
 
 export function DraggableConcessionRow({
@@ -28,6 +29,7 @@ export function DraggableConcessionRow({
   isSelected = false,
   onSelectionChange,
   showSelection = false,
+  currencySymbol = '$',
 }: DraggableConcessionRowProps) {
   const {
     attributes,
@@ -91,7 +93,7 @@ export function DraggableConcessionRow({
         {item.description || '-'}
       </TableCell>
       <TableCell>
-        <Badge variant="outline">${(item.price ?? 0).toFixed(2)}</Badge>
+        <Badge variant="outline">{currencySymbol}{(item.price ?? 0).toFixed(2)}</Badge>
       </TableCell>
       <TableCell>
         {item.track_inventory ? (
