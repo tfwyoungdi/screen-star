@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { getCurrencySymbol } from '@/lib/currency';
 
 interface Showtime {
   id: string;
@@ -35,6 +36,7 @@ interface ShowtimeCalendarProps {
   showtimes: Showtime[];
   screens: Screen[];
   bookingCounts?: BookingCount[];
+  currency?: string | null;
   onShowtimeClick: (showtime: Showtime) => void;
   onShowtimeMove?: (showtimeId: string, newDate: Date) => void;
   onAddShowtime?: (date: Date) => void;
@@ -45,11 +47,13 @@ function DraggableShowtime({
   showtime, 
   screenColor, 
   bookingInfo,
+  currency,
   onClick 
 }: { 
   showtime: Showtime; 
   screenColor: string; 
   bookingInfo?: BookingCount;
+  currency?: string | null;
   onClick: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -80,7 +84,7 @@ function DraggableShowtime({
         isDragging && "opacity-50 ring-2 ring-primary",
         screenColor
       )}
-      title={`${showtime.movies?.title} - ${format(new Date(showtime.start_time), 'EEEE, MMM d • h:mm a')} - ${showtime.screens?.name} • $${showtime.price}${bookingInfo ? ` - ${bookingInfo.count}/${bookingInfo.capacity} seats (${occupancyPercent}%)` : ''}`}
+      title={`${showtime.movies?.title} - ${format(new Date(showtime.start_time), 'EEEE, MMM d • h:mm a')} - ${showtime.screens?.name} • ${getCurrencySymbol(currency)}${showtime.price}${bookingInfo ? ` - ${bookingInfo.count}/${bookingInfo.capacity} seats (${occupancyPercent}%)` : ''}`}
     >
       <div className="flex items-center gap-1">
         {/* Drag handle */}
@@ -164,6 +168,7 @@ export function ShowtimeCalendar({
   showtimes, 
   screens, 
   bookingCounts = [],
+  currency,
   onShowtimeClick,
   onShowtimeMove,
   onAddShowtime
@@ -366,6 +371,7 @@ export function ShowtimeCalendar({
                           showtime={showtime}
                           screenColor={getScreenColor(showtime.screen_id)}
                           bookingInfo={bookingCountsMap[showtime.id]}
+                          currency={currency}
                           onClick={() => onShowtimeClick(showtime)}
                         />
                       ))}

@@ -14,9 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OnlineActivationStats } from './OnlineActivationStats';
+import { formatCurrency } from '@/lib/currency';
 
 interface ShiftHistoryProps {
   organizationId: string;
+  currency?: string | null;
 }
 
 interface ShiftRecord {
@@ -43,7 +45,7 @@ interface ShiftRecord {
   avgTransactionValue?: number;
 }
 
-export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
+export function ShiftHistory({ organizationId, currency }: ShiftHistoryProps) {
   const [dateRange, setDateRange] = useState('7days');
   const [expandedShift, setExpandedShift] = useState<string | null>(null);
 
@@ -197,7 +199,7 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
   return (
     <div className="space-y-6">
       {/* Online Activation Stats */}
-      <OnlineActivationStats organizationId={organizationId} compact />
+      <OnlineActivationStats organizationId={organizationId} currency={currency} compact />
 
       {/* Summary Stats */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
@@ -216,7 +218,7 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
               <DollarSign className="h-4 w-4" />
               Cash Sales
             </div>
-            <p className="text-2xl font-bold mt-1">${stats.totalCashSales.toFixed(2)}</p>
+            <p className="text-2xl font-bold mt-1">{formatCurrency(stats.totalCashSales, currency)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -225,7 +227,7 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
               <CreditCard className="h-4 w-4" />
               Card Sales
             </div>
-            <p className="text-2xl font-bold mt-1">${stats.totalCardSales.toFixed(2)}</p>
+            <p className="text-2xl font-bold mt-1">{formatCurrency(stats.totalCardSales, currency)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -234,7 +236,7 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
               <TrendingUp className="h-4 w-4" />
               Avg Transaction
             </div>
-            <p className="text-2xl font-bold mt-1">${avgTransactionValue.toFixed(2)}</p>
+            <p className="text-2xl font-bold mt-1">{formatCurrency(avgTransactionValue, currency)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -268,7 +270,7 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
             stats.totalDifference > 0 ? 'text-primary' : 
             stats.totalDifference < 0 ? 'text-destructive' : ''
           }`}>
-            ${stats.totalDifference.toFixed(2)}
+            {formatCurrency(stats.totalDifference, currency)}
           </p>
         </CardContent>
       </Card>
@@ -333,7 +335,7 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
                             {format(new Date(shift.started_at), 'h:mm a')}
                           </span>
                           <span className="font-medium text-foreground">
-                            ${((shift.total_cash_sales || 0) + (shift.total_card_sales || 0)).toFixed(2)}
+                            {formatCurrency((shift.total_cash_sales || 0) + (shift.total_card_sales || 0), currency)}
                           </span>
                           {expandedShift === shift.id ? (
                             <ChevronUp className="h-4 w-4" />
@@ -352,32 +354,32 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Opening Cash</p>
-                            <p className="font-medium">${shift.opening_cash.toFixed(2)}</p>
+                            <p className="font-medium">{formatCurrency(shift.opening_cash, currency)}</p>
                           </div>
                           {shift.status === 'closed' && (
                             <>
                               <div>
                                 <p className="text-sm text-muted-foreground">Closing Cash</p>
-                                <p className="font-medium">${(shift.closing_cash || 0).toFixed(2)}</p>
+                                <p className="font-medium">{formatCurrency(shift.closing_cash || 0, currency)}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-muted-foreground">Cash Variance</p>
                                 <p className={`font-medium ${
-                                  (shift.cash_difference || 0) > 0 ? 'text-green-600' : 
+                                  (shift.cash_difference || 0) > 0 ? 'text-primary' : 
                                   (shift.cash_difference || 0) < 0 ? 'text-destructive' : ''
                                 }`}>
-                                  ${(shift.cash_difference || 0).toFixed(2)}
+                                  {formatCurrency(shift.cash_difference || 0, currency)}
                                 </p>
                               </div>
                             </>
                           )}
                           <div>
                             <p className="text-sm text-muted-foreground">Cash Sales</p>
-                            <p className="font-medium">${(shift.total_cash_sales || 0).toFixed(2)}</p>
+                            <p className="font-medium">{formatCurrency(shift.total_cash_sales || 0, currency)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Card Sales</p>
-                            <p className="font-medium">${(shift.total_card_sales || 0).toFixed(2)}</p>
+                            <p className="font-medium">{formatCurrency(shift.total_card_sales || 0, currency)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Transactions</p>
@@ -385,7 +387,7 @@ export function ShiftHistory({ organizationId }: ShiftHistoryProps) {
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Avg Transaction</p>
-                            <p className="font-medium">${(shift.avgTransactionValue || 0).toFixed(2)}</p>
+                            <p className="font-medium">{formatCurrency(shift.avgTransactionValue || 0, currency)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Tickets Sold</p>

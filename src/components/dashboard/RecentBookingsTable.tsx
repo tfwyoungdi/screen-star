@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 interface Booking {
   id: string;
@@ -38,6 +39,7 @@ interface Booking {
 interface RecentBookingsTableProps {
   bookings: Booking[];
   isLoading?: boolean;
+  currency?: string | null;
 }
 
 const statusStyles: Record<string, string> = {
@@ -48,7 +50,7 @@ const statusStyles: Record<string, string> = {
 };
 
 export const RecentBookingsTable = forwardRef<HTMLDivElement, RecentBookingsTableProps>(
-  function RecentBookingsTable({ bookings: initialBookings, isLoading }, ref) {
+  function RecentBookingsTable({ bookings: initialBookings, isLoading, currency }, ref) {
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [bookings, setBookings] = useState(initialBookings);
@@ -151,7 +153,7 @@ export const RecentBookingsTable = forwardRef<HTMLDivElement, RecentBookingsTabl
                 </TableCell>
                 <TableCell className="text-right">
                   <span className="font-semibold text-primary">
-                    ${Number(booking.total_amount).toFixed(2)}
+                    {formatCurrency(Number(booking.total_amount), currency)}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -193,6 +195,7 @@ export const RecentBookingsTable = forwardRef<HTMLDivElement, RecentBookingsTabl
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           onBookingUpdated={handleBookingUpdated}
+          currency={currency}
         />
       </div>
     );

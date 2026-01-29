@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 interface Booking {
   id: string;
@@ -48,6 +49,7 @@ interface BookingDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onBookingUpdated?: (booking: Booking) => void;
+  currency?: string | null;
 }
 
 const statusStyles: Record<string, string> = {
@@ -62,6 +64,7 @@ export function BookingDetailsDialog({
   open,
   onOpenChange,
   onBookingUpdated,
+  currency,
 }: BookingDetailsDialogProps) {
   const [regenerating, setRegenerating] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -249,14 +252,14 @@ export function BookingDetailsDialog({
               <h4 className="text-sm font-medium text-muted-foreground">Payment Summary</h4>
               <div className="bg-muted/30 rounded-lg p-3 space-y-2">
                 {booking.discount_amount && booking.discount_amount > 0 && (
-                  <div className="flex justify-between text-sm text-emerald-500">
+                  <div className="flex justify-between text-sm text-primary">
                     <span>Discount Applied</span>
-                    <span>-${Number(booking.discount_amount).toFixed(2)}</span>
+                    <span>-{formatCurrency(Number(booking.discount_amount), currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold">
                   <span>Total Paid</span>
-                  <span className="text-primary">${Number(booking.total_amount).toFixed(2)}</span>
+                  <span className="text-primary">{formatCurrency(Number(booking.total_amount), currency)}</span>
                 </div>
               </div>
             </div>

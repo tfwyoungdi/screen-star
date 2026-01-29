@@ -497,6 +497,7 @@ export default function Dashboard() {
                 <RecentBookingsTable
                   bookings={recentBookings}
                   isLoading={bookingsLoading}
+                  currency={organization?.currency}
                 />
               </div>
             </ChartCard>
