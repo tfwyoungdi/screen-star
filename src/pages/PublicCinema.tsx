@@ -1,6 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { format, isSameDay, addDays, startOfDay } from 'date-fns';
+
+// Helper to compare showtime date with local date
+// Showtimes are in UTC, we need to compare just the date portion
+const isSameDateUTC = (showtimeDate: Date, localDate: Date): boolean => {
+  const showtimeStr = showtimeDate.toISOString().split('T')[0];
+  const localStr = format(localDate, 'yyyy-MM-dd');
+  return showtimeStr === localStr;
+};
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -262,7 +270,7 @@ export default function PublicCinema() {
   const dateOptions = useMemo(() => {
     return allDateOptions.filter(date => 
       movies.some(movie => 
-        movie.showtimes.some(st => isSameDay(new Date(st.start_time), date))
+        movie.showtimes.some(st => isSameDateUTC(new Date(st.start_time), date))
       )
     );
   }, [movies, allDateOptions]);
@@ -276,7 +284,7 @@ export default function PublicCinema() {
     .map(movie => ({
       ...movie,
       showtimes: movie.showtimes.filter(st => 
-        isSameDay(new Date(st.start_time), selectedDate)
+        isSameDateUTC(new Date(st.start_time), selectedDate)
       )
     }))
     .filter(movie => movie.showtimes.length > 0)
