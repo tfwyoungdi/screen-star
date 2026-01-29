@@ -18,6 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ import { LowStockAlertSettings } from '@/components/concessions/LowStockAlertSet
 import { DraggableConcessionRow } from '@/components/concessions/DraggableConcessionRow';
 import { ImageCropper } from '@/components/concessions/ImageCropper';
 import { BatchEditDialog } from '@/components/concessions/BatchEditDialog';
+import { getCurrencySymbol } from '@/lib/currency';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -52,6 +54,8 @@ const CATEGORIES = [
 
 export default function ConcessionManagement() {
   const { data: profile } = useUserProfile();
+  const { organization } = useOrganization();
+  const currencySymbol = getCurrencySymbol(organization?.currency);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -660,6 +664,7 @@ export default function ConcessionManagement() {
                                 showSelection={batchEditMode}
                                 isSelected={selectedItems.has(item.id)}
                                 onSelectionChange={handleSelectionChange}
+                                currencySymbol={currencySymbol}
                               />
                             ))}
                           </SortableContext>
@@ -693,7 +698,7 @@ export default function ConcessionManagement() {
 
           <TabsContent value="analytics">
             {profile?.organization_id && (
-              <ConcessionAnalytics organizationId={profile.organization_id} />
+              <ConcessionAnalytics organizationId={profile.organization_id} currencySymbol={currencySymbol} />
             )}
           </TabsContent>
 

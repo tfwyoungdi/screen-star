@@ -11,11 +11,12 @@ import { DATE_RANGE_OPTIONS, DateRangeValue, getDateRange, getDateRangeLabel } f
 
 interface ConcessionAnalyticsProps {
   organizationId: string;
+  currencySymbol?: string;
 }
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
-export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps) {
+export function ConcessionAnalytics({ organizationId, currencySymbol = '$' }: ConcessionAnalyticsProps) {
   const [dateRange, setDateRange] = useState<DateRangeValue>('today');
   const { startDate, endDate } = getDateRange(dateRange);
 
@@ -159,7 +160,7 @@ export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${salesData?.totalRevenue.toFixed(2) || '0.00'}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{salesData?.totalRevenue.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">{getDateRangeLabel(dateRange)}</p>
           </CardContent>
         </Card>
@@ -181,7 +182,7 @@ export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${salesData?.avgOrderValue.toFixed(2) || '0.00'}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{salesData?.avgOrderValue.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">Per item sold</p>
           </CardContent>
         </Card>
@@ -255,7 +256,7 @@ export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                      formatter={(value: number) => [`${currencySymbol}${value.toFixed(2)}`, 'Revenue']}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
@@ -271,7 +272,7 @@ export function ConcessionAnalytics({ organizationId }: ConcessionAnalyticsProps
                         className="w-2 h-2 rounded-full mr-2"
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       />
-                      {cat.name}: ${cat.revenue.toFixed(2)}
+                      {cat.name}: {currencySymbol}{cat.revenue.toFixed(2)}
                     </Badge>
                   ))}
                 </div>
