@@ -104,7 +104,8 @@ export function StaffRevenueTab({ organizationId, currency, dateRange }: StaffRe
         .from('bookings')
         .select('id, shift_id, total_amount, status')
         .eq('organization_id', organizationId)
-        .in('shift_id', shiftIds);
+        .in('shift_id', shiftIds)
+        .in('status', ['confirmed', 'paid', 'completed', 'activated']);
 
       if (error) throw error;
       return data;
@@ -182,9 +183,8 @@ export function StaffRevenueTab({ organizationId, currency, dateRange }: StaffRe
       if (!profile) return;
 
       // Calculate revenue from bookings linked to this shift
-      const shiftBookingsFiltered = shiftBookings?.filter(b => 
-        b.shift_id === shift.id && ['paid', 'confirmed', 'completed'].includes(b.status?.toLowerCase() || '')
-      ) || [];
+      // Status filtering is already done in the query
+      const shiftBookingsFiltered = shiftBookings?.filter(b => b.shift_id === shift.id) || [];
       const shiftRevenue = shiftBookingsFiltered.reduce((sum, b) => sum + Number(b.total_amount), 0);
       const transactionCount = shiftBookingsFiltered.length;
 
