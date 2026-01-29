@@ -136,14 +136,12 @@ export default function PublicCinema() {
       // Fetch ALL showtimes for each movie with screen capacity
       const moviesWithShowtimes = await Promise.all(
         moviesResult.map(async (movie) => {
-           const { data: showtimes } = await supabase
+          const { data: showtimes } = await supabase
             .from('showtimes')
             .select('id, start_time, price, screens (name, rows, columns)')
             .eq('movie_id', movie.id)
             .eq('is_active', true)
-             // IMPORTANT: use start-of-day so "today's" schedule doesn't disappear later in the day
-             // (and avoids customer confusion like "No movies scheduled" while showtimes exist earlier today)
-             .gte('start_time', today.toISOString())
+            .gte('start_time', new Date().toISOString())
             .order('start_time');
 
           if (!showtimes || showtimes.length === 0) {
