@@ -91,7 +91,7 @@ export function DraggableConcessionRow({
         {item.description || '-'}
       </TableCell>
       <TableCell>
-        <Badge variant="outline">${item.price.toFixed(2)}</Badge>
+        <Badge variant="outline">${(item.price ?? 0).toFixed(2)}</Badge>
       </TableCell>
       <TableCell>
         {item.track_inventory ? (
