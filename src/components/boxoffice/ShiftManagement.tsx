@@ -64,34 +64,35 @@ export function ShiftManagement({ userId, organizationId, onShiftChange }: Shift
     enabled: !!userId && !!organizationId,
   });
 
-  // Fetch shift sales (from bookings created during shift)
+  // Fetch shift sales (from bookings linked to this shift)
   const { data: shiftSales } = useQuery({
     queryKey: ['shift-sales', activeShift?.id],
     queryFn: async () => {
       if (!activeShift) return { cashSales: 0, cardSales: 0, transactions: 0 };
       
-      // Get all bookings from shift start time
+      // Get all bookings linked to this shift via shift_id
       const { data, error } = await supabase
         .from('bookings')
         .select('total_amount, status')
-        .eq('organization_id', organizationId)
-        .gte('created_at', activeShift.started_at)
-        .in('status', ['confirmed', 'paid']);
+        .eq('shift_id', activeShift.id)
+        .in('status', ['confirmed', 'paid', 'activated']);
 
       if (error) throw error;
 
-      // For simplicity, we'll split 50/50 cash/card (in real app, this would be tracked per booking)
+      // Calculate totals from actual shift bookings
       const total = data?.reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
       const transactions = data?.length || 0;
       
+      // For now, assume box office sales are primarily cash (70/30 split)
+      // In a full implementation, payment_method would be tracked per booking
       return { 
-        cashSales: total * 0.6, // Assume 60% cash for demo
-        cardSales: total * 0.4, // Assume 40% card for demo
+        cashSales: total * 0.7,
+        cardSales: total * 0.3,
         transactions 
       };
     },
     enabled: !!activeShift,
-    refetchInterval: 30000,
+    refetchInterval: 10000, // Refresh more frequently for real-time accuracy
   });
 
   // Start shift mutation
