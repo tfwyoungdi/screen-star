@@ -1153,15 +1153,15 @@ export default function BoxOffice() {
                 <p className="text-muted-foreground">There are no scheduled showtimes for today.</p>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {showtimesByMovie.map(({ movie, showtimes: movieShowtimes }) => (
                   <Card 
                     key={movie.id}
-                    className="overflow-hidden"
+                    className="overflow-hidden hover:shadow-lg transition-shadow"
                   >
-                    <div className="flex gap-3 p-3">
-                      {/* Smaller poster on the left */}
-                      <div className="w-20 h-28 flex-shrink-0 relative bg-muted rounded-md overflow-hidden">
+                    <div className="flex gap-4 p-4">
+                      {/* Poster thumbnail */}
+                      <div className="w-24 h-36 flex-shrink-0 relative bg-muted rounded-lg overflow-hidden shadow-md">
                         {movie.poster_url ? (
                           <img 
                             src={movie.poster_url} 
@@ -1169,72 +1169,74 @@ export default function BoxOffice() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Film className="h-8 w-8 text-muted-foreground" />
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <Film className="h-10 w-10 text-muted-foreground" />
                           </div>
+                        )}
+                        {movie.rating && (
+                          <Badge 
+                            variant="secondary" 
+                            className="absolute top-1 left-1 text-[10px] px-1.5 py-0.5"
+                          >
+                            {movie.rating}
+                          </Badge>
                         )}
                       </div>
                       
-                      {/* Movie info and showtimes on the right */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-sm line-clamp-2 mb-1">{movie.title}</h3>
-                        <div className="flex items-center gap-2 mb-3">
-                          {movie.rating && (
-                            <Badge variant="secondary" className="text-xs">{movie.rating}</Badge>
-                          )}
-                          <span className="text-muted-foreground text-xs">{movie.duration_minutes} min</span>
+                      {/* Movie details */}
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        <h3 className="font-semibold text-base line-clamp-2 mb-1">{movie.title}</h3>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                          <Clock className="h-3 w-3" />
+                          <span>{movie.duration_minutes} min</span>
                         </div>
                         
-                        {/* Showtimes grid */}
-                        <div className="flex flex-wrap gap-1.5">
-                          {movieShowtimes.map((showtime) => {
-                            const { availableSeats, isSoldOut, isLowAvailability } = getShowtimeAvailability(showtime);
-                          
-                          return (
-                            <Button
-                              key={showtime.id}
-                              variant="outline"
-                              size="sm"
-                              disabled={isSoldOut}
-                              className={cn(
-                                "touch-manipulation flex-col h-auto py-2",
-                                !isSoldOut && "hover:bg-primary hover:text-primary-foreground",
-                                isLowAvailability && !isSoldOut && "border-amber-500/50",
-                                isSoldOut && "opacity-60 cursor-not-allowed"
-                              )}
-                              onClick={() => {
-                                if (!isSoldOut) {
-                                  setSelectedShowtime(showtime);
-                                  setStep('seats_snacks');
-                                }
-                              }}
-                            >
-                              <span className="flex items-center">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {format(new Date(showtime.start_time), 'h:mm a')}
-                              </span>
-                              {isSoldOut ? (
-                                <Badge variant="destructive" className="text-[10px] mt-0.5 py-0">
-                                  Sold Out
-                                </Badge>
-                              ) : (
-                                <span className={cn(
-                                  "text-xs mt-0.5",
-                                  isLowAvailability ? "text-amber-500" : "opacity-70"
-                                )}>
-                                  {availableSeats} left • {showtime.screens.name}
-                                </span>
-                              )}
-                            </Button>
-                          );
-                          })}
+                        {/* Showtimes */}
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground mb-2">Select showtime:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {movieShowtimes.map((showtime) => {
+                              const { availableSeats, isSoldOut, isLowAvailability } = getShowtimeAvailability(showtime);
+                            
+                              return (
+                                <Button
+                                  key={showtime.id}
+                                  variant={isSoldOut ? "ghost" : "outline"}
+                                  size="sm"
+                                  disabled={isSoldOut}
+                                  className={cn(
+                                    "touch-manipulation h-auto py-1.5 px-3 font-medium",
+                                    !isSoldOut && "hover:bg-primary hover:text-primary-foreground hover:border-primary",
+                                    isLowAvailability && !isSoldOut && "border-destructive/50 text-destructive",
+                                    isSoldOut && "opacity-50 line-through"
+                                  )}
+                                  onClick={() => {
+                                    if (!isSoldOut) {
+                                      setSelectedShowtime(showtime);
+                                      setStep('seats_snacks');
+                                    }
+                                  }}
+                                >
+                                  {format(new Date(showtime.start_time), 'h:mm a')}
+                                </Button>
+                              );
+                            })}
+                          </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                          <span>From {formatCurrency(Math.min(...movieShowtimes.map(s => s.price)), organization?.currency)}</span>
+                        {/* Pricing footer */}
+                        <div className="flex items-center gap-3 mt-3 pt-2 border-t text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">
+                            {formatCurrency(Math.min(...movieShowtimes.map(s => s.price)), organization?.currency)}
+                          </span>
                           {movieShowtimes.some(s => s.vip_price) && (
-                            <span className="border-l pl-2">VIP {formatCurrency(Math.min(...movieShowtimes.filter(s => s.vip_price).map(s => s.vip_price!)), organization?.currency)}</span>
+                            <span className="text-primary">
+                              VIP {formatCurrency(Math.min(...movieShowtimes.filter(s => s.vip_price).map(s => s.vip_price!)), organization?.currency)}
+                            </span>
                           )}
+                          <span className="ml-auto">
+                            {movieShowtimes[0]?.screens.name}
+                          </span>
                         </div>
                       </div>
                     </div>
