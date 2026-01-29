@@ -90,15 +90,15 @@ export function ShiftHistory({ organizationId, currency }: ShiftHistoryProps) {
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-      // Fetch shift performance metrics (tickets and concessions sold per shift)
+      // Fetch shift performance metrics from actual bookings
       const shiftIds = shiftsData.map(s => s.id);
       
-      // Get bookings linked to each shift
+      // Get bookings linked to each shift - include 'activated' status for walk-in tickets
       const { data: shiftBookings } = await supabase
         .from('bookings')
-        .select('id, shift_id, total_amount')
+        .select('id, shift_id, total_amount, status')
         .in('shift_id', shiftIds)
-        .in('status', ['confirmed', 'paid', 'completed']);
+        .in('status', ['confirmed', 'paid', 'completed', 'activated']);
       
       // Get tickets (booked seats) for those bookings
       const bookingIds = shiftBookings?.map(b => b.id) || [];
@@ -113,29 +113,49 @@ export function ShiftHistory({ organizationId, currency }: ShiftHistoryProps) {
         .select('booking_id, quantity')
         .in('booking_id', bookingIds);
       
-      // Build metrics map per shift
-      const shiftMetrics = new Map<string, { tickets: number; concessions: number }>();
+      // Build metrics map per shift - calculate actual sales from bookings
+      const shiftMetrics = new Map<string, { 
+        tickets: number; 
+        concessions: number; 
+        totalSales: number;
+        transactions: number;
+      }>();
       
       shiftIds.forEach(shiftId => {
-        const shiftBookingIds = shiftBookings?.filter(b => b.shift_id === shiftId).map(b => b.id) || [];
+        const shiftBookingsFiltered = shiftBookings?.filter(b => b.shift_id === shiftId) || [];
+        const shiftBookingIds = shiftBookingsFiltered.map(b => b.id);
         const ticketCount = bookedSeats?.filter(s => shiftBookingIds.includes(s.booking_id)).length || 0;
         const concessionCount = concessions?.filter(c => shiftBookingIds.includes(c.booking_id))
           .reduce((sum, c) => sum + c.quantity, 0) || 0;
         
-        shiftMetrics.set(shiftId, { tickets: ticketCount, concessions: concessionCount });
+        // Calculate total sales from actual booking amounts
+        const totalSales = shiftBookingsFiltered.reduce((sum, b) => sum + Number(b.total_amount), 0);
+        const transactions = shiftBookingsFiltered.length;
+        
+        shiftMetrics.set(shiftId, { 
+          tickets: ticketCount, 
+          concessions: concessionCount,
+          totalSales,
+          transactions
+        });
       });
 
       return shiftsData.map(shift => {
-        const totalSales = (shift.total_cash_sales || 0) + (shift.total_card_sales || 0);
-        const transactions = shift.total_transactions || 0;
         const metrics = shiftMetrics.get(shift.id);
+        // Use actual booking data for sales, falling back to stored values if no bookings
+        const actualTotalSales = metrics?.totalSales || 0;
+        const actualTransactions = metrics?.transactions || 0;
         
         return {
           ...shift,
           profile: profileMap.get(shift.user_id),
           ticketsSold: metrics?.tickets || 0,
           concessionsSold: metrics?.concessions || 0,
-          avgTransactionValue: transactions > 0 ? totalSales / transactions : 0,
+          // Override stored values with actual calculated values from bookings
+          total_cash_sales: actualTotalSales, // For now, treat all as cash until payment method tracking is added
+          total_card_sales: 0, // Will be updated when payment method tracking is implemented
+          total_transactions: actualTransactions,
+          avgTransactionValue: actualTransactions > 0 ? actualTotalSales / actualTransactions : 0,
         };
       }) as ShiftRecord[];
     },
