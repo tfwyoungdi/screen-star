@@ -30,6 +30,16 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Mail,
   Send,
   Users,
@@ -44,6 +54,7 @@ import {
   Loader2,
   CheckCircle2,
   CalendarIcon,
+  Trash2,
 } from 'lucide-react';
 
 interface Movie {
@@ -202,6 +213,8 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
 export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, customerCount }: CustomerEmailBlastProps) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('templates');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [subject, setSubject] = useState('');
@@ -322,6 +335,40 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
       });
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const { error } = await supabase
+        .from('customer_email_campaigns')
+        .delete()
+        .eq('id', campaignId)
+        .eq('organization_id', organizationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Campaign deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['customer-campaigns'] });
+      setDeleteDialogOpen(false);
+      setCampaignToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error('Failed to delete campaign', {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleDeleteClick = (campaignId: string) => {
+    setCampaignToDelete(campaignId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (campaignToDelete) {
+      deleteMutation.mutate(campaignToDelete);
+    }
+  };
 
   const resetForm = () => {
     setSelectedTemplate('');
@@ -590,6 +637,14 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                       {campaign.status === 'sending' && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
                       {campaign.status}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDeleteClick(campaign.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -972,6 +1027,36 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Email Campaign</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this email campaign? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCampaignToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
