@@ -14,6 +14,7 @@ import {
   Loader2, Receipt, CreditCard, Banknote, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 
 interface Shift {
   id: string;
@@ -34,10 +35,11 @@ interface Shift {
 interface ShiftManagementProps {
   userId: string;
   organizationId: string;
+  currency?: string | null;
   onShiftChange?: (hasActiveShift: boolean) => void;
 }
 
-export function ShiftManagement({ userId, organizationId, onShiftChange }: ShiftManagementProps) {
+export function ShiftManagement({ userId, organizationId, currency, onShiftChange }: ShiftManagementProps) {
   const queryClient = useQueryClient();
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showEndDialog, setShowEndDialog] = useState(false);
@@ -284,13 +286,13 @@ export function ShiftManagement({ userId, organizationId, onShiftChange }: Shift
               <p className="text-xs text-muted-foreground">Transactions</p>
             </div>
             <div className="text-center p-3 bg-muted rounded-lg">
-              <Banknote className="h-5 w-5 mx-auto mb-1 text-green-600" />
-              <p className="text-2xl font-bold">${(shiftSales?.cashSales || 0).toFixed(0)}</p>
+              <Banknote className="h-5 w-5 mx-auto mb-1 text-primary" />
+              <p className="text-2xl font-bold">{formatCurrency(shiftSales?.cashSales || 0, currency)}</p>
               <p className="text-xs text-muted-foreground">Cash Sales</p>
             </div>
             <div className="text-center p-3 bg-muted rounded-lg">
-              <CreditCard className="h-5 w-5 mx-auto mb-1 text-blue-600" />
-              <p className="text-2xl font-bold">${(shiftSales?.cardSales || 0).toFixed(0)}</p>
+              <CreditCard className="h-5 w-5 mx-auto mb-1 text-primary" />
+              <p className="text-2xl font-bold">{formatCurrency(shiftSales?.cardSales || 0, currency)}</p>
               <p className="text-xs text-muted-foreground">Card Sales</p>
             </div>
           </div>
@@ -298,10 +300,10 @@ export function ShiftManagement({ userId, organizationId, onShiftChange }: Shift
           <div className="p-3 bg-primary/10 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Expected Cash in Drawer</span>
-              <span className="text-lg font-bold">${expectedCash.toFixed(2)}</span>
+              <span className="text-lg font-bold">{formatCurrency(expectedCash, currency)}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Opening: ${activeShift.opening_cash.toFixed(2)} + Cash Sales: ${(shiftSales?.cashSales || 0).toFixed(2)}
+              Opening: {formatCurrency(activeShift.opening_cash, currency)} + Cash Sales: {formatCurrency(shiftSales?.cashSales || 0, currency)}
             </p>
           </div>
 
@@ -343,16 +345,16 @@ export function ShiftManagement({ userId, organizationId, onShiftChange }: Shift
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cash Sales:</span>
-                  <span>${(shiftSales?.cashSales || 0).toFixed(2)}</span>
+                  <span>{formatCurrency(shiftSales?.cashSales || 0, currency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Card Sales:</span>
-                  <span>${(shiftSales?.cardSales || 0).toFixed(2)}</span>
+                  <span>{formatCurrency(shiftSales?.cardSales || 0, currency)}</span>
                 </div>
               </div>
               <div className="border-t pt-2 mt-2 flex justify-between font-medium">
                 <span>Total Sales:</span>
-                <span>${((shiftSales?.cashSales || 0) + (shiftSales?.cardSales || 0)).toFixed(2)}</span>
+                <span>{formatCurrency((shiftSales?.cashSales || 0) + (shiftSales?.cardSales || 0), currency)}</span>
               </div>
             </div>
 
@@ -395,7 +397,7 @@ export function ShiftManagement({ userId, organizationId, onShiftChange }: Shift
                   </span>
                 </div>
                 {cashDifference !== 0 && (
-                  <span className="font-bold">${Math.abs(cashDifference).toFixed(2)}</span>
+                  <span className="font-bold">{formatCurrency(Math.abs(cashDifference), currency)}</span>
                 )}
               </div>
             )}

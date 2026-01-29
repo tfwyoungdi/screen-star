@@ -1051,6 +1051,7 @@ export default function BoxOffice() {
             <ShiftManagement 
               userId={user.id}
               organizationId={profile.organization_id}
+              currency={organization?.currency}
               onShiftChange={setHasActiveShift}
             />
           </div>
