@@ -13,13 +13,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { format, differenceInDays, addDays, isAfter, isBefore } from 'date-fns';
 import { toast } from 'sonner';
-import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle, Power } from 'lucide-react';
+import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle, Power, CalendarIcon, Save } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 import { useImpersonation } from '@/hooks/useImpersonation';
+import { cn } from '@/lib/utils';
 
 type Organization = Tables<'organizations'>;
 
@@ -41,6 +44,9 @@ export default function PlatformCinemas() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCinema, setSelectedCinema] = useState<CinemaWithSubscription | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
+  const [editStartDate, setEditStartDate] = useState<Date | undefined>();
+  const [editExpiryDate, setEditExpiryDate] = useState<Date | undefined>();
+  const [isEditingDates, setIsEditingDates] = useState(false);
 
   const { data: cinemas, isLoading } = useQuery({
     queryKey: ['all-cinemas-with-subscriptions', searchQuery],
@@ -140,12 +146,103 @@ export default function PlatformCinemas() {
     },
   });
 
+  // Mutation for updating subscription dates
+  const updateDatesMutation = useMutation({
+    mutationFn: async ({ 
+      subscriptionId, 
+      startDate, 
+      expiryDate 
+    }: { 
+      subscriptionId: string; 
+      startDate: string; 
+      expiryDate: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('cinema_subscriptions')
+        .update({
+          current_period_start: startDate,
+          current_period_end: expiryDate,
+        })
+        .eq('id', subscriptionId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['all-cinemas-with-subscriptions'] });
+      toast.success('Subscription dates updated successfully');
+      
+      // Audit log
+      logAction({
+        action: 'subscription_dates_updated',
+        target_type: 'cinema_subscription',
+        target_id: data.id,
+        details: {
+          organization_id: data.organization_id,
+          new_start_date: data.current_period_start,
+          new_expiry_date: data.current_period_end,
+        },
+      });
+      
+      setIsEditingDates(false);
+      // Update the selected cinema with new dates
+      if (selectedCinema) {
+        setSelectedCinema({
+          ...selectedCinema,
+          subscription: selectedCinema.subscription ? {
+            ...selectedCinema.subscription,
+            current_period_start: data.current_period_start,
+            current_period_end: data.current_period_end,
+          } : null,
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to update subscription dates:', error);
+      toast.error('Failed to update subscription dates');
+    },
+  });
+
   const handleSuspend = (cinema: CinemaWithSubscription) => {
     if (!suspendReason.trim()) {
       toast.error('Please provide a reason for suspension');
       return;
     }
     suspendMutation.mutate({ id: cinema.id, suspend: true, reason: suspendReason });
+  };
+
+  const handleEditDates = (cinema: CinemaWithSubscription) => {
+    if (cinema.subscription) {
+      setEditStartDate(new Date(cinema.subscription.current_period_start));
+      setEditExpiryDate(new Date(cinema.subscription.current_period_end));
+      setIsEditingDates(true);
+    }
+  };
+
+  const handleSaveDates = () => {
+    if (!selectedCinema?.subscription?.id || !editStartDate || !editExpiryDate) {
+      toast.error('Please select both start and expiry dates');
+      return;
+    }
+
+    if (isAfter(editStartDate, editExpiryDate)) {
+      toast.error('Start date cannot be after expiry date');
+      return;
+    }
+
+    updateDatesMutation.mutate({
+      subscriptionId: selectedCinema.subscription.id,
+      startDate: editStartDate.toISOString(),
+      expiryDate: editExpiryDate.toISOString(),
+    });
+  };
+
+  const handleCancelEditDates = () => {
+    setIsEditingDates(false);
+    setEditStartDate(undefined);
+    setEditExpiryDate(undefined);
   };
 
   const handleReactivate = (cinema: CinemaWithSubscription) => {
@@ -481,10 +578,23 @@ export default function PlatformCinemas() {
 
                 {/* Subscription Details */}
                 <div className="rounded-lg border p-4 space-y-3">
-                  <h4 className="font-medium flex items-center gap-2">
-                    <CalendarClock className="h-4 w-4" />
-                    Subscription Details
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <CalendarClock className="h-4 w-4" />
+                      Subscription Details
+                    </h4>
+                    {selectedCinema.subscription && !isEditingDates && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditDates(selectedCinema)}
+                        className="gap-1"
+                      >
+                        <CalendarIcon className="h-3 w-3" />
+                        Edit Dates
+                      </Button>
+                    )}
+                  </div>
                   {selectedCinema.subscription ? (
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
@@ -495,27 +605,104 @@ export default function PlatformCinemas() {
                         <Label className="text-muted-foreground">Status</Label>
                         <p className="font-medium capitalize">{selectedCinema.subscription.status}</p>
                       </div>
-                      <div>
-                        <Label className="text-muted-foreground">Subscribed Date</Label>
-                        <p className="font-medium">
-                          {format(new Date(selectedCinema.subscription.current_period_start), 'MMMM d, yyyy')}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-muted-foreground">Expiry Date</Label>
-                        <p className={`font-medium ${
-                          differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date()) <= 5
-                            ? 'text-amber-600'
-                            : ''
-                        }`}>
-                          {format(new Date(selectedCinema.subscription.current_period_end), 'MMMM d, yyyy')}
-                          {differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date()) <= 5 && (
-                            <span className="text-xs ml-1">
-                              ({differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date())} days left)
-                            </span>
-                          )}
-                        </p>
-                      </div>
+                      
+                      {isEditingDates ? (
+                        <>
+                          <div className="col-span-2 border-t pt-3 mt-1">
+                            <Label className="text-muted-foreground mb-2 block">Start Date</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !editStartDate && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {editStartDate ? format(editStartDate, 'MMMM d, yyyy') : 'Select start date'}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={editStartDate}
+                                  onSelect={setEditStartDate}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div className="col-span-2">
+                            <Label className="text-muted-foreground mb-2 block">Expiry Date</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !editExpiryDate && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {editExpiryDate ? format(editExpiryDate, 'MMMM d, yyyy') : 'Select expiry date'}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={editExpiryDate}
+                                  onSelect={setEditExpiryDate}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div className="col-span-2 flex gap-2 pt-2">
+                            <Button
+                              size="sm"
+                              onClick={handleSaveDates}
+                              disabled={updateDatesMutation.isPending}
+                              className="gap-1"
+                            >
+                              <Save className="h-3 w-3" />
+                              {updateDatesMutation.isPending ? 'Saving...' : 'Save Dates'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCancelEditDates}
+                              disabled={updateDatesMutation.isPending}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <Label className="text-muted-foreground">Subscribed Date</Label>
+                            <p className="font-medium">
+                              {format(new Date(selectedCinema.subscription.current_period_start), 'MMMM d, yyyy')}
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-muted-foreground">Expiry Date</Label>
+                            <p className={`font-medium ${
+                              differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date()) <= 5
+                                ? 'text-amber-600'
+                                : ''
+                            }`}>
+                              {format(new Date(selectedCinema.subscription.current_period_end), 'MMMM d, yyyy')}
+                              {differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date()) <= 5 && (
+                                <span className="text-xs ml-1">
+                                  ({differenceInDays(new Date(selectedCinema.subscription.current_period_end), new Date())} days left)
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">No subscription found for this cinema.</p>
