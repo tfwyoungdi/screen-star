@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Download, Search, Users, Mail, Phone, Building2, Calendar, DollarSign } from 'lucide-react';
+import { Download, Search, Users, Mail, Phone, Building2 } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -115,9 +115,6 @@ export default function PlatformCustomers() {
       lines.push(`Email: ${customer.email}`);
       lines.push(`Phone: ${customer.phone || 'N/A'}`);
       lines.push(`Cinema: ${customer.organization_name}`);
-      lines.push(`Loyalty Points: ${customer.loyalty_points}`);
-      lines.push(`Total Spent: $${customer.total_spent.toFixed(2)}`);
-      lines.push(`Total Bookings: ${customer.total_bookings}`);
       lines.push(`First Booking: ${customer.first_booking_at ? format(new Date(customer.first_booking_at), 'PPp') : 'N/A'}`);
       lines.push(`Last Booking: ${customer.last_booking_at ? format(new Date(customer.last_booking_at), 'PPp') : 'N/A'}`);
       lines.push(`Registered: ${format(new Date(customer.created_at), 'PPp')}`);
@@ -142,13 +139,7 @@ export default function PlatformCustomers() {
     toast.success(`Exported ${filteredCustomers.length} customers to TXT`);
   };
 
-  // Stats
   const totalCustomers = customers?.length || 0;
-  const totalRevenue = customers?.reduce((sum, c) => sum + c.total_spent, 0) || 0;
-  const totalBookings = customers?.reduce((sum, c) => sum + c.total_bookings, 0) || 0;
-  const avgLoyaltyPoints = totalCustomers > 0 
-    ? Math.round((customers?.reduce((sum, c) => sum + c.loyalty_points, 0) || 0) / totalCustomers)
-    : 0;
 
   return (
     <PlatformLayout>
@@ -167,44 +158,15 @@ export default function PlatformCustomers() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalCustomers.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalBookings.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Loyalty Points</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{avgLoyaltyPoints.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalCustomers.toLocaleString()}</div>
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card>
@@ -261,9 +223,6 @@ export default function PlatformCustomers() {
                       <TableHead>Customer</TableHead>
                       <TableHead>Contact</TableHead>
                       <TableHead>Cinema</TableHead>
-                      <TableHead className="text-right">Bookings</TableHead>
-                      <TableHead className="text-right">Total Spent</TableHead>
-                      <TableHead className="text-right">Points</TableHead>
                       <TableHead>Last Booking</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -293,15 +252,6 @@ export default function PlatformCustomers() {
                             <Building2 className="h-3 w-3" />
                             {customer.organization_name}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {customer.total_bookings}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          ${customer.total_spent.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="secondary">{customer.loyalty_points}</Badge>
                         </TableCell>
                         <TableCell>
                           {customer.last_booking_at ? (
