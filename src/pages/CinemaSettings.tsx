@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AboutPageSettings } from '@/components/settings/AboutPageSettings';
 import EmailTemplatesSettings from '@/components/settings/EmailTemplatesSettings';
+import { WebsiteTemplateSelector, websiteTemplates, WebsiteTemplate } from '@/components/settings/WebsiteTemplateSelector';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -38,6 +39,7 @@ const cinemaSettingsSchema = z.object({
   name: z.string().min(2, 'Cinema name must be at least 2 characters'),
   primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format'),
   secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format'),
+  website_template: z.string().optional(),
   custom_domain: z.string().optional(),
   about_text: z.string().optional(),
   contact_email: z.string().email().optional().or(z.literal('')),
@@ -104,6 +106,7 @@ export default function CinemaSettings() {
       name: organization.name,
       primary_color: organization.primary_color || '#D97706',
       secondary_color: organization.secondary_color || '#1F2937',
+      website_template: (organization as any).website_template || 'classic-cinema',
       custom_domain: organization.custom_domain?.replace('.cinetix.app', '') || '',
       about_text: (organization as any).about_text || '',
       contact_email: (organization as any).contact_email || '',
@@ -123,6 +126,15 @@ export default function CinemaSettings() {
 
   const selectedGateway = watch('payment_gateway');
   const selectedCurrency = watch('currency');
+  const selectedTemplate = watch('website_template');
+
+  // Handle template selection - apply template colors
+  const handleTemplateSelect = (template: WebsiteTemplate) => {
+    setValue('website_template', template.id, { shouldDirty: true });
+    setValue('primary_color', template.colors.primary, { shouldDirty: true, shouldValidate: true });
+    setValue('secondary_color', template.colors.secondary, { shouldDirty: true, shouldValidate: true });
+    toast.success(`Applied ${template.name} template`);
+  };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -298,6 +310,7 @@ export default function CinemaSettings() {
           name: data.name,
           primary_color: data.primary_color,
           secondary_color: data.secondary_color,
+          website_template: data.website_template || 'classic-cinema',
           custom_domain: formattedDomain,
           logo_url: logoUrl,
           about_text: data.about_text || null,
@@ -397,6 +410,13 @@ export default function CinemaSettings() {
 
             {/* Branding Tab */}
             <TabsContent value="branding" className="space-y-6">
+              {/* Website Template Selector */}
+              <WebsiteTemplateSelector
+                selectedTemplateId={selectedTemplate || null}
+                onSelect={handleTemplateSelect}
+                cinemaName={watch('name') || organization.name}
+              />
+
               {/* Logo Upload */}
               <Card>
                 <CardHeader>
