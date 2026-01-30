@@ -426,18 +426,43 @@ export default function PublicCinema() {
         </div>
       )}
 
+      {/* Gradient separator for Neon Pulse template */}
+      {cinema?.website_template === 'neon-pulse' && (
+        <div
+          className="h-1 w-full"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, #06B6D4 20%, #E879F9 80%, transparent 100%)`
+          }}
+        />
+      )}
+
       {/* Now Showing */}
       <section 
         id="movies" 
-        className="py-12 md:py-16"
+        className="py-12 md:py-16 relative"
         style={{ 
           backgroundColor: cinema?.website_template === 'cinema-carousel' 
             ? '#ffffff' 
             : cinema?.website_template === 'luxury-premiere'
             ? '#0D0A0B'
+            : cinema?.website_template === 'neon-pulse'
+            ? '#050510'
             : '#0a0a0f' 
         }}
       >
+        {/* Neon Pulse background effects */}
+        {cinema?.website_template === 'neon-pulse' && (
+          <>
+            <div 
+              className="absolute top-0 right-0 w-96 h-96 rounded-full blur-[150px] opacity-20 pointer-events-none"
+              style={{ backgroundColor: '#06B6D4' }}
+            />
+            <div 
+              className="absolute bottom-0 left-0 w-80 h-80 rounded-full blur-[120px] opacity-15 pointer-events-none"
+              style={{ backgroundColor: '#E879F9' }}
+            />
+          </>
+        )}
         <div className="container mx-auto px-4">
           {/* Section Header for Cinema Carousel */}
           {cinema?.website_template === 'cinema-carousel' && (
@@ -478,8 +503,31 @@ export default function PublicCinema() {
             </div>
           )}
 
-          {/* Header with title, search bar, and date tabs - Standard templates (not carousel or luxury) */}
-          {cinema?.website_template !== 'cinema-carousel' && cinema?.website_template !== 'luxury-premiere' && (
+          {/* Section Header for Neon Pulse */}
+          {cinema?.website_template === 'neon-pulse' && (
+            <div className="mb-10 relative z-10">
+              <div className="flex items-center gap-3 mb-2">
+                <span 
+                  className="text-xs font-medium tracking-wider"
+                  style={{ 
+                    color: '#06B6D4',
+                    textShadow: '0 0 10px rgba(6, 182, 212, 0.6)'
+                  }}
+                >
+                  ⬡ FEATURED
+                </span>
+              </div>
+              <h3
+                className="text-2xl md:text-3xl font-bold"
+                style={{ color: '#F8FAFC', fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                Now Showing
+              </h3>
+            </div>
+          )}
+
+          {/* Header with title, search bar, and date tabs - Standard templates (not carousel, luxury, or neon-pulse) */}
+          {cinema?.website_template !== 'cinema-carousel' && cinema?.website_template !== 'luxury-premiere' && cinema?.website_template !== 'neon-pulse' && (
           <div className="flex flex-col gap-6 mb-10">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <h3 className="text-2xl md:text-3xl font-bold text-white">
@@ -705,8 +753,99 @@ export default function PublicCinema() {
             </>
           )}
 
+          {/* Movies List - Neon Pulse Style */}
+          {cinema?.website_template === 'neon-pulse' && (
+            <>
+              {filteredMovies.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 relative z-10">
+                  {filteredMovies.map((movie) => (
+                    <div 
+                      key={movie.id} 
+                      className="group cursor-pointer rounded-xl overflow-hidden relative"
+                      style={{ 
+                        backgroundColor: '#0F0D24',
+                        border: '1px solid rgba(6, 182, 212, 0.2)'
+                      }}
+                      onClick={() => navigate(`/cinema/${slug}/booking?movie=${movie.id}`)}
+                    >
+                      {/* Poster with hover overlay */}
+                      <div className="relative aspect-[3/4] overflow-hidden">
+                        {movie.poster_url ? (
+                          <img
+                            src={movie.poster_url}
+                            alt={movie.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div 
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.3) 0%, rgba(232, 121, 249, 0.2) 100%)' }}
+                          >
+                            <Film className="h-12 w-12 text-white/30" />
+                          </div>
+                        )}
+                        
+                        {/* Hover overlay */}
+                        <div 
+                          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center"
+                          style={{ background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.9) 0%, rgba(232, 121, 249, 0.9) 100%)' }}
+                        >
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cinema/${slug}/booking?movie=${movie.id}`);
+                            }}
+                            className="px-5 py-2 text-xs font-semibold tracking-wide rounded-full"
+                            style={{ 
+                              backgroundColor: '#fff',
+                              color: '#050510',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                            }}
+                          >
+                            ⚡ BOOK NOW
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Card info */}
+                      <div className="p-4" style={{ backgroundColor: '#0F0D24' }}>
+                        <h4 
+                          className="font-semibold text-sm mb-2 line-clamp-1"
+                          style={{ color: '#F8FAFC', fontFamily: "'Space Grotesk', sans-serif" }}
+                        >
+                          {movie.title}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <span 
+                            className="text-xs px-2 py-0.5 rounded-full"
+                            style={{ 
+                              backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                              color: '#06B6D4' 
+                            }}
+                          >
+                            {movie.genre || 'Movie'}
+                          </span>
+                          <span className="text-xs" style={{ color: '#94A3B8' }}>
+                            {movie.duration_minutes} min
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 relative z-10">
+                  <Calendar className="h-16 w-16 mx-auto mb-4" style={{ color: '#94A3B8' }} />
+                  <p style={{ color: '#94A3B8' }}>
+                    No films scheduled for {format(selectedDate, 'MMMM d')}{selectedGenre ? ` in ${selectedGenre}` : ''}. Check back soon.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Movies List - Standard Netflix/Streaming Style (Dark background) */}
-          {cinema?.website_template !== 'cinema-carousel' && cinema?.website_template !== 'luxury-premiere' && (
+          {cinema?.website_template !== 'cinema-carousel' && cinema?.website_template !== 'luxury-premiere' && cinema?.website_template !== 'neon-pulse' && (
             <>
           {filteredMovies.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
