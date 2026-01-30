@@ -93,50 +93,27 @@ export default function PlatformCustomers() {
     );
   });
 
-  // Export to TXT
+  // Export to TXT (emails only)
   const handleExportTxt = () => {
     if (!filteredCustomers?.length) {
       toast.error('No customers to export');
       return;
     }
 
-    const lines: string[] = [
-      '='.repeat(80),
-      'CINEMA CUSTOMERS EXPORT',
-      `Generated: ${format(new Date(), 'PPpp')}`,
-      `Total Customers: ${filteredCustomers.length}`,
-      '='.repeat(80),
-      '',
-    ];
-
-    filteredCustomers.forEach((customer, index) => {
-      lines.push(`--- Customer ${index + 1} ---`);
-      lines.push(`Name: ${customer.full_name}`);
-      lines.push(`Email: ${customer.email}`);
-      lines.push(`Phone: ${customer.phone || 'N/A'}`);
-      lines.push(`Cinema: ${customer.organization_name}`);
-      lines.push(`First Booking: ${customer.first_booking_at ? format(new Date(customer.first_booking_at), 'PPp') : 'N/A'}`);
-      lines.push(`Last Booking: ${customer.last_booking_at ? format(new Date(customer.last_booking_at), 'PPp') : 'N/A'}`);
-      lines.push(`Registered: ${format(new Date(customer.created_at), 'PPp')}`);
-      lines.push('');
-    });
-
-    lines.push('='.repeat(80));
-    lines.push('END OF EXPORT');
-    lines.push('='.repeat(80));
-
-    const content = lines.join('\n');
+    const emails = filteredCustomers.map((customer) => customer.email);
+    const content = emails.join('\n');
+    
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `cinema-customers-${format(new Date(), 'yyyy-MM-dd-HHmm')}.txt`;
+    link.download = `customer-emails-${format(new Date(), 'yyyy-MM-dd-HHmm')}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast.success(`Exported ${filteredCustomers.length} customers to TXT`);
+    toast.success(`Exported ${filteredCustomers.length} email addresses`);
   };
 
   const totalCustomers = customers?.length || 0;
