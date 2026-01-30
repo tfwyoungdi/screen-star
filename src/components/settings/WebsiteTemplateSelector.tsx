@@ -60,16 +60,16 @@ export const websiteTemplates: WebsiteTemplate[] = [
     },
   },
   {
-    id: 'warm-sunset',
-    name: 'Warm Sunset',
-    description: 'Inviting coral and orange tones on a dark canvas. Creates a cozy, welcoming atmosphere.',
+    id: 'cinema-carousel',
+    name: 'Cinema Carousel',
+    description: 'Full-width hero carousel with movie spotlight, dotted accents, and a clean white movie grid. Inspired by premium theater websites.',
     icon: Film,
     colors: {
-      primary: '#CD7F5C', // Coral/Terracotta
-      secondary: '#1f1f1f',
-      accent: '#E8956A',
-      background: '#0d0d0d',
-      cardBackground: '#1a1a1a',
+      primary: '#C87B56', // Coral/Terracotta
+      secondary: '#0a0a0a',
+      accent: '#D4956E',
+      background: '#000000',
+      cardBackground: '#ffffff',
       text: '#ffffff',
       mutedText: '#a3a3a3',
     },
@@ -333,103 +333,163 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
         >
           {/* Hero Section */}
           <div
-            className="h-64 relative flex flex-col items-center justify-center text-center px-4"
+            className="h-72 relative flex flex-col justify-center px-8"
             style={{
               background:
                 template.style.heroStyle === 'gradient'
                   ? `linear-gradient(180deg, ${template.colors.secondary} 0%, ${template.colors.background} 100%)`
+                  : template.style.heroStyle === 'image-overlay'
+                  ? `linear-gradient(90deg, ${template.colors.background}ee 0%, ${template.colors.background}88 50%, transparent 100%), linear-gradient(180deg, ${template.colors.secondary}40 0%, ${template.colors.secondary} 100%)`
                   : template.colors.secondary,
             }}
           >
-            {/* Logo/Name */}
-            <div className="flex items-center gap-3 mb-4">
-              <div
-                className={cn(
-                  'h-12 w-12 flex items-center justify-center',
-                  template.style.buttonStyle === 'pill' ? 'rounded-full' : 'rounded-lg'
-                )}
-                style={{ backgroundColor: template.colors.primary }}
-              >
-                <Film className="h-6 w-6" style={{ color: template.colors.text }} />
-              </div>
+            {/* Carousel arrows for cinema-carousel template */}
+            {template.id === 'cinema-carousel' && (
+              <>
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-white/30 flex items-center justify-center">
+                  <span style={{ color: template.colors.text }}>‹</span>
+                </div>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-white/30 flex items-center justify-center">
+                  <span style={{ color: template.colors.text }}>›</span>
+                </div>
+              </>
+            )}
+
+            {/* Hero Content */}
+            <div className="max-w-lg">
+              {/* Category Label */}
               <span
-                className="text-2xl font-bold"
+                className="text-sm font-medium italic"
+                style={{ color: template.colors.primary }}
+              >
+                Adventure Movie
+              </span>
+
+              {/* Movie Title */}
+              <h2
+                className="text-4xl font-bold mt-2 mb-3"
                 style={{
                   color: template.colors.text,
                   fontFamily: template.fonts.heading,
                 }}
               >
-                {cinemaName || 'Your Cinema'}
-              </span>
+                {cinemaName || 'Featured Film'}
+              </h2>
+
+              {/* Description */}
+              <p
+                className="text-sm mb-6 leading-relaxed"
+                style={{ color: template.colors.mutedText }}
+              >
+                Experience movies like never before at your local cinema. Book your tickets today.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex gap-3">
+                <button
+                  className={cn(
+                    'px-5 py-2.5 text-sm font-medium flex items-center gap-2 transition-transform hover:scale-105',
+                    template.style.buttonStyle === 'pill' && 'rounded-full',
+                    template.style.buttonStyle === 'rounded' && 'rounded-md',
+                    template.style.buttonStyle === 'sharp' && 'rounded-none'
+                  )}
+                  style={{
+                    backgroundColor: template.colors.primary,
+                    color: '#ffffff',
+                  }}
+                >
+                  <span>◉</span> More Info
+                </button>
+                <button
+                  className={cn(
+                    'px-5 py-2.5 text-sm font-medium border flex items-center gap-2 transition-transform hover:scale-105',
+                    template.style.buttonStyle === 'pill' && 'rounded-full',
+                    template.style.buttonStyle === 'rounded' && 'rounded-md',
+                    template.style.buttonStyle === 'sharp' && 'rounded-none'
+                  )}
+                  style={{
+                    borderColor: template.colors.text,
+                    color: template.colors.text,
+                    backgroundColor: 'transparent',
+                  }}
+                >
+                  <span>◉</span> Get Ticket
+                </button>
+              </div>
             </div>
 
-            {/* Tagline */}
-            <p
-              className="text-lg mb-6"
-              style={{ color: template.colors.mutedText }}
-            >
-              Experience movies like never before
-            </p>
+            {/* Dotted Separator for cinema-carousel */}
+            {template.id === 'cinema-carousel' && (
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1"
+                style={{
+                  backgroundImage: `repeating-linear-gradient(90deg, ${template.colors.primary} 0px, ${template.colors.primary} 8px, transparent 8px, transparent 16px)`,
+                }}
+              />
+            )}
 
-            {/* CTA Buttons */}
-            <div className="flex gap-3">
-              <button
-                className={cn(
-                  'px-6 py-3 font-medium transition-transform hover:scale-105',
-                  template.style.buttonStyle === 'pill' && 'rounded-full',
-                  template.style.buttonStyle === 'rounded' && 'rounded-lg',
-                  template.style.buttonStyle === 'sharp' && 'rounded-none'
-                )}
-                style={{
-                  backgroundColor: template.colors.primary,
-                  color: template.colors.background,
-                }}
-              >
-                Book Now
-              </button>
-              <button
-                className={cn(
-                  'px-6 py-3 font-medium border transition-transform hover:scale-105',
-                  template.style.buttonStyle === 'pill' && 'rounded-full',
-                  template.style.buttonStyle === 'rounded' && 'rounded-lg',
-                  template.style.buttonStyle === 'sharp' && 'rounded-none'
-                )}
-                style={{
-                  borderColor: `${template.colors.text}40`,
-                  color: template.colors.text,
-                  backgroundColor: 'transparent',
-                }}
-              >
-                View Schedule
-              </button>
-            </div>
+            {/* Accent bar for other templates */}
+            {template.id !== 'cinema-carousel' && (
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1"
+                style={{ backgroundColor: template.colors.primary }}
+              />
+            )}
           </div>
 
           {/* Movies Section */}
-          <div className="p-6">
-            <h3
-              className="text-xl font-bold mb-4"
-              style={{
-                color: template.colors.text,
-                fontFamily: template.fonts.heading,
-              }}
-            >
-              Now Showing
-            </h3>
+          <div
+            className="p-6"
+            style={{
+              backgroundColor: template.id === 'cinema-carousel' ? '#ffffff' : template.colors.background,
+            }}
+          >
+            {/* Section Header */}
+            <div className="text-center mb-6">
+              {template.id === 'cinema-carousel' && (
+                <div className="flex justify-center mb-2">
+                  <Film className="h-5 w-5" style={{ color: template.colors.primary }} />
+                </div>
+              )}
+              <span
+                className="text-sm"
+                style={{
+                  color: template.id === 'cinema-carousel' ? template.colors.primary : template.colors.mutedText,
+                }}
+              >
+                Watch New Movies
+              </span>
+              <h3
+                className="text-xl font-bold mt-1"
+                style={{
+                  color: template.id === 'cinema-carousel' ? '#0f172a' : template.colors.text,
+                  fontFamily: template.fonts.heading,
+                }}
+              >
+                Movies Now Playing
+              </h3>
+            </div>
 
             {/* Movie Cards */}
             <div className="grid grid-cols-4 gap-4">
-              {['Action Movie', 'Romance Film', 'Sci-Fi Epic', 'Comedy Hit'].map((title, i) => (
+              {[
+                { title: 'The Fifth Day', genre: 'Comedy', duration: '180 Mins' },
+                { title: 'Black & White', genre: 'Animation', duration: '160 Mins' },
+                { title: 'Scariest Game', genre: 'Thriller', duration: '190 Mins' },
+                { title: 'New Day Dreams', genre: 'Romance', duration: '150 Mins' },
+              ].map((movie, i) => (
                 <div
                   key={i}
                   className={cn(
                     'rounded-lg overflow-hidden',
                     template.style.cardStyle === 'glass' && 'backdrop-blur border',
-                    template.style.cardStyle === 'elevated' && 'shadow-xl'
+                    template.style.cardStyle === 'elevated' && 'shadow-lg'
                   )}
                   style={{
                     backgroundColor:
-                      template.style.cardStyle === 'glass'
+                      template.id === 'cinema-carousel'
+                        ? '#f8fafc'
+                        : template.style.cardStyle === 'glass'
                         ? `${template.colors.cardBackground}80`
                         : template.colors.cardBackground,
                     borderColor: template.style.cardStyle === 'glass' ? `${template.colors.text}20` : 'transparent',
@@ -446,44 +506,35 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                       className="absolute inset-0 m-auto h-8 w-8"
                       style={{ color: template.colors.mutedText }}
                     />
+                    {/* Genre/Duration overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                      <span className="text-xs text-white/80">
+                        {movie.genre} / {movie.duration}
+                      </span>
+                    </div>
                   </div>
                   <div className="p-3">
                     <h4
                       className="font-medium text-sm truncate"
-                      style={{ color: template.colors.text }}
+                      style={{ color: template.id === 'cinema-carousel' ? '#0f172a' : template.colors.text }}
                     >
-                      {title}
+                      {movie.title}
                     </h4>
-                    <div className="flex gap-1 mt-2">
-                      <span
-                        className={cn(
-                          'px-2 py-0.5 text-xs',
-                          template.style.buttonStyle === 'pill' && 'rounded-full',
-                          template.style.buttonStyle === 'rounded' && 'rounded',
-                          template.style.buttonStyle === 'sharp' && 'rounded-none'
-                        )}
-                        style={{
-                          backgroundColor: template.colors.primary,
-                          color: template.colors.background,
-                        }}
-                      >
-                        7:00 PM
-                      </span>
-                      <span
-                        className={cn(
-                          'px-2 py-0.5 text-xs border',
-                          template.style.buttonStyle === 'pill' && 'rounded-full',
-                          template.style.buttonStyle === 'rounded' && 'rounded',
-                          template.style.buttonStyle === 'sharp' && 'rounded-none'
-                        )}
-                        style={{
-                          borderColor: `${template.colors.text}30`,
-                          color: template.colors.mutedText,
-                        }}
-                      >
-                        9:30 PM
-                      </span>
-                    </div>
+                    <button
+                      className={cn(
+                        'mt-2 px-3 py-1 text-xs border',
+                        template.style.buttonStyle === 'pill' && 'rounded-full',
+                        template.style.buttonStyle === 'rounded' && 'rounded',
+                        template.style.buttonStyle === 'sharp' && 'rounded-none'
+                      )}
+                      style={{
+                        borderColor: template.id === 'cinema-carousel' ? '#0f172a' : template.colors.text,
+                        color: template.id === 'cinema-carousel' ? '#0f172a' : template.colors.text,
+                        backgroundColor: 'transparent',
+                      }}
+                    >
+                      Get Ticket
+                    </button>
                   </div>
                 </div>
               ))}
