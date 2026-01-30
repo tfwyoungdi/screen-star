@@ -22,6 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useExportReports } from '@/hooks/useExportReports';
 import { DataRefreshIndicator } from '@/components/dashboard/DataRefreshIndicator';
 import { StaffRevenueTab } from '@/components/accountant/StaffRevenueTab';
+import { CashierReconciliationTab } from '@/components/accountant/CashierReconciliationTab';
 import {
   BarChart,
   Bar,
@@ -338,6 +339,10 @@ export default function AccountantDashboard() {
                 Staff Revenue
               </TabsTrigger>
               <TabsTrigger value="transactions">Transactions</TabsTrigger>
+              <TabsTrigger value="cashier">
+                <Banknote className="h-4 w-4 mr-1" />
+                Cashier
+              </TabsTrigger>
               <TabsTrigger value="reconciliation">Reconciliation</TabsTrigger>
             </TabsList>
 
@@ -687,6 +692,14 @@ export default function AccountantDashboard() {
                   </Table>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="cashier">
+              <CashierReconciliationTab
+                organizationId={effectiveOrgId || ''}
+                currency={organization?.currency}
+                dateRange={dateRange}
+              />
             </TabsContent>
 
             <TabsContent value="reconciliation" className="space-y-6">
