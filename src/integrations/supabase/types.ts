@@ -3148,6 +3148,7 @@ export type Database = {
           social_facebook: string | null
           social_instagram: string | null
           social_twitter: string | null
+          website_template: string | null
         }
         Insert: {
           about_text?: string | null
@@ -3172,6 +3173,7 @@ export type Database = {
           social_facebook?: string | null
           social_instagram?: string | null
           social_twitter?: string | null
+          website_template?: string | null
         }
         Update: {
           about_text?: string | null
@@ -3196,6 +3198,7 @@ export type Database = {
           social_facebook?: string | null
           social_instagram?: string | null
           social_twitter?: string | null
+          website_template?: string | null
         }
         Relationships: []
       }
@@ -3224,6 +3227,7 @@ export type Database = {
           social_instagram: string | null
           social_twitter: string | null
           updated_at: string | null
+          website_template: string | null
         }
         Insert: {
           about_text?: string | null
@@ -3249,6 +3253,7 @@ export type Database = {
           social_instagram?: string | null
           social_twitter?: string | null
           updated_at?: string | null
+          website_template?: string | null
         }
         Update: {
           about_text?: string | null
@@ -3274,6 +3279,7 @@ export type Database = {
           social_instagram?: string | null
           social_twitter?: string | null
           updated_at?: string | null
+          website_template?: string | null
         }
         Relationships: []
       }

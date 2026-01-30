@@ -25,6 +25,7 @@ interface CinemaHeroProps {
   primaryColor?: string;
   logoUrl?: string | null;
   organizationId?: string;
+  websiteTemplate?: string | null;
 }
 
 const extractVideoId = (url: string): { type: 'youtube' | 'vimeo' | null; id: string | null } => {
@@ -54,7 +55,7 @@ const formatDuration = (minutes: number): string => {
   return `${hours}h ${mins}m`;
 };
 
-export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F59E0B', logoUrl, organizationId }: CinemaHeroProps) {
+export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F59E0B', logoUrl, organizationId, websiteTemplate }: CinemaHeroProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -238,6 +239,8 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
     );
   }
 
+  const isCinemaCarousel = websiteTemplate === 'cinema-carousel';
+
   return (
     <section className="relative h-[400px] md:h-[600px] overflow-hidden" style={{ backgroundColor: '#0a0a12' }}>
       {/* Background Movie Poster - Fixed size container */}
@@ -398,6 +401,16 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
       {/* Main Content */}
       <div className="relative z-10 h-full flex flex-col justify-center px-6 lg:px-12">
         <div className="max-w-7xl mx-auto w-full">
+          {/* Category Label for Cinema Carousel */}
+          {isCinemaCarousel && currentMovie.genre && (
+            <span
+              className="text-base font-medium italic"
+              style={{ color: primaryColor }}
+            >
+              {currentMovie.genre} Movie
+            </span>
+          )}
+
           {/* Movie Title */}
           <h1 
             className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-2 md:mb-3 leading-none tracking-tight"
@@ -406,10 +419,18 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
               textShadow: '2px 4px 20px rgba(0,0,0,0.8)'
             }}
           >
-            {currentMovie.title.toUpperCase()}
+            {isCinemaCarousel ? currentMovie.title : currentMovie.title.toUpperCase()}
           </h1>
 
-          {/* Meta Info Row */}
+          {/* Description for Cinema Carousel */}
+          {isCinemaCarousel && currentMovie.description && (
+            <p className="text-sm text-white/70 mb-6 max-w-lg leading-relaxed line-clamp-2">
+              {currentMovie.description}
+            </p>
+          )}
+
+          {/* Meta Info Row - only for non-carousel */}
+          {!isCinemaCarousel && (
           <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5 text-xs md:text-sm text-white/80">
             <span>{new Date().getFullYear()}</span>
             <span className="w-1 h-1 rounded-full" style={{ backgroundColor: primaryColor }} />
@@ -423,9 +444,37 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
               </>
             )}
           </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5">
+            {isCinemaCarousel ? (
+              <>
+                <Link to={`/cinema/${cinemaSlug}/booking?movie=${currentMovie.id}`}>
+                  <Button
+                    size="sm"
+                    className="font-semibold px-5 py-2.5 text-sm rounded-md hover:opacity-90 transition-opacity flex items-center gap-2"
+                    style={{ 
+                      backgroundColor: primaryColor, 
+                      color: '#fff' 
+                    }}
+                  >
+                    <span>◉</span> More Info
+                  </Button>
+                </Link>
+                <Link to={`/cinema/${cinemaSlug}#movies`}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="font-semibold px-5 py-2.5 text-sm rounded-md border-2 text-white hover:bg-white/10 transition-colors flex items-center gap-2"
+                    style={{ borderColor: '#ffffff' }}
+                  >
+                    <span>◉</span> Get Ticket
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
             <Link to={`/cinema/${cinemaSlug}#movies`}>
               <Button
                 size="sm"
@@ -483,6 +532,8 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             >
               More
             </Button>
+              </>
+            )}
           </div>
 
         </div>
