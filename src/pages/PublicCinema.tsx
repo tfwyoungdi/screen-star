@@ -412,12 +412,30 @@ export default function PublicCinema() {
         />
       )}
 
+      {/* Elegant separator for Luxury Premiere template */}
+      {cinema?.website_template === 'luxury-premiere' && (
+        <div className="flex items-center justify-center py-4" style={{ backgroundColor: '#0D0A0B' }}>
+          <div className="flex items-center gap-3">
+            <div className="h-px w-16" style={{ backgroundColor: '#D4A57430' }} />
+            <div 
+              className="w-2 h-2 rotate-45"
+              style={{ backgroundColor: '#D4A574' }}
+            />
+            <div className="h-px w-16" style={{ backgroundColor: '#D4A57430' }} />
+          </div>
+        </div>
+      )}
+
       {/* Now Showing */}
       <section 
         id="movies" 
         className="py-12 md:py-16"
         style={{ 
-          backgroundColor: cinema?.website_template === 'cinema-carousel' ? '#ffffff' : '#0a0a0f' 
+          backgroundColor: cinema?.website_template === 'cinema-carousel' 
+            ? '#ffffff' 
+            : cinema?.website_template === 'luxury-premiere'
+            ? '#0D0A0B'
+            : '#0a0a0f' 
         }}
       >
         <div className="container mx-auto px-4">
@@ -439,8 +457,29 @@ export default function PublicCinema() {
             </div>
           )}
 
-          {/* Header with title, search bar, and date tabs - Standard templates */}
-          {cinema?.website_template !== 'cinema-carousel' && (
+          {/* Section Header for Luxury Premiere */}
+          {cinema?.website_template === 'luxury-premiere' && (
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-px w-8" style={{ backgroundColor: '#D4A574' }} />
+                <span 
+                  className="text-xs tracking-[0.2em] uppercase"
+                  style={{ color: '#D4A574' }}
+                >
+                  Featured Films
+                </span>
+              </div>
+              <h3
+                className="text-2xl md:text-3xl font-bold"
+                style={{ color: '#FAF7F5', fontFamily: 'Playfair Display, serif' }}
+              >
+                Now Showing
+              </h3>
+            </div>
+          )}
+
+          {/* Header with title, search bar, and date tabs - Standard templates (not carousel or luxury) */}
+          {cinema?.website_template !== 'cinema-carousel' && cinema?.website_template !== 'luxury-premiere' && (
           <div className="flex flex-col gap-6 mb-10">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <h3 className="text-2xl md:text-3xl font-bold text-white">
@@ -585,8 +624,89 @@ export default function PublicCinema() {
             </>
           )}
 
+          {/* Movies List - Luxury Premiere Style */}
+          {cinema?.website_template === 'luxury-premiere' && (
+            <>
+              {filteredMovies.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  {filteredMovies.map((movie) => (
+                    <div 
+                      key={movie.id} 
+                      className="group cursor-pointer rounded-lg overflow-hidden"
+                      style={{ 
+                        backgroundColor: '#1A1315',
+                        border: '1px solid rgba(212, 165, 116, 0.2)'
+                      }}
+                      onClick={() => navigate(`/cinema/${slug}/booking?movie=${movie.id}`)}
+                    >
+                      {/* Poster with hover overlay */}
+                      <div className="relative aspect-[3/4] overflow-hidden">
+                        {movie.poster_url ? (
+                          <img
+                            src={movie.poster_url}
+                            alt={movie.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div 
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ background: 'linear-gradient(180deg, #8B2942 0%, #1C1017 100%)' }}
+                          >
+                            <Film className="h-12 w-12 text-white/30" />
+                          </div>
+                        )}
+                        
+                        {/* Hover overlay */}
+                        <div 
+                          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center"
+                          style={{ backgroundColor: 'rgba(139, 41, 66, 0.85)' }}
+                        >
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cinema/${slug}/booking?movie=${movie.id}`);
+                            }}
+                            className="px-4 py-2 text-xs font-medium tracking-wide border-2 rounded"
+                            style={{ borderColor: '#fff', color: '#fff' }}
+                          >
+                            BOOK NOW
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Card info */}
+                      <div className="p-4" style={{ backgroundColor: '#1A1315' }}>
+                        <h4 
+                          className="font-semibold text-sm mb-1 line-clamp-1"
+                          style={{ color: '#FAF7F5', fontFamily: 'Playfair Display, serif' }}
+                        >
+                          {movie.title}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs" style={{ color: '#D4A574' }}>
+                            {movie.genre || 'Movie'}
+                          </span>
+                          <span className="text-xs" style={{ color: '#A89A9D' }}>
+                            • {movie.duration_minutes} min
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Calendar className="h-16 w-16 mx-auto mb-4" style={{ color: '#A89A9D' }} />
+                  <p style={{ color: '#A89A9D' }}>
+                    No films scheduled for {format(selectedDate, 'MMMM d')}{selectedGenre ? ` in ${selectedGenre}` : ''}. Check back soon.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Movies List - Standard Netflix/Streaming Style (Dark background) */}
-          {cinema?.website_template !== 'cinema-carousel' && (
+          {cinema?.website_template !== 'cinema-carousel' && cinema?.website_template !== 'luxury-premiere' && (
             <>
           {filteredMovies.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">

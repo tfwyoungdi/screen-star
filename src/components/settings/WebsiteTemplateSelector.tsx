@@ -35,28 +35,28 @@ export interface WebsiteTemplate {
 
 export const websiteTemplates: WebsiteTemplate[] = [
   {
-    id: 'classic-cinema',
-    name: 'Classic Cinema',
-    description: 'Timeless elegance with gold accents and dark backgrounds. Perfect for traditional movie theaters.',
-    icon: Film,
+    id: 'luxury-premiere',
+    name: 'Luxury Premiere',
+    description: 'Sophisticated elegance with rich burgundy and gold accents. Perfect for upscale cinemas and premium experiences.',
+    icon: Sparkles,
     colors: {
-      primary: '#D4AF37', // Gold
-      secondary: '#1a1a2e',
-      accent: '#C9A227',
-      background: '#0a0a0f',
-      cardBackground: '#14141f',
-      text: '#ffffff',
-      mutedText: '#9ca3af',
+      primary: '#8B2942', // Rich Burgundy
+      secondary: '#1C1017',
+      accent: '#D4A574', // Champagne Gold
+      background: '#0D0A0B',
+      cardBackground: '#1A1315',
+      text: '#FAF7F5',
+      mutedText: '#A89A9D',
     },
     fonts: {
       heading: 'Playfair Display',
       body: 'Inter',
     },
     style: {
-      heroStyle: 'gradient',
-      cardStyle: 'elevated',
+      heroStyle: 'image-overlay',
+      cardStyle: 'glass',
       buttonStyle: 'rounded',
-      animationLevel: 'subtle',
+      animationLevel: 'moderate',
     },
   },
   {
@@ -82,6 +82,31 @@ export const websiteTemplates: WebsiteTemplate[] = [
       cardStyle: 'elevated',
       buttonStyle: 'rounded',
       animationLevel: 'moderate',
+    },
+  },
+  {
+    id: 'classic-cinema',
+    name: 'Classic Cinema',
+    description: 'Timeless elegance with gold accents and dark backgrounds. Perfect for traditional movie theaters.',
+    icon: Film,
+    colors: {
+      primary: '#D4AF37', // Gold
+      secondary: '#1a1a2e',
+      accent: '#C9A227',
+      background: '#0a0a0f',
+      cardBackground: '#14141f',
+      text: '#ffffff',
+      mutedText: '#9ca3af',
+    },
+    fonts: {
+      heading: 'Playfair Display',
+      body: 'Inter',
+    },
+    style: {
+      heroStyle: 'gradient',
+      cardStyle: 'elevated',
+      buttonStyle: 'rounded',
+      animationLevel: 'subtle',
     },
   },
   {
@@ -317,6 +342,7 @@ interface TemplatePreviewDialogProps {
 
 function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: TemplatePreviewDialogProps) {
   const isCinemaCarousel = template.id === 'cinema-carousel';
+  const isLuxuryPremiere = template.id === 'luxury-premiere';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -333,7 +359,7 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
           className="min-h-[600px] overflow-hidden"
           style={{ backgroundColor: template.colors.background }}
         >
-          {/* Navigation Bar */}
+          {/* Navigation Bar - Cinema Carousel */}
           {isCinemaCarousel && (
             <div
               className="flex items-center justify-between px-6 py-4"
@@ -365,12 +391,64 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
             </div>
           )}
 
+          {/* Navigation Bar - Luxury Premiere */}
+          {isLuxuryPremiere && (
+            <div
+              className="flex items-center justify-between px-8 py-5"
+              style={{ 
+                backgroundColor: 'transparent',
+                borderBottom: `1px solid ${template.colors.accent}30`
+              }}
+            >
+              <div className="flex items-center gap-12">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`
+                    }}
+                  >
+                    <span className="text-white text-xs font-bold">P</span>
+                  </div>
+                  <span 
+                    className="text-lg tracking-wider"
+                    style={{ 
+                      color: template.colors.text,
+                      fontFamily: 'Playfair Display, serif'
+                    }}
+                  >
+                    {cinemaName || 'PREMIERE'}
+                  </span>
+                </div>
+                <nav className="hidden md:flex items-center gap-8">
+                  <span style={{ color: template.colors.accent }} className="text-sm tracking-wide font-medium">HOME</span>
+                  <span className="text-sm tracking-wide" style={{ color: template.colors.mutedText }}>FILMS</span>
+                  <span className="text-sm tracking-wide" style={{ color: template.colors.mutedText }}>EXPERIENCES</span>
+                  <span className="text-sm tracking-wide" style={{ color: template.colors.mutedText }}>CONTACT</span>
+                </nav>
+              </div>
+              <div className="flex items-center gap-6">
+                <button 
+                  className="px-4 py-2 text-xs tracking-widest border rounded"
+                  style={{ 
+                    borderColor: template.colors.accent,
+                    color: template.colors.accent
+                  }}
+                >
+                  MEMBERSHIP
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Hero Section */}
           <div
             className="relative flex flex-col justify-center px-8 md:px-12"
             style={{
-              height: isCinemaCarousel ? '320px' : '280px',
-              background: isCinemaCarousel
+              height: isLuxuryPremiere ? '360px' : isCinemaCarousel ? '320px' : '280px',
+              background: isLuxuryPremiere
+                ? `linear-gradient(135deg, ${template.colors.background} 0%, ${template.colors.secondary} 50%, ${template.colors.background} 100%)`
+                : isCinemaCarousel
                 ? `linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%), linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)`
                 : template.style.heroStyle === 'gradient'
                 ? `linear-gradient(180deg, ${template.colors.secondary} 0%, ${template.colors.background} 100%)`
@@ -379,49 +457,101 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                 : template.colors.secondary,
             }}
           >
-            {/* Carousel arrows */}
-            {isCinemaCarousel && (
+            {/* Decorative elements for Luxury Premiere */}
+            {isLuxuryPremiere && (
               <>
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-black/30 cursor-pointer hover:bg-black/50 transition-colors">
-                  <span className="text-white text-xl">‹</span>
+                <div 
+                  className="absolute top-0 right-0 w-96 h-96 opacity-10 rounded-full blur-3xl"
+                  style={{ backgroundColor: template.colors.primary }}
+                />
+                <div 
+                  className="absolute bottom-0 left-1/4 w-64 h-64 opacity-5 rounded-full blur-2xl"
+                  style={{ backgroundColor: template.colors.accent }}
+                />
+              </>
+            )}
+
+            {/* Carousel arrows */}
+            {(isCinemaCarousel || isLuxuryPremiere) && (
+              <>
+                <div 
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border flex items-center justify-center cursor-pointer transition-colors"
+                  style={{
+                    borderColor: isLuxuryPremiere ? `${template.colors.accent}40` : 'rgba(255,255,255,0.2)',
+                    backgroundColor: isLuxuryPremiere ? `${template.colors.cardBackground}80` : 'rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <span style={{ color: isLuxuryPremiere ? template.colors.accent : '#fff' }} className="text-xl">‹</span>
                 </div>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-black/30 cursor-pointer hover:bg-black/50 transition-colors">
-                  <span className="text-white text-xl">›</span>
+                <div 
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border flex items-center justify-center cursor-pointer transition-colors"
+                  style={{
+                    borderColor: isLuxuryPremiere ? `${template.colors.accent}40` : 'rgba(255,255,255,0.2)',
+                    backgroundColor: isLuxuryPremiere ? `${template.colors.cardBackground}80` : 'rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <span style={{ color: isLuxuryPremiere ? template.colors.accent : '#fff' }} className="text-xl">›</span>
                 </div>
               </>
             )}
 
             {/* Hero Content */}
-            <div className="max-w-xl relative z-10">
-              {/* Category Label - Italic */}
-              <span
-                className="text-base font-medium italic"
-                style={{ color: template.colors.primary }}
-              >
-                Adventure Movie
-              </span>
+            <div className={cn("max-w-xl relative z-10", isLuxuryPremiere && "text-center mx-auto max-w-2xl")}>
+              {/* Category Label */}
+              {isLuxuryPremiere ? (
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <div className="h-px w-12" style={{ backgroundColor: template.colors.accent }} />
+                  <span 
+                    className="text-xs tracking-[0.3em] uppercase"
+                    style={{ color: template.colors.accent }}
+                  >
+                    Now Showing
+                  </span>
+                  <div className="h-px w-12" style={{ backgroundColor: template.colors.accent }} />
+                </div>
+              ) : (
+                <span
+                  className="text-base font-medium italic"
+                  style={{ color: template.colors.primary }}
+                >
+                  Adventure Movie
+                </span>
+              )}
 
               {/* Movie Title - Large */}
               <h2
-                className="text-5xl font-bold mt-3 mb-4 leading-tight"
+                className={cn(
+                  "font-bold leading-tight",
+                  isLuxuryPremiere ? "text-4xl md:text-6xl mt-2 mb-6" : "text-5xl mt-3 mb-4"
+                )}
                 style={{
                   color: template.colors.text,
                   fontFamily: template.fonts.heading,
                 }}
               >
-                The {cinemaName || 'Lorem'}<br />Movie
+                {isLuxuryPremiere ? (
+                  <>{cinemaName || 'The Grand'}<br /><span style={{ color: template.colors.accent }}>Premiere</span></>
+                ) : (
+                  <>The {cinemaName || 'Lorem'}<br />Movie</>
+                )}
               </h2>
 
               {/* Description */}
               <p
-                className="text-sm mb-8 leading-relaxed max-w-lg"
+                className={cn(
+                  "leading-relaxed",
+                  isLuxuryPremiere ? "text-base mb-10 max-w-md mx-auto" : "text-sm mb-8 max-w-lg"
+                )}
                 style={{ color: template.colors.mutedText }}
               >
-                Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer typesetting, remaining essentially unchanged.
+                {isLuxuryPremiere 
+                  ? "Experience cinema in its most exquisite form. Luxury seating, premium sound, and an unforgettable atmosphere await."
+                  : "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since the 1500s."
+                }
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex gap-4">
+              <div className={cn("flex gap-4", isLuxuryPremiere && "justify-center")}>
                 <button
                   className={cn(
                     'px-6 py-3 text-sm font-medium flex items-center gap-2 transition-all hover:opacity-90',
@@ -430,30 +560,45 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                     template.style.buttonStyle === 'sharp' && 'rounded-none'
                   )}
                   style={{
-                    backgroundColor: template.colors.primary,
+                    backgroundColor: isLuxuryPremiere ? template.colors.primary : template.colors.primary,
                     color: '#ffffff',
+                    boxShadow: isLuxuryPremiere ? `0 8px 32px ${template.colors.primary}40` : 'none'
                   }}
                 >
-                  <span>◉</span> More Info
+                  {isLuxuryPremiere ? 'Reserve Seats' : <><span>◉</span> More Info</>}
                 </button>
                 <button
                   className={cn(
-                    'px-6 py-3 text-sm font-medium border-2 flex items-center gap-2 transition-all hover:bg-white/10',
+                    'px-6 py-3 text-sm font-medium border-2 flex items-center gap-2 transition-all',
                     template.style.buttonStyle === 'pill' && 'rounded-full',
                     template.style.buttonStyle === 'rounded' && 'rounded-md',
                     template.style.buttonStyle === 'sharp' && 'rounded-none'
                   )}
                   style={{
-                    borderColor: isCinemaCarousel ? '#ffffff' : template.colors.text,
-                    color: isCinemaCarousel ? '#ffffff' : template.colors.text,
+                    borderColor: isLuxuryPremiere ? template.colors.accent : isCinemaCarousel ? '#ffffff' : template.colors.text,
+                    color: isLuxuryPremiere ? template.colors.accent : isCinemaCarousel ? '#ffffff' : template.colors.text,
                     backgroundColor: 'transparent',
                   }}
                 >
-                  <span>◉</span> Get Ticket
+                  {isLuxuryPremiere ? 'Watch Trailer' : <><span>◉</span> Get Ticket</>}
                 </button>
               </div>
             </div>
           </div>
+
+          {/* Separator for luxury-premiere */}
+          {isLuxuryPremiere && (
+            <div className="flex items-center justify-center py-4" style={{ backgroundColor: template.colors.background }}>
+              <div className="flex items-center gap-3">
+                <div className="h-px w-16" style={{ backgroundColor: `${template.colors.accent}30` }} />
+                <div 
+                  className="w-2 h-2 rotate-45"
+                  style={{ backgroundColor: template.colors.accent }}
+                />
+                <div className="h-px w-16" style={{ backgroundColor: `${template.colors.accent}30` }} />
+              </div>
+            </div>
+          )}
 
           {/* Dotted Separator for cinema-carousel */}
           {isCinemaCarousel && (
@@ -469,7 +614,7 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
           )}
 
           {/* Accent bar for other templates */}
-          {!isCinemaCarousel && (
+          {!isCinemaCarousel && !isLuxuryPremiere && (
             <div
               className="h-1 w-full"
               style={{ backgroundColor: template.colors.primary }}
@@ -484,72 +629,154 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
             }}
           >
             {/* Section Header */}
-            <div className="text-center mb-8">
+            <div className={cn("mb-8", isLuxuryPremiere ? "text-left" : "text-center")}>
               {isCinemaCarousel && (
                 <div className="flex justify-center mb-3">
                   <Film className="h-5 w-5" style={{ color: template.colors.primary }} />
                 </div>
               )}
-              <span
-                className="text-sm tracking-wide"
-                style={{
-                  color: isCinemaCarousel ? template.colors.primary : template.colors.mutedText,
-                }}
-              >
-                Watch New Movies
-              </span>
-              <h3
-                className="text-2xl md:text-3xl font-bold mt-2"
-                style={{
-                  color: isCinemaCarousel ? '#1a1a1a' : template.colors.text,
-                  fontFamily: template.fonts.heading,
-                }}
-              >
-                Movies Now Playing
-              </h3>
+              {isLuxuryPremiere ? (
+                <>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-px w-8" style={{ backgroundColor: template.colors.accent }} />
+                    <span 
+                      className="text-xs tracking-[0.2em] uppercase"
+                      style={{ color: template.colors.accent }}
+                    >
+                      Featured Films
+                    </span>
+                  </div>
+                  <h3
+                    className="text-2xl md:text-3xl font-bold"
+                    style={{
+                      color: template.colors.text,
+                      fontFamily: template.fonts.heading,
+                    }}
+                  >
+                    Now Showing
+                  </h3>
+                </>
+              ) : (
+                <>
+                  <span
+                    className="text-sm tracking-wide"
+                    style={{
+                      color: isCinemaCarousel ? template.colors.primary : template.colors.mutedText,
+                    }}
+                  >
+                    Watch New Movies
+                  </span>
+                  <h3
+                    className="text-2xl md:text-3xl font-bold mt-2"
+                    style={{
+                      color: isCinemaCarousel ? '#1a1a1a' : template.colors.text,
+                      fontFamily: template.fonts.heading,
+                    }}
+                  >
+                    Movies Now Playing
+                  </h3>
+                </>
+              )}
             </div>
 
             {/* Movie Cards Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {[
-                { title: 'The Fifth Day', genre: 'Comedy', duration: '180 Mins', color: '#2d5a3d' },
-                { title: 'Black & White', genre: 'Animation', duration: '160 Mins', color: '#3d3d3d' },
-                { title: 'Scariest Game', genre: 'Thriller', duration: '190 Mins', color: '#4a5568' },
-                { title: 'New Day Dreams', genre: 'Romance', duration: '150 Mins', color: '#2d3748' },
+                { title: 'The Fifth Day', genre: 'Comedy', duration: '180 Mins', color: isLuxuryPremiere ? template.colors.primary : '#2d5a3d' },
+                { title: 'Black & White', genre: 'Animation', duration: '160 Mins', color: isLuxuryPremiere ? '#2a1f22' : '#3d3d3d' },
+                { title: 'Scariest Game', genre: 'Thriller', duration: '190 Mins', color: isLuxuryPremiere ? '#1a1520' : '#4a5568' },
+                { title: 'New Day Dreams', genre: 'Romance', duration: '150 Mins', color: isLuxuryPremiere ? template.colors.secondary : '#2d3748' },
               ].map((movie, i) => (
                 <div
                   key={i}
-                  className="rounded-lg overflow-hidden shadow-lg"
+                  className={cn(
+                    "rounded-lg overflow-hidden",
+                    isLuxuryPremiere ? "group cursor-pointer" : "shadow-lg"
+                  )}
                   style={{
                     backgroundColor: isCinemaCarousel ? '#f8f8f8' : template.colors.cardBackground,
+                    border: isLuxuryPremiere ? `1px solid ${template.colors.accent}20` : 'none',
                   }}
                 >
                   {/* Poster with overlay */}
                   <div
-                    className="aspect-[3/4] relative"
+                    className="aspect-[3/4] relative overflow-hidden"
                     style={{
                       background: `linear-gradient(180deg, ${movie.color} 0%, ${movie.color}dd 100%)`,
                     }}
                   >
                     <Film
-                      className="absolute inset-0 m-auto h-10 w-10 opacity-30"
+                      className={cn(
+                        "absolute inset-0 m-auto opacity-30",
+                        isLuxuryPremiere ? "h-8 w-8" : "h-10 w-10"
+                      )}
                       style={{ color: '#ffffff' }}
                     />
+                    
+                    {/* Luxury Premiere hover overlay */}
+                    {isLuxuryPremiere && (
+                      <div 
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center"
+                        style={{ backgroundColor: `${template.colors.primary}90` }}
+                      >
+                        <button
+                          className="px-4 py-2 text-xs font-medium tracking-wide border-2 rounded"
+                          style={{ 
+                            borderColor: '#fff',
+                            color: '#fff'
+                          }}
+                        >
+                          BOOK NOW
+                        </button>
+                      </div>
+                    )}
+                    
                     {/* Genre/Duration overlay at bottom of poster */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                      <span className="text-xs text-white/90">
-                        {movie.genre} / {movie.duration}
-                      </span>
-                      <h4 className="font-semibold text-sm text-white mt-1">
+                    {!isLuxuryPremiere && (
+                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                        <span className="text-xs text-white/90">
+                          {movie.genre} / {movie.duration}
+                        </span>
+                        <h4 className="font-semibold text-sm text-white mt-1">
+                          {movie.title}
+                        </h4>
+                        <button
+                          className="mt-2 px-3 py-1 text-xs border border-white/80 text-white rounded hover:bg-white/20 transition-colors"
+                        >
+                          Get Ticket
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Luxury Premiere card info */}
+                  {isLuxuryPremiere && (
+                    <div className="p-4" style={{ backgroundColor: template.colors.cardBackground }}>
+                      <h4 
+                        className="font-semibold text-sm mb-1"
+                        style={{ 
+                          color: template.colors.text,
+                          fontFamily: template.fonts.heading
+                        }}
+                      >
                         {movie.title}
                       </h4>
-                      <button
-                        className="mt-2 px-3 py-1 text-xs border border-white/80 text-white rounded hover:bg-white/20 transition-colors"
-                      >
-                        Get Ticket
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className="text-xs"
+                          style={{ color: template.colors.accent }}
+                        >
+                          {movie.genre}
+                        </span>
+                        <span 
+                          className="text-xs"
+                          style={{ color: template.colors.mutedText }}
+                        >
+                          • {movie.duration}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -558,6 +785,24 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
           {/* Footer bar */}
           {isCinemaCarousel && (
             <div className="h-16" style={{ backgroundColor: '#1a1a1a' }} />
+          )}
+          
+          {/* Luxury Premiere Footer */}
+          {isLuxuryPremiere && (
+            <div 
+              className="py-8 text-center"
+              style={{ 
+                backgroundColor: template.colors.background,
+                borderTop: `1px solid ${template.colors.accent}20`
+              }}
+            >
+              <span 
+                className="text-xs tracking-[0.3em] uppercase"
+                style={{ color: template.colors.mutedText }}
+              >
+                Experience Luxury Cinema
+              </span>
+            </div>
           )}
         </div>
       </DialogContent>
