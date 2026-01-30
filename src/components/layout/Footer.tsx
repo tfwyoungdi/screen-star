@@ -88,8 +88,18 @@ const Footer = () => {
           ))}
         </div>
 
+        {/* Email Tracking Disclosure */}
+        <div className="mt-12 p-4 rounded-lg bg-muted/50 border border-border">
+          <p className="text-xs text-muted-foreground text-center">
+            <strong>Privacy Notice:</strong> We use email tracking to improve our communications. 
+            Transactional emails may contain tracking pixels to measure open rates and engagement. 
+            This helps us ensure important booking confirmations reach you. 
+            You can disable image loading in your email client to opt out.
+          </p>
+        </div>
+
         {/* Bottom */}
-        <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="mt-8 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} CineTix. All rights reserved.
           </p>
