@@ -248,10 +248,10 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
   const luxuryAccent = '#D4A574';
   const luxuryBg = '#0D0A0B';
   
-  // Colors for Neon Pulse
-  const neonPrimary = '#06B6D4';
-  const neonAccent = '#E879F9';
-  const neonBg = '#050510';
+  // Colors for Neon Pulse (Simple slate palette)
+  const neonPrimary = '#64748B';
+  const neonAccent = '#94A3B8';
+  const neonBg = '#0F172A';
 
   return (
     <section 

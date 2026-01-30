@@ -481,8 +481,7 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                   <div 
                     className="w-8 h-8 rounded-lg flex items-center justify-center relative overflow-hidden"
                     style={{ 
-                      background: `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`,
-                      boxShadow: `0 0 20px ${template.colors.primary}60`
+                      background: `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`
                     }}
                   >
                     <span className="text-white text-xs font-bold">NP</span>
@@ -517,8 +516,7 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                   className="px-5 py-2 text-xs font-semibold rounded-full transition-all"
                   style={{ 
                     background: `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`,
-                    color: '#fff',
-                    boxShadow: `0 4px 20px ${template.colors.primary}50`
+                    color: '#fff'
                   }}
                 >
                   Get Tickets
@@ -813,11 +811,10 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                     <span 
                       className="text-xs font-medium tracking-wider"
                       style={{ 
-                        color: template.colors.primary,
-                        textShadow: `0 0 10px ${template.colors.primary}60`
+                        color: template.colors.accent
                       }}
                     >
-                      ⬡ FEATURED
+                      ● FEATURED
                     </span>
                   </div>
                   <h3
