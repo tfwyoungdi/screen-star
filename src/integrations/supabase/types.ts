@@ -1586,6 +1586,7 @@ export type Database = {
           suspended_reason: string | null
           updated_at: string
           values_json: Json | null
+          website_template: string | null
         }
         Insert: {
           about_text?: string | null
@@ -1620,6 +1621,7 @@ export type Database = {
           suspended_reason?: string | null
           updated_at?: string
           values_json?: Json | null
+          website_template?: string | null
         }
         Update: {
           about_text?: string | null
@@ -1654,6 +1656,7 @@ export type Database = {
           suspended_reason?: string | null
           updated_at?: string
           values_json?: Json | null
+          website_template?: string | null
         }
         Relationships: []
       }
