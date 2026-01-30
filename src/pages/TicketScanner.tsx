@@ -158,9 +158,9 @@ export default function TicketScanner() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Load scan history from localStorage on mount
+  // Load scan history from sessionStorage on mount (ephemeral - cleared on tab close for security)
   useEffect(() => {
-    const savedHistory = localStorage.getItem('scanHistory');
+    const savedHistory = sessionStorage.getItem('scanHistory');
     if (savedHistory) {
       try {
         const parsed = JSON.parse(savedHistory);
@@ -174,10 +174,10 @@ export default function TicketScanner() {
     }
   }, []);
 
-  // Save scan history to localStorage when it changes
+  // Save scan history to sessionStorage when it changes (ephemeral storage for security)
   useEffect(() => {
     if (scanHistory.length > 0) {
-      localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+      sessionStorage.setItem('scanHistory', JSON.stringify(scanHistory));
     }
   }, [scanHistory]);
 
@@ -459,7 +459,7 @@ export default function TicketScanner() {
 
   const clearHistory = () => {
     setScanHistory([]);
-    localStorage.removeItem('scanHistory');
+    sessionStorage.removeItem('scanHistory');
     toast.success('Scan history cleared');
   };
 

@@ -144,9 +144,9 @@ export default function GateStaff() {
     return { name, message, raw: String(err) };
   }, []);
 
-  // Load history from localStorage
+  // Load history from sessionStorage (ephemeral - cleared on tab close for security)
   useEffect(() => {
-    const savedHistory = localStorage.getItem('gateStaffHistory');
+    const savedHistory = sessionStorage.getItem('gateStaffHistory');
     if (savedHistory) {
       try {
         const parsed = JSON.parse(savedHistory);
@@ -167,10 +167,10 @@ export default function GateStaff() {
     }
   }, []);
 
-  // Save history
+  // Save history to sessionStorage (ephemeral storage for security)
   useEffect(() => {
     if (scanHistory.length > 0) {
-      localStorage.setItem('gateStaffHistory', JSON.stringify(scanHistory));
+      sessionStorage.setItem('gateStaffHistory', JSON.stringify(scanHistory));
     }
   }, [scanHistory]);
 
