@@ -479,10 +479,34 @@ export default function PublicCinema() {
               <h3 className="text-2xl md:text-3xl font-bold mt-2 text-gray-900">
                 Movies Now Playing
               </h3>
+              
+              {/* Date Tabs for Cinema Carousel */}
+              <div className="flex items-center justify-center gap-2 md:gap-3 overflow-x-auto mt-6 pb-2">
+                {dateOptions.map((date, index) => {
+                  const isToday = isSameDay(date, today);
+                  const isTomorrow = isSameDay(date, addDays(today, 1));
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedDateIndex(index)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                        safeSelectedDateIndex === index
+                          ? 'shadow-md'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                      style={safeSelectedDateIndex === index ? {
+                        backgroundColor: cinema?.primary_color || '#C87B56',
+                        color: '#fff'
+                      } : undefined}
+                    >
+                      {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : format(date, 'EEE, MMM d')}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* Section Header for Luxury Premiere */}
           {cinema?.website_template === 'luxury-premiere' && (
             <div className="mb-10">
               <div className="flex items-center gap-3 mb-2">
@@ -500,6 +524,35 @@ export default function PublicCinema() {
               >
                 Now Showing
               </h3>
+              
+              {/* Date Tabs for Luxury Premiere */}
+              <div className="flex items-center gap-2 md:gap-3 overflow-x-auto mt-6 pb-2">
+                {dateOptions.map((date, index) => {
+                  const isToday = isSameDay(date, today);
+                  const isTomorrow = isSameDay(date, addDays(today, 1));
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedDateIndex(index)}
+                      className={`px-4 py-2 rounded text-sm font-medium transition-all whitespace-nowrap border ${
+                        safeSelectedDateIndex === index
+                          ? ''
+                          : 'border-transparent'
+                      }`}
+                      style={safeSelectedDateIndex === index ? {
+                        backgroundColor: '#8B2942',
+                        borderColor: '#D4A574',
+                        color: '#FAF7F5'
+                      } : {
+                        color: '#A89A9D',
+                        backgroundColor: 'transparent'
+                      }}
+                    >
+                      {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : format(date, 'EEE, MMM d')}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -521,6 +574,34 @@ export default function PublicCinema() {
               >
                 Now Showing
               </h3>
+              
+              {/* Date Tabs for Neon Pulse */}
+              <div className="flex items-center gap-2 md:gap-3 overflow-x-auto mt-6 pb-2">
+                {dateOptions.map((date, index) => {
+                  const isToday = isSameDay(date, today);
+                  const isTomorrow = isSameDay(date, addDays(today, 1));
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedDateIndex(index)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                        safeSelectedDateIndex === index
+                          ? ''
+                          : ''
+                      }`}
+                      style={safeSelectedDateIndex === index ? {
+                        backgroundColor: '#64748B',
+                        color: '#F8FAFC'
+                      } : {
+                        color: '#94A3B8',
+                        backgroundColor: '#1E293B'
+                      }}
+                    >
+                      {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : format(date, 'EEE, MMM d')}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
