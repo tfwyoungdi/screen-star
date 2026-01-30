@@ -187,14 +187,14 @@ export const websiteTemplates: WebsiteTemplate[] = [
   {
     id: 'neon-pulse',
     name: 'Neon Pulse',
-    description: 'Ultra-modern futuristic design with vibrant gradients, glassmorphism, and electric glow effects. Perfect for cutting-edge cinemas.',
+    description: 'Clean modern design with subtle elegance, glassmorphism effects, and refined typography. Perfect for contemporary cinemas.',
     icon: Zap,
     colors: {
-      primary: '#06B6D4', // Electric Cyan
-      secondary: '#0C0A1D',
-      accent: '#E879F9', // Vivid Magenta
-      background: '#050510',
-      cardBackground: '#0F0D24',
+      primary: '#64748B', // Slate Gray
+      secondary: '#1E293B',
+      accent: '#94A3B8', // Light Slate
+      background: '#0F172A',
+      cardBackground: '#1E293B',
       text: '#F8FAFC',
       mutedText: '#94A3B8',
     },
@@ -206,7 +206,7 @@ export const websiteTemplates: WebsiteTemplate[] = [
       heroStyle: 'gradient',
       cardStyle: 'glass',
       buttonStyle: 'pill',
-      animationLevel: 'dynamic',
+      animationLevel: 'moderate',
     },
   },
 ];
