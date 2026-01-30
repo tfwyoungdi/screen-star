@@ -17,7 +17,7 @@ export function ImpersonationBanner() {
     return null;
   }
 
-  const handleStopImpersonation = () => {
+  const handleStopImpersonation = async () => {
     // Log the end of impersonation
     logAction({
       action: 'cinema_impersonation_ended',
@@ -29,7 +29,7 @@ export function ImpersonationBanner() {
       },
     });
     
-    stopImpersonation();
+    await stopImpersonation();
     navigate('/platform-admin/cinemas');
   };
 

@@ -1738,6 +1738,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
+          impersonation_session_id: string | null
           ip_address: string | null
           target_id: string | null
           target_type: string | null
@@ -1749,6 +1750,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
+          impersonation_session_id?: string | null
           ip_address?: string | null
           target_id?: string | null
           target_type?: string | null
@@ -1760,12 +1762,21 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
+          impersonation_session_id?: string | null
           ip_address?: string | null
           target_id?: string | null
           target_type?: string | null
           user_agent?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "platform_audit_logs_impersonation_session_id_fkey"
+            columns: ["impersonation_session_id"]
+            isOneToOne: false
+            referencedRelation: "platform_impersonation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_email_analytics: {
         Row: {
@@ -1828,6 +1839,55 @@ export type Database = {
           {
             foreignKeyName: "platform_email_analytics_recipient_organization_id_fkey"
             columns: ["recipient_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_impersonation_sessions: {
+        Row: {
+          admin_user_id: string
+          ended_at: string | null
+          expires_at: string
+          id: string
+          impersonated_organization_id: string
+          started_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          impersonated_organization_id: string
+          started_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          impersonated_organization_id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_impersonation_sessio_impersonated_organization_id_fkey"
+            columns: ["impersonated_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_impersonation_sessio_impersonated_organization_id_fkey"
+            columns: ["impersonated_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_impersonation_sessio_impersonated_organization_id_fkey"
+            columns: ["impersonated_organization_id"]
             isOneToOne: false
             referencedRelation: "organizations_safe"
             referencedColumns: ["id"]
@@ -3156,6 +3216,7 @@ export type Database = {
       delete_old_shifts: { Args: never; Returns: undefined }
       generate_booking_reference: { Args: never; Returns: string }
       generate_unique_slug: { Args: { cinema_name: string }; Returns: string }
+      get_active_impersonation: { Args: { _user_id?: string }; Returns: string }
       get_customer_by_user_id: {
         Args: { _organization_id: string; _user_id: string }
         Returns: {
@@ -3214,6 +3275,8 @@ export type Database = {
         Args: { org_id: string; user_id: string }
         Returns: boolean
       }
+      start_impersonation: { Args: { _org_id: string }; Returns: string }
+      stop_impersonation: { Args: never; Returns: boolean }
       use_promo_code: {
         Args: {
           p_customer_email: string
