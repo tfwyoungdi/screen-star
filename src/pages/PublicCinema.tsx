@@ -1060,98 +1060,243 @@ export default function PublicCinema() {
 
       {/* Coming Soon */}
       {comingSoonMovies.length > 0 && (
-        <section id="coming-soon" className="py-12 md:py-16" style={{ backgroundColor: '#0a0a0f' }}>
+        <section 
+          id="coming-soon" 
+          className="py-12 md:py-16" 
+          style={{ 
+            backgroundColor: cinema?.website_template === 'cinema-carousel' 
+              ? '#f8f8f8' 
+              : cinema?.website_template === 'luxury-premiere'
+              ? '#0D0A0B'
+              : cinema?.website_template === 'neon-pulse'
+              ? '#0F172A'
+              : '#0a0a0f' 
+          }}
+        >
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-3 mb-10">
-              <h3 className="text-2xl md:text-3xl font-bold text-white">
-                Coming Soon
-              </h3>
-              <Badge 
-                className="text-xs font-medium border-0"
-                style={{ 
-                  backgroundColor: `${cinema?.primary_color || '#D4AF37'}20`,
-                  color: cinema?.primary_color || '#D4AF37'
-                }}
-              >
-                {comingSoonMovies.length} {comingSoonMovies.length === 1 ? 'Movie' : 'Movies'}
-              </Badge>
-            </div>
+            {/* Section Header - Cinema Carousel */}
+            {cinema?.website_template === 'cinema-carousel' && (
+              <div className="text-center mb-10">
+                <div className="flex justify-center mb-3">
+                  <Calendar className="h-5 w-5" style={{ color: cinema?.primary_color || '#C87B56' }} />
+                </div>
+                <span className="text-sm tracking-wide" style={{ color: cinema?.primary_color || '#C87B56' }}>
+                  Upcoming Releases
+                </span>
+                <h3 className="text-2xl md:text-3xl font-bold mt-2 text-gray-900">
+                  Coming Soon
+                </h3>
+              </div>
+            )}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-              {comingSoonMovies.map((movie) => (
-                <div 
-                  key={movie.id} 
-                  className="group relative"
+            {/* Section Header - Luxury Premiere */}
+            {cinema?.website_template === 'luxury-premiere' && (
+              <div className="mb-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-px w-8" style={{ backgroundColor: '#D4A574' }} />
+                  <span className="text-xs tracking-[0.2em] uppercase" style={{ color: '#D4A574' }}>
+                    Upcoming
+                  </span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-bold" style={{ color: '#FAF7F5', fontFamily: 'Playfair Display, serif' }}>
+                  Coming Soon
+                </h3>
+              </div>
+            )}
+
+            {/* Section Header - Neon Pulse */}
+            {cinema?.website_template === 'neon-pulse' && (
+              <div className="mb-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-xs font-medium tracking-wider" style={{ color: '#94A3B8' }}>
+                    ○ UPCOMING
+                  </span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-bold" style={{ color: '#F8FAFC', fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Coming Soon
+                </h3>
+              </div>
+            )}
+
+            {/* Section Header - Standard */}
+            {cinema?.website_template !== 'cinema-carousel' && cinema?.website_template !== 'luxury-premiere' && cinema?.website_template !== 'neon-pulse' && (
+              <div className="flex items-center gap-3 mb-10">
+                <h3 className="text-2xl md:text-3xl font-bold text-white">
+                  Coming Soon
+                </h3>
+                <Badge 
+                  className="text-xs font-medium border-0"
+                  style={{ 
+                    backgroundColor: `${cinema?.primary_color || '#D4AF37'}20`,
+                    color: cinema?.primary_color || '#D4AF37'
+                  }}
                 >
-                  {/* Poster Card */}
-                  <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-gray-900">
-                    {movie.poster_url ? (
-                      <img
-                        src={movie.poster_url}
-                        alt={movie.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-                        <Film className="h-12 w-12 text-gray-700" />
-                      </div>
-                    )}
-                    
-                    {/* Coming Soon Badge */}
-                    <div className="absolute top-2 left-2">
+                  {comingSoonMovies.length} {comingSoonMovies.length === 1 ? 'Movie' : 'Movies'}
+                </Badge>
+              </div>
+            )}
+
+            {/* Movies Grid - Cinema Carousel */}
+            {cinema?.website_template === 'cinema-carousel' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                {comingSoonMovies.map((movie) => (
+                  <div key={movie.id} className="group relative rounded-lg overflow-hidden shadow-lg bg-white">
+                    <div className="relative aspect-[2/3]">
+                      {movie.poster_url ? (
+                        <img src={movie.poster_url} alt={movie.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                          <Film className="h-12 w-12 text-gray-400" />
+                        </div>
+                      )}
                       <Badge 
-                        className="text-xs font-semibold border-0 shadow-lg"
-                        style={{ 
-                          backgroundColor: cinema?.primary_color || '#D4AF37',
-                          color: '#000'
-                        }}
+                        className="absolute top-2 left-2 text-xs font-semibold border-0"
+                        style={{ backgroundColor: cinema?.primary_color || '#C87B56', color: '#fff' }}
                       >
                         Coming Soon
                       </Badge>
                     </div>
-                    
-                    {/* Hover overlay with info */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-                      {/* Bottom info */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <div className="flex items-center gap-2 text-white/70 text-xs mb-2">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {movie.duration_minutes} min
-                          </span>
-                          {movie.rating && (
-                            <Badge className="text-[10px] px-1.5 py-0 bg-white/10 text-white border-0">
-                              {movie.rating}
-                            </Badge>
-                          )}
-                        </div>
-                        {movie.genre && (
-                          <p className="text-white/50 text-xs">{movie.genre}</p>
-                        )}
-                        {movie.description && (
-                          <p className="text-white/60 text-xs line-clamp-2 mt-2">
-                            {movie.description}
-                          </p>
-                        )}
-                      </div>
+                    <div className="p-3">
+                      <h4 className="text-sm font-semibold text-gray-900 line-clamp-1">{movie.title}</h4>
+                      {movie.release_date && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(movie.release_date), 'MMM d, yyyy')}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  
-                  {/* Title and release date below poster */}
-                  <div className="mt-2">
-                    <h4 className="text-sm font-medium text-white/90 line-clamp-1 group-hover:text-white transition-colors">
-                      {movie.title}
-                    </h4>
-                    {movie.release_date && (
-                      <p className="text-xs text-white/50 flex items-center gap-1 mt-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(movie.release_date), 'MMM d, yyyy')}
-                      </p>
-                    )}
+                ))}
+              </div>
+            )}
+
+            {/* Movies Grid - Luxury Premiere */}
+            {cinema?.website_template === 'luxury-premiere' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                {comingSoonMovies.map((movie) => (
+                  <div 
+                    key={movie.id} 
+                    className="group rounded-lg overflow-hidden"
+                    style={{ backgroundColor: '#1A1315', border: '1px solid rgba(212, 165, 116, 0.2)' }}
+                  >
+                    <div className="relative aspect-[2/3]">
+                      {movie.poster_url ? (
+                        <img src={movie.poster_url} alt={movie.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #8B2942 0%, #1C1017 100%)' }}>
+                          <Film className="h-12 w-12 text-white/30" />
+                        </div>
+                      )}
+                      <Badge 
+                        className="absolute top-2 left-2 text-xs font-semibold border-0"
+                        style={{ backgroundColor: '#D4A574', color: '#0D0A0B' }}
+                      >
+                        Coming Soon
+                      </Badge>
+                    </div>
+                    <div className="p-3" style={{ backgroundColor: '#1A1315' }}>
+                      <h4 className="text-sm font-semibold line-clamp-1" style={{ color: '#FAF7F5', fontFamily: 'Playfair Display, serif' }}>
+                        {movie.title}
+                      </h4>
+                      {movie.release_date && (
+                        <p className="text-xs flex items-center gap-1 mt-1" style={{ color: '#D4A574' }}>
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(movie.release_date), 'MMM d, yyyy')}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {/* Movies Grid - Neon Pulse */}
+            {cinema?.website_template === 'neon-pulse' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                {comingSoonMovies.map((movie) => (
+                  <div 
+                    key={movie.id} 
+                    className="group rounded-xl overflow-hidden"
+                    style={{ backgroundColor: '#1E293B', border: '1px solid rgba(100, 116, 139, 0.3)' }}
+                  >
+                    <div className="relative aspect-[2/3]">
+                      {movie.poster_url ? (
+                        <img src={movie.poster_url} alt={movie.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(100, 116, 139, 0.3) 0%, rgba(148, 163, 184, 0.2) 100%)' }}>
+                          <Film className="h-12 w-12 text-white/30" />
+                        </div>
+                      )}
+                      <Badge 
+                        className="absolute top-2 left-2 text-xs font-semibold border-0"
+                        style={{ backgroundColor: '#64748B', color: '#F8FAFC' }}
+                      >
+                        Coming Soon
+                      </Badge>
+                    </div>
+                    <div className="p-3" style={{ backgroundColor: '#1E293B' }}>
+                      <h4 className="text-sm font-semibold line-clamp-1" style={{ color: '#F8FAFC', fontFamily: "'Space Grotesk', sans-serif" }}>
+                        {movie.title}
+                      </h4>
+                      {movie.release_date && (
+                        <p className="text-xs flex items-center gap-1 mt-1" style={{ color: '#94A3B8' }}>
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(movie.release_date), 'MMM d, yyyy')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Movies Grid - Standard */}
+            {cinema?.website_template !== 'cinema-carousel' && cinema?.website_template !== 'luxury-premiere' && cinema?.website_template !== 'neon-pulse' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                {comingSoonMovies.map((movie) => (
+                  <div key={movie.id} className="group relative">
+                    <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-gray-900">
+                      {movie.poster_url ? (
+                        <img src={movie.poster_url} alt={movie.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                          <Film className="h-12 w-12 text-gray-700" />
+                        </div>
+                      )}
+                      <div className="absolute top-2 left-2">
+                        <Badge className="text-xs font-semibold border-0 shadow-lg" style={{ backgroundColor: cinema?.primary_color || '#D4AF37', color: '#000' }}>
+                          Coming Soon
+                        </Badge>
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <div className="flex items-center gap-2 text-white/70 text-xs mb-2">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {movie.duration_minutes} min
+                            </span>
+                            {movie.rating && (
+                              <Badge className="text-[10px] px-1.5 py-0 bg-white/10 text-white border-0">{movie.rating}</Badge>
+                            )}
+                          </div>
+                          {movie.genre && <p className="text-white/50 text-xs">{movie.genre}</p>}
+                          {movie.description && <p className="text-white/60 text-xs line-clamp-2 mt-2">{movie.description}</p>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <h4 className="text-sm font-medium text-white/90 line-clamp-1 group-hover:text-white transition-colors">{movie.title}</h4>
+                      {movie.release_date && (
+                        <p className="text-xs text-white/50 flex items-center gap-1 mt-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(movie.release_date), 'MMM d, yyyy')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
