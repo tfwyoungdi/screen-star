@@ -1573,7 +1573,6 @@ export type Database = {
           payment_gateway: string | null
           payment_gateway_configured: boolean | null
           payment_gateway_public_key: string | null
-          payment_gateway_secret_key: string | null
           primary_color: string | null
           secondary_color: string | null
           seo_description: string | null
@@ -1608,7 +1607,6 @@ export type Database = {
           payment_gateway?: string | null
           payment_gateway_configured?: boolean | null
           payment_gateway_public_key?: string | null
-          payment_gateway_secret_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           seo_description?: string | null
@@ -1643,7 +1641,6 @@ export type Database = {
           payment_gateway?: string | null
           payment_gateway_configured?: boolean | null
           payment_gateway_public_key?: string | null
-          payment_gateway_secret_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           seo_description?: string | null
@@ -1711,6 +1708,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_admin_rate_limits: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
       }
       platform_announcement_campaigns: {
         Row: {
@@ -3318,10 +3342,19 @@ export type Database = {
       }
     }
     Functions: {
+      check_platform_admin_rate_limit: {
+        Args: {
+          _action_type: string
+          _max_requests?: number
+          _window_seconds?: number
+        }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: { _key: string; _max_requests: number; _window_seconds: number }
         Returns: Json
       }
+      cleanup_platform_admin_rate_limits: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       delete_old_loyalty_transactions: { Args: never; Returns: undefined }
       delete_old_shifts: { Args: never; Returns: undefined }
