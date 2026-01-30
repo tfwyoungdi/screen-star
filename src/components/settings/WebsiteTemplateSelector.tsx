@@ -184,6 +184,31 @@ export const websiteTemplates: WebsiteTemplate[] = [
       animationLevel: 'dynamic',
     },
   },
+  {
+    id: 'neon-pulse',
+    name: 'Neon Pulse',
+    description: 'Ultra-modern futuristic design with vibrant gradients, glassmorphism, and electric glow effects. Perfect for cutting-edge cinemas.',
+    icon: Zap,
+    colors: {
+      primary: '#06B6D4', // Electric Cyan
+      secondary: '#0C0A1D',
+      accent: '#E879F9', // Vivid Magenta
+      background: '#050510',
+      cardBackground: '#0F0D24',
+      text: '#F8FAFC',
+      mutedText: '#94A3B8',
+    },
+    fonts: {
+      heading: 'Space Grotesk',
+      body: 'Inter',
+    },
+    style: {
+      heroStyle: 'gradient',
+      cardStyle: 'glass',
+      buttonStyle: 'pill',
+      animationLevel: 'dynamic',
+    },
+  },
 ];
 
 interface TemplateCardProps {
@@ -343,6 +368,7 @@ interface TemplatePreviewDialogProps {
 function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: TemplatePreviewDialogProps) {
   const isCinemaCarousel = template.id === 'cinema-carousel';
   const isLuxuryPremiere = template.id === 'luxury-premiere';
+  const isNeonPulse = template.id === 'neon-pulse';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -441,12 +467,74 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
             </div>
           )}
 
+          {/* Navigation Bar - Neon Pulse */}
+          {isNeonPulse && (
+            <div
+              className="flex items-center justify-between px-8 py-4"
+              style={{ 
+                backgroundColor: 'transparent',
+                borderBottom: `1px solid ${template.colors.primary}30`
+              }}
+            >
+              <div className="flex items-center gap-10">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center relative overflow-hidden"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`,
+                      boxShadow: `0 0 20px ${template.colors.primary}60`
+                    }}
+                  >
+                    <span className="text-white text-xs font-bold">NP</span>
+                  </div>
+                  <span 
+                    className="text-lg font-bold tracking-wide"
+                    style={{ 
+                      color: template.colors.text,
+                      fontFamily: "'Space Grotesk', sans-serif"
+                    }}
+                  >
+                    {cinemaName || 'NEON PULSE'}
+                  </span>
+                </div>
+                <nav className="hidden md:flex items-center gap-6">
+                  <span 
+                    className="text-sm font-medium px-3 py-1 rounded-full"
+                    style={{ 
+                      color: template.colors.background,
+                      backgroundColor: template.colors.primary
+                    }}
+                  >
+                    Home
+                  </span>
+                  <span className="text-sm" style={{ color: template.colors.mutedText }}>Movies</span>
+                  <span className="text-sm" style={{ color: template.colors.mutedText }}>Schedule</span>
+                  <span className="text-sm" style={{ color: template.colors.mutedText }}>Contact</span>
+                </nav>
+              </div>
+              <div className="flex items-center gap-4">
+                <button 
+                  className="px-5 py-2 text-xs font-semibold rounded-full transition-all"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`,
+                    color: '#fff',
+                    boxShadow: `0 4px 20px ${template.colors.primary}50`
+                  }}
+                >
+                  Get Tickets
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Hero Section */}
           <div
             className="relative flex flex-col justify-center px-8 md:px-12"
             style={{
-              height: isLuxuryPremiere ? '360px' : isCinemaCarousel ? '320px' : '280px',
-              background: isLuxuryPremiere
+              height: isNeonPulse ? '380px' : isLuxuryPremiere ? '360px' : isCinemaCarousel ? '320px' : '280px',
+              background: isNeonPulse
+                ? `radial-gradient(ellipse at 30% 0%, ${template.colors.primary}20 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, ${template.colors.accent}15 0%, transparent 50%), linear-gradient(180deg, ${template.colors.secondary} 0%, ${template.colors.background} 100%)`
+                : isLuxuryPremiere
                 ? `linear-gradient(135deg, ${template.colors.background} 0%, ${template.colors.secondary} 50%, ${template.colors.background} 100%)`
                 : isCinemaCarousel
                 ? `linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%), linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)`
@@ -457,6 +545,28 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                 : template.colors.secondary,
             }}
           >
+            {/* Decorative elements for Neon Pulse */}
+            {isNeonPulse && (
+              <>
+                <div 
+                  className="absolute top-10 right-20 w-80 h-80 rounded-full blur-[100px] opacity-30"
+                  style={{ backgroundColor: template.colors.primary }}
+                />
+                <div 
+                  className="absolute bottom-10 left-10 w-60 h-60 rounded-full blur-[80px] opacity-25"
+                  style={{ backgroundColor: template.colors.accent }}
+                />
+                {/* Animated grid lines */}
+                <div 
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    backgroundImage: `linear-gradient(${template.colors.primary}20 1px, transparent 1px), linear-gradient(90deg, ${template.colors.primary}20 1px, transparent 1px)`,
+                    backgroundSize: '60px 60px'
+                  }}
+                />
+              </>
+            )}
+            
             {/* Decorative elements for Luxury Premiere */}
             {isLuxuryPremiere && (
               <>
@@ -496,9 +606,26 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
             )}
 
             {/* Hero Content */}
-            <div className={cn("max-w-xl relative z-10", isLuxuryPremiere && "text-center mx-auto max-w-2xl")}>
+            <div className={cn(
+              "max-w-xl relative z-10", 
+              isLuxuryPremiere && "text-center mx-auto max-w-2xl",
+              isNeonPulse && "text-center mx-auto max-w-2xl"
+            )}>
               {/* Category Label */}
-              {isLuxuryPremiere ? (
+              {isNeonPulse ? (
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div 
+                    className="px-4 py-1 text-xs font-medium tracking-wider rounded-full"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${template.colors.primary}30, ${template.colors.accent}30)`,
+                      border: `1px solid ${template.colors.primary}50`,
+                      color: template.colors.primary
+                    }}
+                  >
+                    ✦ NOW STREAMING
+                  </div>
+                </div>
+              ) : isLuxuryPremiere ? (
                 <div className="flex items-center justify-center gap-4 mb-4">
                   <div className="h-px w-12" style={{ backgroundColor: template.colors.accent }} />
                   <span 
@@ -522,14 +649,29 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
               <h2
                 className={cn(
                   "font-bold leading-tight",
-                  isLuxuryPremiere ? "text-4xl md:text-6xl mt-2 mb-6" : "text-5xl mt-3 mb-4"
+                  isNeonPulse ? "text-4xl md:text-6xl mt-2 mb-6" : isLuxuryPremiere ? "text-4xl md:text-6xl mt-2 mb-6" : "text-5xl mt-3 mb-4"
                 )}
                 style={{
                   color: template.colors.text,
                   fontFamily: template.fonts.heading,
                 }}
               >
-                {isLuxuryPremiere ? (
+                {isNeonPulse ? (
+                  <>
+                    <span 
+                      style={{ 
+                        background: `linear-gradient(135deg, ${template.colors.primary}, ${template.colors.accent})`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}
+                    >
+                      {cinemaName || 'NEON'}
+                    </span>
+                    <br />
+                    <span style={{ color: template.colors.text }}>PULSE</span>
+                  </>
+                ) : isLuxuryPremiere ? (
                   <>{cinemaName || 'The Grand'}<br /><span style={{ color: template.colors.accent }}>Premiere</span></>
                 ) : (
                   <>The {cinemaName || 'Lorem'}<br />Movie</>
@@ -540,18 +682,20 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
               <p
                 className={cn(
                   "leading-relaxed",
-                  isLuxuryPremiere ? "text-base mb-10 max-w-md mx-auto" : "text-sm mb-8 max-w-lg"
+                  isNeonPulse ? "text-base mb-8 max-w-lg mx-auto" : isLuxuryPremiere ? "text-base mb-10 max-w-md mx-auto" : "text-sm mb-8 max-w-lg"
                 )}
                 style={{ color: template.colors.mutedText }}
               >
-                {isLuxuryPremiere 
+                {isNeonPulse
+                  ? "Step into the future of cinema. Immersive screens, cutting-edge sound, and an electrifying atmosphere await."
+                  : isLuxuryPremiere 
                   ? "Experience cinema in its most exquisite form. Luxury seating, premium sound, and an unforgettable atmosphere await."
                   : "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since the 1500s."
                 }
               </p>
 
               {/* CTA Buttons */}
-              <div className={cn("flex gap-4", isLuxuryPremiere && "justify-center")}>
+              <div className={cn("flex gap-4", (isLuxuryPremiere || isNeonPulse) && "justify-center")}>
                 <button
                   className={cn(
                     'px-6 py-3 text-sm font-medium flex items-center gap-2 transition-all hover:opacity-90',
@@ -560,12 +704,18 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                     template.style.buttonStyle === 'sharp' && 'rounded-none'
                   )}
                   style={{
-                    backgroundColor: isLuxuryPremiere ? template.colors.primary : template.colors.primary,
+                    background: isNeonPulse 
+                      ? `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`
+                      : template.colors.primary,
                     color: '#ffffff',
-                    boxShadow: isLuxuryPremiere ? `0 8px 32px ${template.colors.primary}40` : 'none'
+                    boxShadow: isNeonPulse 
+                      ? `0 8px 32px ${template.colors.primary}60, 0 0 0 1px ${template.colors.primary}30` 
+                      : isLuxuryPremiere 
+                      ? `0 8px 32px ${template.colors.primary}40` 
+                      : 'none'
                   }}
                 >
-                  {isLuxuryPremiere ? 'Reserve Seats' : <><span>◉</span> More Info</>}
+                  {isNeonPulse ? '⚡ Book Now' : isLuxuryPremiere ? 'Reserve Seats' : <><span>◉</span> More Info</>}
                 </button>
                 <button
                   className={cn(
@@ -575,12 +725,24 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                     template.style.buttonStyle === 'sharp' && 'rounded-none'
                   )}
                   style={{
-                    borderColor: isLuxuryPremiere ? template.colors.accent : isCinemaCarousel ? '#ffffff' : template.colors.text,
-                    color: isLuxuryPremiere ? template.colors.accent : isCinemaCarousel ? '#ffffff' : template.colors.text,
-                    backgroundColor: 'transparent',
+                    borderColor: isNeonPulse 
+                      ? template.colors.accent 
+                      : isLuxuryPremiere 
+                      ? template.colors.accent 
+                      : isCinemaCarousel 
+                      ? '#ffffff' 
+                      : template.colors.text,
+                    color: isNeonPulse 
+                      ? template.colors.accent 
+                      : isLuxuryPremiere 
+                      ? template.colors.accent 
+                      : isCinemaCarousel 
+                      ? '#ffffff' 
+                      : template.colors.text,
+                    backgroundColor: isNeonPulse ? `${template.colors.accent}10` : 'transparent',
                   }}
                 >
-                  {isLuxuryPremiere ? 'Watch Trailer' : <><span>◉</span> Get Ticket</>}
+                  {isNeonPulse ? '▷ Trailer' : isLuxuryPremiere ? 'Watch Trailer' : <><span>◉</span> Get Ticket</>}
                 </button>
               </div>
             </div>
@@ -613,8 +775,18 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
             />
           )}
 
+          {/* Gradient Separator for neon-pulse */}
+          {isNeonPulse && (
+            <div
+              className="h-1 w-full"
+              style={{
+                background: `linear-gradient(90deg, transparent 0%, ${template.colors.primary} 20%, ${template.colors.accent} 80%, transparent 100%)`
+              }}
+            />
+          )}
+
           {/* Accent bar for other templates */}
-          {!isCinemaCarousel && !isLuxuryPremiere && (
+          {!isCinemaCarousel && !isLuxuryPremiere && !isNeonPulse && (
             <div
               className="h-1 w-full"
               style={{ backgroundColor: template.colors.primary }}
@@ -629,13 +801,36 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
             }}
           >
             {/* Section Header */}
-            <div className={cn("mb-8", isLuxuryPremiere ? "text-left" : "text-center")}>
+            <div className={cn("mb-8", (isLuxuryPremiere || isNeonPulse) ? "text-left" : "text-center")}>
               {isCinemaCarousel && (
                 <div className="flex justify-center mb-3">
                   <Film className="h-5 w-5" style={{ color: template.colors.primary }} />
                 </div>
               )}
-              {isLuxuryPremiere ? (
+              {isNeonPulse ? (
+                <>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span 
+                      className="text-xs font-medium tracking-wider"
+                      style={{ 
+                        color: template.colors.primary,
+                        textShadow: `0 0 10px ${template.colors.primary}60`
+                      }}
+                    >
+                      ⬡ FEATURED
+                    </span>
+                  </div>
+                  <h3
+                    className="text-2xl md:text-3xl font-bold"
+                    style={{
+                      color: template.colors.text,
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                  >
+                    Now Showing
+                  </h3>
+                </>
+              ) : isLuxuryPremiere ? (
                 <>
                   <div className="flex items-center gap-3 mb-2">
                     <div className="h-px w-8" style={{ backgroundColor: template.colors.accent }} />
@@ -687,31 +882,60 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                 { title: 'Scariest Game', genre: 'Thriller', duration: '190 Mins', color: isLuxuryPremiere ? '#1a1520' : '#4a5568' },
                 { title: 'New Day Dreams', genre: 'Romance', duration: '150 Mins', color: isLuxuryPremiere ? template.colors.secondary : '#2d3748' },
               ].map((movie, i) => (
-                <div
+              <div
                   key={i}
                   className={cn(
-                    "rounded-lg overflow-hidden",
-                    isLuxuryPremiere ? "group cursor-pointer" : "shadow-lg"
+                    "rounded-lg overflow-hidden group cursor-pointer",
+                    isLuxuryPremiere && "group cursor-pointer",
+                    isNeonPulse && "relative"
                   )}
                   style={{
                     backgroundColor: isCinemaCarousel ? '#f8f8f8' : template.colors.cardBackground,
-                    border: isLuxuryPremiere ? `1px solid ${template.colors.accent}20` : 'none',
+                    border: isNeonPulse 
+                      ? `1px solid ${template.colors.primary}30`
+                      : isLuxuryPremiere 
+                      ? `1px solid ${template.colors.accent}20` 
+                      : 'none',
+                    boxShadow: isNeonPulse ? `0 4px 20px ${template.colors.background}` : 'none'
                   }}
                 >
                   {/* Poster with overlay */}
                   <div
                     className="aspect-[3/4] relative overflow-hidden"
                     style={{
-                      background: `linear-gradient(180deg, ${movie.color} 0%, ${movie.color}dd 100%)`,
+                      background: isNeonPulse 
+                        ? `linear-gradient(135deg, ${template.colors.primary}40 0%, ${template.colors.accent}30 100%)`
+                        : `linear-gradient(180deg, ${movie.color} 0%, ${movie.color}dd 100%)`,
                     }}
                   >
                     <Film
                       className={cn(
                         "absolute inset-0 m-auto opacity-30",
-                        isLuxuryPremiere ? "h-8 w-8" : "h-10 w-10"
+                        isLuxuryPremiere || isNeonPulse ? "h-8 w-8" : "h-10 w-10"
                       )}
                       style={{ color: '#ffffff' }}
                     />
+                    
+                    {/* Neon Pulse hover overlay */}
+                    {isNeonPulse && (
+                      <div 
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center"
+                        style={{ 
+                          background: `linear-gradient(135deg, ${template.colors.primary}e0 0%, ${template.colors.accent}e0 100%)`
+                        }}
+                      >
+                        <button
+                          className="px-5 py-2 text-xs font-semibold tracking-wide rounded-full"
+                          style={{ 
+                            backgroundColor: '#fff',
+                            color: template.colors.background,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                          }}
+                        >
+                          ⚡ BOOK NOW
+                        </button>
+                      </div>
+                    )}
                     
                     {/* Luxury Premiere hover overlay */}
                     {isLuxuryPremiere && (
@@ -732,7 +956,7 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                     )}
                     
                     {/* Genre/Duration overlay at bottom of poster */}
-                    {!isLuxuryPremiere && (
+                    {!isLuxuryPremiere && !isNeonPulse && (
                       <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
                         <span className="text-xs text-white/90">
                           {movie.genre} / {movie.duration}
@@ -748,6 +972,38 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                       </div>
                     )}
                   </div>
+                  
+                  {/* Neon Pulse card info */}
+                  {isNeonPulse && (
+                    <div className="p-4" style={{ backgroundColor: template.colors.cardBackground }}>
+                      <h4 
+                        className="font-semibold text-sm mb-1"
+                        style={{ 
+                          color: template.colors.text,
+                          fontFamily: "'Space Grotesk', sans-serif"
+                        }}
+                      >
+                        {movie.title}
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className="text-xs px-2 py-0.5 rounded-full"
+                          style={{ 
+                            backgroundColor: `${template.colors.primary}20`,
+                            color: template.colors.primary 
+                          }}
+                        >
+                          {movie.genre}
+                        </span>
+                        <span 
+                          className="text-xs"
+                          style={{ color: template.colors.mutedText }}
+                        >
+                          {movie.duration}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Luxury Premiere card info */}
                   {isLuxuryPremiere && (
@@ -801,6 +1057,35 @@ function TemplatePreviewDialog({ template, cinemaName, open, onOpenChange }: Tem
                 style={{ color: template.colors.mutedText }}
               >
                 Experience Luxury Cinema
+              </span>
+            </div>
+          )}
+          
+          {/* Neon Pulse Footer */}
+          {isNeonPulse && (
+            <div 
+              className="py-6 text-center relative overflow-hidden"
+              style={{ 
+                backgroundColor: template.colors.background,
+                borderTop: `1px solid ${template.colors.primary}30`
+              }}
+            >
+              <div 
+                className="absolute inset-0 opacity-20"
+                style={{
+                  background: `radial-gradient(ellipse at center, ${template.colors.primary}30 0%, transparent 70%)`
+                }}
+              />
+              <span 
+                className="text-xs font-medium tracking-wider relative z-10"
+                style={{ 
+                  background: `linear-gradient(90deg, ${template.colors.primary}, ${template.colors.accent})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                ✦ THE FUTURE OF CINEMA ✦
               </span>
             </div>
           )}

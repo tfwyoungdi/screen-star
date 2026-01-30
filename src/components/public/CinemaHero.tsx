@@ -242,16 +242,44 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
 
   const isCinemaCarousel = websiteTemplate === 'cinema-carousel';
   const isLuxuryPremiere = websiteTemplate === 'luxury-premiere';
+  const isNeonPulse = websiteTemplate === 'neon-pulse';
   
   // Colors for Luxury Premiere
   const luxuryAccent = '#D4A574';
   const luxuryBg = '#0D0A0B';
+  
+  // Colors for Neon Pulse
+  const neonPrimary = '#06B6D4';
+  const neonAccent = '#E879F9';
+  const neonBg = '#050510';
 
   return (
     <section 
       className="relative h-[400px] md:h-[600px] overflow-hidden" 
-      style={{ backgroundColor: isLuxuryPremiere ? luxuryBg : '#0a0a12' }}
+      style={{ backgroundColor: isNeonPulse ? neonBg : isLuxuryPremiere ? luxuryBg : '#0a0a12' }}
     >
+      {/* Neon Pulse background effects */}
+      {isNeonPulse && (
+        <>
+          <div 
+            className="absolute top-10 right-20 w-96 h-96 rounded-full blur-[150px] opacity-30 pointer-events-none"
+            style={{ backgroundColor: neonPrimary }}
+          />
+          <div 
+            className="absolute bottom-10 left-10 w-72 h-72 rounded-full blur-[120px] opacity-25 pointer-events-none"
+            style={{ backgroundColor: neonAccent }}
+          />
+          {/* Grid lines */}
+          <div 
+            className="absolute inset-0 opacity-10 pointer-events-none"
+            style={{
+              backgroundImage: `linear-gradient(${neonPrimary}20 1px, transparent 1px), linear-gradient(90deg, ${neonPrimary}20 1px, transparent 1px)`,
+              backgroundSize: '60px 60px'
+            }}
+          />
+        </>
+      )}
+
       {/* Background Movie Poster - Fixed size container */}
       {featuredMovies.map((movie, index) => (
         <div
@@ -269,9 +297,18 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             />
           </div>
           {/* Gradient Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a12] via-[#0a0a12]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a12]/90 via-transparent to-[#0a0a12]/70" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12]/50 via-transparent to-[#0a0a12]" />
+          {isNeonPulse ? (
+            <>
+              <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${neonBg}90 0%, ${neonBg}60 50%, ${neonBg} 100%)` }} />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${neonBg} 0%, transparent 50%, ${neonBg}90 100%)` }} />
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a12] via-[#0a0a12]/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a12]/90 via-transparent to-[#0a0a12]/70" />
+              <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12]/50 via-transparent to-[#0a0a12]" />
+            </>
+          )}
         </div>
       ))}
 
@@ -411,7 +448,7 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
       <div className="relative z-10 h-full flex flex-col justify-center px-6 lg:px-12">
         <div className={cn(
           "max-w-7xl mx-auto w-full",
-          isLuxuryPremiere && "text-center"
+          (isLuxuryPremiere || isNeonPulse) && "text-center"
         )}>
           {/* Category Label for Cinema Carousel */}
           {isCinemaCarousel && currentMovie.genre && (
@@ -437,20 +474,58 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             </div>
           )}
 
+          {/* Neon Pulse header */}
+          {isNeonPulse && (
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div 
+                className="px-4 py-1 text-xs font-medium tracking-wider rounded-full"
+                style={{ 
+                  background: `linear-gradient(135deg, ${neonPrimary}30, ${neonAccent}30)`,
+                  border: `1px solid ${neonPrimary}50`,
+                  color: neonPrimary
+                }}
+              >
+                ✦ NOW STREAMING
+              </div>
+            </div>
+          )}
+
           {/* Movie Title */}
           <h1 
             className={cn(
-              "font-bold text-white leading-none tracking-tight",
-              isLuxuryPremiere 
+              "font-bold leading-none tracking-tight",
+              isNeonPulse
+                ? "text-3xl sm:text-4xl md:text-6xl lg:text-7xl mb-4 md:mb-6"
+                : isLuxuryPremiere 
                 ? "text-3xl sm:text-4xl md:text-6xl lg:text-7xl mb-4 md:mb-6" 
                 : "text-2xl sm:text-3xl md:text-5xl lg:text-6xl mb-2 md:mb-3"
             )}
             style={{ 
-              fontFamily: isLuxuryPremiere ? "'Playfair Display', serif" : "'Arial Black', 'Helvetica Neue', sans-serif",
-              textShadow: '2px 4px 20px rgba(0,0,0,0.8)'
+              fontFamily: isNeonPulse 
+                ? "'Space Grotesk', sans-serif" 
+                : isLuxuryPremiere 
+                ? "'Playfair Display', serif" 
+                : "'Arial Black', 'Helvetica Neue', sans-serif",
+              textShadow: isNeonPulse 
+                ? `0 0 40px ${neonPrimary}60` 
+                : '2px 4px 20px rgba(0,0,0,0.8)',
+              color: isNeonPulse ? '#F8FAFC' : '#fff'
             }}
           >
-            {isLuxuryPremiere ? (
+            {isNeonPulse ? (
+              <>
+                <span 
+                  style={{ 
+                    background: `linear-gradient(135deg, ${neonPrimary}, ${neonAccent})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
+                  {currentMovie.title}
+                </span>
+              </>
+            ) : isLuxuryPremiere ? (
               <>
                 {currentMovie.title}
               </>
@@ -478,8 +553,18 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             </p>
           )}
 
+          {/* Description for Neon Pulse */}
+          {isNeonPulse && currentMovie.description && (
+            <p 
+              className="text-base mb-8 max-w-xl mx-auto leading-relaxed line-clamp-2"
+              style={{ color: '#94A3B8' }}
+            >
+              {currentMovie.description}
+            </p>
+          )}
+
           {/* Meta Info Row - only for standard templates */}
-          {!isCinemaCarousel && !isLuxuryPremiere && (
+          {!isCinemaCarousel && !isLuxuryPremiere && !isNeonPulse && (
           <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5 text-xs md:text-sm text-white/80">
             <span>{new Date().getFullYear()}</span>
             <span className="w-1 h-1 rounded-full" style={{ backgroundColor: primaryColor }} />
@@ -498,9 +583,56 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
           {/* Action Buttons */}
           <div className={cn(
             "flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5",
-            isLuxuryPremiere && "justify-center"
+            (isLuxuryPremiere || isNeonPulse) && "justify-center"
           )}>
-            {isLuxuryPremiere ? (
+            {isNeonPulse ? (
+              <>
+                <Link to={`/cinema/${cinemaSlug}/booking?movie=${currentMovie.id}`}>
+                  <Button
+                    size="sm"
+                    className="font-semibold px-6 py-3 text-sm rounded-full hover:opacity-90 transition-opacity"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${neonPrimary} 0%, ${neonAccent} 100%)`,
+                      color: '#fff',
+                      boxShadow: `0 8px 32px ${neonPrimary}60, 0 0 0 1px ${neonPrimary}30`
+                    }}
+                  >
+                    ⚡ Book Now
+                  </Button>
+                </Link>
+                {currentMovie.trailer_url && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="font-semibold px-6 py-3 text-sm rounded-full border-2 transition-colors"
+                        style={{ 
+                          borderColor: neonAccent,
+                          color: neonAccent,
+                          backgroundColor: `${neonAccent}10`
+                        }}
+                      >
+                        ▷ Trailer
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-white/10">
+                      <DialogHeader className="p-4 pb-0">
+                        <DialogTitle className="text-white">{currentMovie.title} - Trailer</DialogTitle>
+                      </DialogHeader>
+                      <div className="aspect-video">
+                        <iframe
+                          src={getTrailerEmbed(currentMovie.trailer_url)!}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </>
+            ) : isLuxuryPremiere ? (
               <>
                 <Link to={`/cinema/${cinemaSlug}/booking?movie=${currentMovie.id}`}>
                   <Button
