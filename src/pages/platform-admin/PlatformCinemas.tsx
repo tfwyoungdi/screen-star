@@ -249,23 +249,27 @@ export default function PlatformCinemas() {
     suspendMutation.mutate({ id: cinema.id, suspend: false });
   };
 
-  const handleImpersonate = (cinema: CinemaWithSubscription) => {
-    startImpersonation(cinema);
-    
-    // Log the impersonation action
-    logAction({
-      action: 'cinema_impersonation_started',
-      target_type: 'organization',
-      target_id: cinema.id,
-      details: {
-        cinema_name: cinema.name,
-        cinema_slug: cinema.slug,
-      },
-    });
-    
-    toast.success(`Now viewing as ${cinema.name}`);
-    setSelectedCinema(null);
-    navigate('/dashboard');
+  const handleImpersonate = async (cinema: CinemaWithSubscription) => {
+    try {
+      await startImpersonation(cinema);
+      
+      // Log the impersonation action
+      logAction({
+        action: 'cinema_impersonation_started',
+        target_type: 'organization',
+        target_id: cinema.id,
+        details: {
+          cinema_name: cinema.name,
+          cinema_slug: cinema.slug,
+        },
+      });
+      
+      toast.success(`Now viewing as ${cinema.name}`);
+      setSelectedCinema(null);
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error('Failed to start impersonation. Admin privileges required.');
+    }
   };
 
   const getSubscriptionBadge = (cinema: CinemaWithSubscription) => {
