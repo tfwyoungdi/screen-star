@@ -51,6 +51,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "booked_seats_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "booked_seats_showtime_id_fkey"
             columns: ["showtime_id"]
             isOneToOne: false
@@ -93,6 +100,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "booking_combos_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "booking_combos_combo_deal_id_fkey"
             columns: ["combo_deal_id"]
             isOneToOne: false
@@ -132,6 +146,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_concessions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_public"
             referencedColumns: ["id"]
           },
           {
@@ -914,6 +935,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "email_analytics_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "email_analytics_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -1359,6 +1387,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_public"
             referencedColumns: ["id"]
           },
           {
@@ -2021,6 +2056,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "platform_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "platform_transactions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -2262,6 +2304,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_public"
             referencedColumns: ["id"]
           },
           {
@@ -2922,6 +2971,68 @@ export type Database = {
       }
     }
     Views: {
+      bookings_public: {
+        Row: {
+          booking_reference: string | null
+          created_at: string | null
+          discount_amount: number | null
+          id: string | null
+          organization_id: string | null
+          showtime_id: string | null
+          status: string | null
+          total_amount: number | null
+        }
+        Insert: {
+          booking_reference?: string | null
+          created_at?: string | null
+          discount_amount?: number | null
+          id?: string | null
+          organization_id?: string | null
+          showtime_id?: string | null
+          status?: string | null
+          total_amount?: number | null
+        }
+        Update: {
+          booking_reference?: string | null
+          created_at?: string | null
+          discount_amount?: number | null
+          id?: string | null
+          organization_id?: string | null
+          showtime_id?: string | null
+          status?: string | null
+          total_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_showtime_id_fkey"
+            columns: ["showtime_id"]
+            isOneToOne: false
+            referencedRelation: "showtimes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concession_items_public: {
         Row: {
           category: string | null
@@ -3275,6 +3386,7 @@ export type Database = {
         Args: { org_id: string; user_id: string }
         Returns: boolean
       }
+      platform_admin_has_mfa: { Args: { _user_id?: string }; Returns: boolean }
       start_impersonation: { Args: { _org_id: string }; Returns: string }
       stop_impersonation: { Args: never; Returns: boolean }
       use_promo_code: {
