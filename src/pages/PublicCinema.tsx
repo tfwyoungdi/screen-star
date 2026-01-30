@@ -27,6 +27,7 @@ interface CinemaData {
   social_facebook: string | null;
   social_instagram: string | null;
   social_twitter: string | null;
+  website_template: string | null;
 }
 
 interface Showtime {
@@ -107,13 +108,13 @@ export default function PublicCinema() {
       // Use organizations_public view to avoid RLS permission denied errors for anonymous users
       const { data, error } = await supabase
         .from('organizations_public')
-        .select('id, name, slug, logo_url, primary_color, secondary_color, about_text, contact_email, contact_phone, address, social_facebook, social_instagram, social_twitter')
+        .select('*')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
       
       if (error) throw error;
-      return data as CinemaData | null;
+      return data as unknown as CinemaData | null;
     },
     enabled: !!slug,
     staleTime: 60000,
@@ -395,12 +396,51 @@ export default function PublicCinema() {
         primaryColor={cinema?.primary_color || '#F59E0B'}
         logoUrl={cinema?.logo_url}
         organizationId={cinema?.id}
+        websiteTemplate={cinema?.website_template}
       />
 
+      {/* Dotted separator for Cinema Carousel template */}
+      {cinema?.website_template === 'cinema-carousel' && (
+        <div
+          className="h-2 w-full"
+          style={{
+            backgroundImage: `repeating-linear-gradient(90deg, ${cinema?.primary_color || '#C87B56'} 0px, ${cinema?.primary_color || '#C87B56'} 12px, transparent 12px, transparent 24px)`,
+            backgroundSize: '24px 4px',
+            backgroundRepeat: 'repeat-x',
+            backgroundPosition: 'center',
+          }}
+        />
+      )}
+
       {/* Now Showing */}
-      <section id="movies" className="py-12 md:py-16" style={{ backgroundColor: '#0a0a0f' }}>
+      <section 
+        id="movies" 
+        className="py-12 md:py-16"
+        style={{ 
+          backgroundColor: cinema?.website_template === 'cinema-carousel' ? '#ffffff' : '#0a0a0f' 
+        }}
+      >
         <div className="container mx-auto px-4">
-          {/* Header with title, search bar, and date tabs */}
+          {/* Section Header for Cinema Carousel */}
+          {cinema?.website_template === 'cinema-carousel' && (
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-3">
+                <Film className="h-5 w-5" style={{ color: cinema?.primary_color || '#C87B56' }} />
+              </div>
+              <span
+                className="text-sm tracking-wide"
+                style={{ color: cinema?.primary_color || '#C87B56' }}
+              >
+                Watch New Movies
+              </span>
+              <h3 className="text-2xl md:text-3xl font-bold mt-2 text-gray-900">
+                Movies Now Playing
+              </h3>
+            </div>
+          )}
+
+          {/* Header with title, search bar, and date tabs - Standard templates */}
+          {cinema?.website_template !== 'cinema-carousel' && (
           <div className="flex flex-col gap-6 mb-10">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <h3 className="text-2xl md:text-3xl font-bold text-white">
@@ -485,8 +525,69 @@ export default function PublicCinema() {
               )}
             </div>
           </div>
+          )}
 
-          {/* Movies List - Netflix/Streaming Style */}
+          {/* Movies List - Cinema Carousel Style (White background) */}
+          {cinema?.website_template === 'cinema-carousel' && (
+            <>
+              {filteredMovies.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  {filteredMovies.map((movie) => (
+                    <div 
+                      key={movie.id} 
+                      className="group relative cursor-pointer rounded-lg overflow-hidden shadow-lg bg-gray-50"
+                      onClick={() => navigate(`/cinema/${slug}/booking?movie=${movie.id}`)}
+                    >
+                      {/* Poster with overlay */}
+                      <div className="relative aspect-[3/4]">
+                        {movie.poster_url ? (
+                          <img
+                            src={movie.poster_url}
+                            alt={movie.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
+                            <Film className="h-12 w-12 text-gray-500" />
+                          </div>
+                        )}
+                        
+                        {/* Genre/Duration overlay at bottom of poster */}
+                        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                          <span className="text-xs text-white/90">
+                            {movie.genre || 'Movie'} / {movie.duration_minutes} Mins
+                          </span>
+                          <h4 className="font-semibold text-sm text-white mt-1 line-clamp-1">
+                            {movie.title}
+                          </h4>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cinema/${slug}/booking?movie=${movie.id}`);
+                            }}
+                            className="mt-2 px-3 py-1 text-xs border border-white/80 text-white rounded hover:bg-white/20 transition-colors"
+                          >
+                            Get Ticket
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">
+                    No movies scheduled for {format(selectedDate, 'MMMM d')}{selectedGenre ? ` in ${selectedGenre}` : ''}. Try another date or genre!
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Movies List - Standard Netflix/Streaming Style (Dark background) */}
+          {cinema?.website_template !== 'cinema-carousel' && (
+            <>
           {filteredMovies.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {filteredMovies.map((movie) => (
@@ -599,6 +700,8 @@ export default function PublicCinema() {
                 No movies scheduled for {format(selectedDate, 'MMMM d')}{selectedGenre ? ` in ${selectedGenre}` : ''}. Try another date or genre!
               </p>
             </div>
+          )}
+            </>
           )}
         </div>
       </section>
