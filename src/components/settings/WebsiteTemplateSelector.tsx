@@ -60,6 +60,31 @@ export const websiteTemplates: WebsiteTemplate[] = [
     },
   },
   {
+    id: 'warm-sunset',
+    name: 'Warm Sunset',
+    description: 'Inviting coral and orange tones on a dark canvas. Creates a cozy, welcoming atmosphere.',
+    icon: Film,
+    colors: {
+      primary: '#CD7F5C', // Coral/Terracotta
+      secondary: '#1f1f1f',
+      accent: '#E8956A',
+      background: '#0d0d0d',
+      cardBackground: '#1a1a1a',
+      text: '#ffffff',
+      mutedText: '#a3a3a3',
+    },
+    fonts: {
+      heading: 'Inter',
+      body: 'Inter',
+    },
+    style: {
+      heroStyle: 'image-overlay',
+      cardStyle: 'elevated',
+      buttonStyle: 'rounded',
+      animationLevel: 'moderate',
+    },
+  },
+  {
     id: 'modern-minimal',
     name: 'Modern Minimal',
     description: 'Clean, sleek design with crisp whites and bold contrasts. Ideal for contemporary cinemas.',
@@ -82,6 +107,31 @@ export const websiteTemplates: WebsiteTemplate[] = [
       cardStyle: 'flat',
       buttonStyle: 'pill',
       animationLevel: 'moderate',
+    },
+  },
+  {
+    id: 'midnight-royal',
+    name: 'Midnight Royal',
+    description: 'Deep navy blues with silver accents. Sophisticated and premium feel for upscale venues.',
+    icon: Sparkles,
+    colors: {
+      primary: '#6366f1', // Indigo
+      secondary: '#0f172a',
+      accent: '#818cf8',
+      background: '#020617',
+      cardBackground: '#0f172a',
+      text: '#f1f5f9',
+      mutedText: '#94a3b8',
+    },
+    fonts: {
+      heading: 'Inter',
+      body: 'Inter',
+    },
+    style: {
+      heroStyle: 'gradient',
+      cardStyle: 'glass',
+      buttonStyle: 'pill',
+      animationLevel: 'subtle',
     },
   },
   {
