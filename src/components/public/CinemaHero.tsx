@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Clock, Calendar, Star, ChevronLeft, ChevronRight, Search, Grid3X3, User, LogIn, Menu } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -240,9 +241,17 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
   }
 
   const isCinemaCarousel = websiteTemplate === 'cinema-carousel';
+  const isLuxuryPremiere = websiteTemplate === 'luxury-premiere';
+  
+  // Colors for Luxury Premiere
+  const luxuryAccent = '#D4A574';
+  const luxuryBg = '#0D0A0B';
 
   return (
-    <section className="relative h-[400px] md:h-[600px] overflow-hidden" style={{ backgroundColor: '#0a0a12' }}>
+    <section 
+      className="relative h-[400px] md:h-[600px] overflow-hidden" 
+      style={{ backgroundColor: isLuxuryPremiere ? luxuryBg : '#0a0a12' }}
+    >
       {/* Background Movie Poster - Fixed size container */}
       {featuredMovies.map((movie, index) => (
         <div
@@ -400,7 +409,10 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
 
       {/* Main Content */}
       <div className="relative z-10 h-full flex flex-col justify-center px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto w-full">
+        <div className={cn(
+          "max-w-7xl mx-auto w-full",
+          isLuxuryPremiere && "text-center"
+        )}>
           {/* Category Label for Cinema Carousel */}
           {isCinemaCarousel && currentMovie.genre && (
             <span
@@ -411,15 +423,42 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             </span>
           )}
 
+          {/* Luxury Premiere header */}
+          {isLuxuryPremiere && (
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="h-px w-12" style={{ backgroundColor: luxuryAccent }} />
+              <span 
+                className="text-xs tracking-[0.3em] uppercase"
+                style={{ color: luxuryAccent }}
+              >
+                Now Showing
+              </span>
+              <div className="h-px w-12" style={{ backgroundColor: luxuryAccent }} />
+            </div>
+          )}
+
           {/* Movie Title */}
           <h1 
-            className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-2 md:mb-3 leading-none tracking-tight"
+            className={cn(
+              "font-bold text-white leading-none tracking-tight",
+              isLuxuryPremiere 
+                ? "text-3xl sm:text-4xl md:text-6xl lg:text-7xl mb-4 md:mb-6" 
+                : "text-2xl sm:text-3xl md:text-5xl lg:text-6xl mb-2 md:mb-3"
+            )}
             style={{ 
-              fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif",
+              fontFamily: isLuxuryPremiere ? "'Playfair Display', serif" : "'Arial Black', 'Helvetica Neue', sans-serif",
               textShadow: '2px 4px 20px rgba(0,0,0,0.8)'
             }}
           >
-            {isCinemaCarousel ? currentMovie.title : currentMovie.title.toUpperCase()}
+            {isLuxuryPremiere ? (
+              <>
+                {currentMovie.title}
+              </>
+            ) : isCinemaCarousel ? (
+              currentMovie.title
+            ) : (
+              currentMovie.title.toUpperCase()
+            )}
           </h1>
 
           {/* Description for Cinema Carousel */}
@@ -429,8 +468,18 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
             </p>
           )}
 
-          {/* Meta Info Row - only for non-carousel */}
-          {!isCinemaCarousel && (
+          {/* Description for Luxury Premiere */}
+          {isLuxuryPremiere && currentMovie.description && (
+            <p 
+              className="text-base mb-8 max-w-xl mx-auto leading-relaxed line-clamp-2"
+              style={{ color: '#A89A9D' }}
+            >
+              {currentMovie.description}
+            </p>
+          )}
+
+          {/* Meta Info Row - only for standard templates */}
+          {!isCinemaCarousel && !isLuxuryPremiere && (
           <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5 text-xs md:text-sm text-white/80">
             <span>{new Date().getFullYear()}</span>
             <span className="w-1 h-1 rounded-full" style={{ backgroundColor: primaryColor }} />
@@ -447,8 +496,57 @@ export function CinemaHero({ movies, cinemaSlug, cinemaName, primaryColor = '#F5
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5">
-            {isCinemaCarousel ? (
+          <div className={cn(
+            "flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-5",
+            isLuxuryPremiere && "justify-center"
+          )}>
+            {isLuxuryPremiere ? (
+              <>
+                <Link to={`/cinema/${cinemaSlug}/booking?movie=${currentMovie.id}`}>
+                  <Button
+                    size="sm"
+                    className="font-semibold px-6 py-3 text-sm rounded-md hover:opacity-90 transition-opacity"
+                    style={{ 
+                      backgroundColor: primaryColor, 
+                      color: '#fff',
+                      boxShadow: `0 8px 32px ${primaryColor}40`
+                    }}
+                  >
+                    Reserve Seats
+                  </Button>
+                </Link>
+                {currentMovie.trailer_url && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="font-semibold px-6 py-3 text-sm rounded-md border-2 transition-colors"
+                        style={{ 
+                          borderColor: luxuryAccent,
+                          color: luxuryAccent
+                        }}
+                      >
+                        Watch Trailer
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-white/10">
+                      <DialogHeader className="p-4 pb-0">
+                        <DialogTitle className="text-white">{currentMovie.title} - Trailer</DialogTitle>
+                      </DialogHeader>
+                      <div className="aspect-video">
+                        <iframe
+                          src={getTrailerEmbed(currentMovie.trailer_url)!}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </>
+            ) : isCinemaCarousel ? (
               <>
                 <Link to={`/cinema/${cinemaSlug}/booking?movie=${currentMovie.id}`}>
                   <Button
