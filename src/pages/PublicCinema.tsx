@@ -431,7 +431,7 @@ export default function PublicCinema() {
         <div
           className="h-1 w-full"
           style={{
-            background: `linear-gradient(90deg, transparent 0%, #06B6D4 20%, #E879F9 80%, transparent 100%)`
+            background: `linear-gradient(90deg, transparent 0%, #64748B 30%, #94A3B8 70%, transparent 100%)`
           }}
         />
       )}
@@ -446,7 +446,7 @@ export default function PublicCinema() {
             : cinema?.website_template === 'luxury-premiere'
             ? '#0D0A0B'
             : cinema?.website_template === 'neon-pulse'
-            ? '#050510'
+            ? '#0F172A'
             : '#0a0a0f' 
         }}
       >
@@ -454,12 +454,12 @@ export default function PublicCinema() {
         {cinema?.website_template === 'neon-pulse' && (
           <>
             <div 
-              className="absolute top-0 right-0 w-96 h-96 rounded-full blur-[150px] opacity-20 pointer-events-none"
-              style={{ backgroundColor: '#06B6D4' }}
+              className="absolute top-0 right-0 w-96 h-96 rounded-full blur-[150px] opacity-15 pointer-events-none"
+              style={{ backgroundColor: '#64748B' }}
             />
             <div 
-              className="absolute bottom-0 left-0 w-80 h-80 rounded-full blur-[120px] opacity-15 pointer-events-none"
-              style={{ backgroundColor: '#E879F9' }}
+              className="absolute bottom-0 left-0 w-80 h-80 rounded-full blur-[120px] opacity-10 pointer-events-none"
+              style={{ backgroundColor: '#94A3B8' }}
             />
           </>
         )}
@@ -503,18 +503,16 @@ export default function PublicCinema() {
             </div>
           )}
 
-          {/* Section Header for Neon Pulse */}
           {cinema?.website_template === 'neon-pulse' && (
             <div className="mb-10 relative z-10">
               <div className="flex items-center gap-3 mb-2">
                 <span 
                   className="text-xs font-medium tracking-wider"
                   style={{ 
-                    color: '#06B6D4',
-                    textShadow: '0 0 10px rgba(6, 182, 212, 0.6)'
+                    color: '#94A3B8'
                   }}
                 >
-                  ⬡ FEATURED
+                  ● FEATURED
                 </span>
               </div>
               <h3
@@ -763,8 +761,8 @@ export default function PublicCinema() {
                       key={movie.id} 
                       className="group cursor-pointer rounded-xl overflow-hidden relative"
                       style={{ 
-                        backgroundColor: '#0F0D24',
-                        border: '1px solid rgba(6, 182, 212, 0.2)'
+                        backgroundColor: '#1E293B',
+                        border: '1px solid rgba(100, 116, 139, 0.3)'
                       }}
                       onClick={() => navigate(`/cinema/${slug}/booking?movie=${movie.id}`)}
                     >
@@ -779,7 +777,7 @@ export default function PublicCinema() {
                         ) : (
                           <div 
                             className="w-full h-full flex items-center justify-center"
-                            style={{ background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.3) 0%, rgba(232, 121, 249, 0.2) 100%)' }}
+                            style={{ background: 'linear-gradient(135deg, rgba(100, 116, 139, 0.3) 0%, rgba(148, 163, 184, 0.2) 100%)' }}
                           >
                             <Film className="h-12 w-12 text-white/30" />
                           </div>
@@ -788,7 +786,7 @@ export default function PublicCinema() {
                         {/* Hover overlay */}
                         <div 
                           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center"
-                          style={{ background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.9) 0%, rgba(232, 121, 249, 0.9) 100%)' }}
+                          style={{ background: 'linear-gradient(135deg, rgba(100, 116, 139, 0.95) 0%, rgba(71, 85, 105, 0.95) 100%)' }}
                         >
                           <button
                             onClick={(e) => {
@@ -798,17 +796,17 @@ export default function PublicCinema() {
                             className="px-5 py-2 text-xs font-semibold tracking-wide rounded-full"
                             style={{ 
                               backgroundColor: '#fff',
-                              color: '#050510',
+                              color: '#0F172A',
                               boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
                             }}
                           >
-                            ⚡ BOOK NOW
+                            BOOK NOW
                           </button>
                         </div>
                       </div>
                       
                       {/* Card info */}
-                      <div className="p-4" style={{ backgroundColor: '#0F0D24' }}>
+                      <div className="p-4" style={{ backgroundColor: '#1E293B' }}>
                         <h4 
                           className="font-semibold text-sm mb-2 line-clamp-1"
                           style={{ color: '#F8FAFC', fontFamily: "'Space Grotesk', sans-serif" }}
@@ -819,13 +817,13 @@ export default function PublicCinema() {
                           <span 
                             className="text-xs px-2 py-0.5 rounded-full"
                             style={{ 
-                              backgroundColor: 'rgba(6, 182, 212, 0.2)',
-                              color: '#06B6D4' 
+                              backgroundColor: 'rgba(100, 116, 139, 0.3)',
+                              color: '#94A3B8' 
                             }}
                           >
                             {movie.genre || 'Movie'}
                           </span>
-                          <span className="text-xs" style={{ color: '#94A3B8' }}>
+                          <span className="text-xs" style={{ color: '#64748B' }}>
                             {movie.duration_minutes} min
                           </span>
                         </div>
