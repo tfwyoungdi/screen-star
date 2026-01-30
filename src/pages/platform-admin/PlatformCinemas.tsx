@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format, differenceInDays, addDays, isAfter, isBefore } from 'date-fns';
 import { toast } from 'sonner';
-import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle } from 'lucide-react';
+import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle, Power } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
@@ -118,11 +118,11 @@ export default function PlatformCinemas() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['all-cinemas-with-subscriptions'] });
-      toast.success(variables.suspend ? 'Cinema suspended' : 'Cinema reactivated');
+      toast.success(variables.suspend ? 'Cinema suspended' : 'Cinema activated successfully');
       
       // Audit log
       logAction({
-        action: variables.suspend ? 'cinema_suspended' : 'cinema_reactivated',
+        action: variables.suspend ? 'cinema_suspended' : 'cinema_activated',
         target_type: 'organization',
         target_id: variables.id,
         details: {
@@ -392,6 +392,18 @@ export default function PlatformCinemas() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            {!cinema.is_active && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleReactivate(cinema)}
+                                disabled={suspendMutation.isPending}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-500/10"
+                                title="Activate Cinema"
+                              >
+                                <Power className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
@@ -568,11 +580,11 @@ export default function PlatformCinemas() {
                     ) : (
                       <Button
                         onClick={() => handleReactivate(selectedCinema)}
-                        className="gap-2"
+                        className="gap-2 bg-green-600 hover:bg-green-700"
                         disabled={suspendMutation.isPending}
                       >
-                        <CheckCircle className="h-4 w-4" />
-                        Reactivate Cinema
+                        <Power className="h-4 w-4" />
+                        Activate Cinema
                       </Button>
                     )}
                   </div>
