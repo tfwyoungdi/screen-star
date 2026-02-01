@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,10 +28,16 @@ import {
 import { toast } from 'sonner';
 import { 
   Mail, Send, Eye, Users, Clock, Loader2, 
-  Save, Plus, FileText, Trash2
+  Save, Plus, FileText, Trash2, Image, Upload, Copy, Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
+
+interface UploadedImage {
+  name: string;
+  url: string;
+  created_at: string;
+}
 
 interface CustomerEmailTemplate {
   id: string;
@@ -103,6 +109,110 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
     htmlBody: DEFAULT_CUSTOMER_TEMPLATE,
   });
   const [isSending, setIsSending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch uploaded images
+  const { data: uploadedImages, isLoading: isImagesLoading } = useQuery({
+    queryKey: ['platform-email-assets'],
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from('platform-email-assets')
+        .list('', { limit: 50, sortBy: { column: 'created_at', order: 'desc' } });
+      
+      if (error) throw error;
+      
+      const images = (data || [])
+        .filter(file => file.name !== '.emptyFolderPlaceholder')
+        .map(file => ({
+          name: file.name,
+          url: `${supabase.storage.from('platform-email-assets').getPublicUrl(file.name).data.publicUrl}?v=${Date.now()}`,
+          created_at: file.created_at || '',
+        }));
+      
+      return images as UploadedImage[];
+    },
+  });
+
+  // Upload image handler
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size must be less than 2MB');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      
+      const { error } = await supabase.storage
+        .from('platform-email-assets')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      toast.success('Image uploaded successfully');
+      queryClient.invalidateQueries({ queryKey: ['platform-email-assets'] });
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Delete image handler
+  const handleDeleteImage = async (fileName: string) => {
+    try {
+      const { error } = await supabase.storage
+        .from('platform-email-assets')
+        .remove([fileName]);
+
+      if (error) throw error;
+
+      toast.success('Image deleted');
+      queryClient.invalidateQueries({ queryKey: ['platform-email-assets'] });
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete image');
+    }
+  };
+
+  // Copy URL to clipboard
+  const handleCopyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedUrl(url);
+      toast.success('URL copied to clipboard');
+      setTimeout(() => setCopiedUrl(null), 2000);
+    } catch (error) {
+      toast.error('Failed to copy URL');
+    }
+  };
+
+  // Insert image into HTML template
+  const handleInsertImage = (url: string) => {
+    const imgTag = `<img src="${url}" alt="Email image" style="max-width: 100%; height: auto;" />`;
+    setFormData({
+      ...formData,
+      htmlBody: formData.htmlBody.replace('{{email_content}}', `{{email_content}}\n${imgTag}`),
+    });
+    toast.success('Image tag inserted into template');
+  };
 
   // Fetch saved templates
   const { data: templates, isLoading: isTemplatesLoading } = useQuery({
@@ -378,8 +488,9 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
 
           <div className="flex-1 overflow-y-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="compose">Compose</TabsTrigger>
+                <TabsTrigger value="images">Images</TabsTrigger>
                 <TabsTrigger value="template">Template</TabsTrigger>
                 <TabsTrigger value="preview">Preview</TabsTrigger>
               </TabsList>
@@ -432,6 +543,108 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                     placeholder="Write your email content here..."
                     rows={6}
                   />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="images" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Upload Images & Logos</Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload images to use in your email templates (max 2MB)
+                      </p>
+                    </div>
+                    <div>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="gap-2"
+                      >
+                        {isUploading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4" />
+                        )}
+                        Upload Image
+                      </Button>
+                    </div>
+                  </div>
+
+                  {isImagesLoading ? (
+                    <div className="grid grid-cols-3 gap-4">
+                      {[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}
+                    </div>
+                  ) : uploadedImages && uploadedImages.length > 0 ? (
+                    <ScrollArea className="h-[300px]">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {uploadedImages.map((image) => (
+                          <div
+                            key={image.name}
+                            className="border rounded-lg overflow-hidden group relative"
+                          >
+                            <img
+                              src={image.url}
+                              alt={image.name}
+                              className="w-full h-24 object-cover"
+                            />
+                            <div className="p-2 bg-muted/50">
+                              <p className="text-xs font-medium truncate">{image.name}</p>
+                              <div className="flex gap-1 mt-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs flex-1 gap-1"
+                                  onClick={() => handleCopyUrl(image.url)}
+                                >
+                                  {copiedUrl === image.url ? (
+                                    <Check className="h-3 w-3" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                  Copy URL
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs gap-1"
+                                  onClick={() => handleInsertImage(image.url)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  Insert
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteImage(image.name)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div className="text-center py-12 border rounded-lg bg-muted/20">
+                      <Image className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-sm font-medium">No images uploaded</h3>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload logos and images to use in your email templates
+                      </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
