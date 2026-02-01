@@ -1840,6 +1840,81 @@ export type Database = {
           },
         ]
       }
+      platform_customer_email_campaigns: {
+        Row: {
+          clicked_count: number | null
+          created_at: string
+          filter_criteria: Json | null
+          html_body: string
+          id: string
+          opened_count: number | null
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string
+          title: string
+          total_recipients: number | null
+          updated_at: string
+        }
+        Insert: {
+          clicked_count?: number | null
+          created_at?: string
+          filter_criteria?: Json | null
+          html_body: string
+          id?: string
+          opened_count?: number | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject: string
+          title: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Update: {
+          clicked_count?: number | null
+          created_at?: string
+          filter_criteria?: Json | null
+          html_body?: string
+          id?: string
+          opened_count?: number | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string
+          title?: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_customer_email_templates: {
+        Row: {
+          created_at: string
+          html_body: string
+          id: string
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          html_body: string
+          id?: string
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          html_body?: string
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_email_analytics: {
         Row: {
           clicked_at: string | null
