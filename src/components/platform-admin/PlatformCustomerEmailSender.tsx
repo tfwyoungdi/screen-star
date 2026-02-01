@@ -534,22 +534,12 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Email Content</Label>
-                  <Textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    placeholder="Write your email content here..."
-                    rows={6}
-                  />
-                </div>
-
                 {/* Inline Image Upload Section */}
                 <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Image className="h-4 w-4 text-muted-foreground" />
-                      <Label className="text-sm">Attach Images</Label>
+                      <Label className="text-sm">Attach Image (optional)</Label>
                     </div>
                     <div>
                       <input
@@ -612,6 +602,16 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                       Upload images to embed in your email. Click an image to insert it.
                     </p>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Email Content</Label>
+                  <Textarea
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    placeholder="Write your email content here..."
+                    rows={6}
+                  />
                 </div>
               </TabsContent>
 
