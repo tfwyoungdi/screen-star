@@ -645,6 +645,7 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                     srcDoc={getPreviewHtml()}
                     className="w-full h-[400px] border-0"
                     title="Email Preview"
+                    sandbox="allow-same-origin"
                   />
                 </div>
               </TabsContent>
