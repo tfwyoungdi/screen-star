@@ -206,10 +206,10 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
 
   // Insert image into HTML template
   const handleInsertImage = (url: string) => {
-    const imgTag = `<img src="${url}" alt="Email image" style="max-width: 100%; height: auto;" />`;
+    const imgTag = `<img src="${url}" alt="Email image" style="max-width: 100%; height: auto; margin-bottom: 16px;" />`;
     setFormData({
       ...formData,
-      htmlBody: formData.htmlBody.replace('{{email_content}}', `{{email_content}}\n${imgTag}`),
+      htmlBody: formData.htmlBody.replace('{{email_content}}', `${imgTag}\n{{email_content}}`),
     });
     toast.success('Image tag inserted into template');
   };
