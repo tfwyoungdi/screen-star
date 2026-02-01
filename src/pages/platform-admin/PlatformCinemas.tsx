@@ -17,8 +17,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, differenceInDays, addDays, isAfter, isBefore } from 'date-fns';
 import { toast } from 'sonner';
-import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle, Power, CalendarIcon, Save } from 'lucide-react';
+import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle, Power, CalendarIcon, Save, Megaphone } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
+import { BulkAnnouncementSender } from '@/components/platform-admin/BulkAnnouncementSender';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 import { useImpersonation } from '@/hooks/useImpersonation';
@@ -338,60 +339,67 @@ export default function PlatformCinemas() {
           </Alert>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <Building2 className="h-6 w-6 text-primary" />
+        {/* Stats and Bulk Announcements */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <Building2 className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{cinemas?.length || 0}</p>
+                    <p className="text-sm text-muted-foreground">Total Cinemas</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{cinemas?.length || 0}</p>
-                  <p className="text-sm text-muted-foreground">Total Cinemas</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-green-500/10">
+                    <CheckCircle className="h-6 w-6 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{activeCinemas}</p>
+                    <p className="text-sm text-muted-foreground">Active</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-green-500/10">
-                  <CheckCircle className="h-6 w-6 text-green-500" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-destructive/10">
+                    <Ban className="h-6 w-6 text-destructive" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{suspendedCinemas}</p>
+                    <p className="text-sm text-muted-foreground">Suspended</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{activeCinemas}</p>
-                  <p className="text-sm text-muted-foreground">Active</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-amber-500/10">
+                    <CalendarClock className="h-6 w-6 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{expiringCinemas.length}</p>
+                    <p className="text-sm text-muted-foreground">Expiring Soon</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-destructive/10">
-                  <Ban className="h-6 w-6 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{suspendedCinemas}</p>
-                  <p className="text-sm text-muted-foreground">Suspended</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-amber-500/10">
-                  <CalendarClock className="h-6 w-6 text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{expiringCinemas.length}</p>
-                  <p className="text-sm text-muted-foreground">Expiring Soon</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Bulk Announcements to Cinemas */}
+          <div className="lg:col-span-1">
+            <BulkAnnouncementSender />
+          </div>
         </div>
 
         {/* Search & Table */}

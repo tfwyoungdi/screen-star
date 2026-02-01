@@ -11,11 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Settings, Shield, Globe, Timer } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
-import { 
-  PlatformEmailTemplatesEditor, 
-  DEFAULT_TEMPLATES, 
-  PlatformEmailTemplates 
-} from '@/components/platform-admin/PlatformEmailTemplatesEditor';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 
@@ -57,8 +52,6 @@ export default function PlatformSettingsPage() {
     sla_escalation_email: '',
   });
 
-  const [emailTemplates, setEmailTemplates] = useState<PlatformEmailTemplates>(DEFAULT_TEMPLATES);
-
   useEffect(() => {
     if (settings) {
       setFormData({
@@ -78,15 +71,6 @@ export default function PlatformSettingsPage() {
         sla_escalation_enabled: (settings as any).sla_escalation_enabled ?? true,
         sla_escalation_email: (settings as any).sla_escalation_email || '',
       });
-      
-      // Load saved email templates or use defaults
-      const savedTemplates = (settings as any).email_templates;
-      if (savedTemplates) {
-        setEmailTemplates({
-          ...DEFAULT_TEMPLATES,
-          ...savedTemplates,
-        });
-      }
     }
   }, [settings]);
 
@@ -125,15 +109,7 @@ export default function PlatformSettingsPage() {
   });
 
   const handleSave = () => {
-    updateMutation.mutate({
-      ...formData,
-      email_templates: emailTemplates,
-    } as any);
-  };
-
-  const handleEmailTemplatesSave = (templates: PlatformEmailTemplates) => {
-    setEmailTemplates(templates);
-    toast.success('Email templates updated - click Save Changes to persist');
+    updateMutation.mutate(formData as any);
   };
 
   if (isLoading) {
@@ -390,13 +366,6 @@ export default function PlatformSettingsPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Platform Email Templates */}
-          <PlatformEmailTemplatesEditor
-            templates={emailTemplates}
-            onSave={handleEmailTemplatesSave}
-            isSaving={updateMutation.isPending}
-          />
         </div>
       </div>
     </PlatformLayout>
