@@ -488,9 +488,8 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
 
           <div className="flex-1 overflow-y-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="compose">Compose</TabsTrigger>
-                <TabsTrigger value="images">Images</TabsTrigger>
                 <TabsTrigger value="template">Template</TabsTrigger>
                 <TabsTrigger value="preview">Preview</TabsTrigger>
               </TabsList>
@@ -544,16 +543,13 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                     rows={6}
                   />
                 </div>
-              </TabsContent>
 
-              <TabsContent value="images" className="space-y-4 mt-4">
-                <div className="space-y-4">
+                {/* Inline Image Upload Section */}
+                <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Upload Images & Logos</Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Upload images to use in your email templates (max 2MB)
-                      </p>
+                    <div className="flex items-center gap-2">
+                      <Image className="h-4 w-4 text-muted-foreground" />
+                      <Label className="text-sm">Attach Images</Label>
                     </div>
                     <div>
                       <input
@@ -568,82 +564,53 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
-                        className="gap-2"
+                        className="gap-2 h-8"
                       >
                         {isUploading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <Upload className="h-4 w-4" />
+                          <Upload className="h-3 w-3" />
                         )}
-                        Upload Image
+                        Upload
                       </Button>
                     </div>
                   </div>
 
                   {isImagesLoading ? (
-                    <div className="grid grid-cols-3 gap-4">
-                      {[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}
+                    <div className="flex gap-2">
+                      {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-16" />)}
                     </div>
                   ) : uploadedImages && uploadedImages.length > 0 ? (
-                    <ScrollArea className="h-[300px]">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <ScrollArea className="w-full">
+                      <div className="flex gap-2 pb-2">
                         {uploadedImages.map((image) => (
                           <div
                             key={image.name}
-                            className="border rounded-lg overflow-hidden group relative"
+                            className="relative group flex-shrink-0"
                           >
                             <img
                               src={image.url}
                               alt={image.name}
-                              className="w-full h-24 object-cover"
+                              className="h-16 w-16 object-cover rounded-md border cursor-pointer hover:ring-2 hover:ring-primary"
+                              onClick={() => handleInsertImage(image.url)}
+                              title="Click to insert into email"
                             />
-                            <div className="p-2 bg-muted/50">
-                              <p className="text-xs font-medium truncate">{image.name}</p>
-                              <div className="flex gap-1 mt-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 text-xs flex-1 gap-1"
-                                  onClick={() => handleCopyUrl(image.url)}
-                                >
-                                  {copiedUrl === image.url ? (
-                                    <Check className="h-3 w-3" />
-                                  ) : (
-                                    <Copy className="h-3 w-3" />
-                                  )}
-                                  Copy URL
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 text-xs gap-1"
-                                  onClick={() => handleInsertImage(image.url)}
-                                >
-                                  <Plus className="h-3 w-3" />
-                                  Insert
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                  onClick={() => handleDeleteImage(image.name)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="absolute -top-1 -right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleDeleteImage(image.name)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         ))}
                       </div>
                     </ScrollArea>
                   ) : (
-                    <div className="text-center py-12 border rounded-lg bg-muted/20">
-                      <Image className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-sm font-medium">No images uploaded</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Upload logos and images to use in your email templates
-                      </p>
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Upload images to embed in your email. Click an image to insert it.
+                    </p>
                   )}
                 </div>
               </TabsContent>
