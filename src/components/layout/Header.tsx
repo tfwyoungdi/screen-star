@@ -14,16 +14,19 @@ const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 group">
-            <div className="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-              <Film className="h-5 w-5 text-primary" />
+          <a href="/" className="flex items-center gap-2.5 group">
+            <div 
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: '#EEF2FF' }}
+            >
+              <Film className="h-5 w-5" style={{ color: '#4F46E5' }} />
             </div>
             <span className="text-xl font-bold text-foreground">
-              Cine<span className="text-primary">Tix</span>
+              Cine<span style={{ color: '#4F46E5' }}>Tix</span>
             </span>
           </a>
 
@@ -33,7 +36,7 @@ const Header = () => {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors font-medium text-sm"
+                className="text-foreground/70 hover:text-foreground transition-colors font-medium text-[15px]"
               >
                 {link.label}
               </a>
@@ -43,9 +46,14 @@ const Header = () => {
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
             <Link to="/signup">
-              <Button className="rounded-full gap-2 px-6 font-semibold shadow-md hover:shadow-lg transition-all">
+              <Button 
+                className="rounded-full gap-2 px-5 py-2.5 font-semibold text-sm"
+                style={{ backgroundColor: '#4F46E5' }}
+              >
                 Get Started
-                <ArrowUpRight className="h-4 w-4" />
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                  <ArrowUpRight className="h-3.5 w-3.5 text-white" />
+                </div>
               </Button>
             </Link>
           </div>
@@ -63,13 +71,13 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-border">
+          <div className="lg:hidden py-4 border-t border-border bg-white">
             <nav className="flex flex-col gap-4">
               {navLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+                  className="text-foreground/70 hover:text-foreground transition-colors font-medium py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
@@ -82,7 +90,10 @@ const Header = () => {
                   </Button>
                 </Link>
                 <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full rounded-full gap-2">
+                  <Button 
+                    className="w-full rounded-full gap-2"
+                    style={{ backgroundColor: '#4F46E5' }}
+                  >
                     Get Started
                     <ArrowUpRight className="h-4 w-4" />
                   </Button>
