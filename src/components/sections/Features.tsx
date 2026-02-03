@@ -70,7 +70,7 @@ const platformBenefits = [
     icon: Zap,
     title: "Lightning Fast",
     description: "Optimized for speed. Customers book in under 30 seconds.",
-    stat: "< 30s",
+    stat: "30s",
     statLabel: "Booking Time",
   },
   {
