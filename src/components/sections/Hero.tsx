@@ -38,7 +38,7 @@ const Hero = () => {
         </div>
 
         {/* Dashboard Preview with Floating Elements */}
-        <div className="relative max-w-5xl mx-auto px-4 lg:px-8">
+        <div className="relative max-w-6xl mx-auto px-4 lg:px-8">
           {/* Floating Badges */}
           
           {/* System Analyst - Top Left */}
