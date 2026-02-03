@@ -205,62 +205,26 @@ const Features = () => {
           </div>
         </div>
 
-        {/* Platform Benefits - Premium Modern Design */}
-        <div className="relative mt-8">
-          {/* Section Label */}
-          <div className="flex items-center justify-center gap-3 mb-10">
-            <div className="h-px flex-1 max-w-20 bg-gradient-to-r from-transparent to-border" />
-            <span className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Why Choose Us</span>
-            <div className="h-px flex-1 max-w-20 bg-gradient-to-l from-transparent to-border" />
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {platformBenefits.map((benefit, index) => (
-              <div 
-                key={benefit.title} 
-                className="group relative"
-              >
-                {/* Glow effect on hover */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-chart-3/50 rounded-3xl opacity-0 group-hover:opacity-100 blur-xl transition-all duration-500" />
-                
-                {/* Card */}
-                <div className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-b from-card via-card to-secondary/20 border border-border p-8 transition-all duration-500 group-hover:border-primary/30 group-hover:shadow-2xl">
-                  {/* Background Pattern */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/5 to-transparent rounded-bl-full" />
-                  
-                  {/* Stat Badge */}
-                  <div className="relative mb-6">
-                    <div className="inline-flex flex-col items-start">
-                      <div className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary to-chart-3 bg-clip-text text-transparent">
-                        {benefit.stat}
-                      </div>
-                      <div className="text-xs text-muted-foreground uppercase tracking-widest mt-1 font-medium">
-                        {benefit.statLabel}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Icon with animated ring */}
-                  <div className="relative mb-5">
-                    <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 w-fit group-hover:scale-110 transition-transform duration-300">
-                      <benefit.icon className="h-6 w-6 text-primary" />
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {benefit.description}
-                  </p>
-
-                  {/* Decorative corner element */}
-                  <div className="absolute bottom-0 left-0 w-16 h-16">
-                    <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-primary/20 rounded-bl-lg group-hover:border-primary/40 transition-colors duration-300" />
-                  </div>
+        {/* Platform Benefits - Minimal Clean Design */}
+        <div className="mt-16 pt-16 border-t border-border">
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            {platformBenefits.map((benefit) => (
+              <div key={benefit.title} className="text-center">
+                <div className="inline-flex p-3 rounded-xl bg-secondary mb-5">
+                  <benefit.icon className="h-6 w-6 text-primary" />
                 </div>
+                <div className="text-3xl font-bold text-foreground mb-1">
+                  {benefit.stat}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-4">
+                  {benefit.statLabel}
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+                  {benefit.description}
+                </p>
               </div>
             ))}
           </div>
