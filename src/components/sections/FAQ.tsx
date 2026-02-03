@@ -25,6 +25,37 @@ const faqs = [{
   answer: "After 14 days, you'll be prompted to choose a paid plan. If you don't upgrade, your account will be paused but all your data will be preserved. You can reactivate anytime by subscribing to a plan."
 }];
 const FAQ = () => {
-  return;
+  return (
+    <section id="faq" className="py-20 lg:py-28 bg-secondary/30">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Everything you need to know about CineTix
+          </p>
+        </div>
+        <div className="max-w-3xl mx-auto">
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq, index) => (
+              <AccordionItem
+                key={index}
+                value={`item-${index}`}
+                className="bg-card border border-border rounded-lg px-6"
+              >
+                <AccordionTrigger className="text-left text-foreground hover:no-underline py-4">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-4">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </div>
+    </section>
+  );
 };
 export default FAQ;

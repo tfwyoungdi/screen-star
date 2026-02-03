@@ -62,7 +62,7 @@ const Hero = () => {
           {/* Leaders - Right Side (Primary background) */}
           <div className="absolute -right-4 lg:-right-8 top-1/4 z-20 hidden lg:block">
             <div className="px-5 py-2.5 rounded-lg shadow-lg bg-primary">
-              <span className="text-sm font-semibold text-primary-foreground">Leaders</span>
+              <span className="text-sm font-semibold text-primary-foreground">New Campaign</span>
             </div>
           </div>
 
