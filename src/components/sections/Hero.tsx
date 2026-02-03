@@ -1,14 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Check } from "lucide-react";
 import dashboardImage from "@/assets/dashboard-preview.jpg";
-
 const Hero = () => {
-  return (
-    <section className="relative min-h-screen overflow-hidden pt-24 lg:pt-28 pb-8">
+  return <section className="relative min-h-screen overflow-hidden pt-24 lg:pt-28 pb-8">
       {/* Light gradient background using design system colors */}
-      <div 
-        className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-secondary/50" 
-      />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-secondary/50" />
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Main Content - Centered */}
@@ -23,26 +19,11 @@ const Hero = () => {
 
           {/* Subheading */}
           <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-6 leading-relaxed">
-            One powerful platform for unlimited cinemas. Ticketing software, 
-            booking websites, custom domains, and role-based dashboards — 
-            all in one place.
+            One powerful platform for unlimited cinemas. Ticketing software, booking websites, custom domains, and role-based dashboards all in one place.
           </p>
 
           {/* Trust Indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-5 h-5 rounded bg-primary flex items-center justify-center">
-                <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />
-              </div>
-              <span>No credit card Required</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-5 h-5 rounded bg-primary flex items-center justify-center">
-                <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />
-              </div>
-              <span>Cancel Anytime</span>
-            </div>
-          </div>
+          
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -83,7 +64,7 @@ const Hero = () => {
           {/* Leaders - Right Side (Primary background) */}
           <div className="absolute -right-4 lg:-right-8 top-1/4 z-20 hidden lg:block">
             <div className="px-5 py-2.5 rounded-lg shadow-lg bg-primary">
-              <span className="text-sm font-semibold text-primary-foreground">New Campaign</span>
+              <span className="text-sm font-semibold text-primary-foreground">Leaders</span>
             </div>
           </div>
 
@@ -107,8 +88,6 @@ const Hero = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
