@@ -6,45 +6,27 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Users, UserPlus, Shield, Key, Trash2, Building2, UserCheck, Search, RefreshCw } from 'lucide-react';
+import { Users, UserPlus, Shield, Trash2, Search, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
-import { Database } from '@/integrations/supabase/types';
-
-type AppRole = Database['public']['Enums']['app_role'];
-
-const ROLE_CONFIG: Record<AppRole, { label: string; color: string; icon: typeof Shield }> = {
-  platform_admin: { label: 'Platform Admin', color: 'bg-purple-500/10 text-purple-500', icon: Shield },
-  cinema_admin: { label: 'Cinema Admin', color: 'bg-blue-500/10 text-blue-500', icon: Building2 },
-  manager: { label: 'Manager', color: 'bg-green-500/10 text-green-500', icon: UserCheck },
-  supervisor: { label: 'Supervisor', color: 'bg-amber-500/10 text-amber-500', icon: Users },
-  box_office: { label: 'Box Office', color: 'bg-cyan-500/10 text-cyan-500', icon: Users },
-  gate_staff: { label: 'Gate Staff', color: 'bg-slate-500/10 text-slate-500', icon: Users },
-  accountant: { label: 'Accountant', color: 'bg-emerald-500/10 text-emerald-500', icon: Users },
-};
 
 export default function PlatformUsers() {
   const queryClient = useQueryClient();
   const { logAction } = usePlatformAuditLog();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [email, setEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState<AppRole>('platform_admin');
-  const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string; role: AppRole } | null>(null);
-  const [activeTab, setActiveTab] = useState<'platform' | 'cinema'>('platform');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string } | null>(null);
 
-  // Fetch all user roles with profiles
-  const { data: allUserRoles, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['all-user-roles'],
+  // Fetch platform admins only
+  const { data: platformAdmins, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ['platform-admins'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
@@ -52,7 +34,6 @@ export default function PlatformUsers() {
           id,
           user_id,
           role,
-          organization_id,
           created_at,
           profiles!inner (
             id,
@@ -60,13 +41,9 @@ export default function PlatformUsers() {
             full_name,
             avatar_url,
             is_active
-          ),
-          organizations (
-            id,
-            name,
-            slug
           )
         `)
+        .eq('role', 'platform_admin')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -74,26 +51,8 @@ export default function PlatformUsers() {
     },
   });
 
-  // Fetch organizations for role assignment
-  const { data: organizations } = useQuery({
-    queryKey: ['all-organizations'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name, slug')
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Filter users based on tab and search
-  const platformUsers = allUserRoles?.filter(u => u.role === 'platform_admin') || [];
-  const cinemaUsers = allUserRoles?.filter(u => u.role !== 'platform_admin') || [];
-
-  const filteredPlatformUsers = platformUsers.filter(u => {
+  // Filter by search
+  const filteredAdmins = platformAdmins?.filter(u => {
     if (!searchQuery) return true;
     const profile = u.profiles as any;
     const search = searchQuery.toLowerCase();
@@ -101,56 +60,32 @@ export default function PlatformUsers() {
       profile?.email?.toLowerCase().includes(search) ||
       profile?.full_name?.toLowerCase().includes(search)
     );
-  });
+  }) || [];
 
-  const filteredCinemaUsers = cinemaUsers.filter(u => {
-    if (!searchQuery) return true;
-    const profile = u.profiles as any;
-    const org = u.organizations as any;
-    const search = searchQuery.toLowerCase();
-    return (
-      profile?.email?.toLowerCase().includes(search) ||
-      profile?.full_name?.toLowerCase().includes(search) ||
-      org?.name?.toLowerCase().includes(search)
-    );
-  });
-
-  // Add user with role mutation
+  // Add platform admin mutation
   const addUserMutation = useMutation({
-    mutationFn: async ({ email, role, organizationId }: { email: string; role: AppRole; organizationId: string | null }) => {
-      // First, find the user by email in profiles
+    mutationFn: async ({ email }: { email: string }) => {
+      // Find the user by email
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, full_name')
         .eq('email', email.toLowerCase().trim())
         .single();
 
       if (profileError) {
-        throw new Error('User not found. They must sign up first.');
+        throw new Error('User not found. They must have an existing account first.');
       }
 
-      // For non-platform roles, organization is required
-      if (role !== 'platform_admin' && !organizationId) {
-        throw new Error('Please select an organization for this role.');
-      }
-
-      // Check if they already have this role (with same org for non-platform roles)
-      let existingRoleQuery = supabase
+      // Check if they already have platform_admin role
+      const { data: existingRole } = await supabase
         .from('user_roles')
         .select('id')
         .eq('user_id', profile.id)
-        .eq('role', role);
-
-      if (role !== 'platform_admin' && organizationId) {
-        existingRoleQuery = existingRoleQuery.eq('organization_id', organizationId);
-      } else {
-        existingRoleQuery = existingRoleQuery.is('organization_id', null);
-      }
-
-      const { data: existingRole } = await existingRoleQuery.maybeSingle();
+        .eq('role', 'platform_admin')
+        .maybeSingle();
 
       if (existingRole) {
-        throw new Error(`User already has the ${ROLE_CONFIG[role].label} role${organizationId ? ' for this organization' : ''}`);
+        throw new Error('This user is already a Platform Admin.');
       }
 
       // Add the role
@@ -158,54 +93,52 @@ export default function PlatformUsers() {
         .from('user_roles')
         .insert({
           user_id: profile.id,
-          role,
-          organization_id: role === 'platform_admin' ? null : organizationId,
+          role: 'platform_admin' as const,
+          organization_id: null,
         });
 
       if (error) throw error;
-      return { email, role };
+      return { email, name: profile.full_name };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['all-user-roles'] });
-      toast.success(`Added ${data.email} as ${ROLE_CONFIG[data.role].label}`);
+      queryClient.invalidateQueries({ queryKey: ['platform-admins'] });
+      toast.success(`${data.name || data.email} is now a Platform Admin`);
       logAction({
-        action: 'platform_user_added',
+        action: 'platform_admin_added',
         target_type: 'user_role',
-        details: { email: data.email, role: data.role },
+        details: { email: data.email },
       });
       setIsAddOpen(false);
       setEmail('');
-      setSelectedRole('platform_admin');
-      setSelectedOrgId('');
     },
     onError: (error: Error) => {
       toast.error(error.message);
     },
   });
 
-  // Remove role mutation
+  // Remove platform admin mutation
   const removeUserMutation = useMutation({
-    mutationFn: async ({ roleId, email, role }: { roleId: string; email: string; role: AppRole }) => {
+    mutationFn: async ({ roleId, email }: { roleId: string; email: string }) => {
       const { error } = await supabase
         .from('user_roles')
         .delete()
         .eq('id', roleId);
 
       if (error) throw error;
-      return { roleId, email, role };
+      return { email };
     },
-    onSuccess: ({ email, role }) => {
-      queryClient.invalidateQueries({ queryKey: ['all-user-roles'] });
-      toast.success(`Removed ${ROLE_CONFIG[role].label} role from ${email}`);
+    onSuccess: ({ email }) => {
+      queryClient.invalidateQueries({ queryKey: ['platform-admins'] });
+      toast.success(`Removed Platform Admin access from ${email}`);
       logAction({
-        action: 'platform_user_removed',
+        action: 'platform_admin_removed',
         target_type: 'user_role',
-        details: { email, role },
+        details: { email },
       });
       setDeleteTarget(null);
     },
     onError: () => {
-      toast.error('Failed to remove user role');
+      toast.error('Failed to remove Platform Admin');
     },
   });
 
@@ -214,108 +147,20 @@ export default function PlatformUsers() {
       toast.error('Please enter an email address');
       return;
     }
-    if (selectedRole !== 'platform_admin' && !selectedOrgId) {
-      toast.error('Please select an organization for this role');
-      return;
-    }
-    addUserMutation.mutate({ 
-      email: email.trim(), 
-      role: selectedRole,
-      organizationId: selectedRole === 'platform_admin' ? null : selectedOrgId 
-    });
+    addUserMutation.mutate({ email: email.trim() });
   };
 
-  // Role stats
-  const roleStats = {
-    total: allUserRoles?.length || 0,
-    platformAdmins: platformUsers.length,
-    cinemaAdmins: allUserRoles?.filter(u => u.role === 'cinema_admin').length || 0,
-    managers: allUserRoles?.filter(u => u.role === 'manager').length || 0,
-    staff: allUserRoles?.filter(u => ['box_office', 'gate_staff', 'accountant', 'supervisor'].includes(u.role)).length || 0,
-    active: allUserRoles?.filter(u => (u.profiles as any)?.is_active).length || 0,
-  };
-
-  const renderUserRow = (user: any) => {
-    const profile = user.profiles as any;
-    const org = user.organizations as any;
-    const roleConfig = ROLE_CONFIG[user.role as AppRole];
-
-    return (
-      <TableRow key={user.id}>
-        <TableCell>
-          <div className="flex items-center gap-3">
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={profile.full_name}
-                className="w-8 h-8 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary">
-                  {profile?.full_name?.[0]?.toUpperCase() || 'U'}
-                </span>
-              </div>
-            )}
-            <div>
-              <p className="font-medium">{profile?.full_name || 'Unknown'}</p>
-              <p className="text-xs text-muted-foreground">{profile?.email}</p>
-            </div>
-          </div>
-        </TableCell>
-        <TableCell>
-          <Badge className={`gap-1 ${roleConfig.color}`}>
-            <roleConfig.icon className="h-3 w-3" />
-            {roleConfig.label}
-          </Badge>
-        </TableCell>
-        <TableCell>
-          {org ? (
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span>{org.name}</span>
-            </div>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
-        </TableCell>
-        <TableCell>
-          {profile?.is_active ? (
-            <Badge className="bg-green-500/10 text-green-500">Active</Badge>
-          ) : (
-            <Badge variant="destructive">Inactive</Badge>
-          )}
-        </TableCell>
-        <TableCell className="text-muted-foreground">
-          {format(new Date(user.created_at), 'MMM d, yyyy')}
-        </TableCell>
-        <TableCell className="text-right">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setDeleteTarget({ 
-              id: user.id, 
-              email: profile?.email, 
-              role: user.role 
-            })}
-            disabled={removeUserMutation.isPending}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </TableCell>
-      </TableRow>
-    );
-  };
+  const activeCount = platformAdmins?.filter(u => (u.profiles as any)?.is_active).length || 0;
+  const inactiveCount = (platformAdmins?.length || 0) - activeCount;
 
   return (
     <PlatformLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Users & Roles</h1>
+            <h1 className="text-2xl font-bold text-foreground">Platform Admins</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Manage platform administrators and view all cinema staff
+              Manage users with full platform administrative access
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -332,14 +177,14 @@ export default function PlatformUsers() {
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <UserPlus className="h-4 w-4" />
-                  Add User
+                  Add Platform Admin
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add User Role</DialogTitle>
+                  <DialogTitle>Add Platform Admin</DialogTitle>
                   <DialogDescription>
-                    Assign a role to an existing user. For cinema roles, select the organization.
+                    Grant full platform administrative access to an existing user. They will be able to manage all cinemas, users, and platform settings.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
@@ -351,66 +196,21 @@ export default function PlatformUsers() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="user@example.com"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
                     />
                     <p className="text-xs text-muted-foreground">
                       The user must have an existing account in the system.
                     </p>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Role</Label>
-                    <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(Object.entries(ROLE_CONFIG) as [AppRole, typeof ROLE_CONFIG[AppRole]][]).map(([value, config]) => (
-                          <SelectItem key={value} value={value}>
-                            <div className="flex items-center gap-2">
-                              <config.icon className="h-4 w-4" />
-                              <span>{config.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {selectedRole !== 'platform_admin' && (
-                    <div className="space-y-2">
-                      <Label>Organization</Label>
-                      <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an organization" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {organizations?.map((org) => (
-                            <SelectItem key={org.id} value={org.id}>
-                              <div className="flex items-center gap-2">
-                                <Building2 className="h-4 w-4" />
-                                <span>{org.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Select the cinema this user will belong to.
-                      </p>
-                    </div>
-                  )}
-
                   <div className="flex justify-end gap-3 pt-4">
                     <Button variant="outline" onClick={() => {
                       setIsAddOpen(false);
                       setEmail('');
-                      setSelectedRole('platform_admin');
-                      setSelectedOrgId('');
                     }}>
                       Cancel
                     </Button>
                     <Button onClick={handleAddUser} disabled={addUserMutation.isPending}>
-                      {addUserMutation.isPending ? 'Adding...' : 'Add User'}
+                      {addUserMutation.isPending ? 'Adding...' : 'Add Admin'}
                     </Button>
                   </div>
                 </div>
@@ -420,81 +220,42 @@ export default function PlatformUsers() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <Shield className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold">{roleStats.total}</p>
-                  <p className="text-xs text-muted-foreground">Total Roles</p>
+                  <p className="text-2xl font-bold">{platformAdmins?.length || 0}</p>
+                  <p className="text-sm text-muted-foreground">Total Admins</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Shield className="h-5 w-5 text-purple-500" />
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-green-500/10">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold">{roleStats.platformAdmins}</p>
-                  <p className="text-xs text-muted-foreground">Platform Admins</p>
+                  <p className="text-2xl font-bold">{activeCount}</p>
+                  <p className="text-sm text-muted-foreground">Active</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Building2 className="h-5 w-5 text-blue-500" />
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-destructive/10">
+                  <XCircle className="h-6 w-6 text-destructive" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold">{roleStats.cinemaAdmins}</p>
-                  <p className="text-xs text-muted-foreground">Cinema Admins</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <UserCheck className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold">{roleStats.managers}</p>
-                  <p className="text-xs text-muted-foreground">Managers</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-cyan-500/10">
-                  <Key className="h-5 w-5 text-cyan-500" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold">{roleStats.staff}</p>
-                  <p className="text-xs text-muted-foreground">Staff</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <UserCheck className="h-5 w-5 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold">{roleStats.active}</p>
-                  <p className="text-xs text-muted-foreground">Active</p>
+                  <p className="text-2xl font-bold">{inactiveCount}</p>
+                  <p className="text-sm text-muted-foreground">Inactive</p>
                 </div>
               </div>
             </CardContent>
@@ -505,119 +266,120 @@ export default function PlatformUsers() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search users by name, email, or cinema..."
+            placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
 
-        {/* Tabs for Platform vs Cinema users */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'platform' | 'cinema')}>
-          <TabsList>
-            <TabsTrigger value="platform" className="gap-2">
-              <Shield className="h-4 w-4" />
-              Platform Admins ({platformUsers.length})
-            </TabsTrigger>
-            <TabsTrigger value="cinema" className="gap-2">
-              <Building2 className="h-4 w-4" />
-              Cinema Staff ({cinemaUsers.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="platform" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Platform Administrators</CardTitle>
-                <CardDescription>Users with full access to this admin dashboard</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-14 w-full" />
-                    ))}
-                  </div>
-                ) : filteredPlatformUsers.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Organization</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Added</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+        {/* Admins Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Platform Administrators</CardTitle>
+            <CardDescription>
+              Users with full access to this admin dashboard and all platform features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-14 w-full" />
+                ))}
+              </div>
+            ) : filteredAdmins.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Added</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAdmins.map((admin) => {
+                    const profile = admin.profiles as any;
+                    return (
+                      <TableRow key={admin.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {profile?.avatar_url ? (
+                              <img
+                                src={profile.avatar_url}
+                                alt={profile.full_name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-sm font-medium text-primary">
+                                  {profile?.full_name?.[0]?.toUpperCase() || 'U'}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{profile?.full_name || 'Unknown'}</span>
+                              <Badge variant="secondary" className="gap-1">
+                                <Shield className="h-3 w-3" />
+                                Admin
+                              </Badge>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {profile?.email}
+                        </TableCell>
+                        <TableCell>
+                          {profile?.is_active ? (
+                            <Badge className="bg-green-500/10 text-green-500">Active</Badge>
+                          ) : (
+                            <Badge variant="destructive">Inactive</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {format(new Date(admin.created_at), 'MMM d, yyyy')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setDeleteTarget({ 
+                              id: admin.id, 
+                              email: profile?.email 
+                            })}
+                            disabled={removeUserMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPlatformUsers.map(renderUserRow)}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-12">
-                    <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium">No platform admins found</h3>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      {searchQuery ? 'Try adjusting your search' : 'Add administrators to manage the platform.'}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="cinema" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Cinema Staff</CardTitle>
-                <CardDescription>All users across cinema organizations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-14 w-full" />
-                    ))}
-                  </div>
-                ) : filteredCinemaUsers.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Organization</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Added</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCinemaUsers.map(renderUserRow)}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium">No cinema staff found</h3>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      {searchQuery ? 'Try adjusting your search' : 'Cinema staff will appear here when created.'}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-12">
+                <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No platform admins found</h3>
+                <p className="text-muted-foreground text-sm mt-1">
+                  {searchQuery ? 'Try adjusting your search' : 'Add administrators to manage the platform.'}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Remove User Role</AlertDialogTitle>
+              <AlertDialogTitle>Remove Platform Admin</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to remove the <strong>{deleteTarget && ROLE_CONFIG[deleteTarget.role].label}</strong> role 
-                from <strong>{deleteTarget?.email}</strong>? This action cannot be undone.
+                Are you sure you want to remove platform admin access from <strong>{deleteTarget?.email}</strong>? 
+                They will no longer be able to access this dashboard.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -628,13 +390,12 @@ export default function PlatformUsers() {
                   if (deleteTarget) {
                     removeUserMutation.mutate({ 
                       roleId: deleteTarget.id, 
-                      email: deleteTarget.email,
-                      role: deleteTarget.role 
+                      email: deleteTarget.email 
                     });
                   }
                 }}
               >
-                Remove Role
+                Remove Admin
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
