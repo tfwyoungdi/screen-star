@@ -1,40 +1,39 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Film } from "lucide-react";
+import { Menu, X, Film, ArrowUpRight } from "lucide-react";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
     { label: "Features", href: "/#features" },
+    { label: "How It Works", href: "/#how-it-works" },
     { label: "Pricing", href: "/#pricing" },
-    { label: "About", href: "/about" },
-    { label: "Careers", href: "/careers" },
-    { label: "Contact", href: "/contact" },
+    { label: "Use Cases", href: "/#testimonials" },
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group">
-            <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-              <Film className="h-6 w-6 text-primary" />
+            <div className="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+              <Film className="h-5 w-5 text-primary" />
             </div>
             <span className="text-xl font-bold text-foreground">
               Cine<span className="text-primary">Tix</span>
             </span>
           </a>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Centered */}
           <nav className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+                className="text-muted-foreground hover:text-foreground transition-colors font-medium text-sm"
               >
                 {link.label}
               </a>
@@ -42,15 +41,11 @@ const Header = () => {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-4">
-            <Link to="/login">
-              <Button variant="ghost" size="lg">
-                Sign In
-              </Button>
-            </Link>
+          <div className="hidden lg:flex items-center gap-3">
             <Link to="/signup">
-              <Button variant="default" size="lg">
-                Start Free Trial
+              <Button className="rounded-full gap-2 px-6 font-semibold shadow-md hover:shadow-lg transition-all">
+                Get Started
+                <ArrowUpRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -87,8 +82,9 @@ const Header = () => {
                   </Button>
                 </Link>
                 <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="default" className="w-full">
-                    Start Free Trial
+                  <Button className="w-full rounded-full gap-2">
+                    Get Started
+                    <ArrowUpRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
