@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { isToday, parse, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { DollarSign, PlayCircle, Loader2, Key, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { checkRateLimit, formatWaitTime } from '@/lib/rateLimiter';
+import { accessCodeSchema } from '@/lib/validations';
 
 interface StaffClockInProps {
   userId: string;
@@ -23,69 +22,41 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
   const [openingCash, setOpeningCash] = useState('');
   const [error, setError] = useState('');
 
-  // Rate limit config for access code validation (5 attempts per 10 minutes)
-  const ACCESS_CODE_RATE_LIMIT = {
-    maxRequests: 5,
-    windowMs: 10 * 60 * 1000,
-    storageKey: 'rl_access_code',
-  };
-
-  // Clock in mutation
+  // Clock in mutation with server-side access code validation
   const clockInMutation = useMutation({
     mutationFn: async () => {
       setError('');
       
-      // Check rate limit before attempting
-      const rateCheck = checkRateLimit(ACCESS_CODE_RATE_LIMIT);
-      if (rateCheck.isLimited) {
-        const waitTime = formatWaitTime(rateCheck.resetInSeconds);
-        throw new Error(`Too many attempts. Please wait ${waitTime} before trying again.`);
+      // Client-side validation first
+      const validationResult = accessCodeSchema.safeParse({ accessCode });
+      if (!validationResult.success) {
+        throw new Error(validationResult.error.errors[0].message);
       }
       
-      // Verify access code
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .select('daily_access_code, daily_access_code_set_at, daily_access_code_start_time, daily_access_code_end_time')
-        .eq('id', organizationId)
-        .single();
-
-      if (orgError) throw orgError;
-
-      if (!org.daily_access_code) {
-        throw new Error('No access code has been set today. Please contact your manager.');
-      }
-
-      // Check if the code was set today (midnight expiry)
-      if (org.daily_access_code_set_at) {
-        const codeSetAt = new Date(org.daily_access_code_set_at);
-        if (!isToday(codeSetAt)) {
-          throw new Error('Yesterday\'s access code has expired. Please ask your manager to set a new code.');
+      // Server-side validation via edge function (prevents client-side bypass)
+      const { data: validationData, error: validationError } = await supabase.functions.invoke(
+        'validate-access-code',
+        {
+          body: {
+            accessCode,
+            organizationId,
+            userId,
+          },
         }
+      );
+
+      if (validationError) {
+        throw new Error('Failed to validate access code. Please try again.');
       }
 
-      if (org.daily_access_code !== accessCode) {
-        throw new Error('Invalid access code. Please check with your manager.');
-      }
-
-      // Check if current time is within the valid time range
-      const now = new Date();
-      const currentTimeStr = format(now, 'HH:mm:ss');
-      
-      if (org.daily_access_code_start_time) {
-        if (currentTimeStr < org.daily_access_code_start_time) {
-          const startDisplay = format(parse(org.daily_access_code_start_time, 'HH:mm:ss', new Date()), 'h:mm a');
-          throw new Error(`Access code is not valid yet. It becomes active at ${startDisplay}.`);
+      if (!validationData.valid) {
+        if (validationData.rateLimited) {
+          throw new Error(validationData.error || 'Too many attempts. Please wait before trying again.');
         }
-      }
-      
-      if (org.daily_access_code_end_time) {
-        if (currentTimeStr > org.daily_access_code_end_time) {
-          const endDisplay = format(parse(org.daily_access_code_end_time, 'HH:mm:ss', new Date()), 'h:mm a');
-          throw new Error(`Access code has expired. It was valid until ${endDisplay}.`);
-        }
+        throw new Error(validationData.error || 'Invalid access code');
       }
 
-      // Create shift
+      // Create shift only after server-side validation succeeds
       const openingAmount = parseFloat(openingCash) || 0;
       
       const { data: shiftData, error: shiftError } = await supabase

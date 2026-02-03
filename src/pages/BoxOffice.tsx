@@ -21,6 +21,12 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
 import { getCurrencySymbol, formatCurrency } from '@/lib/currency';
+import { 
+  boxOfficeBookingSchema, 
+  boxOfficePhoneSearchSchema,
+  boxOfficePromoCodeSchema,
+  sanitizeForPrint 
+} from '@/lib/validations';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -467,17 +473,38 @@ export default function BoxOffice() {
     : 0;
   const totalAmount = subtotal - discountAmount;
 
-  // Customer lookup by phone
+  // Customer lookup by phone with rate limiting and validation
   const searchCustomerByPhone = async () => {
     if (!phoneSearch.trim() || !profile?.organization_id) return;
     
+    // Validate phone search input
+    const validation = boxOfficePhoneSearchSchema.safeParse({ phone: phoneSearch });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+    
+    // Rate limit phone search (prevents enumeration attacks)
+    const rateLimit = checkRateLimit({
+      maxRequests: 20,
+      windowMs: 60 * 1000, // 20 searches per minute
+      storageKey: 'rl_phone_search',
+    });
+    if (rateLimit.isLimited) {
+      toast.error(`Too many searches. Please wait ${formatWaitTime(rateLimit.resetInSeconds)}`);
+      return;
+    }
+    
     setIsSearchingCustomer(true);
     try {
+      // Sanitize phone input - only keep digits for search
+      const sanitizedPhone = phoneSearch.replace(/\D/g, '');
+      
       const { data, error } = await supabase
         .from('customers')
         .select('id, full_name, email, phone, loyalty_points')
         .eq('organization_id', profile.organization_id)
-        .ilike('phone', `%${phoneSearch.replace(/\D/g, '')}%`)
+        .ilike('phone', `%${sanitizedPhone}%`)
         .limit(1)
         .maybeSingle();
 
@@ -583,9 +610,16 @@ export default function BoxOffice() {
     }
   };
 
-  // Process booking with atomic promo code handling (prevents race conditions)
+  // Process booking with atomic promo code handling and input validation
   const processBooking = async (paymentMethod: 'cash' | 'card') => {
     if (!selectedShowtime || selectedSeats.length === 0 || !profile?.organization_id) return;
+
+    // Validate booking data before processing
+    const validatedData = boxOfficeBookingSchema.safeParse(bookingData);
+    if (!validatedData.success) {
+      toast.error(validatedData.error.errors[0].message);
+      return;
+    }
 
     setIsProcessing(true);
     try {
@@ -600,7 +634,7 @@ export default function BoxOffice() {
       if (appliedPromo) {
         const { data: promoResult, error: promoError } = await supabase.rpc('use_promo_code', {
           p_promo_code_id: appliedPromo.id,
-          p_customer_email: (bookingData.customer_email || 'walkin@boxoffice.local').toLowerCase(),
+          p_customer_email: (validatedData.data.customer_email || 'walkin@boxoffice.local').toLowerCase().trim(),
           p_organization_id: profile.organization_id,
           p_ticket_total: subtotal,
         });
@@ -625,14 +659,19 @@ export default function BoxOffice() {
         serverTotalAmount = subtotal - serverDiscountAmount;
       }
 
+      // Sanitize and prepare booking data
+      const sanitizedName = validatedData.data.customer_name?.trim() || 'Walk-in Customer';
+      const sanitizedEmail = validatedData.data.customer_email?.trim().toLowerCase() || 'walkin@boxoffice.local';
+      const sanitizedPhone = validatedData.data.customer_phone?.trim() || null;
+
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
           organization_id: profile.organization_id,
           showtime_id: selectedShowtime.id,
-          customer_name: bookingData.customer_name || 'Walk-in Customer',
-          customer_email: bookingData.customer_email || 'walkin@boxoffice.local',
-          customer_phone: bookingData.customer_phone || null,
+          customer_name: sanitizedName,
+          customer_email: sanitizedEmail,
+          customer_phone: sanitizedPhone,
           total_amount: serverTotalAmount,
           discount_amount: serverDiscountAmount,
           promo_code_id: appliedPromo?.id || null,
@@ -688,7 +727,7 @@ export default function BoxOffice() {
     }
   };
 
-  // Print ticket
+  // Print ticket with XSS-safe content sanitization
   const printTicket = () => {
     const printContent = printRef.current;
     if (!printContent) return;
@@ -698,6 +737,14 @@ export default function BoxOffice() {
       toast.error('Please allow popups to print');
       return;
     }
+
+    // Sanitize all user-controlled content to prevent XSS
+    const safeOrgName = sanitizeForPrint(organization?.name) || 'Cinema';
+    const safeOrgAddress = sanitizeForPrint(organization?.address);
+    const safeMovieTitle = sanitizeForPrint(selectedShowtime?.movies.title);
+    const safeScreenName = sanitizeForPrint(selectedShowtime?.screens.name);
+    const safeBookingRef = sanitizeForPrint(bookingRef);
+    const safeCurrency = sanitizeForPrint(getCurrencySymbol(organization?.currency));
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -733,21 +780,21 @@ export default function BoxOffice() {
       </head>
       <body>
         <div class="header">
-          <h1>${organization?.name || 'Cinema'}</h1>
-          <p>${organization?.address || ''}</p>
+          <h1>${safeOrgName}</h1>
+          <p>${safeOrgAddress}</p>
         </div>
         
         <div class="qr">
           ${printContent.querySelector('.qr-container')?.innerHTML || ''}
         </div>
         
-        <div class="ref">${bookingRef}</div>
+        <div class="ref">${safeBookingRef}</div>
         
         <div class="divider"></div>
         
         <div class="row">
           <span class="label">Movie:</span>
-          <span class="value">${selectedShowtime?.movies.title}</span>
+          <span class="value">${safeMovieTitle}</span>
         </div>
         
         <div class="row">
@@ -762,13 +809,13 @@ export default function BoxOffice() {
         
         <div class="row">
           <span class="label">Screen:</span>
-          <span class="value">${selectedShowtime?.screens.name}</span>
+          <span class="value">${safeScreenName}</span>
         </div>
         
         <div class="seats">
           <span class="label">Seats:</span>
           <div class="seats-list">
-            ${selectedSeats.map(s => `<span class="seat">${s.row_label}${s.seat_number}</span>`).join('')}
+            ${selectedSeats.map(s => `<span class="seat">${sanitizeForPrint(s.row_label)}${s.seat_number}</span>`).join('')}
           </div>
         </div>
         
@@ -777,8 +824,8 @@ export default function BoxOffice() {
           <div class="label">Concessions:</div>
           ${selectedConcessions.map(c => `
             <div class="row">
-              <span>${c.item.name} x${c.quantity}</span>
-              <span>${getCurrencySymbol(organization?.currency)}${(c.item.price * c.quantity).toFixed(2)}</span>
+              <span>${sanitizeForPrint(c.item.name)} x${c.quantity}</span>
+              <span>${safeCurrency}${(c.item.price * c.quantity).toFixed(2)}</span>
             </div>
           `).join('')}
         ` : ''}
@@ -787,7 +834,7 @@ export default function BoxOffice() {
         
         <div class="row total">
           <span>TOTAL PAID:</span>
-          <span>${getCurrencySymbol(organization?.currency)}${totalAmount.toFixed(2)}</span>
+          <span>${safeCurrency}${totalAmount.toFixed(2)}</span>
         </div>
         
         <div class="cut-line"></div>
