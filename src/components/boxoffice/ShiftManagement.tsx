@@ -219,7 +219,7 @@ export function ShiftManagement({ userId, organizationId, currency, onShiftChang
               <div className="space-y-2">
                 <Label htmlFor="opening-cash">Opening Cash Balance</Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">{getCurrencySymbol(currency)}</span>
                   <Input
                     id="opening-cash"
                     type="number"
@@ -362,7 +362,7 @@ export function ShiftManagement({ userId, organizationId, currency, onShiftChang
             <div className="space-y-2">
               <Label htmlFor="closing-cash">Closing Cash Drawer</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">{getCurrencySymbol(currency)}</span>
                 <Input
                   id="closing-cash"
                   type="number"

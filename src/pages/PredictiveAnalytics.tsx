@@ -457,7 +457,7 @@ export default function PredictiveAnalytics() {
                             dataKey="date"
                             tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { weekday: 'short' })}
                           />
-                          <YAxis tickFormatter={(val) => `$${val}`} />
+                          <YAxis tickFormatter={(val) => formatCurrency(val, effectiveOrg?.currency)} />
                           <Tooltip
                             content={({ active, payload }) => {
                               if (!active || !payload?.length) return null;
