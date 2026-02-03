@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -20,11 +20,16 @@ import {
   Globe,
   Calendar,
   Copy,
-  XCircle
+  XCircle,
+  ShieldAlert
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
+
+// Rate limiting for booking reference searches
+const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 
 interface OnlineBooking {
   id: string;
@@ -70,6 +75,33 @@ export function OnlineTicketActivation({ activeShiftId, onActivated, onDuplicate
   const [searchQuery, setSearchQuery] = useState('');
   const [isActivating, setIsActivating] = useState(false);
   const [lastActivatedBooking, setLastActivatedBooking] = useState<OnlineBooking | null>(null);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  
+  // Client-side rate limiting as first line of defense
+  const searchCountRef = useRef<{ count: number; windowStart: number }>({ count: 0, windowStart: Date.now() });
+  
+  const checkClientRateLimit = useCallback(() => {
+    const now = Date.now();
+    const { count, windowStart } = searchCountRef.current;
+    
+    // Reset window if expired
+    if (now - windowStart > RATE_LIMIT_WINDOW_MS) {
+      searchCountRef.current = { count: 1, windowStart: now };
+      setRateLimitError(null);
+      return true;
+    }
+    
+    // Check if over limit
+    if (count >= RATE_LIMIT_MAX) {
+      const waitTime = Math.ceil((RATE_LIMIT_WINDOW_MS - (now - windowStart)) / 1000);
+      setRateLimitError(`Too many searches. Please wait ${waitTime}s.`);
+      return false;
+    }
+    
+    // Increment count
+    searchCountRef.current.count = count + 1;
+    return true;
+  }, []);
 
   const shouldSearch = searchQuery.trim().length >= 3;
 
@@ -97,7 +129,33 @@ export function OnlineTicketActivation({ activeShiftId, onActivated, onDuplicate
     queryFn: async () => {
       if (!profile?.organization_id || !shouldSearch) return [];
       
+      // Check client-side rate limit first
+      if (!checkClientRateLimit()) {
+        return [];
+      }
+      
+      // Check server-side rate limit
+      const { data: rateLimitResult, error: rateLimitError } = await supabase
+        .rpc('check_activation_search_rate_limit', { _org_id: profile.organization_id });
+      
+      if (rateLimitError) {
+        console.error('Rate limit check failed:', rateLimitError);
+      } else if (rateLimitResult && typeof rateLimitResult === 'object' && rateLimitResult !== null) {
+        const result = rateLimitResult as { allowed?: boolean; error?: string };
+        if (!result.allowed) {
+          setRateLimitError(result.error || 'Rate limit exceeded');
+          return [];
+        } else {
+          setRateLimitError(null);
+        }
+      }
+      
       const search = searchQuery.trim().toUpperCase();
+      
+      // Validate search input - only alphanumeric
+      if (!/^[A-Z0-9]+$/.test(search)) {
+        return [];
+      }
       
       const { data, error } = await supabase
         .from('bookings')
@@ -277,6 +335,14 @@ export function OnlineTicketActivation({ activeShiftId, onActivated, onDuplicate
           className="pl-10 font-mono uppercase text-lg h-12 bg-secondary/50 border-border/50 focus:border-primary"
         />
       </div>
+
+      {/* Rate Limit Warning */}
+      {rateLimitError && (
+        <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-center gap-2">
+          <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
+          <span className="text-sm text-destructive">{rateLimitError}</span>
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="flex-1 min-h-0">
