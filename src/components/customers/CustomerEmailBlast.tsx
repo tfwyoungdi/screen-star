@@ -55,6 +55,7 @@ import {
   CheckCircle2,
   CalendarIcon,
   Trash2,
+  Wand2,
 } from 'lucide-react';
 
 interface Movie {
@@ -238,6 +239,7 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
   const [rewardName, setRewardName] = useState<string>('');
   const [rewardDescription, setRewardDescription] = useState<string>('');
   const [rewardInstructions, setRewardInstructions] = useState<string>('');
+  const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
   // Generate templates with cinema logo
   const emailTemplates = generateEmailTemplates(cinemaLogoUrl);
 
@@ -501,6 +503,83 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
     }
   };
 
+  const generateWithAI = async (
+    type: 'subject' | 'content',
+    field?: string
+  ) => {
+    const loadingKey = field || type;
+    setIsGeneratingAI(loadingKey);
+
+    try {
+      const context: Record<string, string> = {};
+      
+      if (selectedTemplate === 'new_movie' && selectedMovie) {
+        context.movieTitle = selectedMovie.title;
+      } else if (selectedTemplate === 'special_offer') {
+        context.offerTitle = offerTitle;
+      } else if (selectedTemplate === 'general_update') {
+        context.updateTitle = updateTitle;
+      } else if (selectedTemplate === 'loyalty_reward') {
+        context.rewardName = rewardName;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-email-content`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            type,
+            templateType: selectedTemplate,
+            cinemaName,
+            organizationId,
+            context,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to generate content');
+      }
+
+      const result = await response.json();
+
+      if (type === 'subject' && result.subject) {
+        setSubject(result.subject);
+        toast.success('Subject line generated!');
+      } else if (type === 'content' && result.content) {
+        // Apply content based on the current template and field
+        if (selectedTemplate === 'new_movie') {
+          setMovieDescription(result.content);
+          if (selectedMovie) {
+            updateNewMovieTemplate(selectedMovie, result.content);
+          }
+        } else if (selectedTemplate === 'special_offer') {
+          setOfferDetails(result.content);
+          updateSpecialOfferTemplate(offerTitle, discountText, result.content, offerStartDate, offerEndDate);
+        } else if (selectedTemplate === 'general_update') {
+          setUpdateMessage(result.content);
+          updateGeneralUpdateTemplate(updateTitle, result.content);
+        } else if (selectedTemplate === 'loyalty_reward') {
+          setRewardInstructions(result.content);
+          updateLoyaltyRewardTemplate(rewardName, rewardDescription, result.content);
+        }
+        toast.success('Content generated!');
+      }
+    } catch (error) {
+      console.error('AI generation error:', error);
+      toast.error('Failed to generate content', {
+        description: error instanceof Error ? error.message : 'Please try again',
+      });
+    } finally {
+      setIsGeneratingAI(null);
+    }
+  };
+
   const getPreviewHtml = () => {
     let preview = htmlBody.replace(/\{\{customer_name\}\}/g, 'John Doe').replace(/\{\{cinema_name\}\}/g, cinemaName);
     
@@ -745,7 +824,24 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Movie Description</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Movie Description</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1"
+                        disabled={!selectedMovie || isGeneratingAI === 'movieDescription'}
+                        onClick={() => generateWithAI('content', 'movieDescription')}
+                      >
+                        {isGeneratingAI === 'movieDescription' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Generate with AI
+                      </Button>
+                    </div>
                     <Textarea
                       placeholder="Enter a brief description about this movie (e.g., genre, stars, synopsis)..."
                       value={movieDescription}
@@ -858,7 +954,24 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Offer Description</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Offer Description</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1"
+                        disabled={!offerTitle || isGeneratingAI === 'offerDetails'}
+                        onClick={() => generateWithAI('content', 'offerDetails')}
+                      >
+                        {isGeneratingAI === 'offerDetails' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Generate with AI
+                      </Button>
+                    </div>
                     <Textarea
                       placeholder="Describe how customers can use this offer, any terms & conditions..."
                       value={offerDetails}
@@ -893,7 +1006,24 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label>Update Message *</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Update Message *</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1"
+                        disabled={!updateTitle || isGeneratingAI === 'updateMessage'}
+                        onClick={() => generateWithAI('content', 'updateMessage')}
+                      >
+                        {isGeneratingAI === 'updateMessage' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Generate with AI
+                      </Button>
+                    </div>
                     <Textarea
                       placeholder="Write your announcement message here..."
                       value={updateMessage}
@@ -942,7 +1072,24 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label>Redemption Instructions</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Redemption Instructions</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1"
+                        disabled={!rewardName || isGeneratingAI === 'rewardInstructions'}
+                        onClick={() => generateWithAI('content', 'rewardInstructions')}
+                      >
+                        {isGeneratingAI === 'rewardInstructions' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Generate with AI
+                      </Button>
+                    </div>
                     <Textarea
                       placeholder="Explain how customers can redeem this reward..."
                       value={rewardInstructions}
@@ -960,7 +1107,24 @@ export function CustomerEmailBlast({ organizationId, cinemaName, cinemaLogoUrl, 
               )}
 
               <div className="space-y-2">
-                <Label>Subject Line</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Subject Line</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    disabled={isGeneratingAI === 'subject'}
+                    onClick={() => generateWithAI('subject')}
+                  >
+                    {isGeneratingAI === 'subject' ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3 w-3" />
+                    )}
+                    Generate with AI
+                  </Button>
+                </div>
                 <Input
                   placeholder="Email subject..."
                   value={subject}
