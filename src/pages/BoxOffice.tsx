@@ -922,6 +922,8 @@ export default function BoxOffice() {
           <StaffClockIn
             userId={user.id}
             organizationId={profile.organization_id}
+            logoUrl={organization?.logo_url}
+            cinemaName={organization?.name}
             onClockIn={(shiftId: string) => {
               setHasActiveShift(true);
               setActiveShiftId(shiftId);
