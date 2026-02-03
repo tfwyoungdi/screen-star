@@ -1,4 +1,4 @@
-import { UserPlus, Film, Globe, TrendingUp, Sparkles, ChevronRight } from "lucide-react";
+import { UserPlus, Film, Globe, TrendingUp, ArrowRight, Play } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface Step {
@@ -6,8 +6,8 @@ interface Step {
   icon: LucideIcon;
   title: string;
   description: string;
-  accent: string;
-  glowColor: string;
+  gradient: string;
+  borderGradient: string;
 }
 
 const steps: Step[] = [
@@ -15,171 +15,167 @@ const steps: Step[] = [
     number: "01",
     icon: UserPlus,
     title: "Sign Up & Setup",
-    description: "Create your account, configure your cinema profile, add halls, and set up seating layouts in minutes.",
-    accent: "bg-primary",
-    glowColor: "shadow-primary/25",
+    description: "Create your account and configure your cinema profile in minutes.",
+    gradient: "from-primary to-primary/60",
+    borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-primary",
   },
   {
     number: "02",
     icon: Film,
-    title: "Add Movies & Showtimes",
-    description: "Import movie details, schedule showtimes, and set pricing with our intuitive scheduling system.",
-    accent: "bg-chart-3",
-    glowColor: "shadow-chart-3/25",
+    title: "Add Content",
+    description: "Import movies, set showtimes, and configure your pricing tiers.",
+    gradient: "from-chart-3 to-chart-3/60",
+    borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-3",
   },
   {
     number: "03",
     icon: Globe,
-    title: "Launch Your Website",
-    description: "Customize your booking website, connect your domain, and go live with online ticket sales.",
-    accent: "bg-chart-4",
-    glowColor: "shadow-chart-4/25",
+    title: "Go Live",
+    description: "Launch your branded website and start selling tickets online.",
+    gradient: "from-chart-4 to-chart-4/60",
+    borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-4",
   },
   {
     number: "04",
     icon: TrendingUp,
-    title: "Manage & Grow",
-    description: "Use analytics to optimize operations, manage staff roles, and scale your cinema business.",
-    accent: "bg-chart-5",
-    glowColor: "shadow-chart-5/25",
+    title: "Scale Up",
+    description: "Use analytics to optimize and grow your cinema business.",
+    gradient: "from-chart-5 to-chart-5/60",
+    borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-5",
   },
 ];
 
 const HowItWorks = () => {
   return (
-    <section className="py-24 lg:py-32 bg-background relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-chart-3/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-chart-4/5 rounded-full blur-3xl" />
+    <section className="py-24 lg:py-32 relative overflow-hidden bg-secondary/20">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.08),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--chart-3)/0.08),transparent_50%)]" />
+        {/* Grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px'
+          }}
+        />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border shadow-sm mb-6">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-foreground text-sm font-medium">Simple Process</span>
+        {/* Header with asymmetric layout */}
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-end mb-16 lg:mb-24">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 mb-6">
+              <Play className="w-3 h-3 text-primary fill-primary" />
+              <span className="text-primary text-xs font-bold uppercase tracking-wider">How It Works</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1]">
+              Launch your cinema
+              <span className="block mt-2 bg-gradient-to-r from-primary via-chart-3 to-chart-4 bg-clip-text text-transparent">
+                in 4 steps
+              </span>
+            </h2>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-            From Zero to <br className="hidden sm:block" />
-            <span className="bg-gradient-to-r from-primary via-chart-3 to-chart-4 bg-clip-text text-transparent">
-              Selling Tickets
-            </span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Launch your cinema's online presence in four straightforward steps. No technical expertise required.
-          </p>
+          <div className="lg:text-right">
+            <p className="text-muted-foreground text-lg max-w-md lg:ml-auto">
+              No coding required. No complex setup. Just follow our streamlined process and start selling tickets today.
+            </p>
+          </div>
         </div>
 
-        {/* Timeline Steps - Desktop */}
-        <div className="hidden lg:block relative max-w-5xl mx-auto mb-16">
-          {/* Central timeline line */}
-          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-border to-transparent" />
+        {/* Steps - Horizontal Scroll on Mobile, Grid on Desktop */}
+        <div className="relative">
+          {/* Connection line - Desktop only */}
+          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent -translate-y-1/2 z-0" />
           
-          {steps.map((step, index) => {
-            const isEven = index % 2 === 0;
-            const StepIcon = step.icon;
-            
-            return (
-              <div 
-                key={step.number} 
-                className={`relative flex items-center gap-8 mb-16 last:mb-0 ${isEven ? 'flex-row' : 'flex-row-reverse'}`}
-              >
-                {/* Content Card */}
-                <div className={`w-[calc(50%-3rem)] ${isEven ? 'text-right' : 'text-left'}`}>
-                  <div className={`group inline-block w-full max-w-md bg-card rounded-3xl border border-border p-8 hover:border-primary/30 transition-all duration-500 hover:shadow-xl ${step.glowColor} ${isEven ? 'ml-auto' : 'mr-auto'}`}>
-                    <div className={`flex items-start gap-4 ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
-                      <div className={`shrink-0 p-4 rounded-2xl ${step.accent} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+          <div className="flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 snap-x snap-mandatory lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0">
+            {steps.map((step, index) => {
+              const StepIcon = step.icon;
+              
+              return (
+                <div 
+                  key={step.number}
+                  className="snap-center shrink-0 w-[280px] lg:w-auto"
+                >
+                  <div className={`group relative h-full bg-card rounded-3xl border border-border p-6 lg:p-8 transition-all duration-500 ${step.borderGradient} hover:-translate-y-2`}>
+                    {/* Decorative corner accent */}
+                    <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${step.gradient} opacity-10 rounded-bl-[100px] rounded-tr-3xl`} />
+                    
+                    {/* Step number - large background */}
+                    <div className="absolute bottom-4 right-4 text-8xl font-black text-muted-foreground/[0.03] leading-none select-none">
+                      {step.number}
+                    </div>
+                    
+                    <div className="relative z-10">
+                      {/* Icon with gradient background */}
+                      <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${step.gradient} mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                         <StepIcon className="h-6 w-6 text-primary-foreground" />
                       </div>
-                      <div className={isEven ? 'text-right' : 'text-left'}>
-                        <span className="text-xs font-bold text-muted-foreground/50 uppercase tracking-widest">
+                      
+                      {/* Step indicator */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                           Step {step.number}
                         </span>
-                        <h3 className="text-xl font-bold text-foreground mt-1 mb-2">
-                          {step.title}
-                        </h3>
-                        <p className="text-muted-foreground text-sm leading-relaxed">
-                          {step.description}
-                        </p>
+                        {index < steps.length - 1 && (
+                          <ArrowRight className="hidden lg:block w-4 h-4 text-muted-foreground/30" />
+                        )}
                       </div>
+                      
+                      <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3">
+                        {step.title}
+                      </h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">
+                        {step.description}
+                      </p>
                     </div>
                   </div>
                 </div>
-
-                {/* Center Node */}
-                <div className="absolute left-1/2 -translate-x-1/2 z-10">
-                  <div className={`w-12 h-12 rounded-full ${step.accent} border-4 border-background flex items-center justify-center shadow-lg`}>
-                    <span className="text-sm font-bold text-primary-foreground">{step.number}</span>
-                  </div>
-                </div>
-
-                {/* Spacer for opposite side */}
-                <div className="w-[calc(50%-3rem)]" />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Timeline Steps - Mobile/Tablet */}
-        <div className="lg:hidden space-y-6 mb-16">
-          {steps.map((step, index) => {
-            const StepIcon = step.icon;
-            
-            return (
-              <div key={step.number} className="relative flex gap-4">
-                {/* Timeline line and node */}
-                <div className="flex flex-col items-center">
-                  <div className={`w-12 h-12 rounded-full ${step.accent} flex items-center justify-center shadow-lg shrink-0`}>
-                    <span className="text-sm font-bold text-primary-foreground">{step.number}</span>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div className="w-px flex-1 bg-gradient-to-b from-border to-transparent mt-4" />
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className={`flex-1 bg-card rounded-2xl border border-border p-6 ${step.glowColor} hover:shadow-lg transition-shadow`}>
-                  <div className="flex items-start gap-4">
-                    <div className={`shrink-0 p-3 rounded-xl ${step.accent}/10`}>
-                      <StepIcon className={`h-5 w-5`} style={{ color: `hsl(var(--primary))` }} />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-foreground mb-2">{step.title}</h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center">
-          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-2 rounded-full bg-card border border-border shadow-lg">
-            <div className="flex items-center gap-3 px-4 py-2">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-secondary border-2 border-card flex items-center justify-center">
-                    <span className="text-xs font-medium text-muted-foreground">{i}</span>
-                  </div>
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">500+</span> cinemas onboard
-              </span>
-            </div>
-            <a 
-              href="/signup" 
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
-            >
-              Start Free Trial
-              <ChevronRight className="w-4 h-4" />
-            </a>
+              );
+            })}
           </div>
+          
+          {/* Mobile scroll indicator */}
+          <div className="flex lg:hidden justify-center gap-2 mt-6">
+            {steps.map((step, i) => (
+              <div 
+                key={i} 
+                className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-primary' : 'bg-border'}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="mt-16 lg:mt-24 flex flex-col sm:flex-row items-center justify-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="flex -space-x-3">
+              {['bg-primary', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5'].map((color, i) => (
+                <div 
+                  key={i} 
+                  className={`w-10 h-10 rounded-full ${color} border-3 border-background flex items-center justify-center shadow-lg`}
+                  style={{ zIndex: 4 - i }}
+                >
+                  <span className="text-xs font-bold text-primary-foreground">
+                    {['S', 'A', 'G', 'S'][i]}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-semibold text-foreground">Join 500+ Cinemas</div>
+              <div className="text-xs text-muted-foreground">Already growing with us</div>
+            </div>
+          </div>
+          
+          <a 
+            href="/signup" 
+            className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-foreground text-background font-semibold hover:opacity-90 transition-all"
+          >
+            Get Started Free
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </a>
         </div>
       </div>
     </section>
