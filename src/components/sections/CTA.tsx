@@ -1,9 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Film } from "lucide-react";
-
 const CTA = () => {
-  return (
-    <section className="py-24 lg:py-32 bg-background relative overflow-hidden">
+  return <section className="py-24 lg:py-32 bg-background relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl" />
@@ -42,13 +40,9 @@ const CTA = () => {
           </div>
 
           {/* Trust indicators */}
-          <p className="mt-8 text-sm text-muted-foreground">
-            No credit card required • 14-day free trial • Cancel anytime
-          </p>
+          
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default CTA;
