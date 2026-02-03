@@ -36,6 +36,8 @@ export default function PlatformUsers() {
   const { logAction } = usePlatformAuditLog();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [selectedRole, setSelectedRole] = useState<AppRole>('platform_admin');
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string; role: AppRole } | null>(null);
   const [activeTab, setActiveTab] = useState<'platform' | 'cinema'>('platform');
@@ -72,6 +74,21 @@ export default function PlatformUsers() {
     },
   });
 
+  // Fetch organizations for role assignment
+  const { data: organizations } = useQuery({
+    queryKey: ['all-organizations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name, slug')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Filter users based on tab and search
   const platformUsers = allUserRoles?.filter(u => u.role === 'platform_admin') || [];
   const cinemaUsers = allUserRoles?.filter(u => u.role !== 'platform_admin') || [];
@@ -98,9 +115,9 @@ export default function PlatformUsers() {
     );
   });
 
-  // Add platform admin mutation
+  // Add user with role mutation
   const addUserMutation = useMutation({
-    mutationFn: async ({ email }: { email: string }) => {
+    mutationFn: async ({ email, role, organizationId }: { email: string; role: AppRole; organizationId: string | null }) => {
       // First, find the user by email in profiles
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -112,16 +129,28 @@ export default function PlatformUsers() {
         throw new Error('User not found. They must sign up first.');
       }
 
-      // Check if they already have platform_admin role
-      const { data: existingRole } = await supabase
+      // For non-platform roles, organization is required
+      if (role !== 'platform_admin' && !organizationId) {
+        throw new Error('Please select an organization for this role.');
+      }
+
+      // Check if they already have this role (with same org for non-platform roles)
+      let existingRoleQuery = supabase
         .from('user_roles')
         .select('id')
         .eq('user_id', profile.id)
-        .eq('role', 'platform_admin')
-        .maybeSingle();
+        .eq('role', role);
+
+      if (role !== 'platform_admin' && organizationId) {
+        existingRoleQuery = existingRoleQuery.eq('organization_id', organizationId);
+      } else {
+        existingRoleQuery = existingRoleQuery.is('organization_id', null);
+      }
+
+      const { data: existingRole } = await existingRoleQuery.maybeSingle();
 
       if (existingRole) {
-        throw new Error('User already has Platform Admin role');
+        throw new Error(`User already has the ${ROLE_CONFIG[role].label} role${organizationId ? ' for this organization' : ''}`);
       }
 
       // Add the role
@@ -129,23 +158,25 @@ export default function PlatformUsers() {
         .from('user_roles')
         .insert({
           user_id: profile.id,
-          role: 'platform_admin' as AppRole,
-          organization_id: null,
+          role,
+          organization_id: role === 'platform_admin' ? null : organizationId,
         });
 
       if (error) throw error;
-      return { email };
+      return { email, role };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['all-user-roles'] });
-      toast.success(`Added ${data.email} as Platform Admin`);
+      toast.success(`Added ${data.email} as ${ROLE_CONFIG[data.role].label}`);
       logAction({
         action: 'platform_user_added',
         target_type: 'user_role',
-        details: { email: data.email, role: 'platform_admin' },
+        details: { email: data.email, role: data.role },
       });
       setIsAddOpen(false);
       setEmail('');
+      setSelectedRole('platform_admin');
+      setSelectedOrgId('');
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -183,7 +214,15 @@ export default function PlatformUsers() {
       toast.error('Please enter an email address');
       return;
     }
-    addUserMutation.mutate({ email: email.trim() });
+    if (selectedRole !== 'platform_admin' && !selectedOrgId) {
+      toast.error('Please select an organization for this role');
+      return;
+    }
+    addUserMutation.mutate({ 
+      email: email.trim(), 
+      role: selectedRole,
+      organizationId: selectedRole === 'platform_admin' ? null : selectedOrgId 
+    });
   };
 
   // Role stats
@@ -293,14 +332,14 @@ export default function PlatformUsers() {
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <UserPlus className="h-4 w-4" />
-                  Add Platform Admin
+                  Add User
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Add Platform Admin</DialogTitle>
+                  <DialogTitle>Add User Role</DialogTitle>
                   <DialogDescription>
-                    Grant platform admin access to an existing user. They will have full access to manage all cinemas.
+                    Assign a role to an existing user. For cinema roles, select the organization.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
@@ -317,12 +356,61 @@ export default function PlatformUsers() {
                       The user must have an existing account in the system.
                     </p>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(Object.entries(ROLE_CONFIG) as [AppRole, typeof ROLE_CONFIG[AppRole]][]).map(([value, config]) => (
+                          <SelectItem key={value} value={value}>
+                            <div className="flex items-center gap-2">
+                              <config.icon className="h-4 w-4" />
+                              <span>{config.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedRole !== 'platform_admin' && (
+                    <div className="space-y-2">
+                      <Label>Organization</Label>
+                      <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an organization" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {organizations?.map((org) => (
+                            <SelectItem key={org.id} value={org.id}>
+                              <div className="flex items-center gap-2">
+                                <Building2 className="h-4 w-4" />
+                                <span>{org.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Select the cinema this user will belong to.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-3 pt-4">
-                    <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+                    <Button variant="outline" onClick={() => {
+                      setIsAddOpen(false);
+                      setEmail('');
+                      setSelectedRole('platform_admin');
+                      setSelectedOrgId('');
+                    }}>
                       Cancel
                     </Button>
                     <Button onClick={handleAddUser} disabled={addUserMutation.isPending}>
-                      {addUserMutation.isPending ? 'Adding...' : 'Add Admin'}
+                      {addUserMutation.isPending ? 'Adding...' : 'Add User'}
                     </Button>
                   </div>
                 </div>
