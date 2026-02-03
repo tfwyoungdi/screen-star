@@ -390,7 +390,7 @@ export default function Dashboard() {
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px',
                       }}
-                      formatter={(value: number) => [`${currencySymbol}${value.toFixed(0)}`, 'Revenue']}
+                      formatter={(value: number) => [formatCurrency(value, effectiveOrg?.currency), 'Revenue']}
                     />
                     <Bar
                       dataKey="revenue"
@@ -472,7 +472,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{movie.name}</p>
-                        <p className="text-xs text-muted-foreground">{currencySymbol}{movie.value.toFixed(0)} revenue</p>
+                        <p className="text-xs text-muted-foreground">{formatCurrency(movie.value, effectiveOrg?.currency)} revenue</p>
                       </div>
                     </div>
                   ))}
