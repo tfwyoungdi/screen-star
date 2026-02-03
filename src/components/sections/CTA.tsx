@@ -1,9 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Play, Ticket, Users, TrendingUp, CheckCircle2 } from "lucide-react";
-
 const CTA = () => {
-  return (
-    <section className="py-24 lg:py-32 relative overflow-hidden bg-background">
+  return <section className="py-24 lg:py-32 relative overflow-hidden bg-background">
       {/* Background with contained gradient on right side only */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Soft gradient on right side - doesn't overlap left content */}
@@ -45,34 +43,20 @@ const CTA = () => {
 
             {/* Checklist */}
             <div className="grid sm:grid-cols-2 gap-3 mb-8">
-              {[
-                "Unlimited tickets & screens",
-                "Custom branded website",
-                "Real-time analytics",
-                "24/7 priority support"
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2">
+              {["Unlimited tickets & screens", "Custom branded website", "Real-time analytics", "24/7 priority support"].map((item, i) => <div key={i} className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
                   <span className="text-sm text-foreground">{item}</span>
-                </div>
-              ))}
+                </div>)}
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <Button 
-                size="lg" 
-                className="group gap-2 px-8 py-6 text-base font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
-              >
+              <Button size="lg" className="group gap-2 px-8 py-6 text-base font-semibold rounded-full shadow-lg hover:shadow-xl transition-all">
                 <Play className="h-5 w-5 fill-current" />
                 Start Your Free Trial
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button 
-                variant="outline"
-                size="lg" 
-                className="px-8 py-6 text-base font-semibold rounded-full border-2"
-              >
+              <Button variant="outline" size="lg" className="px-8 py-6 text-base font-semibold rounded-full border-2">
                 Schedule a Demo
               </Button>
             </div>
@@ -80,24 +64,17 @@ const CTA = () => {
             {/* Social proof row */}
             <div className="flex items-center gap-4">
               <div className="flex -space-x-3">
-                {['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-primary'].map((color, i) => (
-                  <div 
-                    key={i} 
-                    className={`w-10 h-10 rounded-full ${color} border-2 border-background flex items-center justify-center shadow-md`}
-                  >
+                {['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-primary'].map((color, i) => <div key={i} className={`w-10 h-10 rounded-full ${color} border-2 border-background flex items-center justify-center shadow-md`}>
                     <span className="text-xs font-bold text-white drop-shadow-sm">
                       {['J', 'M', 'K', 'A'][i]}
                     </span>
-                  </div>
-                ))}
+                  </div>)}
               </div>
               <div className="text-sm">
                 <div className="flex items-center gap-1 mb-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <svg key={i} className="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
+                  {[...Array(5)].map((_, i) => <svg key={i} className="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
                       <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
-                  ))}
+                    </svg>)}
                   <span className="text-foreground font-medium ml-1">4.9</span>
                 </div>
                 <p className="text-muted-foreground">from 500+ cinema owners</p>
@@ -131,18 +108,31 @@ const CTA = () => {
 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 gap-6 mb-8">
-                  {[
-                    { value: "40%", label: "More Tickets Sold", icon: Ticket, color: "text-primary" },
-                    { value: "3.2x", label: "Revenue Increase", icon: TrendingUp, color: "text-chart-3" },
-                    { value: "85%", label: "Time Saved", icon: Sparkles, color: "text-chart-4" },
-                    { value: "2M+", label: "Happy Customers", icon: Users, color: "text-chart-2" },
-                  ].map((stat, i) => (
-                    <div key={i} className="text-center p-4 rounded-2xl bg-secondary/50 border border-border/50">
+                  {[{
+                  value: "40%",
+                  label: "More Tickets Sold",
+                  icon: Ticket,
+                  color: "text-primary"
+                }, {
+                  value: "3.2x",
+                  label: "Revenue Increase",
+                  icon: TrendingUp,
+                  color: "text-chart-3"
+                }, {
+                  value: "85%",
+                  label: "Time Saved",
+                  icon: Sparkles,
+                  color: "text-chart-4"
+                }, {
+                  value: "2M+",
+                  label: "Happy Customers",
+                  icon: Users,
+                  color: "text-chart-2"
+                }].map((stat, i) => <div key={i} className="text-center p-4 rounded-2xl bg-secondary/50 border border-border/50">
                       <stat.icon className={`h-5 w-5 ${stat.color} mx-auto mb-2`} />
                       <p className={`text-2xl md:text-3xl font-bold ${stat.color}`}>{stat.value}</p>
                       <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
 
                 {/* Bottom bar chart visualization */}
@@ -163,17 +153,7 @@ const CTA = () => {
             </div>
 
             {/* Floating mini cards */}
-            <div className="absolute -left-4 lg:-left-8 top-1/4 bg-card rounded-2xl border border-border p-4 shadow-xl hidden md:block animate-fade-in">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-chart-3/10 flex items-center justify-center">
-                  <Ticket className="h-5 w-5 text-chart-3" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Just sold</p>
-                  <p className="text-sm font-semibold text-foreground">247 tickets</p>
-                </div>
-              </div>
-            </div>
+            
 
             <div className="absolute -right-4 lg:-right-8 bottom-1/4 bg-card rounded-2xl border border-border p-4 shadow-xl hidden md:block animate-fade-in">
               <div className="flex items-center gap-3">
@@ -189,8 +169,6 @@ const CTA = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default CTA;
