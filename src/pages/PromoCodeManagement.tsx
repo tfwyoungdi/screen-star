@@ -706,7 +706,7 @@ export default function PromoCodeManagement() {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <PromoCodeAnalytics organizationId={effectiveOrgId} />
+            <PromoCodeAnalytics organizationId={effectiveOrgId} currency={organization?.currency} />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/lib/currency';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
@@ -404,7 +405,7 @@ export default function PredictiveAnalytics() {
                       <CardDescription>Weekly Forecast</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <span className="text-3xl font-bold">${revenueData.weeklyTotal?.toLocaleString()}</span>
+                      <span className="text-3xl font-bold">{formatCurrency(revenueData.weeklyTotal || 0, organization?.currency)}</span>
                     </CardContent>
                   </Card>
                   <Card>
@@ -412,7 +413,7 @@ export default function PredictiveAnalytics() {
                       <CardDescription>Monthly Projection</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <span className="text-2xl font-bold">${revenueData.monthlyProjection?.toLocaleString()}</span>
+                      <span className="text-2xl font-bold">{formatCurrency(revenueData.monthlyProjection || 0, organization?.currency)}</span>
                     </CardContent>
                   </Card>
                   <Card>
@@ -435,7 +436,7 @@ export default function PredictiveAnalytics() {
                     </CardHeader>
                     <CardContent>
                       <span className="text-2xl font-bold">
-                        ${Math.round(revenueData.weeklyTotal / 7).toLocaleString()}
+                        {formatCurrency(Math.round((revenueData.weeklyTotal || 0) / 7), organization?.currency)}
                       </span>
                     </CardContent>
                   </Card>
@@ -466,7 +467,7 @@ export default function PredictiveAnalytics() {
                                   <p className="font-medium">
                                     {new Date(data.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                                   </p>
-                                  <p className="text-primary font-bold">${data.predictedRevenue?.toLocaleString()}</p>
+                                  <p className="text-primary font-bold">{formatCurrency(data.predictedRevenue || 0, organization?.currency)}</p>
                                   <ConfidenceBadge confidence={data.confidence} />
                                 </div>
                               );
