@@ -2,7 +2,6 @@ project_id = "immqqxnblovkdvokfbef"
 [functions.generate-predictions]
 verify_jwt = false
 
-
 [functions.verify-domain]
 verify_jwt = false
 
@@ -13,4 +12,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.recommend-movies]
+verify_jwt = false
+
+[functions.validate-access-code]
 verify_jwt = false
