@@ -2351,6 +2351,33 @@ export type Database = {
           },
         ]
       }
+      promo_validation_rate_limits: {
+        Row: {
+          attempt_count: number | null
+          created_at: string | null
+          id: string
+          identifier: string
+          organization_id: string
+          window_start: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          created_at?: string | null
+          id?: string
+          identifier: string
+          organization_id: string
+          window_start?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          organization_id?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       rate_limit_entries: {
         Row: {
           created_at: string
@@ -3465,12 +3492,18 @@ export type Database = {
         }
         Returns: Json
       }
+      check_promo_validation_rate_limit: {
+        Args: { _identifier: string; _org_id: string }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: { _key: string; _max_requests: number; _window_seconds: number }
         Returns: Json
       }
       cleanup_activation_rate_limits: { Args: never; Returns: undefined }
+      cleanup_old_email_analytics: { Args: never; Returns: undefined }
       cleanup_platform_admin_rate_limits: { Args: never; Returns: undefined }
+      cleanup_promo_rate_limits: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       delete_old_loyalty_transactions: { Args: never; Returns: undefined }
       delete_old_shifts: { Args: never; Returns: undefined }
