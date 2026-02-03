@@ -33,6 +33,7 @@ import BookingFlow from "./pages/BookingFlow";
 import CinemaBooking from "./pages/CinemaBooking";
 import CustomerManagement from "./pages/CustomerManagement";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import PredictiveAnalytics from "./pages/PredictiveAnalytics";
 import ConcessionManagement from "./pages/ConcessionManagement";
 import CustomerLogin from "./pages/CustomerLogin";
 import CustomerSignup from "./pages/CustomerSignup";
@@ -226,6 +227,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['cinema_admin', 'manager', 'accountant']}>
                     <AnalyticsDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/predictions"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager']}>
+                    <PredictiveAnalytics />
                   </ProtectedRoute>
                 }
               />
