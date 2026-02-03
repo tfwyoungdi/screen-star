@@ -39,6 +39,7 @@ import {
   Briefcase,
   Ticket,
   Gift,
+  Brain,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -67,6 +68,7 @@ const navItems = [
   { title: 'Sales', url: '/sales', icon: BarChart3 },
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
+  { title: 'AI Predictions', url: '/predictions', icon: Brain },
   { title: 'Messages', url: '/messages', icon: Mail, showBadge: true },
   { title: 'Applications', url: '/applications', icon: Briefcase },
   { title: 'Scanner', url: '/scanner', icon: QrCode },

@@ -1,4 +1,7 @@
 project_id = "immqqxnblovkdvokfbef"
+[functions.generate-predictions]
+verify_jwt = false
+
 
 [functions.verify-domain]
 verify_jwt = false
