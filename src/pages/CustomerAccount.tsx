@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Gift, Star, Ticket, LogOut, Clock, History, Mail, X, User } from 'lucide-react';
+import { ArrowLeft, Loader2, Gift, Star, Ticket, LogOut, Clock, History, Mail, X, User, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { CustomerProfileEditor } from '@/components/customer/CustomerProfileEditor';
 import { CustomerBookingHistory } from '@/components/customer/CustomerBookingHistory';
+import { MovieRecommendations } from '@/components/customer/MovieRecommendations';
 
 interface LoyaltyTransaction {
   id: string;
@@ -271,8 +272,15 @@ export default function CustomerAccount() {
           </Card>
 
           {/* Tabs */}
-          <Tabs defaultValue="profile" className="w-full">
+          <Tabs defaultValue="recommendations" className="w-full">
             <TabsList className="bg-white/5 border-white/10 mb-6 flex-wrap h-auto gap-1">
+              <TabsTrigger 
+                value="recommendations" 
+                className="data-[state=active]:bg-white/10 text-white/70 data-[state=active]:text-white"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                For You
+              </TabsTrigger>
               <TabsTrigger 
                 value="profile" 
                 className="data-[state=active]:bg-white/10 text-white/70 data-[state=active]:text-white"
@@ -302,6 +310,17 @@ export default function CustomerAccount() {
                 Points History
               </TabsTrigger>
             </TabsList>
+
+            {/* Recommendations Tab */}
+            <TabsContent value="recommendations">
+              {customer && cinema && (
+                <MovieRecommendations
+                  customerId={customer.id}
+                  organizationId={cinema.id}
+                  primaryColor={cinema.primary_color}
+                />
+              )}
+            </TabsContent>
 
             {/* Profile Tab */}
             <TabsContent value="profile">

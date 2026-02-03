@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.generate-email-content]
 verify_jwt = false
+
+[functions.recommend-movies]
+verify_jwt = false
