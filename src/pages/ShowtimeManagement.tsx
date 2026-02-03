@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format, addDays, addMinutes } from 'date-fns';
 import { Loader2, Plus, Calendar, Clock, Trash2, Film, Monitor, CalendarPlus, AlertTriangle, CalendarDays, List, Pencil, Ticket, DollarSign } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -975,9 +976,9 @@ export default function ShowtimeManagement() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                <Badge variant="outline">${showtime.price}</Badge>
+                                <Badge variant="outline">{formatCurrency(showtime.price, organization?.currency)}</Badge>
                                 {showtime.vip_price && (
-                                  <Badge variant="secondary">VIP: ${showtime.vip_price}</Badge>
+                                  <Badge variant="secondary">VIP: {formatCurrency(showtime.vip_price, organization?.currency)}</Badge>
                                 )}
                               </div>
                             </TableCell>

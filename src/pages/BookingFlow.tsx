@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { PrintableTicket } from '@/components/booking/PrintableTicket';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { checkRateLimit, formatWaitTime, RATE_LIMITS } from '@/lib/rateLimiter';
+import { formatCurrency } from '@/lib/currency';
 
 interface PromoCode {
   id: string;
@@ -626,7 +627,7 @@ export default function BookingFlow() {
       
       // Check minimum purchase
       if (data.min_purchase_amount && ticketsSubtotal < data.min_purchase_amount) {
-        setPromoError(`Minimum purchase of $${data.min_purchase_amount} required`);
+        setPromoError(`Minimum purchase of ${formatCurrency(data.min_purchase_amount, cinema.currency)} required`);
         return;
       }
       
@@ -1138,12 +1139,12 @@ export default function BookingFlow() {
             <div className="flex justify-center gap-6 text-sm">
               <div className="text-center">
                 <span className="text-white/60">Regular</span>
-                <p className="font-bold text-white">${showtime.price}</p>
+                <p className="font-bold text-white">{formatCurrency(showtime.price, cinema.currency)}</p>
               </div>
               {showtime.vip_price && (
                 <div className="text-center">
                   <span className="text-white/60">VIP</span>
-                  <p className="font-bold" style={{ color: primaryColor }}>${showtime.vip_price}</p>
+                  <p className="font-bold" style={{ color: primaryColor }}>{formatCurrency(showtime.vip_price, cinema.currency)}</p>
                 </div>
               )}
             </div>
@@ -1160,7 +1161,7 @@ export default function BookingFlow() {
                 <div className="flex justify-between items-center">
                   <span className="text-white/60 text-sm">Subtotal</span>
                   <span className="text-lg font-bold" style={{ color: primaryColor }}>
-                    ${ticketsSubtotal.toFixed(2)}
+                    {formatCurrency(ticketsSubtotal, cinema.currency)}
                   </span>
                 </div>
               </div>
@@ -1221,7 +1222,7 @@ export default function BookingFlow() {
                                   <div className="flex items-center gap-2">
                                     <h4 className="font-semibold text-white">{combo.name}</h4>
                                     <span className="text-xs text-amber-400 bg-amber-400/20 px-2 py-0.5 rounded-full">
-                                      Save ${savings.toFixed(2)}
+                                      Save {formatCurrency(savings, cinema.currency)}
                                     </span>
                                   </div>
                                   <p className="text-xs text-white/50 mt-1">
@@ -1234,8 +1235,8 @@ export default function BookingFlow() {
                               
                               <div className="flex items-center justify-between mt-3">
                                 <div className="flex items-baseline gap-2">
-                                  <span className="text-xl font-bold text-amber-400">${combo.combo_price.toFixed(2)}</span>
-                                  <span className="text-sm text-white/40 line-through">${combo.original_price.toFixed(2)}</span>
+                                  <span className="text-xl font-bold text-amber-400">{formatCurrency(combo.combo_price, cinema.currency)}</span>
+                                  <span className="text-sm text-white/40 line-through">{formatCurrency(combo.original_price, cinema.currency)}</span>
                                 </div>
                                 
                                 {quantity === 0 ? (
@@ -1300,7 +1301,7 @@ export default function BookingFlow() {
                                   
                                   <div className="flex items-center justify-between mt-3">
                                     <span className="text-lg font-bold" style={{ color: primaryColor }}>
-                                      ${item.price.toFixed(2)}
+                                      {formatCurrency(item.price, cinema.currency)}
                                     </span>
                                     
                                     {quantity === 0 ? (
@@ -1347,18 +1348,18 @@ export default function BookingFlow() {
                       {selectedConcessions.map((c) => (
                         <div key={c.item.id} className="flex justify-between text-sm">
                           <span className="text-white/70">{c.item.name} × {c.quantity}</span>
-                          <span className="text-white">${(c.item.price * c.quantity).toFixed(2)}</span>
+                          <span className="text-white">{formatCurrency(c.item.price * c.quantity, cinema.currency)}</span>
                         </div>
                       ))}
                       {selectedCombos.map((c) => (
                         <div key={c.combo.id} className="flex justify-between text-sm">
                           <span className="text-white/70">{c.combo.name} × {c.quantity}</span>
-                          <span className="text-white">${(c.combo.combo_price * c.quantity).toFixed(2)}</span>
+                          <span className="text-white">{formatCurrency(c.combo.combo_price * c.quantity, cinema.currency)}</span>
                         </div>
                       ))}
                       <div className="border-t border-white/10 pt-2 flex justify-between font-semibold">
                         <span className="text-white">Snacks Total</span>
-                        <span style={{ color: cinema.primary_color }}>${(concessionsSubtotal + combosSubtotal).toFixed(2)}</span>
+                        <span style={{ color: cinema.primary_color }}>{formatCurrency(concessionsSubtotal + combosSubtotal, cinema.currency)}</span>
                       </div>
                     </div>
                   )}
@@ -1377,7 +1378,7 @@ export default function BookingFlow() {
                       style={{ backgroundColor: cinema.primary_color }}
                     >
                       Continue to Details
-                      {(concessionsSubtotal + combosSubtotal) > 0 && ` (+$${(concessionsSubtotal + combosSubtotal).toFixed(2)})`}
+                      {(concessionsSubtotal + combosSubtotal) > 0 && ` (+${formatCurrency(concessionsSubtotal + combosSubtotal, cinema.currency)})`}
                     </button>
                   </div>
                 </div>
@@ -1456,7 +1457,7 @@ export default function BookingFlow() {
                   className="flex-1 py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ backgroundColor: (!bookingData.customer_name || !bookingData.customer_email) ? 'rgba(255,255,255,0.1)' : primaryColor }}
                 >
-                  Continue to Payment - ${totalAmount.toFixed(2)}
+                  Continue to Payment - {formatCurrency(totalAmount, cinema.currency)}
                 </button>
               ) : (
                 <button
@@ -1465,7 +1466,7 @@ export default function BookingFlow() {
                   className="flex-1 py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ backgroundColor: (!bookingData.customer_name || !bookingData.customer_email || submitting) ? 'rgba(255,255,255,0.1)' : primaryColor }}
                 >
-                  {submitting ? 'Processing...' : `Confirm Booking - $${totalAmount.toFixed(2)}`}
+                  {submitting ? 'Processing...' : `Confirm Booking - ${formatCurrency(totalAmount, cinema.currency)}`}
                 </button>
               )}
             </div>
@@ -1487,23 +1488,23 @@ export default function BookingFlow() {
             <div className="bg-white/5 rounded-xl p-5 mb-6 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-white/70">Tickets ({selectedSeats.length})</span>
-                <span className="text-white">${ticketsSubtotal.toFixed(2)}</span>
+                <span className="text-white">{formatCurrency(ticketsSubtotal, cinema.currency)}</span>
               </div>
               {(concessionsSubtotal + combosSubtotal) > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-white/70">Snacks & Combos</span>
-                  <span className="text-white">${(concessionsSubtotal + combosSubtotal).toFixed(2)}</span>
+                  <span className="text-white">{formatCurrency(concessionsSubtotal + combosSubtotal, cinema.currency)}</span>
                 </div>
               )}
               {discountAmount > 0 && (
                 <div className="flex justify-between text-sm text-green-400">
                   <span>Discount</span>
-                  <span>-${discountAmount.toFixed(2)}</span>
+                  <span>-{formatCurrency(discountAmount, cinema.currency)}</span>
                 </div>
               )}
               <div className="border-t border-white/10 pt-3 flex justify-between font-bold">
                 <span className="text-white">Total</span>
-                <span style={{ color: primaryColor }}>${totalAmount.toFixed(2)}</span>
+                <span style={{ color: primaryColor }}>{formatCurrency(totalAmount, cinema.currency)}</span>
               </div>
             </div>
 
@@ -1515,7 +1516,7 @@ export default function BookingFlow() {
               primaryColor={primaryColor}
               onRewardApplied={(reward, customer, discountAmount) => {
                 setAppliedLoyaltyReward({ reward, customer, discount: discountAmount });
-                toast.success(`Applied ${reward.name} - Save $${discountAmount.toFixed(2)}!`);
+                toast.success(`Applied ${reward.name} - Save ${formatCurrency(discountAmount, cinema.currency)}!`);
               }}
               onRewardRemoved={() => {
                 setAppliedLoyaltyReward(null);
@@ -1612,7 +1613,7 @@ export default function BookingFlow() {
                     Redirecting to payment...
                   </>
                 ) : (
-                  `Pay $${totalAmount.toFixed(2)}`
+                  `Pay ${formatCurrency(totalAmount, cinema.currency)}`
                 )}
               </button>
             </div>
@@ -1685,13 +1686,13 @@ export default function BookingFlow() {
                   {selectedCombos.map((sc) => (
                     <div key={sc.combo.id} className="flex justify-between text-sm">
                       <span className="text-white/70">{sc.quantity}x {sc.combo.name}</span>
-                      <span className="text-white">${(sc.combo.combo_price * sc.quantity).toFixed(2)}</span>
+                      <span className="text-white">{formatCurrency(sc.combo.combo_price * sc.quantity, cinema.currency)}</span>
                     </div>
                   ))}
                   {selectedConcessions.map((sc) => (
                     <div key={sc.item.id} className="flex justify-between text-sm">
                       <span className="text-white/70">{sc.quantity}x {sc.item.name}</span>
-                      <span className="text-white">${(sc.item.price * sc.quantity).toFixed(2)}</span>
+                      <span className="text-white">{formatCurrency(sc.item.price * sc.quantity, cinema.currency)}</span>
                     </div>
                   ))}
                 </div>

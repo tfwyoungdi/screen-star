@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Clock, Heart, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 interface Movie {
   id: string;
@@ -602,11 +603,11 @@ export default function CinemaBooking() {
                       {showtime.screens?.name || 'Screen'}
                     </span>
                     <div className="flex items-center gap-1 text-[10px]">
-                      <span className="opacity-80">${showtime.price}</span>
+                      <span className="opacity-80">{formatCurrency(showtime.price, cinema?.currency)}</span>
                       {hasVipPrice && (
                         <>
                           <span className="opacity-40">|</span>
-                          <span className="text-amber-400">${showtime.vip_price}</span>
+                          <span className="text-amber-400">{formatCurrency(showtime.vip_price!, cinema?.currency)}</span>
                         </>
                       )}
                     </div>
@@ -830,7 +831,7 @@ export default function CinemaBooking() {
                         <span className="text-white/60">
                           Regular × {regularSeats.length}
                         </span>
-                        <span className="text-white">${regularTotal.toFixed(2)}</span>
+                        <span className="text-white">{formatCurrency(regularTotal, cinema?.currency)}</span>
                       </div>
                     )}
                     {vipSeats.length > 0 && (
@@ -838,12 +839,12 @@ export default function CinemaBooking() {
                         <span className="text-amber-400">
                           VIP × {vipSeats.length}
                         </span>
-                        <span className="text-amber-400">${vipTotal.toFixed(2)}</span>
+                        <span className="text-amber-400">{formatCurrency(vipTotal, cinema?.currency)}</span>
                       </div>
                     )}
                     <div className="border-t border-white/10 pt-2 flex justify-between font-semibold">
                       <span className="text-white">Total</span>
-                      <span className="text-white">${totalAmount.toFixed(2)}</span>
+                      <span className="text-white">{formatCurrency(totalAmount, cinema?.currency)}</span>
                     </div>
                   </>
                 );
@@ -862,7 +863,7 @@ export default function CinemaBooking() {
           >
             <ShoppingCart className="h-5 w-5 mr-2" />
             {selectedSeats.length > 0 
-              ? `Add to cart - $${totalAmount.toFixed(2)}`
+              ? `Add to cart - ${formatCurrency(totalAmount, cinema?.currency)}`
               : 'Select seats to continue'
             }
           </Button>

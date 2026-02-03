@@ -179,7 +179,7 @@ export default function SalesDashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => exportToCSV(bookings || [], 'sales-report')}
+              onClick={() => exportToCSV(bookings || [], 'sales-report', organization?.currency)}
               disabled={!bookings || bookings.length === 0}
             >
               <Download className="h-4 w-4 mr-2" />
@@ -188,7 +188,7 @@ export default function SalesDashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => exportToPDF(bookings || [], `Sales Report - Last ${dateRange} Days`)}
+              onClick={() => exportToPDF(bookings || [], `Sales Report - Last ${dateRange} Days`, organization?.currency)}
               disabled={!bookings || bookings.length === 0}
             >
               <FileText className="h-4 w-4 mr-2" />

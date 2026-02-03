@@ -5,11 +5,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { DollarSign, Ticket, TrendingUp, Film, BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { formatCurrency } from '@/lib/currency';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 interface PromoCodeAnalyticsProps {
   organizationId: string | undefined;
+  currency?: string | null;
 }
 
 interface PromoCodeStats {
@@ -33,7 +35,7 @@ interface BookingWithPromo {
   } | null;
 }
 
-export function PromoCodeAnalytics({ organizationId }: PromoCodeAnalyticsProps) {
+export function PromoCodeAnalytics({ organizationId, currency }: PromoCodeAnalyticsProps) {
   // Fetch promo codes with usage data
   const { data: promoCodes, isLoading: codesLoading } = useQuery({
     queryKey: ['promo-codes-analytics', organizationId],
@@ -167,7 +169,7 @@ export function PromoCodeAnalytics({ organizationId }: PromoCodeAnalyticsProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">${totalDiscountsGiven.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-destructive">{formatCurrency(totalDiscountsGiven, currency)}</div>
             <p className="text-xs text-muted-foreground">Value of all discounts</p>
           </CardContent>
         </Card>
@@ -180,7 +182,7 @@ export function PromoCodeAnalytics({ organizationId }: PromoCodeAnalyticsProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">${totalRevenueWithPromos.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-primary">{formatCurrency(totalRevenueWithPromos, currency)}</div>
             <p className="text-xs text-muted-foreground">From promo bookings</p>
           </CardContent>
         </Card>
@@ -193,7 +195,7 @@ export function PromoCodeAnalytics({ organizationId }: PromoCodeAnalyticsProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${avgDiscountPerBooking.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(avgDiscountPerBooking, currency)}</div>
             <p className="text-xs text-muted-foreground">Per promo booking</p>
           </CardContent>
         </Card>
@@ -259,8 +261,8 @@ export function PromoCodeAnalytics({ organizationId }: PromoCodeAnalyticsProps) 
                         </Badge>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                        <span className="text-destructive">-${movie.discounts.toFixed(2)} discounts</span>
-                        <span className="text-primary">${movie.revenue.toFixed(2)} revenue</span>
+                        <span className="text-destructive">-{formatCurrency(movie.discounts, currency)} discounts</span>
+                        <span className="text-primary">{formatCurrency(movie.revenue, currency)} revenue</span>
                       </div>
                     </div>
                   </div>

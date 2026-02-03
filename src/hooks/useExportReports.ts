@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { formatCurrency } from '@/lib/currency';
 
 interface BookingExportData {
   booking_reference: string;
@@ -15,7 +16,7 @@ interface BookingExportData {
 }
 
 export function useExportReports() {
-  const exportToCSV = (bookings: BookingExportData[], filename: string = 'bookings-report') => {
+  const exportToCSV = (bookings: BookingExportData[], filename: string = 'bookings-report', currency?: string | null) => {
     if (!bookings || bookings.length === 0) return;
 
     const headers = [
@@ -39,7 +40,7 @@ export function useExportReports() {
       booking.showtimes?.start_time
         ? format(new Date(booking.showtimes.start_time), 'MMM d, yyyy h:mm a')
         : 'N/A',
-      `$${Number(booking.total_amount).toFixed(2)}`,
+      formatCurrency(Number(booking.total_amount), currency),
       booking.status,
       format(new Date(booking.created_at), 'MMM d, yyyy h:mm a'),
     ]);
@@ -60,7 +61,7 @@ export function useExportReports() {
     URL.revokeObjectURL(url);
   };
 
-  const exportToPDF = (bookings: BookingExportData[], title: string = 'Booking Report') => {
+  const exportToPDF = (bookings: BookingExportData[], title: string = 'Booking Report', currency?: string | null) => {
     if (!bookings || bookings.length === 0) return;
 
     const totalRevenue = bookings.reduce((sum, b) => sum + Number(b.total_amount), 0);
@@ -97,7 +98,7 @@ export function useExportReports() {
         <div class="summary">
           <div class="summary-item">
             <div class="summary-label">Total Revenue</div>
-            <div class="summary-value">$${totalRevenue.toFixed(2)}</div>
+            <div class="summary-value">${formatCurrency(totalRevenue, currency)}</div>
           </div>
           <div class="summary-item">
             <div class="summary-label">Total Bookings</div>
@@ -105,7 +106,7 @@ export function useExportReports() {
           </div>
           <div class="summary-item">
             <div class="summary-label">Avg Order Value</div>
-            <div class="summary-value">$${(totalRevenue / totalBookings).toFixed(2)}</div>
+            <div class="summary-value">${formatCurrency(totalRevenue / totalBookings, currency)}</div>
           </div>
         </div>
 
@@ -130,7 +131,7 @@ export function useExportReports() {
                 <td>${booking.customer_name}</td>
                 <td>${booking.showtimes?.movies?.title || 'N/A'}</td>
                 <td>${booking.showtimes?.start_time ? format(new Date(booking.showtimes.start_time), 'MMM d, h:mm a') : 'N/A'}</td>
-                <td class="amount">$${Number(booking.total_amount).toFixed(2)}</td>
+                <td class="amount">${formatCurrency(Number(booking.total_amount), currency)}</td>
                 <td><span class="status status-${booking.status}">${booking.status.toUpperCase()}</span></td>
                 <td>${format(new Date(booking.created_at), 'MMM d, yyyy')}</td>
               </tr>
