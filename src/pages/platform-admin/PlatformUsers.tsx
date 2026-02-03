@@ -6,27 +6,40 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Users, UserPlus, Shield, Trash2, Search, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { Users, UserPlus, Trash2, Search, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
+import { PLATFORM_ROLE_CONFIG, type PlatformRoleType } from '@/lib/platformRoleConfig';
+import { cn } from '@/lib/utils';
+
+const PLATFORM_ROLES: PlatformRoleType[] = [
+  'platform_admin',
+  'platform_marketing',
+  'platform_accounts',
+  'platform_dev',
+];
 
 export default function PlatformUsers() {
   const queryClient = useQueryClient();
   const { logAction } = usePlatformAuditLog();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [selectedRole, setSelectedRole] = useState<PlatformRoleType>('platform_admin');
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string; role: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('all');
 
-  // Fetch platform admins only
-  const { data: platformAdmins, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['platform-admins'],
+  // Fetch all platform-level users
+  const { data: platformUsers, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ['platform-users'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
@@ -43,7 +56,7 @@ export default function PlatformUsers() {
             is_active
           )
         `)
-        .eq('role', 'platform_admin')
+        .in('role', PLATFORM_ROLES)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -51,20 +64,21 @@ export default function PlatformUsers() {
     },
   });
 
-  // Filter by search
-  const filteredAdmins = platformAdmins?.filter(u => {
-    if (!searchQuery) return true;
+  // Filter by search and tab
+  const filteredUsers = platformUsers?.filter(u => {
     const profile = u.profiles as any;
-    const search = searchQuery.toLowerCase();
-    return (
-      profile?.email?.toLowerCase().includes(search) ||
-      profile?.full_name?.toLowerCase().includes(search)
-    );
+    const matchesSearch = !searchQuery || 
+      profile?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      profile?.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesTab = activeTab === 'all' || u.role === activeTab;
+    
+    return matchesSearch && matchesTab;
   }) || [];
 
-  // Add platform admin mutation
+  // Add platform user mutation
   const addUserMutation = useMutation({
-    mutationFn: async ({ email }: { email: string }) => {
+    mutationFn: async ({ email, role }: { email: string; role: PlatformRoleType }) => {
       // Find the user by email
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -76,16 +90,16 @@ export default function PlatformUsers() {
         throw new Error('User not found. They must have an existing account first.');
       }
 
-      // Check if they already have platform_admin role
+      // Check if they already have this role
       const { data: existingRole } = await supabase
         .from('user_roles')
         .select('id')
         .eq('user_id', profile.id)
-        .eq('role', 'platform_admin')
+        .eq('role', role)
         .maybeSingle();
 
       if (existingRole) {
-        throw new Error('This user is already a Platform Admin.');
+        throw new Error(`This user already has the ${PLATFORM_ROLE_CONFIG[role].label} role.`);
       }
 
       // Add the role
@@ -93,52 +107,53 @@ export default function PlatformUsers() {
         .from('user_roles')
         .insert({
           user_id: profile.id,
-          role: 'platform_admin' as const,
+          role: role as any,
           organization_id: null,
         });
 
       if (error) throw error;
-      return { email, name: profile.full_name };
+      return { email, name: profile.full_name, role };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['platform-admins'] });
-      toast.success(`${data.name || data.email} is now a Platform Admin`);
+      queryClient.invalidateQueries({ queryKey: ['platform-users'] });
+      toast.success(`${data.name || data.email} is now a ${PLATFORM_ROLE_CONFIG[data.role].label}`);
       logAction({
-        action: 'platform_admin_added',
+        action: 'platform_user_added',
         target_type: 'user_role',
-        details: { email: data.email },
+        details: { email: data.email, role: data.role },
       });
       setIsAddOpen(false);
       setEmail('');
+      setSelectedRole('platform_admin');
     },
     onError: (error: Error) => {
       toast.error(error.message);
     },
   });
 
-  // Remove platform admin mutation
+  // Remove platform user mutation
   const removeUserMutation = useMutation({
-    mutationFn: async ({ roleId, email }: { roleId: string; email: string }) => {
+    mutationFn: async ({ roleId, email, role }: { roleId: string; email: string; role: string }) => {
       const { error } = await supabase
         .from('user_roles')
         .delete()
         .eq('id', roleId);
 
       if (error) throw error;
-      return { email };
+      return { email, role };
     },
-    onSuccess: ({ email }) => {
-      queryClient.invalidateQueries({ queryKey: ['platform-admins'] });
-      toast.success(`Removed Platform Admin access from ${email}`);
+    onSuccess: ({ email, role }) => {
+      queryClient.invalidateQueries({ queryKey: ['platform-users'] });
+      toast.success(`Removed ${role} access from ${email}`);
       logAction({
-        action: 'platform_admin_removed',
+        action: 'platform_user_removed',
         target_type: 'user_role',
-        details: { email },
+        details: { email, role },
       });
       setDeleteTarget(null);
     },
     onError: () => {
-      toast.error('Failed to remove Platform Admin');
+      toast.error('Failed to remove user');
     },
   });
 
@@ -147,20 +162,25 @@ export default function PlatformUsers() {
       toast.error('Please enter an email address');
       return;
     }
-    addUserMutation.mutate({ email: email.trim() });
+    addUserMutation.mutate({ email: email.trim(), role: selectedRole });
   };
 
-  const activeCount = platformAdmins?.filter(u => (u.profiles as any)?.is_active).length || 0;
-  const inactiveCount = (platformAdmins?.length || 0) - activeCount;
+  // Calculate stats
+  const stats = PLATFORM_ROLES.reduce((acc, role) => {
+    acc[role] = platformUsers?.filter(u => u.role === role).length || 0;
+    return acc;
+  }, {} as Record<PlatformRoleType, number>);
+
+  const totalUsers = platformUsers?.length || 0;
 
   return (
     <PlatformLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Platform Admins</h1>
+            <h1 className="text-2xl font-bold text-foreground">Users & Roles</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Manage users with full platform administrative access
+              Manage platform-level users and their access permissions
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -177,40 +197,66 @@ export default function PlatformUsers() {
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <UserPlus className="h-4 w-4" />
-                  Add Platform Admin
+                  Add User
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add Platform Admin</DialogTitle>
+                  <DialogTitle>Add Platform User</DialogTitle>
                   <DialogDescription>
-                    Grant full platform administrative access to an existing user. They will be able to manage all cinemas, users, and platform settings.
+                    Grant platform access to an existing user. Select their role to define their permissions.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="admin-email">User Email</Label>
+                    <Label htmlFor="user-email">User Email</Label>
                     <Input
-                      id="admin-email"
+                      id="user-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="user@example.com"
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
                     />
                     <p className="text-xs text-muted-foreground">
                       The user must have an existing account in the system.
                     </p>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as PlatformRoleType)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PLATFORM_ROLES.map(role => {
+                          const config = PLATFORM_ROLE_CONFIG[role];
+                          return (
+                            <SelectItem key={role} value={role}>
+                              <div className="flex items-center gap-2">
+                                <config.icon className="h-4 w-4" />
+                                <span>{config.label}</span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {PLATFORM_ROLE_CONFIG[selectedRole].description}
+                    </p>
+                  </div>
+
                   <div className="flex justify-end gap-3 pt-4">
                     <Button variant="outline" onClick={() => {
                       setIsAddOpen(false);
                       setEmail('');
+                      setSelectedRole('platform_admin');
                     }}>
                       Cancel
                     </Button>
                     <Button onClick={handleAddUser} disabled={addUserMutation.isPending}>
-                      {addUserMutation.isPending ? 'Adding...' : 'Add Admin'}
+                      {addUserMutation.isPending ? 'Adding...' : 'Add User'}
                     </Button>
                   </div>
                 </div>
@@ -219,66 +265,58 @@ export default function PlatformUsers() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <Shield className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{platformAdmins?.length || 0}</p>
-                  <p className="text-sm text-muted-foreground">Total Admins</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-green-500/10">
-                  <CheckCircle className="h-6 w-6 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{activeCount}</p>
-                  <p className="text-sm text-muted-foreground">Active</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-destructive/10">
-                  <XCircle className="h-6 w-6 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{inactiveCount}</p>
-                  <p className="text-sm text-muted-foreground">Inactive</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats by Role */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {PLATFORM_ROLES.map(role => {
+            const config = PLATFORM_ROLE_CONFIG[role];
+            return (
+              <Card key={role}>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className={cn('p-3 rounded-lg', config.color.split(' ')[0])}>
+                      <config.icon className={cn('h-6 w-6', config.color.split(' ')[1])} />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats[role]}</p>
+                      <p className="text-sm text-muted-foreground">{config.label}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        {/* Tabs and Search */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+            <TabsList>
+              <TabsTrigger value="all">All ({totalUsers})</TabsTrigger>
+              {PLATFORM_ROLES.map(role => (
+                <TabsTrigger key={role} value={role}>
+                  {PLATFORM_ROLE_CONFIG[role].label.split(' ')[0]} ({stats[role]})
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          
+          <div className="relative w-full sm:w-auto sm:min-w-[250px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
 
-        {/* Admins Table */}
+        {/* Users Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Platform Administrators</CardTitle>
+            <CardTitle>Platform Users</CardTitle>
             <CardDescription>
-              Users with full access to this admin dashboard and all platform features
+              Users with access to this platform admin dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -288,22 +326,25 @@ export default function PlatformUsers() {
                   <Skeleton key={i} className="h-14 w-full" />
                 ))}
               </div>
-            ) : filteredAdmins.length > 0 ? (
+            ) : filteredUsers.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Added</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAdmins.map((admin) => {
-                    const profile = admin.profiles as any;
+                  {filteredUsers.map((user) => {
+                    const profile = user.profiles as any;
+                    const roleConfig = PLATFORM_ROLE_CONFIG[user.role as PlatformRoleType];
+                    
                     return (
-                      <TableRow key={admin.id}>
+                      <TableRow key={user.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             {profile?.avatar_url ? (
@@ -319,27 +360,33 @@ export default function PlatformUsers() {
                                 </span>
                               </div>
                             )}
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{profile?.full_name || 'Unknown'}</span>
-                              <Badge variant="secondary" className="gap-1">
-                                <Shield className="h-3 w-3" />
-                                Admin
-                              </Badge>
-                            </div>
+                            <span className="font-medium">{profile?.full_name || 'Unknown'}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {profile?.email}
                         </TableCell>
                         <TableCell>
+                          <Badge className={cn('gap-1', roleConfig?.color)}>
+                            {roleConfig && <roleConfig.icon className="h-3 w-3" />}
+                            {roleConfig?.label || user.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           {profile?.is_active ? (
-                            <Badge className="bg-green-500/10 text-green-500">Active</Badge>
+                            <Badge className="bg-green-500/10 text-green-500 gap-1">
+                              <CheckCircle className="h-3 w-3" />
+                              Active
+                            </Badge>
                           ) : (
-                            <Badge variant="destructive">Inactive</Badge>
+                            <Badge variant="destructive" className="gap-1">
+                              <XCircle className="h-3 w-3" />
+                              Inactive
+                            </Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {format(new Date(admin.created_at), 'MMM d, yyyy')}
+                          {format(new Date(user.created_at), 'MMM d, yyyy')}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
@@ -347,8 +394,9 @@ export default function PlatformUsers() {
                             size="sm"
                             className="text-destructive hover:text-destructive"
                             onClick={() => setDeleteTarget({ 
-                              id: admin.id, 
-                              email: profile?.email 
+                              id: user.id, 
+                              email: profile?.email,
+                              role: roleConfig?.label || user.role,
                             })}
                             disabled={removeUserMutation.isPending}
                           >
@@ -362,10 +410,10 @@ export default function PlatformUsers() {
               </Table>
             ) : (
               <div className="text-center py-12">
-                <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No platform admins found</h3>
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No users found</h3>
                 <p className="text-muted-foreground text-sm mt-1">
-                  {searchQuery ? 'Try adjusting your search' : 'Add administrators to manage the platform.'}
+                  {searchQuery ? 'Try adjusting your search' : 'Add users to grant platform access.'}
                 </p>
               </div>
             )}
@@ -376,9 +424,9 @@ export default function PlatformUsers() {
         <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Remove Platform Admin</AlertDialogTitle>
+              <AlertDialogTitle>Remove User Access</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to remove platform admin access from <strong>{deleteTarget?.email}</strong>? 
+                Are you sure you want to remove <strong>{deleteTarget?.role}</strong> access from <strong>{deleteTarget?.email}</strong>? 
                 They will no longer be able to access this dashboard.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -390,12 +438,13 @@ export default function PlatformUsers() {
                   if (deleteTarget) {
                     removeUserMutation.mutate({ 
                       roleId: deleteTarget.id, 
-                      email: deleteTarget.email 
+                      email: deleteTarget.email,
+                      role: deleteTarget.role,
                     });
                   }
                 }}
               >
-                Remove Admin
+                Remove Access
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -1,51 +1,22 @@
 import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { usePlatformRole } from '@/hooks/usePlatformRole';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  LayoutDashboard,
-  Building2,
-  CreditCard,
-  Receipt,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Shield,
-  Globe,
-  Users,
-  Activity,
-  BarChart3,
-  ScrollText,
-  Timer,
-  Mail,
-  UserCircle,
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { LogOut, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getNavItemsForRole, PLATFORM_ROLE_CONFIG } from '@/lib/platformRoleConfig';
 
 interface PlatformLayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
-  { title: 'Dashboard', href: '/platform-admin', icon: LayoutDashboard },
-  { title: 'Cinemas', href: '/platform-admin/cinemas', icon: Building2 },
-  { title: 'Customers', href: '/platform-admin/customers', icon: UserCircle },
-  { title: 'Subscription Plans', href: '/platform-admin/plans', icon: CreditCard },
-  { title: 'Transactions', href: '/platform-admin/transactions', icon: Receipt },
-  { title: 'Domains', href: '/platform-admin/domains', icon: Globe },
-  { title: 'Users & Roles', href: '/platform-admin/users', icon: Users },
-  { title: 'Communications', href: '/platform-admin/communications', icon: Mail },
-  { title: 'Monitoring', href: '/platform-admin/monitoring', icon: Activity },
-  { title: 'Reports', href: '/platform-admin/reports', icon: BarChart3 },
-  { title: 'Audit Logs', href: '/platform-admin/audit-logs', icon: ScrollText },
-  { title: 'SLA Dashboard', href: '/platform-admin/sla', icon: Timer },
-  { title: 'Support Tickets', href: '/platform-admin/tickets', icon: MessageSquare },
-  { title: 'Settings', href: '/platform-admin/settings', icon: Settings },
-];
-
 export function PlatformLayout({ children }: PlatformLayoutProps) {
   const { signOut } = useAuth();
+  const { platformRole, isLoading } = usePlatformRole();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -54,6 +25,9 @@ export function PlatformLayout({ children }: PlatformLayoutProps) {
     navigate('/login');
   };
 
+  const navItems = getNavItemsForRole(platformRole);
+  const roleConfig = platformRole ? PLATFORM_ROLE_CONFIG[platformRole] : null;
+
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
@@ -61,36 +35,55 @@ export function PlatformLayout({ children }: PlatformLayoutProps) {
         <div className="p-6 border-b">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Shield className="h-5 w-5 text-primary" />
+              {roleConfig ? (
+                <roleConfig.icon className="h-5 w-5 text-primary" />
+              ) : (
+                <Shield className="h-5 w-5 text-primary" />
+              )}
             </div>
-            <div>
-              <h2 className="font-bold text-foreground">Platform Admin</h2>
+            <div className="min-w-0">
+              <h2 className="font-bold text-foreground truncate">
+                {roleConfig?.label || 'Platform'}
+              </h2>
               <p className="text-xs text-muted-foreground">CineTix Management</p>
             </div>
           </div>
+          {roleConfig && platformRole !== 'platform_admin' && (
+            <Badge className={cn('mt-3', roleConfig.color)}>
+              {roleConfig.label}
+            </Badge>
+          )}
         </div>
 
         <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <button
-                  key={item.href}
-                  onClick={() => navigate(item.href)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.title}
-                </button>
-              );
-            })}
-          </nav>
+          {isLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map(i => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : (
+            <nav className="space-y-1">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => navigate(item.href)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.title}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
         </ScrollArea>
 
         <div className="p-4 border-t">

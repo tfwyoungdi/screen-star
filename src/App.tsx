@@ -67,6 +67,9 @@ import PlatformAuditLogs from "./pages/platform-admin/PlatformAuditLogs";
 import PlatformSLA from "./pages/platform-admin/PlatformSLA";
 import PlatformCommunications from "./pages/platform-admin/PlatformCommunications";
 import PlatformCustomers from "./pages/platform-admin/PlatformCustomers";
+import PlatformMarketingDashboard from "./pages/platform-admin/PlatformMarketingDashboard";
+import PlatformAccountsDashboard from "./pages/platform-admin/PlatformAccountsDashboard";
+import PlatformDevDashboard from "./pages/platform-admin/PlatformDevDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -272,15 +275,39 @@ const App = () => (
               <Route
                 path="/platform-admin"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin']}>
                     <PlatformDashboard />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/marketing"
+                element={
+                  <PlatformProtectedRoute allowedRoles={['platform_marketing']}>
+                    <PlatformMarketingDashboard />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/accounts"
+                element={
+                  <PlatformProtectedRoute allowedRoles={['platform_accounts']}>
+                    <PlatformAccountsDashboard />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/dev"
+                element={
+                  <PlatformProtectedRoute allowedRoles={['platform_dev']}>
+                    <PlatformDevDashboard />
                   </PlatformProtectedRoute>
                 }
               />
               <Route
                 path="/platform-admin/cinemas"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin']}>
                     <PlatformCinemas />
                   </PlatformProtectedRoute>
                 }
@@ -288,7 +315,7 @@ const App = () => (
               <Route
                 path="/platform-admin/plans"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_accounts']}>
                     <PlatformPlans />
                   </PlatformProtectedRoute>
                 }
@@ -296,7 +323,7 @@ const App = () => (
               <Route
                 path="/platform-admin/transactions"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_accounts']}>
                     <PlatformTransactions />
                   </PlatformProtectedRoute>
                 }
@@ -304,7 +331,7 @@ const App = () => (
               <Route
                 path="/platform-admin/tickets"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin']}>
                     <PlatformTickets />
                   </PlatformProtectedRoute>
                 }
@@ -312,7 +339,7 @@ const App = () => (
               <Route
                 path="/platform-admin/settings"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin']}>
                     <PlatformSettings />
                   </PlatformProtectedRoute>
                 }
@@ -320,7 +347,7 @@ const App = () => (
               <Route
                 path="/platform-admin/domains"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_dev']}>
                     <PlatformDomains />
                   </PlatformProtectedRoute>
                 }
@@ -328,7 +355,7 @@ const App = () => (
               <Route
                 path="/platform-admin/users"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin']}>
                     <PlatformUsers />
                   </PlatformProtectedRoute>
                 }
@@ -336,7 +363,7 @@ const App = () => (
               <Route
                 path="/platform-admin/monitoring"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_dev']}>
                     <PlatformMonitoring />
                   </PlatformProtectedRoute>
                 }
@@ -344,7 +371,7 @@ const App = () => (
               <Route
                 path="/platform-admin/reports"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_marketing', 'platform_accounts']}>
                     <PlatformReports />
                   </PlatformProtectedRoute>
                 }
@@ -352,7 +379,7 @@ const App = () => (
               <Route
                 path="/platform-admin/audit-logs"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_dev']}>
                     <PlatformAuditLogs />
                   </PlatformProtectedRoute>
                 }
@@ -360,7 +387,7 @@ const App = () => (
               <Route
                 path="/platform-admin/sla"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin']}>
                     <PlatformSLA />
                   </PlatformProtectedRoute>
                 }
@@ -368,7 +395,7 @@ const App = () => (
               <Route
                 path="/platform-admin/communications"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_marketing']}>
                     <PlatformCommunications />
                   </PlatformProtectedRoute>
                 }
@@ -376,7 +403,7 @@ const App = () => (
               <Route
                 path="/platform-admin/customers"
                 element={
-                  <PlatformProtectedRoute>
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_marketing']}>
                     <PlatformCustomers />
                   </PlatformProtectedRoute>
                 }

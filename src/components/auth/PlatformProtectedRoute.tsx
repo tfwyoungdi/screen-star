@@ -1,32 +1,19 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { usePlatformRole } from '@/hooks/usePlatformRole';
 import { Loader2 } from 'lucide-react';
+import { getDefaultRouteForRole, type PlatformRoleType } from '@/lib/platformRoleConfig';
 
 interface PlatformProtectedRouteProps {
   children: ReactNode;
+  allowedRoles?: PlatformRoleType[];
 }
 
-export function PlatformProtectedRoute({ children }: PlatformProtectedRouteProps) {
+export function PlatformProtectedRoute({ children, allowedRoles }: PlatformProtectedRouteProps) {
   const { user, loading: authLoading } = useAuth();
-
-  const { data: isPlatformAdmin, isLoading: roleLoading } = useQuery({
-    queryKey: ['is-platform-admin', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      const { data, error } = await supabase.rpc('is_platform_admin', {
-        _user_id: user.id,
-      });
-      if (error) {
-        console.error('Platform admin check error:', error);
-        return false;
-      }
-      return data as boolean;
-    },
-    enabled: !!user?.id,
-  });
+  const { platformRole, hasPlatformAccess, isLoading: roleLoading } = usePlatformRole();
+  const location = useLocation();
 
   const isLoading = authLoading || roleLoading;
 
@@ -42,8 +29,19 @@ export function PlatformProtectedRoute({ children }: PlatformProtectedRouteProps
     return <Navigate to="/platform-admin/login" replace />;
   }
 
-  if (!isPlatformAdmin) {
+  if (!hasPlatformAccess) {
     return <Navigate to="/platform-admin/login" replace />;
+  }
+
+  // If specific roles are required, check if user has one of them
+  if (allowedRoles && allowedRoles.length > 0 && platformRole) {
+    if (!allowedRoles.includes(platformRole)) {
+      // Redirect to their default dashboard
+      const defaultRoute = getDefaultRouteForRole(platformRole);
+      if (location.pathname !== defaultRoute) {
+        return <Navigate to={defaultRoute} replace />;
+      }
+    }
   }
 
   return <>{children}</>;
