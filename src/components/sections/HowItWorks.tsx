@@ -154,10 +154,10 @@ const HowItWorks = () => {
               {['bg-primary', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5'].map((color, i) => (
                 <div 
                   key={i} 
-                  className={`w-10 h-10 rounded-full ${color} border-3 border-background flex items-center justify-center shadow-lg`}
+                  className={`w-10 h-10 rounded-full ${color} border-2 border-background flex items-center justify-center shadow-lg`}
                   style={{ zIndex: 4 - i }}
                 >
-                  <span className="text-xs font-bold text-primary-foreground">
+                  <span className="text-xs font-bold text-white drop-shadow-sm">
                     {['S', 'A', 'G', 'S'][i]}
                   </span>
                 </div>
