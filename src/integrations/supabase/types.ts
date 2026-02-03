@@ -81,13 +81,6 @@ export type Database = {
             foreignKeyName: "booked_seats_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "bookings_activation_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booked_seats_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
             referencedRelation: "bookings_public"
             referencedColumns: ["id"]
           },
@@ -137,13 +130,6 @@ export type Database = {
             foreignKeyName: "booking_combos_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "bookings_activation_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_combos_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
             referencedRelation: "bookings_public"
             referencedColumns: ["id"]
           },
@@ -187,13 +173,6 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_concessions_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings_activation_view"
             referencedColumns: ["id"]
           },
           {
@@ -986,13 +965,6 @@ export type Database = {
             foreignKeyName: "email_analytics_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "bookings_activation_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "email_analytics_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
             referencedRelation: "bookings_public"
             referencedColumns: ["id"]
           },
@@ -1442,13 +1414,6 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_transactions_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings_activation_view"
             referencedColumns: ["id"]
           },
           {
@@ -2223,13 +2188,6 @@ export type Database = {
             foreignKeyName: "platform_transactions_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "bookings_activation_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_transactions_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
             referencedRelation: "bookings_public"
             referencedColumns: ["id"]
           },
@@ -2475,13 +2433,6 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scan_logs_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings_activation_view"
             referencedColumns: ["id"]
           },
           {
@@ -3149,93 +3100,6 @@ export type Database = {
       }
     }
     Views: {
-      bookings_activation_view: {
-        Row: {
-          activated_at: string | null
-          activated_by: string | null
-          booking_reference: string | null
-          created_at: string | null
-          customer_email: string | null
-          customer_name: string | null
-          customer_name_masked: string | null
-          customer_phone: string | null
-          id: string | null
-          organization_id: string | null
-          shift_id: string | null
-          showtime_id: string | null
-          status: string | null
-          total_amount: number | null
-        }
-        Insert: {
-          activated_at?: string | null
-          activated_by?: string | null
-          booking_reference?: string | null
-          created_at?: string | null
-          customer_email?: string | null
-          customer_name?: string | null
-          customer_name_masked?: never
-          customer_phone?: string | null
-          id?: string | null
-          organization_id?: string | null
-          shift_id?: string | null
-          showtime_id?: string | null
-          status?: string | null
-          total_amount?: number | null
-        }
-        Update: {
-          activated_at?: string | null
-          activated_by?: string | null
-          booking_reference?: string | null
-          created_at?: string | null
-          customer_email?: string | null
-          customer_name?: string | null
-          customer_name_masked?: never
-          customer_phone?: string | null
-          id?: string | null
-          organization_id?: string | null
-          shift_id?: string | null
-          showtime_id?: string | null
-          status?: string | null
-          total_amount?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bookings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_shift_id_fkey"
-            columns: ["shift_id"]
-            isOneToOne: false
-            referencedRelation: "shifts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_showtime_id_fkey"
-            columns: ["showtime_id"]
-            isOneToOne: false
-            referencedRelation: "showtimes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       bookings_public: {
         Row: {
           booking_reference: string | null
