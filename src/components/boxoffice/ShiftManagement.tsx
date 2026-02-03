@@ -102,6 +102,16 @@ export function ShiftManagement({ userId, organizationId, currency, onShiftChang
     mutationFn: async () => {
       const openingAmount = parseFloat(openingCash) || 0;
       
+      // Validate: no negative values allowed
+      if (openingAmount < 0) {
+        throw new Error('Opening cash cannot be negative');
+      }
+      
+      // Validate: reasonable maximum (prevent typos like extra zeros)
+      if (openingAmount > 100000) {
+        throw new Error('Opening cash amount seems unusually high. Please verify.');
+      }
+      
       const { data, error } = await supabase
         .from('shifts')
         .insert({
@@ -134,6 +144,17 @@ export function ShiftManagement({ userId, organizationId, currency, onShiftChang
       if (!activeShift) throw new Error('No active shift');
       
       const closingAmount = parseFloat(closingCash) || 0;
+      
+      // Validate: no negative values allowed
+      if (closingAmount < 0) {
+        throw new Error('Closing cash cannot be negative');
+      }
+      
+      // Validate: reasonable maximum
+      if (closingAmount > 100000) {
+        throw new Error('Closing cash amount seems unusually high. Please verify.');
+      }
+      
       const expectedCash = activeShift.opening_cash + (shiftSales?.cashSales || 0);
       const difference = closingAmount - expectedCash;
 
