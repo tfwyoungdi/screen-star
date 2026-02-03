@@ -1,137 +1,185 @@
-import { UserPlus, Film, Globe, TrendingUp, ArrowRight } from "lucide-react";
-import dashboardImage from "@/assets/dashboard-preview.jpg";
-import mobileImage from "@/assets/mobile-booking.jpg";
+import { UserPlus, Film, Globe, TrendingUp, Sparkles, ChevronRight } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-const steps = [
+interface Step {
+  number: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  accent: string;
+  glowColor: string;
+}
+
+const steps: Step[] = [
   {
     number: "01",
     icon: UserPlus,
     title: "Sign Up & Setup",
     description: "Create your account, configure your cinema profile, add halls, and set up seating layouts in minutes.",
-    color: "from-primary/20 to-primary/5",
-    iconBg: "bg-primary",
+    accent: "bg-primary",
+    glowColor: "shadow-primary/25",
   },
   {
     number: "02",
     icon: Film,
     title: "Add Movies & Showtimes",
     description: "Import movie details, schedule showtimes, and set pricing with our intuitive scheduling system.",
-    color: "from-chart-3/20 to-chart-3/5",
-    iconBg: "bg-chart-3",
+    accent: "bg-chart-3",
+    glowColor: "shadow-chart-3/25",
   },
   {
     number: "03",
     icon: Globe,
     title: "Launch Your Website",
     description: "Customize your booking website, connect your domain, and go live with online ticket sales.",
-    color: "from-chart-4/20 to-chart-4/5",
-    iconBg: "bg-chart-4",
+    accent: "bg-chart-4",
+    glowColor: "shadow-chart-4/25",
   },
   {
     number: "04",
     icon: TrendingUp,
     title: "Manage & Grow",
     description: "Use analytics to optimize operations, manage staff roles, and scale your cinema business.",
-    color: "from-chart-5/20 to-chart-5/5",
-    iconBg: "bg-chart-5",
+    accent: "bg-chart-5",
+    glowColor: "shadow-chart-5/25",
   },
 ];
 
 const HowItWorks = () => {
   return (
-    <section className="py-24 lg:py-32 bg-secondary/30 relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-      
+    <section className="py-24 lg:py-32 bg-background relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-chart-3/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-chart-4/5 rounded-full blur-3xl" />
+      </div>
+
       <div className="container mx-auto px-4 relative z-10">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-primary text-sm font-semibold tracking-wide uppercase">How It Works</span>
+        <div className="text-center max-w-3xl mx-auto mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border shadow-sm mb-6">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-foreground text-sm font-medium">Simple Process</span>
           </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            Get Started in <span className="text-primary">4 Simple Steps</span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+            From Zero to <br className="hidden sm:block" />
+            <span className="bg-gradient-to-r from-primary via-chart-3 to-chart-4 bg-clip-text text-transparent">
+              Selling Tickets
+            </span>
           </h2>
-          <p className="text-lg text-muted-foreground">
-            From signup to selling tickets — we make the journey effortless.
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Launch your cinema's online presence in four straightforward steps. No technical expertise required.
           </p>
         </div>
 
-        {/* Steps Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {steps.map((step, index) => (
-            <div
-              key={step.number}
-              className="group relative"
-            >
-              {/* Connector line for desktop */}
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-12 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-px bg-gradient-to-r from-border via-primary/30 to-border z-0" />
-              )}
-              
-              <div className={`relative z-10 h-full bg-card rounded-3xl border border-border p-6 hover:border-primary/40 hover:shadow-xl transition-all duration-500 group-hover:-translate-y-2`}>
-                {/* Gradient overlay on hover */}
-                <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                
-                <div className="relative z-10">
-                  {/* Step number & icon row */}
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-5xl font-bold text-muted-foreground/20 group-hover:text-primary/20 transition-colors">
-                      {step.number}
-                    </span>
-                    <div className={`p-3 rounded-2xl ${step.iconBg} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                      <step.icon className="h-6 w-6 text-primary-foreground" />
+        {/* Timeline Steps - Desktop */}
+        <div className="hidden lg:block relative max-w-5xl mx-auto mb-16">
+          {/* Central timeline line */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-border to-transparent" />
+          
+          {steps.map((step, index) => {
+            const isEven = index % 2 === 0;
+            const StepIcon = step.icon;
+            
+            return (
+              <div 
+                key={step.number} 
+                className={`relative flex items-center gap-8 mb-16 last:mb-0 ${isEven ? 'flex-row' : 'flex-row-reverse'}`}
+              >
+                {/* Content Card */}
+                <div className={`w-[calc(50%-3rem)] ${isEven ? 'text-right' : 'text-left'}`}>
+                  <div className={`group inline-block w-full max-w-md bg-card rounded-3xl border border-border p-8 hover:border-primary/30 transition-all duration-500 hover:shadow-xl ${step.glowColor} ${isEven ? 'ml-auto' : 'mr-auto'}`}>
+                    <div className={`flex items-start gap-4 ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
+                      <div className={`shrink-0 p-4 rounded-2xl ${step.accent} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <StepIcon className="h-6 w-6 text-primary-foreground" />
+                      </div>
+                      <div className={isEven ? 'text-right' : 'text-left'}>
+                        <span className="text-xs font-bold text-muted-foreground/50 uppercase tracking-widest">
+                          Step {step.number}
+                        </span>
+                        <h3 className="text-xl font-bold text-foreground mt-1 mb-2">
+                          {step.title}
+                        </h3>
+                        <p className="text-muted-foreground text-sm leading-relaxed">
+                          {step.description}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  
-                  <h3 className="text-xl font-semibold text-foreground mb-3">
-                    {step.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm">
-                    {step.description}
-                  </p>
                 </div>
+
+                {/* Center Node */}
+                <div className="absolute left-1/2 -translate-x-1/2 z-10">
+                  <div className={`w-12 h-12 rounded-full ${step.accent} border-4 border-background flex items-center justify-center shadow-lg`}>
+                    <span className="text-sm font-bold text-primary-foreground">{step.number}</span>
+                  </div>
+                </div>
+
+                {/* Spacer for opposite side */}
+                <div className="w-[calc(50%-3rem)]" />
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Visual showcase */}
-        <div className="relative max-w-5xl mx-auto">
-          <div className="relative rounded-3xl overflow-hidden border border-border shadow-2xl bg-card">
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10" />
-            <img
-              src={dashboardImage}
-              alt="CineTix Dashboard Preview"
-              className="w-full h-auto"
-            />
+        {/* Timeline Steps - Mobile/Tablet */}
+        <div className="lg:hidden space-y-6 mb-16">
+          {steps.map((step, index) => {
+            const StepIcon = step.icon;
             
-            {/* Floating badge */}
-            <div className="absolute bottom-6 left-6 z-20 flex items-center gap-3 bg-card/90 backdrop-blur-sm px-4 py-3 rounded-2xl border border-border shadow-lg">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <TrendingUp className="h-5 w-5 text-primary" />
+            return (
+              <div key={step.number} className="relative flex gap-4">
+                {/* Timeline line and node */}
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-full ${step.accent} flex items-center justify-center shadow-lg shrink-0`}>
+                    <span className="text-sm font-bold text-primary-foreground">{step.number}</span>
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className="w-px flex-1 bg-gradient-to-b from-border to-transparent mt-4" />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className={`flex-1 bg-card rounded-2xl border border-border p-6 ${step.glowColor} hover:shadow-lg transition-shadow`}>
+                  <div className="flex items-start gap-4">
+                    <div className={`shrink-0 p-3 rounded-xl ${step.accent}/10`}>
+                      <StepIcon className={`h-5 w-5`} style={{ color: `hsl(var(--primary))` }} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground mb-2">{step.title}</h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-semibold text-foreground">Real-time Analytics</div>
-                <div className="text-xs text-muted-foreground">Track sales & performance</div>
+            );
+          })}
+        </div>
+
+        {/* CTA Section */}
+        <div className="text-center">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-2 rounded-full bg-card border border-border shadow-lg">
+            <div className="flex items-center gap-3 px-4 py-2">
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-8 h-8 rounded-full bg-secondary border-2 border-card flex items-center justify-center">
+                    <span className="text-xs font-medium text-muted-foreground">{i}</span>
+                  </div>
+                ))}
               </div>
+              <span className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">500+</span> cinemas onboard
+              </span>
             </div>
+            <a 
+              href="/signup" 
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              Start Free Trial
+              <ChevronRight className="w-4 h-4" />
+            </a>
           </div>
-          
-          {/* Mobile preview */}
-          <div className="absolute -bottom-8 -right-4 lg:right-8 w-32 lg:w-44 z-30">
-            <div className="rounded-2xl overflow-hidden border-4 border-card shadow-2xl">
-              <img
-                src={mobileImage}
-                alt="Mobile Booking Experience"
-                className="w-full h-auto"
-              />
-            </div>
-          </div>
-          
-          {/* Decorative glow */}
-          <div className="absolute -inset-10 -z-10 bg-primary/10 blur-3xl rounded-full opacity-50" />
         </div>
       </div>
     </section>
