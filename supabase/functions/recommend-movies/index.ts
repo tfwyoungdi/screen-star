@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -25,6 +26,51 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // First verify the customer exists
+    const { data: customer, error: customerError } = await supabase
+      .from("customers")
+      .select("id, full_name")
+      .eq("id", customerId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+
+    // Fetch available movies first (needed for both cases)
+    const { data: availableMovies, error: moviesError } = await supabase
+      .from("movies")
+      .select(`
+        id,
+        title,
+        genre,
+        rating,
+        description,
+        poster_url,
+        duration_minutes
+      `)
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .eq("status", "now_showing");
+
+    if (moviesError) {
+      console.error("Error fetching movies:", moviesError);
+      throw new Error("Failed to fetch available movies");
+    }
+
+    // If customer doesn't exist or error, return popular movies
+    if (customerError || !customer) {
+      console.log("Customer not found or error, returning popular movies");
+      return new Response(
+        JSON.stringify({
+          recommendations: availableMovies?.slice(0, 4).map(m => ({
+            ...m,
+            reason: "Popular at this cinema",
+            matchScore: 75,
+          })) || [],
+          basedOn: "popular",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Fetch customer's booking history with movie details
     const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")
@@ -32,9 +78,9 @@ serve(async (req) => {
         id,
         created_at,
         showtime_id,
-        showtimes!inner (
+        showtimes (
           movie_id,
-          movies!inner (
+          movies (
             id,
             title,
             genre,
@@ -50,42 +96,38 @@ serve(async (req) => {
 
     if (bookingsError) {
       console.error("Error fetching bookings:", bookingsError);
-      throw new Error("Failed to fetch booking history");
+      // Return popular movies as fallback
+      return new Response(
+        JSON.stringify({
+          recommendations: availableMovies?.slice(0, 4).map(m => ({
+            ...m,
+            reason: "Popular at this cinema",
+            matchScore: 75,
+          })) || [],
+          basedOn: "popular",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Extract watched movies
-    const watchedMovies = bookings?.map((b: any) => ({
-      id: b.showtimes.movies.id,
-      title: b.showtimes.movies.title,
-      genre: b.showtimes.movies.genre,
-      rating: b.showtimes.movies.rating,
-      watchedAt: b.created_at,
-    })) || [];
+    // Extract watched movies (handle null showtimes gracefully)
+    const watchedMovies = (bookings || [])
+      .filter((b: any) => b.showtimes?.movies)
+      .map((b: any) => ({
+        id: b.showtimes.movies.id,
+        title: b.showtimes.movies.title,
+        genre: b.showtimes.movies.genre,
+        rating: b.showtimes.movies.rating,
+        watchedAt: b.created_at,
+      }));
 
     // Get unique movie IDs the customer has watched
     const watchedMovieIds = [...new Set(watchedMovies.map(m => m.id))];
 
-    // Fetch currently available movies (excluding already watched)
-    const { data: availableMovies, error: moviesError } = await supabase
-      .from("movies")
-      .select(`
-        id,
-        title,
-        genre,
-        rating,
-        description,
-        poster_url,
-        duration_minutes
-      `)
-      .eq("organization_id", organizationId)
-      .eq("is_active", true)
-      .eq("status", "now_showing")
-      .not("id", "in", `(${watchedMovieIds.length > 0 ? watchedMovieIds.join(",") : "00000000-0000-0000-0000-000000000000"})`);
-
-    if (moviesError) {
-      console.error("Error fetching movies:", moviesError);
-      throw new Error("Failed to fetch available movies");
-    }
+    // Filter out already watched movies from available movies
+    const unwatchedMovies = (availableMovies || []).filter(
+      m => !watchedMovieIds.includes(m.id)
+    );
 
     // If no booking history, return popular movies
     if (watchedMovies.length === 0) {
@@ -102,8 +144,8 @@ serve(async (req) => {
       );
     }
 
-    // If no available movies to recommend
-    if (!availableMovies || availableMovies.length === 0) {
+    // If no unwatched movies to recommend
+    if (unwatchedMovies.length === 0) {
       return new Response(
         JSON.stringify({
           recommendations: [],
@@ -144,7 +186,7 @@ ${watchedMovies.slice(0, 10).map(m => `- "${m.title}" (${m.genre || 'Unknown gen
 TOP GENRE PREFERENCES: ${topGenres.join(", ") || "Mixed"}
 
 AVAILABLE MOVIES TO RECOMMEND:
-${availableMovies.map(m => `- ID: ${m.id} | "${m.title}" | Genre: ${m.genre || 'Unknown'} | Rating: ${m.rating || 'Unrated'} | Description: ${m.description?.slice(0, 100) || 'No description'}...`).join("\n")}
+${unwatchedMovies.map(m => `- ID: ${m.id} | "${m.title}" | Genre: ${m.genre || 'Unknown'} | Rating: ${m.rating || 'Unrated'} | Description: ${m.description?.slice(0, 100) || 'No description'}...`).join("\n")}
 
 Return a JSON array of up to 4 movie recommendations. For each, include:
 - id: the movie ID from the list
@@ -175,7 +217,7 @@ Only return the JSON array, no other text.`;
       console.error("AI API error:", errorText);
       
       // Fallback to genre-based matching
-      const fallbackRecs = availableMovies
+      const fallbackRecs = unwatchedMovies
         .filter(m => topGenres.some(g => m.genre?.toLowerCase().includes(g.toLowerCase())))
         .slice(0, 4)
         .map(m => ({
@@ -186,7 +228,7 @@ Only return the JSON array, no other text.`;
 
       return new Response(
         JSON.stringify({
-          recommendations: fallbackRecs.length > 0 ? fallbackRecs : availableMovies.slice(0, 4).map(m => ({
+          recommendations: fallbackRecs.length > 0 ? fallbackRecs : unwatchedMovies.slice(0, 4).map(m => ({
             ...m,
             reason: "Recommended for you",
             matchScore: 60,
@@ -209,7 +251,7 @@ Only return the JSON array, no other text.`;
     } catch (parseError) {
       console.error("Failed to parse AI response:", content);
       // Fallback
-      aiRecommendations = availableMovies.slice(0, 4).map(m => ({
+      aiRecommendations = unwatchedMovies.slice(0, 4).map(m => ({
         id: m.id,
         reason: "Based on your viewing history",
         matchScore: 65,
@@ -219,7 +261,7 @@ Only return the JSON array, no other text.`;
     // Merge AI recommendations with full movie data
     const recommendations = aiRecommendations
       .map(rec => {
-        const movie = availableMovies.find(m => m.id === rec.id);
+        const movie = unwatchedMovies.find(m => m.id === rec.id);
         if (!movie) return null;
         return {
           ...movie,
