@@ -7,7 +7,9 @@ import {
   BarChart3,
   Palette,
   Shield,
-  Zap
+  Zap,
+  ArrowRight,
+  Check
 } from "lucide-react";
 
 const features = [
@@ -15,43 +17,51 @@ const features = [
     icon: LayoutDashboard,
     title: "Cinema Admin Dashboard",
     description: "Complete control center for cinema management. Movies, showtimes, halls, seating layouts, pricing, and promotions.",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
+    gradient: "from-primary/20 via-primary/10 to-transparent",
+    iconBg: "bg-primary",
+    size: "large",
+    highlights: ["Movie Management", "Showtime Scheduling", "Pricing Control"],
   },
   {
     icon: Globe,
     title: "Custom Domain & Website",
     description: "Every cinema gets a ready-made booking website. Choose themes, upload branding, and connect your own domain.",
-    color: "text-accent",
-    bgColor: "bg-accent/10",
+    gradient: "from-chart-3/20 via-chart-3/10 to-transparent",
+    iconBg: "bg-chart-3",
+    size: "medium",
   },
   {
     icon: CreditCard,
     title: "Payment Gateway Setup",
     description: "Integrate your preferred payment providers. Stripe, PayPal, or local payment methods — all supported.",
-    color: "text-chart-3",
-    bgColor: "bg-chart-3/10",
+    gradient: "from-chart-4/20 via-chart-4/10 to-transparent",
+    iconBg: "bg-chart-4",
+    size: "medium",
   },
   {
     icon: Users,
     title: "Role-Based Access",
     description: "Box Office, Gate Staff, Managers, Accountants — each role sees exactly what they need. Same system, tailored views.",
-    color: "text-chart-4",
-    bgColor: "bg-chart-4/10",
+    gradient: "from-chart-5/20 via-chart-5/10 to-transparent",
+    iconBg: "bg-chart-5",
+    size: "medium",
   },
   {
     icon: QrCode,
     title: "QR Ticket System",
     description: "Digital tickets with unique QR codes. Gate staff can scan and validate entries in seconds.",
-    color: "text-chart-5",
-    bgColor: "bg-chart-5/10",
+    gradient: "from-chart-2/20 via-chart-2/10 to-transparent",
+    iconBg: "bg-chart-2",
+    size: "medium",
   },
   {
     icon: BarChart3,
     title: "Analytics & Reports",
     description: "Real-time insights on sales, attendance, and revenue. Make data-driven decisions for your cinema.",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
+    gradient: "from-primary/20 via-primary/10 to-transparent",
+    iconBg: "bg-primary",
+    size: "large",
+    highlights: ["Revenue Tracking", "Attendance Insights", "Performance Metrics"],
   },
 ];
 
@@ -60,80 +70,165 @@ const platformBenefits = [
     icon: Zap,
     title: "Lightning Fast",
     description: "Optimized for speed. Customers book in under 30 seconds.",
+    stat: "< 30s",
+    statLabel: "Booking Time",
   },
   {
     icon: Shield,
     title: "Enterprise Security",
     description: "Bank-level encryption. Your data is always protected.",
+    stat: "256-bit",
+    statLabel: "Encryption",
   },
   {
     icon: Palette,
     title: "Fully Customizable",
     description: "Match your brand with custom themes and styling.",
+    stat: "100%",
+    statLabel: "Brandable",
   },
 ];
 
 const Features = () => {
   return (
-    <section id="features" className="py-24 lg:py-32 bg-card relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+    <section id="features" className="py-24 lg:py-32 bg-background relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-chart-3/5 rounded-full blur-3xl pointer-events-none" />
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            Features
-          </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-primary text-sm font-semibold tracking-wide uppercase">Features</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6">
             Everything Your Cinema Needs
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground leading-relaxed">
             A complete SaaS platform designed specifically for cinema businesses. 
             From ticketing to analytics, we've got you covered.
           </p>
         </div>
 
-        {/* Main Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-          {features.map((feature, index) => (
+        {/* Bento Grid Features */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
+          {/* Large Feature Card - Dashboard */}
+          <div className="md:col-span-2 lg:col-span-2 group relative overflow-hidden rounded-3xl bg-card border border-border p-8 lg:p-10 hover:border-primary/40 transition-all duration-500">
+            <div className={`absolute inset-0 bg-gradient-to-br ${features[0].gradient} opacity-50`} />
+            <div className="relative z-10">
+              <div className={`inline-flex p-4 rounded-2xl ${features[0].iconBg} mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <LayoutDashboard className="h-7 w-7 text-primary-foreground" />
+              </div>
+              <h3 className="text-2xl font-bold text-foreground mb-3">
+                {features[0].title}
+              </h3>
+              <p className="text-muted-foreground leading-relaxed mb-6">
+                {features[0].description}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {features[0].highlights?.map((item) => (
+                  <span key={item} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/80 border border-border text-sm text-foreground">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Medium Feature Cards */}
+          {features.slice(1, 3).map((feature, index) => (
             <div
               key={feature.title}
-              className="group p-6 lg:p-8 rounded-2xl bg-background border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="group relative overflow-hidden rounded-3xl bg-card border border-border p-6 lg:p-8 hover:border-primary/40 transition-all duration-500"
             >
-              <div className={`inline-flex p-3 rounded-xl ${feature.bgColor} mb-4 group-hover:scale-110 transition-transform`}>
-                <feature.icon className={`h-6 w-6 ${feature.color}`} />
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-50 transition-opacity duration-500`} />
+              <div className="relative z-10">
+                <div className={`inline-flex p-3 rounded-xl ${feature.iconBg} mb-5 shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                  <feature.icon className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                {feature.title}
+            </div>
+          ))}
+
+          {/* Medium Feature Cards - Second Row */}
+          {features.slice(3, 5).map((feature) => (
+            <div
+              key={feature.title}
+              className="group relative overflow-hidden rounded-3xl bg-card border border-border p-6 lg:p-8 hover:border-primary/40 transition-all duration-500"
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-50 transition-opacity duration-500`} />
+              <div className="relative z-10">
+                <div className={`inline-flex p-3 rounded-xl ${feature.iconBg} mb-5 shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                  <feature.icon className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {/* Large Feature Card - Analytics */}
+          <div className="md:col-span-2 lg:col-span-2 group relative overflow-hidden rounded-3xl bg-card border border-border p-8 lg:p-10 hover:border-primary/40 transition-all duration-500">
+            <div className={`absolute inset-0 bg-gradient-to-br ${features[5].gradient} opacity-50`} />
+            <div className="relative z-10">
+              <div className={`inline-flex p-4 rounded-2xl ${features[5].iconBg} mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <BarChart3 className="h-7 w-7 text-primary-foreground" />
+              </div>
+              <h3 className="text-2xl font-bold text-foreground mb-3">
+                {features[5].title}
               </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {feature.description}
+              <p className="text-muted-foreground leading-relaxed mb-6">
+                {features[5].description}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {features[5].highlights?.map((item) => (
+                  <span key={item} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/80 border border-border text-sm text-foreground">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Platform Benefits - Modern Cards */}
+        <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
+          {platformBenefits.map((benefit) => (
+            <div 
+              key={benefit.title} 
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-card to-secondary/30 border border-border p-6 lg:p-8 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500"
+            >
+              <div className="flex items-start justify-between mb-6">
+                <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <benefit.icon className="h-6 w-6 text-primary" />
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-primary">{benefit.stat}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">{benefit.statLabel}</div>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                {benefit.title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {benefit.description}
               </p>
             </div>
           ))}
-        </div>
-
-        {/* Platform Benefits */}
-        <div className="bg-background rounded-3xl p-8 lg:p-12 border border-border">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {platformBenefits.map((benefit) => (
-              <div key={benefit.title} className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-primary/10 shrink-0">
-                  <benefit.icon className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {benefit.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </section>
