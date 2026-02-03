@@ -14,9 +14,11 @@ interface StaffClockInProps {
   userId: string;
   organizationId: string;
   onClockIn: (shiftId: string) => void;
+  logoUrl?: string | null;
+  cinemaName?: string;
 }
 
-export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockInProps) {
+export function StaffClockIn({ userId, organizationId, onClockIn, logoUrl, cinemaName }: StaffClockInProps) {
   const queryClient = useQueryClient();
   const [accessCode, setAccessCode] = useState('');
   const [openingCash, setOpeningCash] = useState('');
@@ -88,9 +90,22 @@ export function StaffClockIn({ userId, organizationId, onClockIn }: StaffClockIn
   return (
     <Card className="max-w-md mx-auto">
       <CardHeader className="text-center">
-        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <Key className="h-8 w-8 text-primary" />
+        <div className="mx-auto mb-4">
+          {logoUrl ? (
+            <img 
+              src={logoUrl} 
+              alt={cinemaName || 'Cinema'} 
+              className="h-20 w-auto max-w-[200px] object-contain mx-auto"
+            />
+          ) : (
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+              <Key className="h-8 w-8 text-primary" />
+            </div>
+          )}
         </div>
+        {cinemaName && (
+          <p className="text-sm text-muted-foreground mb-2">{cinemaName}</p>
+        )}
         <CardTitle>Clock In</CardTitle>
         <CardDescription>
           Enter today's access code to start your shift
