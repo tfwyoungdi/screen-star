@@ -70,7 +70,7 @@ const Pricing = () => {
   const popularIndex = plans && plans.length > 1 ? 1 : 0;
   return <section id="pricing" className="py-24 lg:py-32 relative overflow-hidden">
       {/* Dynamic background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background" />
+      
       
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
