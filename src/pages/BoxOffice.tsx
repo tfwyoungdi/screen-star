@@ -15,7 +15,7 @@ import {
   Check, X, ArrowLeft, Plus, Minus, Tag, 
   CreditCard, Loader2, LogOut, Receipt, RefreshCw,
   Popcorn, Phone, Printer, User, ClipboardList, Calendar,
-  Globe
+  Globe, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -124,6 +124,7 @@ export default function BoxOffice() {
   const [showActivationPanel, setShowActivationPanel] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showSalesStats, setShowSalesStats] = useState(true);
 
   // Fetch active shift on mount
   const { data: activeShift } = useQuery({
@@ -982,16 +983,29 @@ export default function BoxOffice() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-muted rounded-xl">
-              <div className="flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">{todaysSales?.count || 0} sales</span>
-              </div>
-              <div className="w-px h-4 bg-border" />
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-primary">{getCurrencySymbol(organization?.currency)}</span>
-                <span className="text-sm font-bold">{todaysSales?.revenue.toFixed(2) || '0.00'}</span>
-              </div>
+            <div className="hidden md:flex items-center gap-2">
+              {showSalesStats && (
+                <div className="flex items-center gap-4 px-4 py-2 bg-muted rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{todaysSales?.count || 0} sales</span>
+                  </div>
+                  <div className="w-px h-4 bg-border" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-primary">{getCurrencySymbol(organization?.currency)}</span>
+                    <span className="text-sm font-bold">{todaysSales?.revenue.toFixed(2) || '0.00'}</span>
+                  </div>
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSalesStats(!showSalesStats)}
+                className="h-8 w-8"
+                title={showSalesStats ? "Hide sales stats" : "Show sales stats"}
+              >
+                {showSalesStats ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
             </div>
 
             <Button 
