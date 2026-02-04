@@ -52,6 +52,7 @@ import GateStaff from "./pages/GateStaff";
 import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
+import DownloadPage from "./pages/Download";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import StaffLogin from "./pages/StaffLogin";
 import SupportTickets from "./pages/SupportTickets";
@@ -94,6 +95,7 @@ const App = () => (
                   <Route path="/about" element={<About />} />
                   <Route path="/careers" element={<Careers />} />
                   <Route path="/contact" element={<Contact />} />
+                  <Route path="/download" element={<DownloadPage />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/choose-plan" element={<ChoosePlan />} />

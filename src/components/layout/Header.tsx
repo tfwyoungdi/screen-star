@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowUpRight, Download } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Header = () => {
@@ -38,6 +38,15 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
+            <Link to="/download">
+              <Button
+                variant="ghost"
+                className="rounded-full gap-2 px-4 py-2.5 font-semibold text-sm"
+              >
+                <Download className="h-4 w-4" />
+                Download App
+              </Button>
+            </Link>
             <Link to="/login">
               <Button
                 className="rounded-full gap-2 px-5 py-2.5 font-semibold text-sm"
@@ -77,6 +86,12 @@ const Header = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-3 pt-4 mt-2 border-t border-border">
+                <Link to="/download" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start min-h-[48px] gap-2">
+                    <Download className="h-4 w-4" />
+                    Download App
+                  </Button>
+                </Link>
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start min-h-[48px]">
                     Sign In
