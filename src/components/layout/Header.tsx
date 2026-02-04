@@ -41,11 +41,10 @@ const Header = () => {
             <Link to="/signup">
               <Button 
                 className="rounded-full gap-2 px-5 py-2.5 font-semibold text-sm"
-                style={{ backgroundColor: '#4F46E5' }}
               >
                 Get Started
-                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                  <ArrowUpRight className="h-3.5 w-3.5 text-white" />
+                <div className="w-5 h-5 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                  <ArrowUpRight className="h-3.5 w-3.5 text-primary-foreground" />
                 </div>
               </Button>
             </Link>
@@ -85,7 +84,6 @@ const Header = () => {
                 <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
                   <Button 
                     className="w-full rounded-full gap-2"
-                    style={{ backgroundColor: '#4F46E5' }}
                   >
                     Get Started
                     <ArrowUpRight className="h-4 w-4" />
