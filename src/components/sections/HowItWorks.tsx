@@ -1,6 +1,5 @@
 import { UserPlus, Film, Globe, TrendingUp, ArrowRight, Play } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-
 interface Step {
   number: string;
   icon: LucideIcon;
@@ -9,57 +8,46 @@ interface Step {
   gradient: string;
   borderGradient: string;
 }
-
-const steps: Step[] = [
-  {
-    number: "01",
-    icon: UserPlus,
-    title: "Sign Up & Setup",
-    description: "Create your account and configure your cinema profile in minutes.",
-    gradient: "from-primary to-primary/60",
-    borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-primary",
-  },
-  {
-    number: "02",
-    icon: Film,
-    title: "Add Content",
-    description: "Import movies, set showtimes, and configure your pricing tiers.",
-    gradient: "from-chart-3 to-chart-3/60",
-    borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-3",
-  },
-  {
-    number: "03",
-    icon: Globe,
-    title: "Go Live",
-    description: "Launch your branded website and start selling tickets online.",
-    gradient: "from-chart-4 to-chart-4/60",
-    borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-4",
-  },
-  {
-    number: "04",
-    icon: TrendingUp,
-    title: "Scale Up",
-    description: "Use analytics to optimize and grow your cinema business.",
-    gradient: "from-chart-5 to-chart-5/60",
-    borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-5",
-  },
-];
-
+const steps: Step[] = [{
+  number: "01",
+  icon: UserPlus,
+  title: "Sign Up & Setup",
+  description: "Create your account and configure your cinema profile in minutes.",
+  gradient: "from-primary to-primary/60",
+  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-primary"
+}, {
+  number: "02",
+  icon: Film,
+  title: "Add Content",
+  description: "Import movies, set showtimes, and configure your pricing tiers.",
+  gradient: "from-chart-3 to-chart-3/60",
+  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-3"
+}, {
+  number: "03",
+  icon: Globe,
+  title: "Go Live",
+  description: "Launch your branded website and start selling tickets online.",
+  gradient: "from-chart-4 to-chart-4/60",
+  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-4"
+}, {
+  number: "04",
+  icon: TrendingUp,
+  title: "Scale Up",
+  description: "Use analytics to optimize and grow your cinema business.",
+  gradient: "from-chart-5 to-chart-5/60",
+  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-5"
+}];
 const HowItWorks = () => {
-  return (
-    <section className="py-24 lg:py-32 relative overflow-hidden bg-secondary/20">
+  return <section className="py-24 lg:py-32 relative overflow-hidden bg-secondary/20">
       {/* Background Pattern */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.08),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--chart-3)/0.08),transparent_50%)]" />
         {/* Grid pattern */}
-        <div 
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px'
-          }}
-        />
+        <div className="absolute inset-0 opacity-[0.02]" style={{
+        backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
+        backgroundSize: '60px 60px'
+      }} />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -91,13 +79,8 @@ const HowItWorks = () => {
           
           <div className="flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 snap-x snap-mandatory lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0">
             {steps.map((step, index) => {
-              const StepIcon = step.icon;
-              
-              return (
-                <div 
-                  key={step.number}
-                  className="snap-center shrink-0 w-[280px] lg:w-auto"
-                >
+            const StepIcon = step.icon;
+            return <div key={step.number} className="snap-center shrink-0 w-[280px] lg:w-auto">
                   <div className={`group relative h-full bg-card rounded-3xl border border-border p-6 lg:p-8 transition-all duration-500 ${step.borderGradient} hover:-translate-y-2`}>
                     {/* Decorative corner accent */}
                     <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${step.gradient} opacity-10 rounded-bl-[100px] rounded-tr-3xl`} />
@@ -118,9 +101,7 @@ const HowItWorks = () => {
                         <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                           Step {step.number}
                         </span>
-                        {index < steps.length - 1 && (
-                          <ArrowRight className="hidden lg:block w-4 h-4 text-muted-foreground/30" />
-                        )}
+                        {index < steps.length - 1 && <ArrowRight className="hidden lg:block w-4 h-4 text-muted-foreground/30" />}
                       </div>
                       
                       <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3">
@@ -131,55 +112,19 @@ const HowItWorks = () => {
                       </p>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </div>
           
           {/* Mobile scroll indicator */}
           <div className="flex lg:hidden justify-center gap-2 mt-6">
-            {steps.map((step, i) => (
-              <div 
-                key={i} 
-                className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-primary' : 'bg-border'}`}
-              />
-            ))}
+            {steps.map((step, i) => <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-primary' : 'bg-border'}`} />)}
           </div>
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-16 lg:mt-24 flex flex-col sm:flex-row items-center justify-center gap-6">
-          <div className="flex items-center gap-4">
-            <div className="flex -space-x-3">
-              {['bg-primary', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5'].map((color, i) => (
-                <div 
-                  key={i} 
-                  className={`w-10 h-10 rounded-full ${color} border-2 border-background flex items-center justify-center shadow-lg`}
-                  style={{ zIndex: 4 - i }}
-                >
-                  <span className="text-xs font-bold text-white drop-shadow-sm">
-                    {['S', 'A', 'G', 'S'][i]}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="text-left">
-              <div className="text-sm font-semibold text-foreground">Join 500+ Cinemas</div>
-              <div className="text-xs text-muted-foreground">Already growing with us</div>
-            </div>
-          </div>
-          
-          <a 
-            href="/signup" 
-            className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-foreground text-background font-semibold hover:opacity-90 transition-all"
-          >
-            Get Started Free
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </a>
-        </div>
+        
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HowItWorks;
