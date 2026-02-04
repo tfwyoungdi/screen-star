@@ -2066,10 +2066,12 @@ export type Database = {
           enable_custom_domains: boolean | null
           enable_promotions: boolean | null
           enable_wallet_feature: boolean | null
+          flutterwave_configured: boolean | null
           id: string
           logo_url: string | null
           maintenance_message: string | null
           maintenance_mode: boolean | null
+          paystack_configured: boolean | null
           platform_name: string
           primary_color: string | null
           sla_email_html_body: string | null
@@ -2080,6 +2082,8 @@ export type Database = {
           sla_response_time_low: number | null
           sla_response_time_medium: number | null
           sla_response_time_urgent: number | null
+          stripe_configured: boolean | null
+          subscription_payment_gateway: string | null
           support_email: string | null
           updated_at: string
         }
@@ -2090,10 +2094,12 @@ export type Database = {
           enable_custom_domains?: boolean | null
           enable_promotions?: boolean | null
           enable_wallet_feature?: boolean | null
+          flutterwave_configured?: boolean | null
           id?: string
           logo_url?: string | null
           maintenance_message?: string | null
           maintenance_mode?: boolean | null
+          paystack_configured?: boolean | null
           platform_name?: string
           primary_color?: string | null
           sla_email_html_body?: string | null
@@ -2104,6 +2110,8 @@ export type Database = {
           sla_response_time_low?: number | null
           sla_response_time_medium?: number | null
           sla_response_time_urgent?: number | null
+          stripe_configured?: boolean | null
+          subscription_payment_gateway?: string | null
           support_email?: string | null
           updated_at?: string
         }
@@ -2114,10 +2122,12 @@ export type Database = {
           enable_custom_domains?: boolean | null
           enable_promotions?: boolean | null
           enable_wallet_feature?: boolean | null
+          flutterwave_configured?: boolean | null
           id?: string
           logo_url?: string | null
           maintenance_message?: string | null
           maintenance_mode?: boolean | null
+          paystack_configured?: boolean | null
           platform_name?: string
           primary_color?: string | null
           sla_email_html_body?: string | null
@@ -2128,6 +2138,8 @@ export type Database = {
           sla_response_time_low?: number | null
           sla_response_time_medium?: number | null
           sla_response_time_urgent?: number | null
+          stripe_configured?: boolean | null
+          subscription_payment_gateway?: string | null
           support_email?: string | null
           updated_at?: string
         }
