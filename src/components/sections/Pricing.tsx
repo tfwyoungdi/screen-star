@@ -131,9 +131,10 @@ const Pricing = () => {
         {isLoading ? <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[1, 2, 3].map(i => <Skeleton key={i} className="h-[500px] rounded-3xl" />)}
           </div> : <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {plans?.map((plan, index) => {
+        {plans?.map((plan, index) => {
           const isPopular = index === popularIndex;
-          const isEnterprise = plan.slug === 'enterprise' || plan.max_locations === -1;
+          // Use actual price from database - show "Custom" only when price is 0
+          const isCustomPricing = plan.price_monthly === 0 && plan.price_yearly === 0;
           const features = buildFeatures(plan);
           const PlanIcon = planIcons[index % planIcons.length];
           return <div key={plan.id} className={`relative group rounded-3xl transition-all duration-500 ${isPopular ? "lg:-mt-4 lg:mb-4" : ""}`}>
@@ -165,7 +166,7 @@ const Pricing = () => {
 
                     {/* Price */}
                     <div className="mb-8">
-                      {isEnterprise ? <>
+                      {isCustomPricing ? <>
                           <div className="flex items-baseline gap-1">
                             <span className="text-3xl lg:text-4xl font-bold text-foreground">
                               Custom
@@ -198,8 +199,8 @@ const Pricing = () => {
                     </ul>
 
                     {/* CTA Button */}
-                    <Button variant={isPopular ? "default" : "outline"} className={`w-full rounded-xl h-12 font-semibold transition-all ${isPopular ? "shadow-lg hover:shadow-xl" : "hover:bg-primary hover:text-primary-foreground hover:border-primary"}`} onClick={isEnterprise ? () => navigate('/contact') : undefined}>
-                      {isEnterprise ? "Contact Sales" : "Start Free Trial"}
+                    <Button variant={isPopular ? "default" : "outline"} className={`w-full rounded-xl h-12 font-semibold transition-all ${isPopular ? "shadow-lg hover:shadow-xl" : "hover:bg-primary hover:text-primary-foreground hover:border-primary"}`} onClick={isCustomPricing ? () => navigate('/contact') : undefined}>
+                      {isCustomPricing ? "Contact Sales" : "Start Free Trial"}
                     </Button>
                   </div>
                 </div>;
