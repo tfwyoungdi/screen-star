@@ -18,12 +18,15 @@ const Pricing = () => {
       const {
         data,
         error
-      } = await supabase.from('subscription_plans').select('*').eq('is_active', true).order('sort_order', {
-        ascending: true
-      });
+      } = await supabase
+        .from('subscription_plans')
+        .select('id, name, slug, description, price_monthly, price_yearly, max_screens, max_staff, max_locations, commission_percentage, per_ticket_fee, allow_custom_domain, allow_own_gateway')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
       if (error) throw error;
       return data;
-    }
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - plans rarely change
   });
 
   // Helper to build features list from plan data
