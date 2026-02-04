@@ -125,9 +125,9 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        {isLoading ? <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[500px] rounded-3xl" />)}
-          </div> : <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        {isLoading ? <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-[500px] rounded-3xl" />)}
+          </div> : <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {plans?.map((plan, index) => {
           const isPopular = index === popularIndex;
           const isEnterprise = plan.slug === 'enterprise' || plan.max_locations === -1;
