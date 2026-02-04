@@ -155,17 +155,7 @@ const CTA = () => {
             {/* Floating mini cards */}
             
 
-            <div className="absolute -right-4 lg:-right-8 bottom-1/4 bg-card rounded-2xl border border-border p-4 shadow-xl hidden md:block animate-fade-in">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">New cinema</p>
-                  <p className="text-sm font-semibold text-foreground">joined today!</p>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>
