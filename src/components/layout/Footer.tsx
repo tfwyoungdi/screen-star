@@ -1,4 +1,5 @@
-import { Film, Twitter, Linkedin, Youtube } from "lucide-react";
+import { Twitter, Linkedin, Youtube } from "lucide-react";
+import logo from "@/assets/logo.png";
 const footerLinks = {
   Product: [{
     label: "Features",
@@ -59,13 +60,8 @@ const Footer = () => {
         <div className="grid lg:grid-cols-6 gap-12 lg:gap-8">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <a href="/" className="flex items-center gap-2 mb-4">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Film className="h-6 w-6 text-primary" />
-              </div>
-              <span className="text-xl font-bold text-foreground">
-                Cine<span className="text-primary">Tix</span>
-              </span>
+            <a href="/" className="flex items-center mb-4">
+              <img src={logo} alt="Cinitix" className="h-12 w-auto" />
             </a>
             <p className="text-muted-foreground mb-6 max-w-sm">
               The complete cinema ticketing platform. Sell more tickets, 
