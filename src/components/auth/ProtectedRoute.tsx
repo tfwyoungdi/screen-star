@@ -1,12 +1,13 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2, ShieldAlert, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -69,7 +70,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     enabled: !!profile?.organization_id,
   });
 
-  const isLoading = authLoading || (!!user && (profileLoading || rolesLoading || orgLoading));
+  // Check subscription status
+  const { data: subscriptionStatus, isLoading: subLoading } = useSubscriptionStatus(profile?.organization_id);
+
+  const isLoading = authLoading || (!!user && (profileLoading || rolesLoading || orgLoading || subLoading));
 
   if (isLoading) {
     return (
@@ -120,6 +124,14 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         </Card>
       </div>
     );
+  }
+
+  // Check if user has active subscription (only for cinema_admin role)
+  const userRolesArray = userRoles || [];
+  const isAdmin = userRolesArray.includes('cinema_admin');
+  
+  if (isAdmin && subscriptionStatus && !subscriptionStatus.hasActiveSubscription) {
+    return <Navigate to="/choose-plan" replace />;
   }
 
   // Check if user has any roles

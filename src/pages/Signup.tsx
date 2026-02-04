@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Loader2, Check, Globe } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Globe } from 'lucide-react';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,6 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ message: string; slug: string } | null>(null);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -41,7 +40,6 @@ export default function Signup() {
 
   const onSubmit = async (data: SignupFormData) => {
     setError(null);
-    setSuccess(null);
 
     // Check rate limit before attempting signup
     const rateCheck = checkRateLimit(RATE_LIMITS.SIGNUP);
@@ -71,52 +69,9 @@ export default function Signup() {
       return;
     }
 
-    setSuccess({
-      message: 'Your cinema has been registered successfully! Please check your email to verify your account.',
-      slug: organizationSlug || previewSlug,
-    });
+    // Redirect to choose plan page
+    navigate('/choose-plan');
   };
-
-  if (success) {
-    return (
-      <AuthLayout
-        title="Registration Successful!"
-        subtitle="Your cinema account has been created"
-      >
-        <div className="space-y-6">
-          <Alert className="border-primary/50 bg-primary/10">
-            <Check className="h-4 w-4 text-primary" />
-            <AlertDescription className="text-foreground">
-              {success.message}
-            </AlertDescription>
-          </Alert>
-
-          <div className="p-4 bg-card rounded-lg border border-border">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <Globe className="h-4 w-4" />
-              Your Cinema Dashboard URL
-            </div>
-            <code className="text-primary font-mono text-sm">
-              {success.slug}.cinetix.com
-            </code>
-          </div>
-
-          <div className="space-y-3">
-            <Button onClick={() => navigate('/login')} className="w-full">
-              Go to Login
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/')}
-              className="w-full"
-            >
-              Back to Home
-            </Button>
-          </div>
-        </div>
-      </AuthLayout>
-    );
-  }
 
   return (
     <AuthLayout
