@@ -82,8 +82,8 @@ export default function PlatformAdminLogin() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Shield className="h-8 w-8 text-primary" />
+          <div className="mx-auto flex items-center justify-center">
+            <img src="/lovable-uploads/b13d9673-eda4-4b38-b030-abc2c46d7ac6.png" alt="Cinitix" className="h-16 w-auto" />
           </div>
           <div>
             <CardTitle className="text-2xl">Platform Admin</CardTitle>
