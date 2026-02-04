@@ -100,7 +100,7 @@ export default function ConcessionManagement() {
       if (!profile?.organization_id) return [];
       const { data, error } = await supabase
         .from('concession_items')
-        .select('*')
+        .select('id, name, description, price, category, image_url, is_available, stock_quantity, track_inventory, low_stock_threshold, display_order')
         .eq('organization_id', profile.organization_id)
         .order('display_order', { ascending: true })
         .order('category', { ascending: true })

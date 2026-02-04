@@ -107,9 +107,10 @@ export default function PublicCinema() {
     queryKey: ['public-cinema', slug],
     queryFn: async () => {
       // Use organizations_public view to avoid RLS permission denied errors for anonymous users
+      // Only select columns needed for public cinema display
       const { data, error } = await supabase
         .from('organizations_public')
-        .select('*')
+        .select('id, name, slug, logo_url, primary_color, secondary_color, about_text, contact_email, contact_phone, address, social_facebook, social_instagram, social_twitter, website_template, is_active, currency')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();

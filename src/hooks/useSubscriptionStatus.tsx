@@ -71,6 +71,6 @@ export function useSubscriptionStatus(organizationId: string | null | undefined)
       };
     },
     enabled: !!organizationId,
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 300000, // Cache for 5 minutes - subscription status rarely changes mid-session
   });
 }

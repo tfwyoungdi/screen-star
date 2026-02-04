@@ -26,13 +26,14 @@ export default function PlatformSettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('platform_settings')
-        .select('*')
+        .select('id, platform_name, support_email, logo_url, primary_color, maintenance_mode, maintenance_message, enable_cinema_gateways, enable_custom_domains, enable_wallet_feature, enable_promotions, sla_response_time_low, sla_response_time_medium, sla_response_time_high, sla_response_time_urgent, sla_escalation_enabled, sla_escalation_email, subscription_payment_gateway, stripe_configured, flutterwave_configured, paystack_configured')
         .limit(1)
         .maybeSingle();
 
       if (error) throw error;
       return data as PlatformSettings | null;
     },
+    staleTime: 120000, // Cache for 2 minutes - settings rarely change
   });
 
   const [formData, setFormData] = useState({

@@ -103,9 +103,10 @@ export default function CinemaBooking() {
   const fetchData = async () => {
     try {
       // Fetch cinema using public view (no RLS restrictions for anonymous users)
+      // Only select needed columns
       const { data: cinemaData, error: cinemaError } = await supabase
         .from('organizations_public')
-        .select('*')
+        .select('id, name, slug, primary_color, secondary_color, currency, payment_gateway, payment_gateway_configured, payment_gateway_public_key, is_active')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
@@ -155,10 +156,10 @@ export default function CinemaBooking() {
         return;
       }
 
-      // Fetch movie if movieId provided
+      // Fetch movie if movieId provided - only needed columns
       const { data: movieData, error: movieError } = await supabase
         .from('movies')
-        .select('*')
+        .select('id, title, duration_minutes, poster_url, description, genre, rating')
         .eq('id', resolvedMovieId)
         .eq('organization_id', cinemaData.id)
         .eq('is_active', true)
@@ -249,10 +250,10 @@ export default function CinemaBooking() {
   };
 
   const fetchSeatsForShowtime = async (showtime: Showtime) => {
-    // Fetch seat layouts
+    // Fetch seat layouts - only needed columns
     const { data: layouts } = await supabase
       .from('seat_layouts')
-      .select('*')
+      .select('id, row_label, seat_number, seat_type, is_available, screen_id')
       .eq('screen_id', showtime.screens.id);
     setSeatLayouts(layouts || []);
 

@@ -83,15 +83,21 @@ export default function Dashboard() {
     enabled: !!effectiveOrgId && !isImpersonating,
   });
 
-  // Fetch bookings for analytics
+  // Fetch bookings for analytics - only select needed columns
   const { data: bookings, isLoading: bookingsLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['dashboard-bookings', effectiveOrgId],
+    queryKey: ['dashboard-bookings', effectiveOrgId, startDate.toISOString(), endDate.toISOString()],
     queryFn: async () => {
       if (!effectiveOrgId) return [];
       const { data, error } = await supabase
         .from('bookings')
         .select(`
-          *,
+          id,
+          created_at,
+          status,
+          total_amount,
+          customer_name,
+          customer_email,
+          booking_reference,
           showtimes (
             start_time,
             movies (title),
@@ -109,6 +115,7 @@ export default function Dashboard() {
       return data;
     },
     enabled: !!effectiveOrgId,
+    staleTime: 30000, // Cache for 30 seconds to reduce refetches
   });
 
   // Fetch previous period bookings for trend calculation
@@ -163,21 +170,22 @@ export default function Dashboard() {
     enabled: !!effectiveOrgId,
   });
 
-  // Fetch booked seats count
+  // Fetch booked seats count - only select needed columns
   const { data: bookedSeats } = useQuery({
-    queryKey: ['dashboard-seats', effectiveOrgId, bookings],
+    queryKey: ['dashboard-seats', effectiveOrgId, bookings?.map(b => b.id).join(',')],
     queryFn: async () => {
       if (!bookings || bookings.length === 0) return [];
       const bookingIds = bookings.map((b) => b.id);
       const { data, error } = await supabase
         .from('booked_seats')
-        .select('*')
+        .select('id, booking_id')
         .in('booking_id', bookingIds);
 
       if (error) throw error;
       return data;
     },
     enabled: !!bookings && bookings.length > 0,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   // Fetch previous period seats for trend
