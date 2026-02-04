@@ -19,50 +19,8 @@ const testimonials = [{
   avatar: "EC"
 }];
 const Testimonials = () => {
-  return (
-    <section className="py-24 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Loved by Cinema Owners
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Join hundreds of cinemas already using CineTix to streamline their operations
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-          {testimonials.map((testimonial, index) => (
-            <div 
-              key={index}
-              className="bg-card border border-border rounded-2xl p-8 relative"
-            >
-              <Quote className="absolute top-6 right-6 h-8 w-8 text-primary/20" />
-              
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                ))}
-              </div>
-              
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                "{testimonial.content}"
-              </p>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                  {testimonial.avatar}
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <section className="py-24 bg-muted/30">
+      
+    </section>;
 };
 export default Testimonials;
