@@ -38,8 +38,8 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link to="/signup">
-              <Button 
+            <Link to="/login">
+              <Button
                 className="rounded-full gap-2 px-5 py-2.5 font-semibold text-sm"
               >
                 Get Started
@@ -81,7 +81,7 @@ const Header = () => {
                     Sign In
                   </Button>
                 </Link>
-                <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button 
                     className="w-full rounded-full gap-2"
                   >
