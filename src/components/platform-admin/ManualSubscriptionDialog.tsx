@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { format, addMonths, addYears } from 'date-fns';
 import { toast } from 'sonner';
 import { CalendarIcon, CreditCard, Loader2 } from 'lucide-react';
@@ -180,7 +181,8 @@ export function ManualSubscriptionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-4">
+        <ScrollArea className="max-h-[60vh]">
+          <div className="space-y-4 pt-4 pr-4">
           {/* Plan Selection */}
           <div className="space-y-2">
             <Label>Subscription Plan *</Label>
@@ -302,6 +304,8 @@ export function ManualSubscriptionDialog({
             </Button>
           </div>
         </div>
+        <ScrollBar orientation="vertical" />
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
