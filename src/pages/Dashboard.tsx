@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrganization, useUserProfile } from '@/hooks/useUserProfile';
 import { useImpersonation } from '@/hooks/useImpersonation';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 import { useRealtimeBookings, useRealtimeShowtimes, useRealtimeMovies } from '@/hooks/useRealtimeDashboard';
 import { DATE_RANGE_OPTIONS, DateRangeValue, getDateRange, getDateRangeLabel } from '@/lib/dateRanges';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +20,7 @@ import { WebsiteStatsWidget } from '@/components/dashboard/WebsiteStatsWidget';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { WelcomeTour, useTour } from '@/components/dashboard/WelcomeTour';
 import { DataRefreshIndicator } from '@/components/dashboard/DataRefreshIndicator';
+import { SubscriptionGate } from '@/components/dashboard/SubscriptionGate';
 import {
   Select,
   SelectContent,
@@ -58,6 +60,10 @@ export default function Dashboard() {
   const effectiveOrgId = getEffectiveOrganizationId(profile?.organization_id);
   const effectiveOrg = isImpersonating ? impersonatedOrganization : organization;
   const currencySymbol = getCurrencySymbol(effectiveOrg?.currency);
+
+  // Check subscription status for subscription gate
+  const { data: subscriptionStatus } = useSubscriptionStatus(profile?.organization_id);
+  const showSubscriptionGate = !isImpersonating && subscriptionStatus && !subscriptionStatus.hasActiveSubscription;
 
   const { startDate, endDate } = getDateRange(dateRange);
   
@@ -277,8 +283,14 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
+      {/* Subscription Gate - blocks interaction until subscribed */}
+      <SubscriptionGate 
+        isOpen={!!showSubscriptionGate} 
+        organizationName={effectiveOrg?.name}
+      />
+
       {/* Welcome Tour */}
-      {showTour && <WelcomeTour onComplete={() => setShowTour(false)} />}
+      {showTour && !showSubscriptionGate && <WelcomeTour onComplete={() => setShowTour(false)} />}
 
       {loading ? (
         <div className="space-y-6">
