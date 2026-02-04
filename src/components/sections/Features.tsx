@@ -27,7 +27,7 @@ const features = [
     title: "Custom Domain & Website",
     description: "Every cinema gets a ready-made booking website. Choose themes, upload branding, and connect your own domain.",
     gradient: "from-chart-3/20 via-chart-3/10 to-transparent",
-    iconBg: "bg-chart-3",
+    iconBg: "bg-primary",
     size: "medium",
   },
   {
@@ -35,7 +35,7 @@ const features = [
     title: "Payment Gateway Setup",
     description: "Integrate your preferred payment providers. Stripe, PayPal, or local payment methods — all supported.",
     gradient: "from-chart-4/20 via-chart-4/10 to-transparent",
-    iconBg: "bg-chart-4",
+    iconBg: "bg-primary",
     size: "medium",
   },
   {
@@ -43,7 +43,7 @@ const features = [
     title: "Role-Based Access",
     description: "Box Office, Gate Staff, Managers, Accountants — each role sees exactly what they need. Same system, tailored views.",
     gradient: "from-chart-5/20 via-chart-5/10 to-transparent",
-    iconBg: "bg-chart-5",
+    iconBg: "bg-primary",
     size: "medium",
   },
   {
@@ -51,7 +51,7 @@ const features = [
     title: "QR Ticket System",
     description: "Digital tickets with unique QR codes. Gate staff can scan and validate entries in seconds.",
     gradient: "from-chart-2/20 via-chart-2/10 to-transparent",
-    iconBg: "bg-chart-2",
+    iconBg: "bg-primary",
     size: "medium",
   },
   {
