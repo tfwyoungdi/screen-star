@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Film, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowUpRight } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,16 +19,8 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5 group">
-            <div 
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ backgroundColor: '#EEF2FF' }}
-            >
-              <Film className="h-5 w-5" style={{ color: '#4F46E5' }} />
-            </div>
-            <span className="text-xl font-bold text-foreground">
-              Cine<span style={{ color: '#4F46E5' }}>Tix</span>
-            </span>
+          <a href="/" className="flex items-center">
+            <img src={logo} alt="Cinitix" className="h-8 lg:h-10 w-auto" />
           </a>
 
           {/* Desktop Navigation - Centered */}
