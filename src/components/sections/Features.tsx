@@ -207,7 +207,7 @@ const Features = () => {
 
         {/* Platform Benefits - Minimal Clean Design */}
         <div className="mt-16 pt-16 border-t border-border">
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 lg:gap-12">
             {platformBenefits.map((benefit) => (
               <div key={benefit.title} className="text-center">
                 <div className="inline-flex p-3 rounded-xl bg-secondary mb-5">

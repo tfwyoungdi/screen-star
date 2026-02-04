@@ -119,15 +119,17 @@ export default function Login() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
+              autoComplete="current-password"
               {...register('password')}
-              className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+              className={errors.password ? 'border-destructive pr-12' : 'pr-12'}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors min-w-[44px]"
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
           {errors.password && (

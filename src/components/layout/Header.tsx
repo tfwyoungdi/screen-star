@@ -54,8 +54,9 @@ const Header = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden min-w-[44px] min-h-[44px]"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >
             {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
@@ -63,27 +64,27 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-border bg-white">
-            <nav className="flex flex-col gap-4">
+          <div className="lg:hidden py-4 border-t border-border bg-card">
+            <nav className="flex flex-col gap-1">
               {navLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-foreground/70 hover:text-foreground transition-colors font-medium py-2"
+                  className="text-foreground/70 hover:text-foreground hover:bg-secondary/50 transition-colors font-medium py-3 px-2 rounded-lg min-h-[48px] flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
+              <div className="flex flex-col gap-3 pt-4 mt-2 border-t border-border">
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start">
+                  <Button variant="ghost" className="w-full justify-start min-h-[48px]">
                     Sign In
                   </Button>
                 </Link>
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button 
-                    className="w-full rounded-full gap-2"
+                    className="w-full rounded-full gap-2 min-h-[48px]"
                   >
                     Get Started
                     <ArrowUpRight className="h-4 w-4" />

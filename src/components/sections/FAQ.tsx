@@ -155,11 +155,11 @@ const FAQ = () => {
                 >
                   <button
                     onClick={() => setExpandedIndex(isExpanded ? null : index)}
-                    className="w-full flex items-center justify-between gap-4 p-5 lg:p-6 text-left"
+                    className="w-full flex items-start sm:items-center justify-between gap-3 p-4 lg:p-6 text-left min-h-[56px]"
                   >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
                       <span className={cn(
-                        "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-colors",
+                        "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-colors mt-0.5 sm:mt-0",
                         isExpanded 
                           ? "bg-primary text-primary-foreground" 
                           : "bg-secondary text-muted-foreground"
@@ -167,14 +167,14 @@ const FAQ = () => {
                         {String(originalIndex + 1).padStart(2, '0')}
                       </span>
                       <span className={cn(
-                        "font-medium transition-colors truncate",
+                        "font-medium transition-colors text-sm sm:text-base leading-snug",
                         isExpanded ? "text-foreground" : "text-foreground/80 group-hover:text-foreground"
                       )}>
                         {faq.question}
                       </span>
                     </div>
                     
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0 mt-0.5 sm:mt-0">
                       <span className={cn(
                         "hidden sm:inline-block px-2.5 py-1 rounded-md text-xs font-medium transition-colors",
                         isExpanded 
@@ -184,7 +184,7 @@ const FAQ = () => {
                         {faq.category}
                       </span>
                       <ChevronRight className={cn(
-                        "h-5 w-5 text-muted-foreground transition-transform duration-300",
+                        "h-5 w-5 text-muted-foreground transition-transform duration-300 flex-shrink-0",
                         isExpanded && "rotate-90"
                       )} />
                     </div>
