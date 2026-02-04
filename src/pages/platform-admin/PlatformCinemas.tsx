@@ -17,9 +17,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, differenceInDays, addDays, isAfter, isBefore } from 'date-fns';
 import { toast } from 'sonner';
-import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle, Power, CalendarIcon, Save, Megaphone } from 'lucide-react';
+import { Building2, Eye, Ban, CheckCircle, ExternalLink, Search, UserCheck, CalendarClock, AlertTriangle, Power, CalendarIcon, Save, Megaphone, CreditCard } from 'lucide-react';
 import { PlatformLayout } from '@/components/platform-admin/PlatformLayout';
 import { BulkAnnouncementSender } from '@/components/platform-admin/BulkAnnouncementSender';
+import { ManualSubscriptionDialog } from '@/components/platform-admin/ManualSubscriptionDialog';
 import { Tables } from '@/integrations/supabase/types';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
 import { useImpersonation } from '@/hooks/useImpersonation';
@@ -48,6 +49,7 @@ export default function PlatformCinemas() {
   const [editStartDate, setEditStartDate] = useState<Date | undefined>();
   const [editExpiryDate, setEditExpiryDate] = useState<Date | undefined>();
   const [isEditingDates, setIsEditingDates] = useState(false);
+  const [manualSubCinema, setManualSubCinema] = useState<CinemaWithSubscription | null>(null);
 
   const { data: cinemas, isLoading } = useQuery({
     queryKey: ['all-cinemas-with-subscriptions', searchQuery],
@@ -501,6 +503,17 @@ export default function PlatformCinemas() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            {!cinema.subscription && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setManualSubCinema(cinema)}
+                                className="text-primary hover:text-primary hover:bg-primary/10"
+                                title="Activate Subscription"
+                              >
+                                <CreditCard className="h-4 w-4" />
+                              </Button>
+                            )}
                             {!cinema.is_active && (
                               <Button
                                 variant="ghost"
@@ -717,7 +730,21 @@ export default function PlatformCinemas() {
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No subscription found for this cinema.</p>
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">No subscription found for this cinema.</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedCinema(null);
+                          setManualSubCinema(selectedCinema);
+                        }}
+                        className="gap-2"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        Activate Subscription Manually
+                      </Button>
+                    </div>
                   )}
                 </div>
 
@@ -792,6 +819,13 @@ export default function PlatformCinemas() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Manual Subscription Dialog */}
+        <ManualSubscriptionDialog
+          open={!!manualSubCinema}
+          onOpenChange={(open) => !open && setManualSubCinema(null)}
+          cinema={manualSubCinema}
+        />
       </div>
     </PlatformLayout>
   );
