@@ -10,11 +10,15 @@ export function useUserProfile() {
     queryFn: async () => {
       if (!user?.id) return null;
 
+      // Only select needed columns instead of *
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select(`
-          *,
-          organizations (*)
+          id,
+          organization_id,
+          full_name,
+          email,
+          avatar_url
         `)
         .eq('id', user.id)
         .single();
@@ -34,6 +38,7 @@ export function useUserProfile() {
       };
     },
     enabled: !!user?.id,
+    staleTime: 60000, // Cache for 1 minute - profile rarely changes
   });
 }
 
@@ -45,9 +50,10 @@ export function useOrganization() {
     queryFn: async () => {
       if (!profile?.organization_id) return null;
 
+      // Select commonly needed columns - add more as needed
       const { data, error } = await supabase
         .from('organizations')
-        .select('*')
+        .select('id, name, slug, logo_url, currency, primary_color, secondary_color, contact_email, contact_phone, address, custom_domain, payment_gateway, payment_gateway_configured, payment_gateway_public_key, website_template, about_text, is_active')
         .eq('id', profile.organization_id)
         .single();
 
@@ -55,6 +61,6 @@ export function useOrganization() {
       return data;
     },
     enabled: !!profile?.organization_id,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 120000, // Cache for 2 minutes - org settings rarely change
   });
 }

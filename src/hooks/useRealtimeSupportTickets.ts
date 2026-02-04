@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -9,6 +9,29 @@ interface UseRealtimeSupportTicketsOptions {
   isPlatformAdmin?: boolean;
 }
 
+// Debounce helper to prevent rapid-fire invalidations
+function useDebouncedInvalidate(queryClient: ReturnType<typeof useQueryClient>, delay = 2000) {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingKeysRef = useRef<Set<string>>(new Set());
+
+  const invalidate = useCallback((queryKey: string[]) => {
+    pendingKeysRef.current.add(JSON.stringify(queryKey));
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      pendingKeysRef.current.forEach(key => {
+        queryClient.invalidateQueries({ queryKey: JSON.parse(key) });
+      });
+      pendingKeysRef.current.clear();
+    }, delay);
+  }, [queryClient, delay]);
+
+  return invalidate;
+}
+
 export function useRealtimeSupportTickets({
   enabled = true,
   organizationId,
@@ -16,6 +39,7 @@ export function useRealtimeSupportTickets({
 }: UseRealtimeSupportTicketsOptions = {}) {
   const queryClient = useQueryClient();
   const [newTicketsCount, setNewTicketsCount] = useState(0);
+  const debouncedInvalidate = useDebouncedInvalidate(queryClient);
 
   useEffect(() => {
     if (!enabled) return;
@@ -45,10 +69,10 @@ export function useRealtimeSupportTickets({
             duration: 5000,
           });
 
-          // Invalidate relevant queries
-          queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
-          queryClient.invalidateQueries({ queryKey: ['recent-tickets-platform'] });
-          queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
+          // Debounced invalidation to reduce rapid refetches
+          debouncedInvalidate(['support-tickets']);
+          debouncedInvalidate(['recent-tickets-platform']);
+          debouncedInvalidate(['platform-stats']);
         }
       )
       .on(
@@ -62,8 +86,8 @@ export function useRealtimeSupportTickets({
             : {}),
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
-          queryClient.invalidateQueries({ queryKey: ['recent-tickets-platform'] });
+          debouncedInvalidate(['support-tickets']);
+          debouncedInvalidate(['recent-tickets-platform']);
         }
       )
       .subscribe();
@@ -71,7 +95,7 @@ export function useRealtimeSupportTickets({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [enabled, organizationId, isPlatformAdmin, queryClient]);
+  }, [enabled, organizationId, isPlatformAdmin, debouncedInvalidate]);
 
   const resetNewTicketsCount = () => setNewTicketsCount(0);
 

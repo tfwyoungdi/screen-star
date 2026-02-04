@@ -141,7 +141,7 @@ export default function AccountantDashboard() {
 
       const { data, error } = await supabase
         .from('booked_seats')
-        .select('*')
+        .select('id, booking_id, price, seat_type')
         .in('booking_id', bookingIds);
 
       if (error) throw error;

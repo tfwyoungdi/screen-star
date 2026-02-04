@@ -34,10 +34,10 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
 
       if (error || !orgId) return null;
 
-      // Fetch the organization details
+      // Fetch all organization columns for impersonation (needs full org access)
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .select('*')
+        .select('id, name, slug, logo_url, currency, primary_color, secondary_color, contact_email, contact_phone, address, custom_domain, payment_gateway, payment_gateway_configured, payment_gateway_public_key, website_template, about_text, mission_text, values_json, social_facebook, social_instagram, social_twitter, seo_title, seo_description, daily_access_code, daily_access_code_set_at, daily_access_code_start_time, daily_access_code_end_time, is_active, subscription_plan, suspended_at, suspended_reason, created_at, updated_at')
         .eq('id', orgId)
         .single();
 
@@ -45,8 +45,8 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       return org;
     },
     enabled: !!user?.id,
-    staleTime: 30000, // Cache for 30 seconds
-    refetchOnWindowFocus: true,
+    staleTime: 60000, // Cache for 1 minute - impersonation session is stable
+    refetchOnWindowFocus: false, // Don't refetch on every focus, reduces egress
   });
 
   const startMutation = useMutation({

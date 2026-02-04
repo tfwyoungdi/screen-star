@@ -27,6 +27,7 @@ export function usePlatformRole() {
       return data?.role as PlatformRole | null;
     },
     enabled: !!user?.id,
+    staleTime: 300000, // Cache for 5 minutes - platform role rarely changes
   });
 
   const isPlatformAdmin = platformRole === 'platform_admin';

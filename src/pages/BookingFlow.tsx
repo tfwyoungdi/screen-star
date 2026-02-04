@@ -363,11 +363,11 @@ export default function BookingFlow() {
 
   const fetchData = async () => {
     try {
-      // Fetch cinema
+      // Fetch cinema - only select needed columns
       // Use organizations_public view to avoid permission denied errors for anonymous users
       const { data: cinemaData } = await supabase
         .from('organizations_public')
-        .select('*')
+        .select('id, name, slug, primary_color, secondary_color, currency, payment_gateway, payment_gateway_configured, payment_gateway_public_key, is_active')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
@@ -398,10 +398,10 @@ export default function BookingFlow() {
       }
       setShowtime(showtimeData);
 
-      // Fetch seat layouts
+      // Fetch seat layouts - only needed columns
       const { data: layouts } = await supabase
         .from('seat_layouts')
-        .select('*')
+        .select('id, row_label, seat_number, seat_type, is_available, screen_id')
         .eq('screen_id', showtimeData.screens.id);
 
       setSeatLayouts(layouts || []);
@@ -409,10 +409,10 @@ export default function BookingFlow() {
       // Fetch already booked seats
       await fetchBookedSeats();
 
-      // Fetch concession items for this cinema
+      // Fetch concession items for this cinema - only needed columns
       const { data: concessions } = await supabase
         .from('concession_items')
-        .select('*')
+        .select('id, name, description, price, category, image_url')
         .eq('organization_id', cinemaData.id)
         .eq('is_available', true)
         .order('category')
