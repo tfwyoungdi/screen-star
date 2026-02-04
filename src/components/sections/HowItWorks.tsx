@@ -66,9 +66,7 @@ const HowItWorks = () => {
             </h2>
           </div>
           <div className="lg:text-right">
-            <p className="text-muted-foreground text-lg max-w-md lg:ml-auto">
-              No coding required. No complex setup. Just follow our streamlined process and start selling tickets today.
-            </p>
+            
           </div>
         </div>
 
