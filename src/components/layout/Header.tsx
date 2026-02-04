@@ -20,7 +20,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <a href="/" className="flex items-center">
-            <img src={logo} alt="Cinitix" className="h-8 lg:h-10 w-auto" />
+            <img src={logo} alt="Cinitix" className="h-10 lg:h-12 w-auto" />
           </a>
 
           {/* Desktop Navigation - Centered */}
