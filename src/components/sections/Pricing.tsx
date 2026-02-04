@@ -199,8 +199,8 @@ const Pricing = () => {
                     </ul>
 
                     {/* CTA Button */}
-                    <Button variant={isPopular ? "default" : "outline"} className={`w-full rounded-xl h-12 font-semibold transition-all ${isPopular ? "shadow-lg hover:shadow-xl" : "hover:bg-primary hover:text-primary-foreground hover:border-primary"}`} onClick={isCustomPricing ? () => navigate('/contact') : undefined}>
-                      {isCustomPricing ? "Contact Sales" : "Start Free Trial"}
+                    <Button variant={isPopular ? "default" : "outline"} className={`w-full rounded-xl h-12 font-semibold transition-all ${isPopular ? "shadow-lg hover:shadow-xl" : "hover:bg-primary hover:text-primary-foreground hover:border-primary"}`} onClick={isCustomPricing ? () => navigate('/contact') : () => navigate('/signup')}>
+                      {isCustomPricing ? "Contact Sales" : "Start Now"}
                     </Button>
                   </div>
                 </div>;
