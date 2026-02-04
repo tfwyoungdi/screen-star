@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
-import { Film, Check, Shield, Zap } from 'lucide-react';
+import { Check, Shield, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import logo from '@/assets/logo.png';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -19,13 +20,8 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         
         <div className="relative z-10 flex flex-col justify-center w-full p-12 lg:p-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 mb-12">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Film className="h-5 w-5 text-primary" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">
-              Cine<span className="text-primary">Tix</span>
-            </span>
+          <Link to="/" className="flex items-center mb-12">
+            <img src={logo} alt="Cinitix" className="h-14 w-auto" />
           </Link>
           
           {/* Main headline */}
@@ -88,13 +84,8 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       {/* Right side - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-8 bg-background">
         {/* Mobile logo */}
-        <Link to="/" className="lg:hidden flex items-center gap-2 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Film className="h-5 w-5 text-primary" />
-          </div>
-          <span className="text-xl font-bold text-foreground">
-            Cine<span className="text-primary">Tix</span>
-          </span>
+        <Link to="/" className="lg:hidden flex items-center mb-8">
+          <img src={logo} alt="Cinitix" className="h-12 w-auto" />
         </Link>
 
         <div className="w-full max-w-md">
