@@ -52,18 +52,18 @@ const DownloadPage = () => {
   const features = [
     {
       icon: Zap,
-      title: "Fast & Responsive",
-      description: "Native performance for smooth ticket sales",
+      title: "Fast Ticket Sales",
+      description: "Optimized for high-volume counter operations",
     },
     {
       icon: Shield,
       title: "Secure Access",
-      description: "Daily access codes and role-based permissions",
+      description: "Daily access codes and shift-based authentication",
     },
     {
       icon: CheckCircle,
-      title: "Offline Ready",
-      description: "Continue working even without internet",
+      title: "Multi-Cinema Ready",
+      description: "Enter your cinema code once, auto-connect every time",
     },
   ];
 
@@ -81,13 +81,13 @@ const DownloadPage = () => {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <Badge variant="secondary" className="mb-4">
-            Desktop App
+            Desktop App for Staff
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Download Box Office
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            The dedicated desktop application for cinema staff. Fast, secure, and designed for high-volume ticket sales.
+            The dedicated desktop application for cinema box office staff. Fast, secure, and designed for high-volume ticket sales at the counter.
           </p>
         </div>
 
