@@ -126,13 +126,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  // Check if user has active subscription (only for cinema_admin role)
+  // Note: Subscription check is now handled within the Dashboard component
+  // to show a "locked" dashboard with a subscription gate modal
   const userRolesArray = userRoles || [];
-  const isAdmin = userRolesArray.includes('cinema_admin');
-  
-  if (isAdmin && subscriptionStatus && !subscriptionStatus.hasActiveSubscription) {
-    return <Navigate to="/choose-plan" replace />;
-  }
 
   // Check if user has any roles
   if (!userRoles || userRoles.length === 0) {
