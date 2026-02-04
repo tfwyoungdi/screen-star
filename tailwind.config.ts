@@ -96,7 +96,7 @@ export default {
   		},
 		fontFamily: {
 			sans: [
-				'Inter',
+				'Bricolage Grotesque',
 				'ui-sans-serif',
 				'system-ui',
 				'-apple-system',
