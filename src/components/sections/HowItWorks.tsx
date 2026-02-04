@@ -51,23 +51,18 @@ const HowItWorks = () => {
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        {/* Header with asymmetric layout */}
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-end mb-16 lg:mb-24">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 mb-6">
-              <Play className="w-3 h-3 text-primary fill-primary" />
-              <span className="text-primary text-xs font-bold uppercase tracking-wider">How It Works</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1]">
-              Launch your cinema
-              <span className="block mt-2 bg-gradient-to-r from-primary via-chart-3 to-chart-4 bg-clip-text text-transparent">
-                in 4 steps
-              </span>
-            </h2>
+        {/* Header - Centered */}
+        <div className="text-center mb-16 lg:mb-24">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 mb-6">
+            <Play className="w-3 h-3 text-primary fill-primary" />
+            <span className="text-primary text-xs font-bold uppercase tracking-wider">How It Works</span>
           </div>
-          <div className="lg:text-right">
-            
-          </div>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1]">
+            Launch your cinema
+            <span className="block mt-2 bg-gradient-to-r from-primary via-chart-3 to-chart-4 bg-clip-text text-transparent">
+              in 4 steps
+            </span>
+          </h2>
         </div>
 
         {/* Steps - Horizontal Scroll on Mobile, Grid on Desktop */}
