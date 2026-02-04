@@ -13,29 +13,29 @@ const steps: Step[] = [{
   icon: UserPlus,
   title: "Sign Up & Setup",
   description: "Create your account and configure your cinema profile in minutes.",
-  gradient: "from-primary to-primary/60",
+  gradient: "from-primary to-primary/80",
   borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-primary"
 }, {
   number: "02",
   icon: Film,
   title: "Add Content",
   description: "Import movies, set showtimes, and configure your pricing tiers.",
-  gradient: "from-chart-3 to-chart-3/60",
-  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-3"
+  gradient: "from-primary to-primary/80",
+  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-primary"
 }, {
   number: "03",
   icon: Globe,
   title: "Go Live",
   description: "Launch your branded website and start selling tickets online.",
-  gradient: "from-chart-4 to-chart-4/60",
-  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-4"
+  gradient: "from-primary to-primary/80",
+  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-primary"
 }, {
   number: "04",
   icon: TrendingUp,
   title: "Scale Up",
   description: "Use analytics to optimize and grow your cinema business.",
-  gradient: "from-chart-5 to-chart-5/60",
-  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-chart-5"
+  gradient: "from-primary to-primary/80",
+  borderGradient: "hover:shadow-[0_0_40px_-12px] hover:shadow-primary"
 }];
 const HowItWorks = () => {
   return <section className="py-24 lg:py-32 relative overflow-hidden bg-secondary/20">
