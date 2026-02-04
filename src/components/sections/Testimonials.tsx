@@ -19,8 +19,6 @@ const testimonials = [{
   avatar: "EC"
 }];
 const Testimonials = () => {
-  return <section className="py-20 lg:py-28 bg-secondary/30">
-      
-    </section>;
+  return;
 };
 export default Testimonials;
