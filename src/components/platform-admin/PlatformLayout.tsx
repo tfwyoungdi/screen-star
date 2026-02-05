@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { LogOut, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getNavItemsForRole, PLATFORM_ROLE_CONFIG } from '@/lib/platformRoleConfig';
+import logo from '@/assets/logo.png';
 
 interface PlatformLayoutProps {
   children: ReactNode;
@@ -34,13 +35,7 @@ export function PlatformLayout({ children }: PlatformLayoutProps) {
       <aside className="w-64 border-r bg-card flex flex-col">
         <div className="p-6 border-b">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              {roleConfig ? (
-                <roleConfig.icon className="h-5 w-5 text-primary" />
-              ) : (
-                <Shield className="h-5 w-5 text-primary" />
-              )}
-            </div>
+            <img src={logo} alt="Cinitix Logo" className="h-10 w-auto" />
             <div className="min-w-0">
               <h2 className="font-bold text-foreground truncate">
                 {roleConfig?.label || 'Platform'}
