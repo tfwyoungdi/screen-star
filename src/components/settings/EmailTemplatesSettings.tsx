@@ -21,6 +21,7 @@ import {
 import { EmailBlockEditor, EmailBlock, blocksToHtml } from "./EmailBlockEditor";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EmailAnalyticsWidget from "./EmailAnalyticsWidget";
+import { sanitizeEmailTemplate } from "@/lib/htmlSanitizer";
 
 interface EmailTemplate {
   id?: string;
@@ -373,12 +374,15 @@ export default function EmailTemplatesSettings() {
 
   const saveMutation = useMutation({
     mutationFn: async (template: EmailTemplate) => {
+      // SECURITY: Sanitize HTML content before saving to prevent stored XSS
+      const sanitizedHtmlBody = sanitizeEmailTemplate(template.html_body);
+      
       if (template.id) {
         const { error } = await supabase
           .from("email_templates")
           .update({
             subject: template.subject,
-            html_body: template.html_body,
+            html_body: sanitizedHtmlBody,
             is_active: template.is_active,
           })
           .eq("id", template.id);
@@ -388,7 +392,7 @@ export default function EmailTemplatesSettings() {
           organization_id: template.organization_id,
           template_type: template.template_type,
           subject: template.subject,
-          html_body: template.html_body,
+          html_body: sanitizedHtmlBody,
           is_active: template.is_active,
         });
         if (error) throw error;

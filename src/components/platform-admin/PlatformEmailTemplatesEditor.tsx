@@ -14,6 +14,7 @@ import {
   CreditCard, Building2, Bell, ShieldCheck, Send, Ticket
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeEmailTemplate, getSafePreviewSandbox } from '@/lib/htmlSanitizer';
 
 export interface EmailTemplate {
   subject: string;
@@ -528,7 +529,18 @@ export function PlatformEmailTemplatesEditor({ templates, onSave, isSaving }: Pl
   };
 
   const handleSave = () => {
-    onSave(editedTemplates);
+    // SECURITY: Sanitize all HTML templates before saving to prevent stored XSS
+    const sanitizedTemplates = Object.fromEntries(
+      Object.entries(editedTemplates).map(([key, template]) => [
+        key,
+        {
+          ...template,
+          htmlBody: sanitizeEmailTemplate(template.htmlBody),
+        },
+      ])
+    ) as PlatformEmailTemplates;
+    
+    onSave(sanitizedTemplates);
   };
 
   const getPreviewHtml = () => {
@@ -705,10 +717,12 @@ export function PlatformEmailTemplatesEditor({ templates, onSave, isSaving }: Pl
               </TabsContent>
               <TabsContent value="preview">
                 <div className="border rounded-lg overflow-hidden bg-white">
+                  {/* SECURITY: Use sandboxed iframe to prevent XSS from email preview */}
                   <iframe
                     srcDoc={getPreviewHtml()}
                     className="w-full h-[350px] border-0"
                     title="Email Preview"
+                    sandbox="allow-same-origin"
                   />
                 </div>
               </TabsContent>
