@@ -20,7 +20,7 @@ const features = [
     gradient: "from-primary/20 via-primary/10 to-transparent",
     iconBg: "bg-primary",
     size: "large",
-    highlights: ["Movie Management", "Showtime Scheduling", "Pricing Control", "Seating Layouts", "Hall Management", "Staff Management", "Promotions & Discounts", "Concession Management", "Customer Management", "Promo Codes", "Loyalty Program", "& More"],
+    highlights: ["Movie Management", "Showtime Scheduling", "Pricing Control", "Seating Layouts", "Hall Management", "Staff Management", "Promotions & Discounts", "Customer Management", "Promo Codes", "& More"],
   },
   {
     icon: Globe,
