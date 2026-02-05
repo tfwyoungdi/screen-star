@@ -210,7 +210,7 @@ const Features = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 lg:gap-12">
             {platformBenefits.map((benefit) => (
               <div key={benefit.title} className="text-center">
-                <div className="inline-flex p-3 rounded-xl bg-secondary mb-5">
+                <div className="inline-flex p-3 rounded-xl mb-5">
                   <benefit.icon className="h-6 w-6 text-primary" />
                 </div>
                 <div className="text-3xl font-bold text-foreground mb-1">
