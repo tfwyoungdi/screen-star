@@ -11,11 +11,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { loginSchema, type LoginFormData } from '@/lib/validations';
+import { getDefaultRouteForRole, type PlatformRoleType } from '@/lib/platformRoleConfig';
 
 export default function PlatformAdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [retryAfter, setRetryAfter] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const {
@@ -31,6 +33,25 @@ export default function PlatformAdminLogin() {
     setIsLoading(true);
 
     try {
+      // Check server-side rate limit before attempting login
+      const { data: rateLimitResult, error: rateLimitError } = await supabase.rpc(
+        'check_platform_login_rate_limit',
+        { _identifier: data.email.toLowerCase() }
+      );
+
+      if (rateLimitError) {
+        console.error('Rate limit check error:', rateLimitError);
+        // Continue with login if rate limit check fails (don't block)
+      } else if (rateLimitResult && typeof rateLimitResult === 'object' && rateLimitResult !== null) {
+        const result = rateLimitResult as { allowed?: boolean; error?: string; retry_after_seconds?: number };
+        if (!result.allowed) {
+          setError(result.error || 'Too many login attempts. Please wait.');
+          setRetryAfter(result.retry_after_seconds || 900);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // Sign in the user
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -38,6 +59,11 @@ export default function PlatformAdminLogin() {
       });
 
       if (authError) {
+        // Record failed login attempt for rate limiting
+        await supabase.rpc('record_platform_login_failure', {
+          _identifier: data.email.toLowerCase(),
+        });
+
         if (authError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password.');
         } else {
@@ -47,12 +73,15 @@ export default function PlatformAdminLogin() {
       }
 
       if (!authData.user) {
+        await supabase.rpc('record_platform_login_failure', {
+          _identifier: data.email.toLowerCase(),
+        });
         setError('Authentication failed.');
         return;
       }
 
-      // Verify platform admin role using the secure function
-      const { data: isPlatformAdmin, error: roleError } = await supabase.rpc('is_platform_admin', {
+      // Use the new secure get_platform_role function
+      const { data: platformRole, error: roleError } = await supabase.rpc('get_platform_role', {
         _user_id: authData.user.id,
       });
 
@@ -63,14 +92,24 @@ export default function PlatformAdminLogin() {
         return;
       }
 
-      if (!isPlatformAdmin) {
+      if (!platformRole) {
         await supabase.auth.signOut();
+        // Record as failed attempt (unauthorized access attempt)
+        await supabase.rpc('record_platform_login_failure', {
+          _identifier: data.email.toLowerCase(),
+        });
         setError('Access denied. Platform admin privileges required.');
         return;
       }
 
-      // Successful login - redirect to platform admin dashboard
-      navigate('/platform-admin');
+      // Clear rate limit on successful login
+      await supabase.rpc('clear_platform_login_rate_limit', {
+        _identifier: data.email.toLowerCase(),
+      });
+
+      // Successful login - redirect to appropriate dashboard based on role
+      const defaultRoute = getDefaultRouteForRole(platformRole as PlatformRoleType);
+      navigate(defaultRoute);
     } catch (err) {
       console.error('Login error:', err);
       setError('An unexpected error occurred.');
@@ -97,7 +136,14 @@ export default function PlatformAdminLogin() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {error}
+                  {retryAfter && (
+                    <span className="block mt-1 text-xs">
+                      Please try again in {Math.ceil(retryAfter / 60)} minutes.
+                    </span>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
 

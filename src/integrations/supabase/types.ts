@@ -2016,7 +2016,9 @@ export type Database = {
           expires_at: string
           id: string
           impersonated_organization_id: string
+          ip_address: unknown
           started_at: string
+          user_agent: string | null
         }
         Insert: {
           admin_user_id: string
@@ -2024,7 +2026,9 @@ export type Database = {
           expires_at?: string
           id?: string
           impersonated_organization_id: string
+          ip_address?: unknown
           started_at?: string
+          user_agent?: string | null
         }
         Update: {
           admin_user_id?: string
@@ -2032,7 +2036,9 @@ export type Database = {
           expires_at?: string
           id?: string
           impersonated_organization_id?: string
+          ip_address?: unknown
           started_at?: string
+          user_agent?: string | null
         }
         Relationships: [
           {
@@ -2057,6 +2063,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_login_rate_limits: {
+        Row: {
+          attempt_count: number | null
+          attempt_type: string
+          created_at: string | null
+          id: string
+          identifier: string
+          window_start: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          attempt_type?: string
+          created_at?: string | null
+          id?: string
+          identifier: string
+          window_start?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          attempt_type?: string
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          window_start?: string | null
+        }
+        Relationships: []
       }
       platform_settings: {
         Row: {
@@ -3143,6 +3176,8 @@ export type Database = {
         Row: {
           booking_reference: string | null
           created_at: string | null
+          customer_email_masked: string | null
+          customer_name_masked: string | null
           discount_amount: number | null
           id: string | null
           organization_id: string | null
@@ -3153,6 +3188,8 @@ export type Database = {
         Insert: {
           booking_reference?: string | null
           created_at?: string | null
+          customer_email_masked?: never
+          customer_name_masked?: never
           discount_amount?: number | null
           id?: string | null
           organization_id?: string | null
@@ -3163,6 +3200,8 @@ export type Database = {
         Update: {
           booking_reference?: string | null
           created_at?: string | null
+          customer_email_masked?: never
+          customer_name_masked?: never
           discount_amount?: number | null
           id?: string | null
           organization_id?: string | null
@@ -3204,7 +3243,6 @@ export type Database = {
       concession_items_public: {
         Row: {
           category: string | null
-          created_at: string | null
           description: string | null
           display_order: number | null
           id: string | null
@@ -3213,11 +3251,9 @@ export type Database = {
           name: string | null
           organization_id: string | null
           price: number | null
-          updated_at: string | null
         }
         Insert: {
           category?: string | null
-          created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string | null
@@ -3226,11 +3262,9 @@ export type Database = {
           name?: string | null
           organization_id?: string | null
           price?: number | null
-          updated_at?: string | null
         }
         Update: {
           category?: string | null
-          created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string | null
@@ -3239,7 +3273,6 @@ export type Database = {
           name?: string | null
           organization_id?: string | null
           price?: number | null
-          updated_at?: string | null
         }
         Relationships: [
           {
@@ -3289,6 +3322,7 @@ export type Database = {
           social_facebook: string | null
           social_instagram: string | null
           social_twitter: string | null
+          values_json: Json | null
           website_template: string | null
         }
         Insert: {
@@ -3314,6 +3348,7 @@ export type Database = {
           social_facebook?: string | null
           social_instagram?: string | null
           social_twitter?: string | null
+          values_json?: Json | null
           website_template?: string | null
         }
         Update: {
@@ -3339,6 +3374,7 @@ export type Database = {
           social_facebook?: string | null
           social_instagram?: string | null
           social_twitter?: string | null
+          values_json?: Json | null
           website_template?: string | null
         }
         Relationships: []
@@ -3426,37 +3462,23 @@ export type Database = {
       }
       platform_settings_public: {
         Row: {
+          enable_cinema_gateways: boolean | null
+          enable_custom_domains: boolean | null
           enable_promotions: boolean | null
+          enable_wallet_feature: boolean | null
           id: string | null
           logo_url: string | null
           maintenance_message: string | null
           maintenance_mode: boolean | null
           platform_name: string | null
           primary_color: string | null
-        }
-        Insert: {
-          enable_promotions?: boolean | null
-          id?: string | null
-          logo_url?: string | null
-          maintenance_message?: string | null
-          maintenance_mode?: boolean | null
-          platform_name?: string | null
-          primary_color?: string | null
-        }
-        Update: {
-          enable_promotions?: boolean | null
-          id?: string | null
-          logo_url?: string | null
-          maintenance_message?: string | null
-          maintenance_mode?: boolean | null
-          platform_name?: string | null
-          primary_color?: string | null
+          support_email: string | null
         }
         Relationships: []
       }
       subscription_plans_public: {
         Row: {
-          created_at: string | null
+          description: string | null
           features: Json | null
           id: string | null
           is_active: boolean | null
@@ -3465,9 +3487,11 @@ export type Database = {
           name: string | null
           price_monthly: number | null
           price_yearly: number | null
+          slug: string | null
+          sort_order: number | null
         }
         Insert: {
-          created_at?: string | null
+          description?: string | null
           features?: Json | null
           id?: string | null
           is_active?: boolean | null
@@ -3476,9 +3500,11 @@ export type Database = {
           name?: string | null
           price_monthly?: number | null
           price_yearly?: number | null
+          slug?: string | null
+          sort_order?: number | null
         }
         Update: {
-          created_at?: string | null
+          description?: string | null
           features?: Json | null
           id?: string | null
           is_active?: boolean | null
@@ -3487,6 +3513,8 @@ export type Database = {
           name?: string | null
           price_monthly?: number | null
           price_yearly?: number | null
+          slug?: string | null
+          sort_order?: number | null
         }
         Relationships: []
       }
@@ -3504,6 +3532,10 @@ export type Database = {
         }
         Returns: Json
       }
+      check_platform_login_rate_limit: {
+        Args: { _identifier: string }
+        Returns: Json
+      }
       check_promo_validation_rate_limit: {
         Args: { _identifier: string; _org_id: string }
         Returns: Json
@@ -3515,8 +3547,13 @@ export type Database = {
       cleanup_activation_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_email_analytics: { Args: never; Returns: undefined }
       cleanup_platform_admin_rate_limits: { Args: never; Returns: undefined }
+      cleanup_platform_login_rate_limits: { Args: never; Returns: undefined }
       cleanup_promo_rate_limits: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      clear_platform_login_rate_limit: {
+        Args: { _identifier: string }
+        Returns: undefined
+      }
       delete_old_loyalty_transactions: { Args: never; Returns: undefined }
       delete_old_shifts: { Args: never; Returns: undefined }
       generate_booking_reference: { Args: never; Returns: string }
@@ -3558,7 +3595,12 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      get_platform_role: { Args: { _user_id?: string }; Returns: string }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
+      has_platform_feature_access: {
+        Args: { _feature: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3580,8 +3622,32 @@ export type Database = {
         Args: { org_id: string; user_id: string }
         Returns: boolean
       }
+      lookup_booking_by_reference: {
+        Args: { _booking_ref: string; _org_slug: string }
+        Returns: {
+          booking_reference: string
+          movie_title: string
+          screen_name: string
+          seat_count: number
+          start_time: string
+          status: string
+        }[]
+      }
       platform_admin_has_mfa: { Args: { _user_id?: string }; Returns: boolean }
-      start_impersonation: { Args: { _org_id: string }; Returns: string }
+      record_platform_login_failure: {
+        Args: { _identifier: string }
+        Returns: undefined
+      }
+      start_impersonation:
+        | { Args: { _org_id: string }; Returns: string }
+        | {
+            Args: {
+              _ip_address?: unknown
+              _org_id: string
+              _user_agent?: string
+            }
+            Returns: string
+          }
       stop_impersonation: { Args: never; Returns: boolean }
       use_promo_code: {
         Args: {
