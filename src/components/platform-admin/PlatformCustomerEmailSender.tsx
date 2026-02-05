@@ -65,7 +65,7 @@ const DEFAULT_CUSTOMER_TEMPLATE = `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://screen-star.lovable.app/cinitix-logo.png" alt="Cinitix Logo" class="logo" />
+      <img src="https://screen-star.lovable.app/lovable-uploads/b13d9673-eda4-4b38-b030-abc2c46d7ac6.png" alt="Cinitix Logo" class="logo" />
       <h1 style="margin: 0;">{{email_title}}</h1>
     </div>
     <div class="content">
