@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Mail, Eye, Code, RefreshCw } from 'lucide-react';
+import { sanitizeEmailTemplate, getSafePreviewSandbox } from '@/lib/htmlSanitizer';
 
 interface SLAEmailTemplateProps {
   template: {
@@ -109,7 +110,12 @@ export function SLAEmailTemplateEditor({ template, onSave, isSaving }: SLAEmailT
   };
 
   const handleSave = () => {
-    onSave(editedTemplate);
+    // SECURITY: Sanitize HTML content before saving to prevent stored XSS
+    const sanitizedTemplate = {
+      subject: editedTemplate.subject,
+      htmlBody: sanitizeEmailTemplate(editedTemplate.htmlBody),
+    };
+    onSave(sanitizedTemplate);
   };
 
   const getPreviewHtml = () => {
@@ -190,10 +196,12 @@ export function SLAEmailTemplateEditor({ template, onSave, isSaving }: SLAEmailT
           </TabsContent>
           <TabsContent value="preview">
             <div className="border rounded-lg overflow-hidden bg-white">
+              {/* SECURITY: Use sandboxed iframe to prevent XSS from template preview */}
               <iframe
                 srcDoc={getPreviewHtml()}
                 className="w-full h-[500px] border-0"
                 title="Email Preview"
+                sandbox={getSafePreviewSandbox()}
               />
             </div>
           </TabsContent>

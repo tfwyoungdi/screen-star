@@ -3462,59 +3462,47 @@ export type Database = {
       }
       platform_settings_public: {
         Row: {
-          enable_cinema_gateways: boolean | null
-          enable_custom_domains: boolean | null
-          enable_promotions: boolean | null
-          enable_wallet_feature: boolean | null
-          id: string | null
           logo_url: string | null
           maintenance_message: string | null
           maintenance_mode: boolean | null
           platform_name: string | null
           primary_color: string | null
-          support_email: string | null
         }
         Relationships: []
       }
       subscription_plans_public: {
         Row: {
+          allow_custom_domain: boolean | null
+          allow_own_gateway: boolean | null
           description: string | null
-          features: Json | null
           id: string | null
           is_active: boolean | null
-          max_screens: number | null
-          max_staff: number | null
           name: string | null
-          price_monthly: number | null
-          price_yearly: number | null
-          slug: string | null
+          scale_tier: string | null
           sort_order: number | null
+          team_size_tier: string | null
         }
         Insert: {
+          allow_custom_domain?: boolean | null
+          allow_own_gateway?: boolean | null
           description?: string | null
-          features?: Json | null
           id?: string | null
           is_active?: boolean | null
-          max_screens?: number | null
-          max_staff?: number | null
           name?: string | null
-          price_monthly?: number | null
-          price_yearly?: number | null
-          slug?: string | null
+          scale_tier?: never
           sort_order?: number | null
+          team_size_tier?: never
         }
         Update: {
+          allow_custom_domain?: boolean | null
+          allow_own_gateway?: boolean | null
           description?: string | null
-          features?: Json | null
           id?: string | null
           is_active?: boolean | null
-          max_screens?: number | null
-          max_staff?: number | null
           name?: string | null
-          price_monthly?: number | null
-          price_yearly?: number | null
-          slug?: string | null
+          scale_tier?: never
           sort_order?: number | null
+          team_size_tier?: never
         }
         Relationships: []
       }
@@ -3545,6 +3533,10 @@ export type Database = {
         Returns: Json
       }
       cleanup_activation_rate_limits: { Args: never; Returns: undefined }
+      cleanup_expired_impersonation_sessions: {
+        Args: never
+        Returns: undefined
+      }
       cleanup_old_email_analytics: { Args: never; Returns: undefined }
       cleanup_platform_admin_rate_limits: { Args: never; Returns: undefined }
       cleanup_platform_login_rate_limits: { Args: never; Returns: undefined }
@@ -3622,6 +3614,14 @@ export type Database = {
         Args: { org_id: string; user_id: string }
         Returns: boolean
       }
+      log_platform_login_attempt: {
+        Args: {
+          _failure_reason?: string
+          _identifier: string
+          _success: boolean
+        }
+        Returns: undefined
+      }
       lookup_booking_by_reference: {
         Args: { _booking_ref: string; _org_slug: string }
         Returns: {
@@ -3638,6 +3638,8 @@ export type Database = {
         Args: { _identifier: string }
         Returns: undefined
       }
+      safe_error_message: { Args: { _internal_error: string }; Returns: string }
+      sanitize_html_content: { Args: { _html: string }; Returns: string }
       start_impersonation:
         | { Args: { _org_id: string }; Returns: string }
         | {

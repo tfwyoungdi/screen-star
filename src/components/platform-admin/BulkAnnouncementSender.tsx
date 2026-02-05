@@ -405,10 +405,12 @@ export function BulkAnnouncementSender() {
 
               <TabsContent value="preview" className="mt-4">
                 <div className="border rounded-lg overflow-hidden bg-white">
+                  {/* SECURITY: Use sandboxed iframe to prevent XSS from email preview */}
                   <iframe
                     srcDoc={getPreviewHtml()}
                     className="w-full h-[400px] border-0"
                     title="Email Preview"
+                    sandbox="allow-same-origin"
                   />
                 </div>
               </TabsContent>

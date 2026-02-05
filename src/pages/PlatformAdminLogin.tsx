@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { loginSchema, type LoginFormData } from '@/lib/validations';
 import { getDefaultRouteForRole, type PlatformRoleType } from '@/lib/platformRoleConfig';
+import { GENERIC_ERRORS } from '@/lib/errorMessages';
 
 export default function PlatformAdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -59,16 +60,20 @@ export default function PlatformAdminLogin() {
       });
 
       if (authError) {
-        // Record failed login attempt for rate limiting
+        // Record failed login attempt for rate limiting and audit logging
         await supabase.rpc('record_platform_login_failure', {
           _identifier: data.email.toLowerCase(),
         });
+        
+        // Log failed attempt to audit log (fire and forget)
+        (supabase.rpc as any)('log_platform_login_attempt', {
+          _identifier: data.email.toLowerCase(),
+          _success: false,
+          _failure_reason: 'invalid_credentials',
+        });
 
-        if (authError.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password.');
-        } else {
-          setError(authError.message);
-        }
+        // Use generic error message to prevent user enumeration
+        setError(GENERIC_ERRORS.AUTHENTICATION);
         return;
       }
 
@@ -76,7 +81,7 @@ export default function PlatformAdminLogin() {
         await supabase.rpc('record_platform_login_failure', {
           _identifier: data.email.toLowerCase(),
         });
-        setError('Authentication failed.');
+        setError(GENERIC_ERRORS.AUTHENTICATION);
         return;
       }
 
@@ -88,7 +93,7 @@ export default function PlatformAdminLogin() {
       if (roleError) {
         console.error('Role check error:', roleError);
         await supabase.auth.signOut();
-        setError('Unable to verify admin privileges.');
+        setError(GENERIC_ERRORS.AUTHORIZATION);
         return;
       }
 
@@ -98,7 +103,16 @@ export default function PlatformAdminLogin() {
         await supabase.rpc('record_platform_login_failure', {
           _identifier: data.email.toLowerCase(),
         });
-        setError('Access denied. Platform admin privileges required.');
+        
+        // Log unauthorized access attempt (fire and forget)
+        (supabase.rpc as any)('log_platform_login_attempt', {
+          _identifier: data.email.toLowerCase(),
+          _success: false,
+          _failure_reason: 'no_platform_role',
+        });
+        
+        // Use generic error to prevent role enumeration
+        setError(GENERIC_ERRORS.AUTHORIZATION);
         return;
       }
 
@@ -106,13 +120,19 @@ export default function PlatformAdminLogin() {
       await supabase.rpc('clear_platform_login_rate_limit', {
         _identifier: data.email.toLowerCase(),
       });
+      
+      // Log successful login (fire and forget)
+      (supabase.rpc as any)('log_platform_login_attempt', {
+        _identifier: data.email.toLowerCase(),
+        _success: true,
+      });
 
       // Successful login - redirect to appropriate dashboard based on role
       const defaultRoute = getDefaultRouteForRole(platformRole as PlatformRoleType);
       navigate(defaultRoute);
     } catch (err) {
       console.error('Login error:', err);
-      setError('An unexpected error occurred.');
+      setError(GENERIC_ERRORS.SERVER);
     } finally {
       setIsLoading(false);
     }
