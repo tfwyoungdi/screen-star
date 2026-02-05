@@ -52,7 +52,7 @@ const DEFAULT_ANNOUNCEMENT_TEMPLATE = `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://screen-star.lovable.app/logo.png" alt="Cinitix Logo" class="logo" />
+      <img src="https://screen-star.lovable.app/lovable-uploads/b13d9673-eda4-4b38-b030-abc2c46d7ac6.png" alt="Cinitix Logo" class="logo" />
       <h1 style="margin: 0;">📢 {{announcement_title}}</h1>
     </div>
     <div class="content">
