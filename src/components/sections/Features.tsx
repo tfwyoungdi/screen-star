@@ -118,8 +118,8 @@ const Features = () => {
           <div className="md:col-span-2 lg:col-span-2 group relative overflow-hidden rounded-3xl bg-card border border-border p-8 lg:p-10 hover:border-primary/40 transition-all duration-500">
             <div className={`absolute inset-0 bg-gradient-to-br ${features[0].gradient} opacity-50`} />
             <div className="relative z-10">
-              <div className={`inline-flex p-4 rounded-2xl ${features[0].iconBg} mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                <LayoutDashboard className="h-7 w-7 text-primary-foreground" />
+              <div className="inline-flex p-4 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
+                <LayoutDashboard className="h-7 w-7 text-primary" />
               </div>
               <h3 className="text-2xl font-bold text-foreground mb-3">
                 {features[0].title}
