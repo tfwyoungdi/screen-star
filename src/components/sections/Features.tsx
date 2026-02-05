@@ -40,7 +40,7 @@ const features = [
   },
   {
     icon: Users,
-    title: "Role-Based Access",
+    title: "Role Based Access",
     description: "Box Office, Gate Staff, Managers, Accountants — each role sees exactly what they need. Same system, tailored views.",
     gradient: "from-chart-5/20 via-chart-5/10 to-transparent",
     iconBg: "bg-primary",
