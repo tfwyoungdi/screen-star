@@ -767,6 +767,55 @@ export type Database = {
           },
         ]
       }
+      customer_login_rate_limits: {
+        Row: {
+          attempt_count: number | null
+          created_at: string | null
+          email_hash: string
+          id: string
+          organization_id: string | null
+          window_start: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          created_at?: string | null
+          email_hash: string
+          id?: string
+          organization_id?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          created_at?: string | null
+          email_hash?: string
+          id?: string
+          organization_id?: string | null
+          window_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_login_rate_limits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_login_rate_limits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_login_rate_limits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
@@ -3512,6 +3561,10 @@ export type Database = {
         Args: { _org_id: string }
         Returns: Json
       }
+      check_customer_login_rate_limit: {
+        Args: { _email: string; _organization_id: string }
+        Returns: Json
+      }
       check_platform_admin_rate_limit: {
         Args: {
           _action_type: string
@@ -3634,6 +3687,10 @@ export type Database = {
         }[]
       }
       platform_admin_has_mfa: { Args: { _user_id?: string }; Returns: boolean }
+      record_customer_login_attempt: {
+        Args: { _email: string; _organization_id: string }
+        Returns: undefined
+      }
       record_platform_login_failure: {
         Args: { _identifier: string }
         Returns: undefined

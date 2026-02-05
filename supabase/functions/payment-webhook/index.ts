@@ -83,6 +83,40 @@ function verifyFlutterwaveHash(hash: string): boolean {
   return hash === FLUTTERWAVE_WEBHOOK_HASH;
 }
 
+async function verifyNombaSignature(payload: string, signature: string): Promise<boolean> {
+  const NOMBA_WEBHOOK_SECRET = Deno.env.get("NOMBA_WEBHOOK_SECRET");
+  if (!NOMBA_WEBHOOK_SECRET) {
+    console.warn("NOMBA_WEBHOOK_SECRET not configured");
+    return false;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(NOMBA_WEBHOOK_SECRET),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const expectedSig = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+    const expectedHex = Array.from(new Uint8Array(expectedSig))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // Constant-time comparison
+    if (expectedHex.length !== signature.length) return false;
+    let result = 0;
+    for (let i = 0; i < expectedHex.length; i++) {
+      result |= expectedHex.charCodeAt(i) ^ signature.charCodeAt(i);
+    }
+    return result === 0;
+  } catch (error) {
+    console.error("Nomba signature verification failed:", error);
+    return false;
+  }
+}
+
 async function updateBookingStatus(bookingReference: string, status: string, paymentDetails: Record<string, any>) {
   console.log(`Updating booking ${bookingReference} to status: ${status}`);
   
@@ -262,6 +296,27 @@ const handler = async (req: Request): Promise<Response> => {
           bookingReference = payload.data.metadata?.booking_reference;
           paymentStatus = "paid";
           paymentDetails = { id: payload.data.id, reference: payload.data.reference };
+        }
+        break;
+      }
+
+      case "nomba": {
+        const nombaSignature = req.headers.get("x-nomba-signature");
+        if (!nombaSignature || !await verifyNombaSignature(rawBody, nombaSignature)) {
+          console.error("Invalid Nomba signature");
+          return new Response(JSON.stringify({ error: "Invalid signature" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+
+        const payload = JSON.parse(rawBody);
+        console.log(`Nomba event: ${payload.event}`);
+
+        if (payload.event === "checkout.completed" && payload.data?.status === "successful") {
+          bookingReference = payload.data?.metadata?.booking_reference;
+          paymentStatus = "paid";
+          paymentDetails = { id: payload.data.id, reference: payload.data.order_reference };
         }
         break;
       }
