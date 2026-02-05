@@ -52,7 +52,7 @@ const DEFAULT_ANNOUNCEMENT_TEMPLATE = `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://screen-star.lovable.app/lovable-uploads/b13d9673-eda4-4b38-b030-abc2c46d7ac6.png" alt="Cinitix Logo" class="logo" />
+      <img src="{{logo_url}}" alt="Cinitix Logo" class="logo" />
       <h1 style="margin: 0;">📢 {{announcement_title}}</h1>
     </div>
     <div class="content">
@@ -145,8 +145,12 @@ export function BulkAnnouncementSender() {
 
   const sendMutation = useMutation({
     mutationFn: async () => {
+      // Outgoing emails should reference the published domain asset
+      const sentLogoUrl = `https://screen-star.lovable.app/logo.png`;
+
       // Build final HTML with content
       const finalHtml = formData.htmlBody
+        .replace(/\{\{logo_url\}\}/g, sentLogoUrl)
         .replace(/\{\{announcement_content\}\}/g, formData.content);
 
       const { data, error } = await supabase.functions.invoke('send-bulk-announcement', {
@@ -199,7 +203,10 @@ export function BulkAnnouncementSender() {
   };
 
   const getPreviewHtml = () => {
+    // Preview should show the logo from the current preview origin
+    const previewLogoUrl = `${window.location.origin}/logo.png`;
     return formData.htmlBody
+      .replace(/\{\{logo_url\}\}/g, previewLogoUrl)
       .replace(/\{\{cinema_name\}\}/g, 'Sample Cinema')
       .replace(/\{\{announcement_title\}\}/g, formData.title || 'Announcement Title')
       .replace(/\{\{announcement_content\}\}/g, formData.content || 'Your announcement content here...')
