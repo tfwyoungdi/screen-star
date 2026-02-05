@@ -16,15 +16,13 @@ export function usePlatformRole() {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .in('role', ['platform_admin', 'platform_marketing', 'platform_accounts', 'platform_dev'])
-        .maybeSingle();
+      // Use the secure server-side function to get platform role
+      const { data, error } = await supabase.rpc('get_platform_role', {
+        _user_id: user.id,
+      });
 
       if (error) throw error;
-      return data?.role as PlatformRole | null;
+      return data as PlatformRole | null;
     },
     enabled: !!user?.id,
     staleTime: 300000, // Cache for 5 minutes - platform role rarely changes
