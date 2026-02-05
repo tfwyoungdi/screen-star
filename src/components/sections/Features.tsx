@@ -33,7 +33,7 @@ const features = [
   {
     icon: CreditCard,
     title: "Payment Gateway Setup",
-    description: "Integrate your preferred payment providers. Stripe, PayPal, or local payment methods — all supported.",
+    description: "Integrate your preferred payment providers. Stripe, PayPal, or local payment methods all supported.",
     gradient: "from-chart-4/20 via-chart-4/10 to-transparent",
     iconBg: "bg-primary",
     size: "medium",
