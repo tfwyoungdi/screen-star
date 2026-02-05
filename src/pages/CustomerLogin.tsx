@@ -65,23 +65,55 @@ export default function CustomerLogin() {
     
     setError(null);
 
-    // Check rate limit before attempting login
-    const rateCheck = checkRateLimit(RATE_LIMITS.CUSTOMER_LOGIN);
-    if (rateCheck.isLimited) {
-      const waitTime = formatWaitTime(rateCheck.resetInSeconds);
+    // Check client-side rate limit first (fast check)
+    const clientRateCheck = checkRateLimit(RATE_LIMITS.CUSTOMER_LOGIN);
+    if (clientRateCheck.isLimited) {
+      const waitTime = formatWaitTime(clientRateCheck.resetInSeconds);
       setError(`Too many login attempts. Please wait ${waitTime} before trying again.`);
       return;
     }
 
-    const { error } = await signIn(data.email, data.password, cinema.id);
+    // Check server-side rate limit (authoritative)
+    try {
+      const { data: serverRateCheck, error: rateError } = await supabase
+        .rpc('check_customer_login_rate_limit', {
+          _email: data.email.toLowerCase().trim(),
+          _organization_id: cinema.id
+        });
 
-    if (error) {
-      if (error.message.includes('Invalid login credentials')) {
+      if (rateError) {
+        console.error('Rate limit check error:', rateError);
+      } else if (serverRateCheck && typeof serverRateCheck === 'object' && serverRateCheck !== null) {
+        const rateResult = serverRateCheck as { allowed: boolean; remaining: number; reset_in_seconds: number };
+        if (!rateResult.allowed) {
+          const waitMinutes = Math.ceil(rateResult.reset_in_seconds / 60);
+          setError(`Too many login attempts. Please wait ${waitMinutes} minutes before trying again.`);
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('Rate limit check failed:', err);
+    }
+
+    const { error: authError } = await signIn(data.email, data.password, cinema.id);
+
+    if (authError) {
+      // Record failed attempt server-side
+      try {
+        await supabase.rpc('record_customer_login_attempt', {
+          _email: data.email.toLowerCase().trim(),
+          _organization_id: cinema.id
+        });
+      } catch (err) {
+        console.error('Failed to record login attempt:', err);
+      }
+
+      if (authError.message.includes('Invalid login credentials')) {
         setError('Invalid email or password. Please try again.');
-      } else if (error.message.includes('Email not confirmed')) {
+      } else if (authError.message.includes('Email not confirmed')) {
         setError('Please verify your email before logging in.');
       } else {
-        setError(error.message);
+        setError('An error occurred. Please try again.');
       }
       return;
     }
