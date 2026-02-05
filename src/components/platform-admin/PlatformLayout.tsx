@@ -34,10 +34,10 @@ export function PlatformLayout({ children }: PlatformLayoutProps) {
       {/* Sidebar */}
       <aside className="w-64 border-r bg-card flex flex-col">
         <div className="p-6 border-b">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-center gap-3">
             <img src={logo} alt="Cinitix Logo" className="h-10 w-auto" />
-            <div className="min-w-0">
-              <h2 className="font-bold text-foreground truncate">
+            <div className="text-center">
+              <h2 className="font-bold text-foreground">
                 {roleConfig?.label || 'Platform'}
               </h2>
               <p className="text-xs text-muted-foreground">CineTix Management</p>
