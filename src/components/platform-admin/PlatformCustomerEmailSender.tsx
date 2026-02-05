@@ -65,7 +65,7 @@ const DEFAULT_CUSTOMER_TEMPLATE = `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://screen-star.lovable.app/lovable-uploads/b13d9673-eda4-4b38-b030-abc2c46d7ac6.png" alt="Cinitix Logo" class="logo" />
+      <img src="{{logo_url}}" alt="Cinitix Logo" class="logo" />
       <h1 style="margin: 0;">{{email_title}}</h1>
     </div>
     <div class="content">
@@ -292,7 +292,9 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
   // Send email mutation
   const sendMutation = useMutation({
     mutationFn: async () => {
+      const sentLogoUrl = `https://screen-star.lovable.app/logo.png`;
       const finalHtml = formData.htmlBody
+        .replace(/\{\{logo_url\}\}/g, sentLogoUrl)
         .replace(/\{\{email_title\}\}/g, formData.title)
         .replace(/\{\{email_content\}\}/g, formData.content);
 
@@ -360,7 +362,9 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
   };
 
   const getPreviewHtml = () => {
+    const previewLogoUrl = `${window.location.origin}/logo.png`;
     return formData.htmlBody
+      .replace(/\{\{logo_url\}\}/g, previewLogoUrl)
       .replace(/\{\{customer_name\}\}/g, 'John Doe')
       .replace(/\{\{email_title\}\}/g, formData.title || 'Email Title')
       .replace(/\{\{email_content\}\}/g, formData.content || 'Your message content here...')
