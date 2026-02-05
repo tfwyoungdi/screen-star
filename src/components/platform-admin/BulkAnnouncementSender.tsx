@@ -43,7 +43,7 @@ const DEFAULT_ANNOUNCEMENT_TEMPLATE = `<!DOCTYPE html>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-    .logo { max-height: 50px; margin-bottom: 15px; }
+    .logo { max-height: 60px; margin-bottom: 15px; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
     .announcement-box { background: #fff7ed; border-left: 4px solid #f97316; padding: 20px; margin: 20px 0; }
     .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
@@ -52,7 +52,7 @@ const DEFAULT_ANNOUNCEMENT_TEMPLATE = `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://screen-star.lovable.app/lovable-uploads/b13d9673-eda4-4b38-b030-abc2c46d7ac6.png" alt="Cinitix Logo" class="logo" />
+      <img src="https://screen-star.lovable.app/cinitix-logo.png" alt="Cinitix Logo" class="logo" />
       <h1 style="margin: 0;">📢 {{announcement_title}}</h1>
     </div>
     <div class="content">

@@ -55,15 +55,17 @@ const DEFAULT_CUSTOMER_TEMPLATE = `<!DOCTYPE html>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .logo { max-height: 60px; margin-bottom: 15px; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
-    .message-box { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .message-box { background: #fff7ed; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f97316; }
     .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
+      <img src="https://screen-star.lovable.app/cinitix-logo.png" alt="Cinitix Logo" class="logo" />
       <h1 style="margin: 0;">{{email_title}}</h1>
     </div>
     <div class="content">
