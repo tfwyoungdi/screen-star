@@ -139,8 +139,8 @@
                
                {/* Icon container with playful shape */}
                <div className="relative mb-6">
-                 <div className={`inline-flex p-4 rounded-2xl ${feature.color} shadow-lg transform group-hover:rotate-6 group-hover:scale-110 transition-transform duration-300`}>
-                   <feature.icon className="h-7 w-7 text-primary-foreground" />
+                  <div className={`inline-flex p-4 rounded-2xl ${feature.color} shadow-lg transform group-hover:rotate-6 group-hover:scale-110 transition-transform duration-300`} style={{ color: 'hsl(0 0% 100%)' }}>
+                    <feature.icon className="h-7 w-7" />
                  </div>
                  {/* Decorative ring */}
                  <div className={`absolute -inset-2 rounded-3xl border-2 border-dashed ${feature.accent} opacity-0 group-hover:opacity-30 transition-opacity`} />
