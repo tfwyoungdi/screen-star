@@ -42,7 +42,7 @@ const DEFAULT_ANNOUNCEMENT_TEMPLATE = `<!DOCTYPE html>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
     .logo { max-height: 60px; margin-bottom: 15px; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
     .announcement-box { background: #fff7ed; border-left: 4px solid #f97316; padding: 20px; margin: 20px 0; }
