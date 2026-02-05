@@ -176,7 +176,10 @@
                  </div>
                  
                  <div className="relative">
-                   <div className="text-5xl font-bold text-primary mb-2 group-hover:scale-110 transition-transform inline-block">
+                    <div className="inline-flex p-3 rounded-2xl bg-primary mb-4">
+                      <benefit.icon className="h-6 w-6 text-white" strokeWidth={2} />
+                    </div>
+                    <div className="text-4xl font-bold text-primary mb-2 group-hover:scale-110 transition-transform inline-block">
                      {benefit.stat}
                    </div>
                    <h4 className="text-lg font-semibold text-foreground mb-2">
