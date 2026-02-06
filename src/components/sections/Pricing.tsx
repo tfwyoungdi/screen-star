@@ -57,8 +57,9 @@ const Pricing = () => {
     if (p.allow_own_gateway) features.push({
       text: "Own Payment Gateway"
     });
-    if (p.commission_percentage) features.push({
-      text: `${p.commission_percentage}% Commission`
+    features.push({
+      text: "Multi-Currency Support",
+      highlight: true
     });
     if (p.per_ticket_fee) features.push({
       text: `$${p.per_ticket_fee} Per Ticket Fee`
