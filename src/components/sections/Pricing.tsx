@@ -20,7 +20,7 @@ const Pricing = () => {
         .eq('is_active', true)
         .order('sort_order', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
