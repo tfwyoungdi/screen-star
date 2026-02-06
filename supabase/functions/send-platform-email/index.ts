@@ -64,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: {
           address: "noreply@cinetix.app",
-          name: "CineTix Platform",
+          name: "Cinitix Platform",
         },
         to: [{ email_address: { address: recipient_email } }],
         subject: subject,

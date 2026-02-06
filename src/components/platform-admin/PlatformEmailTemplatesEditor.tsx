@@ -415,7 +415,7 @@ const DEFAULT_TEMPLATES: PlatformEmailTemplates = {
 
 const getSampleData = (templateKey: keyof PlatformEmailTemplates): Record<string, string> => {
   const base = {
-    platform_name: 'CineTix Platform',
+    platform_name: 'Cinitix Platform',
   };
   
   switch (templateKey) {

@@ -37,7 +37,7 @@ export default function PlatformSettingsPage() {
   });
 
   const [formData, setFormData] = useState({
-    platform_name: 'CineTix',
+    platform_name: 'Cinitix',
     support_email: '',
     primary_color: '#f59e0b',
     maintenance_mode: false,
@@ -61,7 +61,7 @@ export default function PlatformSettingsPage() {
   useEffect(() => {
     if (settings) {
       setFormData({
-        platform_name: settings.platform_name || 'CineTix',
+        platform_name: settings.platform_name || 'Cinitix',
         support_email: settings.support_email || '',
         primary_color: settings.primary_color || '#f59e0b',
         maintenance_mode: settings.maintenance_mode || false,

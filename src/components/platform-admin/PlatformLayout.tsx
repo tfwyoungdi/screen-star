@@ -40,7 +40,7 @@ export function PlatformLayout({ children }: PlatformLayoutProps) {
               <h2 className="font-bold text-foreground">
                 {roleConfig?.label || 'Platform'}
               </h2>
-              <p className="text-xs text-muted-foreground">CineTix Management</p>
+              <p className="text-xs text-muted-foreground">Cinitix Management</p>
             </div>
           </div>
           {roleConfig && platformRole !== 'platform_admin' && (

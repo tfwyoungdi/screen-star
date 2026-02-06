@@ -183,7 +183,7 @@ const handler = async (req: Request): Promise<Response> => {
               name: customerName,
             },
             customizations: {
-              title: "CineTix Tickets",
+              title: "Cinitix Tickets",
               description: `Movie Tickets - ${bookingReference}`,
             },
             meta: {

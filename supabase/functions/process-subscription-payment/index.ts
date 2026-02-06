@@ -92,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
         "payment_method_types[]": "card",
         "line_items[0][price_data][currency]": "usd",
         "line_items[0][price_data][unit_amount]": Math.round(amount * 100).toString(),
-        "line_items[0][price_data][product_data][name]": `CineTix ${plan.name} Plan - ${billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}`,
+        "line_items[0][price_data][product_data][name]": `Cinitix ${plan.name} Plan - ${billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}`,
         "line_items[0][price_data][product_data][description]": plan.description || `${plan.name} subscription plan`,
         "line_items[0][quantity]": "1",
         "mode": "payment",

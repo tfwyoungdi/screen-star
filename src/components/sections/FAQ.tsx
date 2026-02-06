@@ -37,7 +37,7 @@ const faqs = [
   },
   {
     question: "Can I migrate from my current system?",
-    answer: "Yes! We offer free migration assistance for all plans. Our team will help you transfer your movie database, customer records, and historical data to CineTix with zero downtime.",
+    answer: "Yes! We offer free migration assistance for all plans. Our team will help you transfer your movie database, customer records, and historical data to Cinitix with zero downtime.",
     category: "Setup"
   },
   {
@@ -90,7 +90,7 @@ const FAQ = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Everything you need to know about CineTix. Can't find the answer you're looking for? 
+            Everything you need to know about Cinitix. Can't find the answer you're looking for? 
             <a href="#contact" className="text-primary hover:underline ml-1">Reach out to our support team</a>.
           </p>
         </div>

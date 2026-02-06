@@ -368,7 +368,7 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
       .replace(/\{\{customer_name\}\}/g, 'John Doe')
       .replace(/\{\{email_title\}\}/g, formData.title || 'Email Title')
       .replace(/\{\{email_content\}\}/g, formData.content || 'Your message content here...')
-      .replace(/\{\{platform_name\}\}/g, 'CineTix Platform');
+      .replace(/\{\{platform_name\}\}/g, 'Cinitix Platform');
   };
 
   const recipientCount = customers.length;

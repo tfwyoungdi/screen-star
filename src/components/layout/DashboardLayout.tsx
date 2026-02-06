@@ -135,7 +135,7 @@ function SidebarContentWrapper({ newMessagesCount }: { newMessagesCount: number 
           </div>
           {!isCollapsed && (
             <span className="font-bold text-sidebar-foreground truncate">
-              {displayOrg?.name || 'CineTix'}
+              {displayOrg?.name || 'Cinitix'}
             </span>
           )}
         </div>

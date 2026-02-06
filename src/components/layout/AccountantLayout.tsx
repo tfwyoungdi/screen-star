@@ -73,7 +73,7 @@ function SidebarContentWrapper() {
           </div>
           {!isCollapsed && (
             <span className="font-bold text-sidebar-foreground truncate">
-              {organization?.name || 'CineTix'}
+              {organization?.name || 'Cinitix'}
             </span>
           )}
         </div>

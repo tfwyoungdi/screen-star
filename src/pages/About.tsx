@@ -97,7 +97,7 @@ const About = () => {
                 <span className="text-primary">For Cinema Lovers</span>
               </h2>
               <p className="text-white/70 text-lg leading-relaxed mb-6">
-                CineTix was born from a simple observation: independent cinemas deserve the same 
+                Cinitix was born from a simple observation: independent cinemas deserve the same 
                 powerful tools as major chains, without the complexity or cost.
               </p>
               <p className="text-white/70 text-lg leading-relaxed mb-8">
@@ -244,7 +244,7 @@ const About = () => {
               Ready to Transform Your Cinema?
             </h2>
             <p className="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
-              Join 500+ cinemas already using CineTix to streamline their operations 
+              Join 500+ cinemas already using Cinitix to streamline their operations 
               and delight their audiences.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
