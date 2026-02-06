@@ -1,0 +1,1 @@
+UPDATE subscription_plans SET max_screens = 6 WHERE id = '8d91d827-6e12-46a6-b5e9-02f6d33bd140';
