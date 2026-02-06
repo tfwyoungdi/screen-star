@@ -89,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       try {
         const emailBody = {
-          from: { address: "noreply@cinetix.com", name: cinema_name },
+          from: { address: "noreply@cinitix.com", name: cinema_name },
           to: [{ email_address: { address: customer.email, name: customer.full_name || "" } }],
           subject: personalizedSubject,
           htmlbody: personalizedHtml,

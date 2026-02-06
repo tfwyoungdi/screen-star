@@ -99,7 +99,7 @@ export default function Signup() {
           {cinemaName && !errors.cinemaName && (
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Globe className="h-3 w-3" />
-              Your URL: <span className="text-primary font-mono">{previewSlug}.cinetix.com</span>
+              Your URL: <span className="text-primary font-mono">{previewSlug}.cinitix.com</span>
             </p>
           )}
         </div>

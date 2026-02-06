@@ -1008,7 +1008,7 @@ export default function CinemaSettings() {
                       {watch('seo_title') || organization.name}
                     </p>
                     <p className="text-sm text-green-600 truncate">
-                      {organization.slug}.cinetix.com
+                      {organization.slug}.cinitix.com
                     </p>
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {watch('seo_description') || 'Book movie tickets online'}

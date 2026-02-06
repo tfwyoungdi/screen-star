@@ -127,7 +127,7 @@ export function SLAEmailTemplateEditor({ template, onSave, isSaving }: SLAEmailT
     preview = preview.replace(/\{\{created_at\}\}/g, 'Jan 12, 2026 3:45 PM');
     preview = preview.replace(/\{\{hours_overdue\}\}/g, '2.5');
     preview = preview.replace(/\{\{platform_name\}\}/g, 'Cinitix Platform');
-    preview = preview.replace(/\{\{escalation_email\}\}/g, 'admin@cinetix.com');
+    preview = preview.replace(/\{\{escalation_email\}\}/g, 'admin@cinitix.com');
     return preview;
   };
 

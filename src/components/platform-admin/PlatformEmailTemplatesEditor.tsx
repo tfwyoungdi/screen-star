@@ -436,7 +436,7 @@ const getSampleData = (templateKey: keyof PlatformEmailTemplates): Record<string
         admin_name: 'John Smith',
         admin_email: 'john@starlighttheatre.com',
         plan_name: 'Pro',
-        dashboard_url: 'https://app.cinetix.com/dashboard',
+        dashboard_url: 'https://app.cinitix.com/dashboard',
       };
     case 'subscription_activated':
       return {
@@ -454,7 +454,7 @@ const getSampleData = (templateKey: keyof PlatformEmailTemplates): Record<string
         plan_name: 'Pro',
         expiry_date: 'Jan 21, 2026',
         days_remaining: '7',
-        renewal_url: 'https://app.cinetix.com/billing',
+        renewal_url: 'https://app.cinitix.com/billing',
       };
     case 'payment_failed':
       return {
@@ -464,7 +464,7 @@ const getSampleData = (templateKey: keyof PlatformEmailTemplates): Record<string
         amount: '$49.99',
         failure_reason: 'Card declined - insufficient funds',
         retry_date: 'Jan 17, 2026',
-        update_payment_url: 'https://app.cinetix.com/billing',
+        update_payment_url: 'https://app.cinitix.com/billing',
       };
     case 'platform_announcement':
       return {

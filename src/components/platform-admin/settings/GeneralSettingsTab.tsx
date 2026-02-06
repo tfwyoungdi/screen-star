@@ -55,7 +55,7 @@ export function GeneralSettingsTab({ formData, setFormData }: GeneralSettingsTab
             type="email"
             value={formData.support_email}
             onChange={(e) => setFormData({ ...formData, support_email: e.target.value })}
-            placeholder="support@cinetix.com"
+            placeholder="support@cinitix.com"
           />
         </div>
       </CardContent>
