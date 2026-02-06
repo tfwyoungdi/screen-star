@@ -146,7 +146,7 @@ export function BulkAnnouncementSender() {
   const sendMutation = useMutation({
     mutationFn: async () => {
       // Outgoing emails should reference the published domain asset
-      const sentLogoUrl = `https://screen-star.lovable.app/logo.png`;
+      const sentLogoUrl = `https://www.cinitix.com/logo.png`;
 
       // Build final HTML with content
       const finalHtml = formData.htmlBody
