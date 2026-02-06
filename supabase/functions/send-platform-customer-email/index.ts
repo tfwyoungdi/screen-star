@@ -113,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
           },
           body: JSON.stringify({
             from: {
-              address: "noreply@cinitix.app",
+              address: "noreply@cinitix.com",
               name: platformName,
             },
             to: [{ email_address: { address: customer.email, name: customer.name || "" } }],

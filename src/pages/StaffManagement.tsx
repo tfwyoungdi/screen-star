@@ -338,7 +338,7 @@ export default function StaffManagement() {
   };
 
   const staffPortalUrl = organization?.slug 
-    ? `https://${organization.slug}.cinitix.app/staff`
+    ? `https://${organization.slug}.cinitix.com/staff`
     : null;
 
   return (
