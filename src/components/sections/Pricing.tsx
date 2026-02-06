@@ -61,8 +61,9 @@ const Pricing = () => {
       text: "Multi-Currency Support",
       highlight: true
     });
-    if (p.per_ticket_fee) features.push({
-      text: `$${p.per_ticket_fee} Per Ticket Fee`
+    features.push({
+      text: "Advanced Analytics",
+      highlight: true
     });
     return features;
   };
