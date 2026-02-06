@@ -117,10 +117,10 @@ serve(async (req) => {
     const dnsData = await dnsResponse.json();
     console.log('DNS response:', JSON.stringify(dnsData));
 
-    // Check for CNAME records pointing to cinetix.app
+    // Check for CNAME records pointing to cinitix.app
     const cnameRecords = dnsData.Answer?.filter((record: any) => record.type === 5) || [];
     const hasCorrectCname = cnameRecords.some((record: any) => 
-      record.data?.toLowerCase().includes('cinetix.app')
+      record.data?.toLowerCase().includes('cinitix.app')
     );
 
     // Also check A records as fallback
@@ -149,7 +149,7 @@ serve(async (req) => {
       verified = true;
       status = 'verified';
       message = 'Domain verified successfully!';
-      details = `CNAME record correctly pointing to cinetix.app`;
+      details = `CNAME record correctly pointing to cinitix.app`;
     } else if (hasARecord) {
       verified = true;
       status = 'verified';
@@ -166,7 +166,7 @@ serve(async (req) => {
     } else {
       status = 'misconfigured';
       message = 'DNS configuration issue';
-      details = 'The domain exists but is not configured correctly. Please verify your CNAME record points to cinetix.app';
+      details = 'The domain exists but is not configured correctly. Please verify your CNAME record points to cinitix.app';
     }
 
     console.log(`Verification result for ${cleanDomain}: ${status}, SSL valid: ${sslInfo.valid}`);
