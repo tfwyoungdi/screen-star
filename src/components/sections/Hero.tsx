@@ -24,15 +24,12 @@ const Hero = () => {
           
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Button size="lg" className="group gap-2 px-7 py-6 text-base font-semibold rounded-full shadow-lg hover:shadow-xl transition-all">
-              Get Started For Free
+              Download Now
               <div className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center">
                 <ArrowUpRight className="h-4 w-4 text-primary-foreground" />
               </div>
-            </Button>
-            <Button variant="outline" size="lg" className="px-7 py-6 text-base font-semibold rounded-full border-2 border-foreground/20 bg-card hover:bg-secondary/50">
-              Request a Demo
             </Button>
           </div>
         </div>
