@@ -52,7 +52,7 @@ const Contact = () => {
       country: "United States",
       address: "100 California St, Suite 800",
       phone: "+1 (415) 555-0123",
-      email: "sf@cinetix.com",
+      email: "sf@cinitix.com",
       timezone: "PST (UTC-8)",
     },
     {
@@ -60,7 +60,7 @@ const Contact = () => {
       country: "United Kingdom",
       address: "1 Canada Square, Canary Wharf",
       phone: "+44 20 7946 0958",
-      email: "london@cinetix.com",
+      email: "london@cinitix.com",
       timezone: "GMT (UTC+0)",
     },
     {
@@ -68,7 +68,7 @@ const Contact = () => {
       country: "Singapore",
       address: "1 Raffles Place, Tower 1",
       phone: "+65 6789 0123",
-      email: "sg@cinetix.com",
+      email: "sg@cinitix.com",
       timezone: "SGT (UTC+8)",
     },
   ];
@@ -85,8 +85,8 @@ const Contact = () => {
       icon: Mail,
       title: "Email Support",
       description: "Get help with technical issues",
-      action: "support@cinetix.com",
-      href: "mailto:support@cinetix.com",
+      action: "support@cinitix.com",
+      href: "mailto:support@cinitix.com",
     },
     {
       icon: Phone,

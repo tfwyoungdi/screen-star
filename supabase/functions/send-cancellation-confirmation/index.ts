@@ -135,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
     finalHtml = addTrackingPixel(finalHtml, trackingUrl);
 
     const emailBody = {
-      from: { address: "noreply@cinetix.com", name: "Cinitix" },
+      from: { address: "noreply@cinitix.com", name: "Cinitix" },
       to: [{ email_address: { address: customerEmail, name: customerName } }],
       subject: replaceVariables(subject, variables),
       htmlbody: finalHtml,

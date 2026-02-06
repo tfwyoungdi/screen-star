@@ -85,7 +85,7 @@ export function SLASettingsTab({ formData, setFormData }: SLASettingsTabProps) {
                 type="email"
                 value={formData.sla_escalation_email}
                 onChange={(e) => setFormData({ ...formData, sla_escalation_email: e.target.value })}
-                placeholder="escalations@cinetix.com"
+                placeholder="escalations@cinitix.com"
               />
               <p className="text-xs text-muted-foreground">
                 Email address to receive SLA breach notifications
