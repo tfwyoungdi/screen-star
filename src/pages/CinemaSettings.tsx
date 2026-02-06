@@ -107,7 +107,7 @@ export default function CinemaSettings() {
       primary_color: organization.primary_color || '#D97706',
       secondary_color: organization.secondary_color || '#1F2937',
       website_template: (organization as any).website_template || 'classic-cinema',
-      custom_domain: organization.custom_domain?.replace('.cinitix.app', '') || '',
+      custom_domain: organization.custom_domain?.replace('.cinitix.com', '') || '',
       about_text: (organization as any).about_text || '',
       contact_email: (organization as any).contact_email || '',
       contact_phone: (organization as any).contact_phone || '',
@@ -301,8 +301,8 @@ export default function CinemaSettings() {
         if (newLogoUrl) logoUrl = newLogoUrl;
       }
 
-      // Format custom domain with .cinitix.app suffix
-      const formattedDomain = data.custom_domain ? `${data.custom_domain}.cinitix.app` : null;
+      // Format custom domain with .cinitix.com suffix
+      const formattedDomain = data.custom_domain ? `${data.custom_domain}.cinitix.com` : null;
 
       const { error } = await supabase
         .from('organizations')
@@ -505,7 +505,7 @@ export default function CinemaSettings() {
                           }}
                         />
                         <span className="inline-flex items-center px-3 h-9 border border-input bg-muted text-muted-foreground text-sm rounded-r-md">
-                          .cinitix.app
+                          .cinitix.com
                         </span>
                       </div>
                       <Button
@@ -523,7 +523,7 @@ export default function CinemaSettings() {
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Your public URL will be: <strong>{watch('custom_domain') || 'yourcinema'}.cinitix.app</strong>
+                      Your public URL will be: <strong>{watch('custom_domain') || 'yourcinema'}.cinitix.com</strong>
                     </p>
                   </div>
 
@@ -603,13 +603,13 @@ export default function CinemaSettings() {
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">Public</Badge>
                         <code className="text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
-                          {organization.slug}.cinitix.app
+                          {organization.slug}.cinitix.com
                         </code>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyToClipboard(`https://${organization.slug}.cinitix.app`)}
+                          onClick={() => copyToClipboard(`https://${organization.slug}.cinitix.com`)}
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
@@ -617,13 +617,13 @@ export default function CinemaSettings() {
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">Staff Portal</Badge>
                         <code className="text-sm text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">
-                          {organization.slug}.cinitix.app/staff
+                          {organization.slug}.cinitix.com/staff
                         </code>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyToClipboard(`https://${organization.slug}.cinitix.app/staff`)}
+                          onClick={() => copyToClipboard(`https://${organization.slug}.cinitix.com/staff`)}
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
@@ -661,7 +661,7 @@ export default function CinemaSettings() {
                         <div className="flex items-center gap-2">
                           <Badge variant="secondary" className="text-xs">Custom URL</Badge>
                           <code className="text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
-                            {watch('custom_domain') ? `${watch('custom_domain')}.cinitix.app` : organization?.custom_domain}
+                            {watch('custom_domain') ? `${watch('custom_domain')}.cinitix.com` : organization?.custom_domain}
                           </code>
                           {domainVerification?.verified && (
                             <Badge className="bg-green-500/20 text-green-600 text-xs">Verified</Badge>
@@ -698,7 +698,7 @@ export default function CinemaSettings() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Remove Custom Domain?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This will disconnect <strong>{watch('custom_domain') ? `${watch('custom_domain')}.cinitix.app` : organization?.custom_domain}</strong> from your cinema. 
+                              This will disconnect <strong>{watch('custom_domain') ? `${watch('custom_domain')}.cinitix.com` : organization?.custom_domain}</strong> from your cinema. 
                               Your booking website will only be accessible via your default URL. You can add a new custom URL later.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
