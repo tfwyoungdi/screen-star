@@ -39,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailBody = {
       from: {
         address: "noreply@cinetix.com",
-        name: "CineTix Careers"
+        name: "Cinitix Careers"
       },
       to: [
         {

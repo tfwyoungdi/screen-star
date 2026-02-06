@@ -146,7 +146,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailBody = {
       from: {
         address: "noreply@cinetix.com",
-        name: "CineTix Notifications"
+        name: "Cinitix Notifications"
       },
       to: [
         {

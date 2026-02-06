@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailBody = {
       from: {
         address: "noreply@cinetix.com",
-        name: "CineTix"
+        name: "Cinitix"
       },
       to: [
         {
@@ -52,7 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
       ],
-      subject: `You're invited to join ${cinemaName} on CineTix`,
+      subject: `You're invited to join ${cinemaName} on Cinitix`,
       htmlbody: `
         <!DOCTYPE html>
         <html>
@@ -63,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
           <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #D4AF37; margin: 0; font-size: 28px;">🎬 CineTix</h1>
+              <h1 style="color: #D4AF37; margin: 0; font-size: 28px;">🎬 Cinitix</h1>
             </div>
             
             <h2 style="color: #f5f5f0; margin-bottom: 20px;">You've been invited!</h2>

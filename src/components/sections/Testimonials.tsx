@@ -2,7 +2,7 @@ import { Star, Quote } from "lucide-react";
 const testimonials = [{
   name: "Sarah Mitchell",
   role: "Owner, Palace Cinema",
-  content: "CineTix transformed how we manage our cinema. Online bookings increased by 300% in the first month. The dashboard is intuitive and our staff loves it.",
+  content: "Cinitix transformed how we manage our cinema. Online bookings increased by 300% in the first month. The dashboard is intuitive and our staff loves it.",
   rating: 5,
   avatar: "SM"
 }, {
@@ -14,7 +14,7 @@ const testimonials = [{
 }, {
   name: "Emily Chen",
   role: "CEO, CineMax Chain",
-  content: "We run 12 locations on CineTix. The multi-tenant architecture keeps everything organized while giving us unified analytics across all venues.",
+  content: "We run 12 locations on Cinitix. The multi-tenant architecture keeps everything organized while giving us unified analytics across all venues.",
   rating: 5,
   avatar: "EC"
 }];

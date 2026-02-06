@@ -210,7 +210,7 @@ export function BulkAnnouncementSender() {
       .replace(/\{\{cinema_name\}\}/g, 'Sample Cinema')
       .replace(/\{\{announcement_title\}\}/g, formData.title || 'Announcement Title')
       .replace(/\{\{announcement_content\}\}/g, formData.content || 'Your announcement content here...')
-      .replace(/\{\{platform_name\}\}/g, 'CineTix Platform');
+      .replace(/\{\{platform_name\}\}/g, 'Cinitix Platform');
   };
 
   return (

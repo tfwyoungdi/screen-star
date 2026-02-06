@@ -29,7 +29,7 @@ export function GeneralSettingsTab({ formData, setFormData }: GeneralSettingsTab
             <Input
               value={formData.platform_name}
               onChange={(e) => setFormData({ ...formData, platform_name: e.target.value })}
-              placeholder="CineTix"
+              placeholder="Cinitix"
             />
           </div>
           <div className="space-y-2">

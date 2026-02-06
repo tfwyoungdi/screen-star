@@ -1530,7 +1530,7 @@ export default function PublicCinema() {
           )}
           
           <p className="text-muted-foreground text-sm text-center">
-            © {new Date().getFullYear()} {cinema?.name}. Powered by CineTix.
+            © {new Date().getFullYear()} {cinema?.name}. Powered by Cinitix.
           </p>
         </div>
       </footer>

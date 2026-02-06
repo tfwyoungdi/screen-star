@@ -198,7 +198,7 @@ export function usePlatformExportPDF() {
         `}
 
         <div class="footer">
-          <p>This report was generated automatically by the CineTix Platform.</p>
+          <p>This report was generated automatically by the Cinitix Platform.</p>
           <p>Total Cinemas: ${cinemaStats?.totalCinemas || 0} • New Cinemas (this period): ${cinemaStats?.newCinemas || 0}</p>
         </div>
       </body>

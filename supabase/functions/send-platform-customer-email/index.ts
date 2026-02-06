@@ -49,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
       .limit(1)
       .single();
 
-    const platformName = settings?.platform_name || "CineTix";
+    const platformName = settings?.platform_name || "Cinitix";
 
     // Create campaign record
     const { data: campaign, error: campaignError } = await supabase

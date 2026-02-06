@@ -144,7 +144,7 @@ async function generateTicketPDF(
       
       <!-- Footer -->
       <text x="200" y="570" text-anchor="middle" fill="#666666" font-family="Arial, sans-serif" font-size="10">Scan QR code at entrance • Arrive 15 min early</text>
-      <text x="200" y="590" text-anchor="middle" fill="#444444" font-family="Arial, sans-serif" font-size="9">Powered by CineTix</text>
+      <text x="200" y="590" text-anchor="middle" fill="#444444" font-family="Arial, sans-serif" font-size="9">Powered by Cinitix</text>
     </svg>
   `;
 
@@ -228,7 +228,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // ZeptoMail email with attachment
     const emailBody = {
-      from: { address: "noreply@cinetix.com", name: "CineTix" },
+      from: { address: "noreply@cinetix.com", name: "Cinitix" },
       to: [{ email_address: { address: customerEmail, name: customerName } }],
       subject: replaceVariables(subject, variables),
       htmlbody: replaceVariables(htmlBody, variables),

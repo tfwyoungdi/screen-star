@@ -106,7 +106,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-8 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} CineTix. All rights reserved.
+            © {new Date().getFullYear()} Cinitix. All rights reserved.
           </p>
           
         </div>

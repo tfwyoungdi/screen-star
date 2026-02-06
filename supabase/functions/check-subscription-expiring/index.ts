@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
       .limit(1)
       .single();
 
-    const platformName = settings?.platform_name || "CineTix";
+    const platformName = settings?.platform_name || "Cinitix";
     const emailTemplates = (settings as any)?.email_templates || {};
 
     // Check for subscriptions expiring in 7 days

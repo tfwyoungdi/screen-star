@@ -82,7 +82,7 @@ const Hero = () => {
 
           {/* Main Dashboard Image */}
           <div className="relative rounded-2xl overflow-hidden bg-card border border-border shadow-2xl">
-            <img alt="CineTix Dashboard Preview" className="w-full h-auto" src="/lovable-uploads/b13d9673-eda4-4b38-b030-abc2c46d7ac6.png" />
+            <img alt="Cinitix Dashboard Preview" className="w-full h-auto" src="/lovable-uploads/b13d9673-eda4-4b38-b030-abc2c46d7ac6.png" />
           </div>
         </div>
       </div>

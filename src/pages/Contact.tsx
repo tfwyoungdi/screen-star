@@ -347,7 +347,7 @@ const Contact = () => {
               Ready to Get Started?
             </h2>
             <p className="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
-              Start your free trial today and see why 500+ cinemas trust CineTix.
+              Start your free trial today and see why 500+ cinemas trust Cinitix.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
