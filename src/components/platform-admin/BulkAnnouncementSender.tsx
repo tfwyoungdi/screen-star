@@ -39,31 +39,65 @@ const DEFAULT_ANNOUNCEMENT_TEMPLATE = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-    .logo { max-height: 60px; margin-bottom: 15px; }
-    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
-    .announcement-box { background: #fff7ed; border-left: 4px solid #f97316; padding: 20px; margin: 20px 0; }
-    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <img src="{{logo_url}}" alt="Cinitix Logo" class="logo" />
-      <h1 style="margin: 0;">📢 {{announcement_title}}</h1>
-    </div>
-    <div class="content">
-      <p>Hi {{cinema_name}},</p>
-      <div class="announcement-box">
-        {{announcement_content}}
-      </div>
-      <p>If you have any questions, please contact our support team.</p>
-    </div>
-    <div class="footer">{{platform_name}}</div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #333333;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 30px;">
+              <img src="{{logo_url}}" alt="Cinitix Logo" style="max-height: 50px; height: auto;" />
+            </td>
+          </tr>
+          <!-- Title -->
+          <tr>
+            <td align="center" style="padding-bottom: 24px;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #111111;">📢 {{announcement_title}}</h1>
+            </td>
+          </tr>
+          <!-- Divider -->
+          <tr>
+            <td style="padding-bottom: 24px;">
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0;" />
+            </td>
+          </tr>
+          <!-- Greeting -->
+          <tr>
+            <td style="padding-bottom: 16px; font-size: 15px; line-height: 1.6; color: #333333;">
+              Hi {{cinema_name}},
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding-bottom: 24px; font-size: 15px; line-height: 1.6; color: #333333;">
+              {{announcement_content}}
+            </td>
+          </tr>
+          <!-- Closing -->
+          <tr>
+            <td style="padding-bottom: 24px; font-size: 15px; line-height: 1.6; color: #333333;">
+              If you have any questions, please contact our support team.
+            </td>
+          </tr>
+          <!-- Footer Divider -->
+          <tr>
+            <td style="padding-bottom: 16px;">
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0;" />
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="font-size: 12px; color: #9ca3af;">
+              {{platform_name}}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 
