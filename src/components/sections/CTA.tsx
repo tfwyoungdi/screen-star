@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Play, Ticket, Users, TrendingUp, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Sparkles, Ticket, Users, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
 const CTA = () => {
   return (
     <section className="py-24 lg:py-32 bg-primary relative overflow-hidden">
@@ -24,22 +25,17 @@ const CTA = () => {
             boost ticket sales, and delight their customers.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex justify-center mb-12">
             <Button 
+              asChild
               size="lg" 
               variant="secondary"
               className="rounded-full gap-2 px-8 text-base font-semibold"
             >
-              Start Free Trial
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="ghost"
-              className="rounded-full gap-2 px-8 text-base font-semibold text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              <Play className="h-5 w-5" />
-              Watch Demo
+              <Link to="/download">
+                Download Now
+                <ArrowRight className="h-5 w-5" />
+              </Link>
             </Button>
           </div>
           
