@@ -3,59 +3,54 @@ import { Button } from "@/components/ui/button";
 import { Film, Users, Star, Award, Target, Heart, ArrowRight, ArrowUpRight, CheckCircle } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-const stats = [{
-  label: "Active Cinemas",
-  value: "500+",
-  icon: Film
-}, {
-  label: "Tickets Sold",
-  value: "2M+",
-  icon: Award
-}, {
-  label: "Customer Rating",
-  value: "4.9/5",
-  icon: Star
-}, {
-  label: "Team Members",
-  value: "50+",
-  icon: Users
-}];
-const values = [{
-  icon: Target,
-  title: "Innovation First",
-  description: "We constantly push boundaries to deliver cutting-edge cinema technology that keeps you ahead of the curve.",
-  gradient: "from-primary/20 via-primary/10 to-transparent"
-}, {
-  icon: Heart,
-  title: "Customer Obsessed",
-  description: "Your success is our success. We're dedicated to providing exceptional support and building features you actually need.",
-  gradient: "from-chart-3/20 via-chart-3/10 to-transparent"
-}, {
-  icon: Users,
-  title: "Community Driven",
-  description: "We listen to our community of cinema operators and incorporate their feedback into every product decision.",
-  gradient: "from-chart-4/20 via-chart-4/10 to-transparent"
-}];
-const team = [{
-  name: "Sarah Chen",
-  role: "CEO & Co-founder",
-  image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop"
-}, {
-  name: "Marcus Johnson",
-  role: "CTO & Co-founder",
-  image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
-}, {
-  name: "Emily Rodriguez",
-  role: "Head of Product",
-  image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop"
-}, {
-  name: "David Kim",
-  role: "Head of Engineering",
-  image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop"
-}];
-const whyChooseUs = ["No hidden fees or complicated pricing", "24/7 dedicated customer support", "99.9% uptime guarantee", "Free data migration assistance", "Regular feature updates", "GDPR compliant & secure"];
+
+const stats = [
+  { label: "Active Cinemas", value: "500+", icon: Film },
+  { label: "Tickets Sold", value: "2M+", icon: Award },
+  { label: "Customer Rating", value: "4.9/5", icon: Star },
+  { label: "Team Members", value: "50+", icon: Users },
+];
+
+const values = [
+  {
+    icon: Target,
+    title: "Innovation First",
+    description: "We constantly push boundaries to deliver cutting-edge cinema technology that keeps you ahead of the curve.",
+    gradient: "from-primary/20 via-primary/10 to-transparent",
+  },
+  {
+    icon: Heart,
+    title: "Customer Obsessed",
+    description: "Your success is our success. We're dedicated to providing exceptional support and building features you actually need.",
+    gradient: "from-chart-3/20 via-chart-3/10 to-transparent",
+  },
+  {
+    icon: Users,
+    title: "Community Driven",
+    description: "We listen to our community of cinema operators and incorporate their feedback into every product decision.",
+    gradient: "from-chart-4/20 via-chart-4/10 to-transparent",
+  },
+];
+
+const team = [
+  { name: "Sarah Chen", role: "CEO & Co-founder", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop" },
+  { name: "Marcus Johnson", role: "CTO & Co-founder", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop" },
+  { name: "Emily Rodriguez", role: "Head of Product", image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop" },
+  { name: "David Kim", role: "Head of Engineering", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop" },
+];
+
+const whyChooseUs = [
+  "No hidden fees or complicated pricing",
+  "24/7 dedicated customer support",
+  "99.9% uptime guarantee",
+  "Free data migration assistance",
+  "Regular feature updates",
+  "GDPR compliant & secure",
+];
+
 const About = () => {
-  return <div className="min-h-screen bg-background text-foreground">
+  return (
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
       
       {/* Hero Section */}
@@ -85,7 +80,21 @@ const About = () => {
       </section>
 
       {/* Stats Section */}
-      
+      <section className="py-16 border-y border-border bg-card">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+                  <stat.icon className="h-7 w-7 text-primary" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-foreground mb-2">{stat.value}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Mission Section */}
       <section className="py-20 lg:py-28 bg-background">
@@ -116,7 +125,12 @@ const About = () => {
             </div>
             <div className="relative">
               <div className="aspect-video rounded-3xl overflow-hidden bg-card border border-border shadow-2xl">
-                <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=450&fit=crop" alt="Cinema audience enjoying a movie" className="w-full h-full object-cover" loading="lazy" />
+                <img 
+                  src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=450&fit=crop"
+                  alt="Cinema audience enjoying a movie"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
               </div>
             </div>
           </div>
@@ -140,7 +154,11 @@ const About = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
-            {values.map((value, index) => <div key={index} className="group relative overflow-hidden rounded-3xl bg-card border border-border p-8 hover:border-primary/40 transition-all duration-500">
+            {values.map((value, index) => (
+              <div 
+                key={index} 
+                className="group relative overflow-hidden rounded-3xl bg-card border border-border p-8 hover:border-primary/40 transition-all duration-500"
+              >
                 <div className={`absolute inset-0 bg-gradient-to-br ${value.gradient} opacity-0 group-hover:opacity-50 transition-opacity duration-500`} />
                 <div className="relative z-10">
                   <div className="inline-flex p-3 rounded-xl mb-5 group-hover:scale-110 transition-transform duration-300">
@@ -149,7 +167,8 @@ const About = () => {
                   <h3 className="text-xl font-bold text-foreground mb-3">{value.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">{value.description}</p>
                 </div>
-              </div>)}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -171,13 +190,20 @@ const About = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {team.map((member, index) => <div key={index} className="text-center group">
+            {team.map((member, index) => (
+              <div key={index} className="text-center group">
                 <div className="relative mb-4 overflow-hidden rounded-3xl aspect-square bg-card border border-border shadow-md">
-                  <img src={member.image} alt={member.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                  <img 
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-1">{member.name}</h3>
                 <p className="text-sm text-muted-foreground">{member.role}</p>
-              </div>)}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -188,10 +214,12 @@ const About = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="order-2 lg:order-1">
               <div className="grid grid-cols-1 gap-4">
-                {whyChooseUs.map((item, index) => <div key={index} className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border hover:border-primary/40 transition-colors">
+                {whyChooseUs.map((item, index) => (
+                  <div key={index} className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border hover:border-primary/40 transition-colors">
                     <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
                     <span className="text-foreground">{item}</span>
-                  </div>)}
+                  </div>
+                ))}
               </div>
             </div>
             <div className="order-1 lg:order-2">
@@ -229,7 +257,12 @@ const About = () => {
               Join 500+ cinemas already using Cinitix to streamline their operations 
               and delight their audiences.
             </p>
-            <Button asChild size="lg" variant="secondary" className="rounded-full gap-2 px-8 text-base font-semibold">
+            <Button 
+              asChild
+              size="lg" 
+              variant="secondary"
+              className="rounded-full gap-2 px-8 text-base font-semibold"
+            >
               <Link to="/download">
                 Download Now
                 <ArrowRight className="h-5 w-5" />
@@ -240,6 +273,8 @@ const About = () => {
       </section>
 
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default About;
