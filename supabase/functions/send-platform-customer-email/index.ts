@@ -108,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
         const emailResponse = await fetch("https://api.zeptomail.com/v1.1/email", {
           method: "POST",
           headers: {
-            "Authorization": `Zoho-enczapikey ${zeptoMailApiKey}`,
+            "Authorization": zeptoMailApiKey,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
