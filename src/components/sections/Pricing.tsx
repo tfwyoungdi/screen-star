@@ -41,8 +41,6 @@ const Pricing = () => {
     if (p.max_screens === -1) features.push({
       text: "Unlimited Screens",
       highlight: true
-    });else features.push({
-      text: `Up to ${p.max_screens} Screens`
     });
     if (p.max_staff === -1) features.push({
       text: "Unlimited Staff",
