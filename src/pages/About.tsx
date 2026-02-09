@@ -107,12 +107,26 @@ const About = () => {
               </h2>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
                 Cinitix was born from a simple observation: independent cinemas deserve the same 
-                powerful tools as major chains, without the complexity or cost.
+                powerful tools as major chains without the complexity or cost.
+              </p>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-6">
+                We exist to level the playing field for independent and community cinemas by providing 
+                smart, easy to use digital solutions that simplify operations, boost visibility, and 
+                improve the movie going experience. From ticketing and scheduling to audience engagement 
+                and data insights, Cinitix brings everything together in one streamlined platform 
+                designed specifically for smaller cinema operators.
+              </p>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-6">
+                Unlike bloated enterprise systems, Cinitix is built with clarity, flexibility, and 
+                affordability at its core. We understand the realities of running an independent cinema 
+                — tight margins, limited staff, and the need to move fast. That's why our tools are 
+                intuitive, reliable, and tailored to real-world cinema workflows.
               </p>
               <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-                Founded in 2020, we've grown from a small startup to serving over 500 cinemas 
-                worldwide. Our platform handles millions of tickets, but we've never lost sight 
-                of our core mission — making cinema management simple and delightful.
+                At Cinitix, we believe independent cinemas are cultural hubs that deserve modern 
+                technology without compromise. Our mission is to empower them to compete, grow, and 
+                thrive in an increasingly digital world — while staying focused on what truly matters: 
+                great films and memorable experiences.
               </p>
               <Button asChild size="lg" className="group gap-2 rounded-full px-7 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all">
                 <Link to="/download">
