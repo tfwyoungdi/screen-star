@@ -103,7 +103,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
   <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
     ${logoHtml}
-    <h1 style="color: white; margin: 0; font-size: 28px;">🎬 New Movie Alert!</h1>
+    <h1 style="color: white; margin: 0; font-size: 28px;">New Movie Alert!</h1>
   </div>
   <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <p style="font-size: 18px; color: #374151;">Hi {{customer_name}},</p>
