@@ -23,53 +23,59 @@ const DEFAULT_HTML_BODY = `<!DOCTYPE html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #D4AF37; margin: 0; font-size: 28px;">📬 New Contact Message</h1>
-    </div>
-    
-    <p style="color: #888; font-size: 14px; text-align: center; margin-bottom: 30px;">
-      You've received a new message from your cinema's contact form.
-    </p>
-    
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 10px 0; color: #888; font-size: 14px; width: 100px;">From</td>
-          <td style="padding: 10px 0; color: #f5f5f0; font-size: 14px;">{{sender_name}}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Email</td>
-          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px;">
-            <a href="mailto:{{sender_email}}" style="color: #D4AF37; text-decoration: none;">{{sender_email}}</a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Subject</td>
-          <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; font-weight: bold;">{{subject}}</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <p style="color: #888; font-size: 12px; text-transform: uppercase; margin: 0 0 10px 0;">Message</p>
-      <p style="color: #f5f5f0; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{message}}</p>
-    </div>
-    
-    <div style="text-align: center; margin-top: 30px;">
-      <a href="mailto:{{sender_email}}?subject=Re: {{subject}}" 
-         style="display: inline-block; background-color: #D4AF37; color: #000; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold;">
-        Reply to {{sender_name}}
-      </a>
-    </div>
-    
-    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
-    
-    <p style="color: #666; font-size: 12px; text-align: center;">
-      This notification was sent from the {{cinema_name}} contact form.
-    </p>
-  </div>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a;">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #121212; border-radius: 12px; border: 1px solid #2a2a2a;">
+          <tr><td style="padding: 24px 20px;">
+            <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 24px; text-align: center;">📬 New Contact Message</h1>
+            <p style="color: #888; font-size: 14px; text-align: center; margin-bottom: 30px;">
+              You've received a new message from your cinema's contact form.
+            </p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 8px; margin-bottom: 20px;">
+              <tr><td style="padding: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 10px 0; color: #888; font-size: 14px; width: 100px;">From</td>
+                    <td style="padding: 10px 0; color: #f5f5f0; font-size: 14px;">{{sender_name}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Email</td>
+                    <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; word-break: break-all;">
+                      <a href="mailto:{{sender_email}}" style="color: #D4AF37; text-decoration: none;">{{sender_email}}</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Subject</td>
+                    <td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; font-weight: bold;">{{subject}}</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 8px; margin-bottom: 20px;">
+              <tr><td style="padding: 20px;">
+                <p style="color: #888; font-size: 12px; text-transform: uppercase; margin: 0 0 10px 0;">Message</p>
+                <p style="color: #f5f5f0; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{message}}</p>
+              </td></tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-top: 10px;">
+                <a href="mailto:{{sender_email}}?subject=Re: {{subject}}" 
+                   style="display: inline-block; background-color: #D4AF37; color: #000; padding: 14px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; min-width: 44px;">
+                  Reply to {{sender_name}}
+                </a>
+              </td></tr>
+            </table>
+            <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+            <p style="color: #666; font-size: 12px; text-align: center;">
+              This notification was sent from the {{cinema_name}} contact form.
+            </p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 

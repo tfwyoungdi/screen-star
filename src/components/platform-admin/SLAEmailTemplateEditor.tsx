@@ -25,66 +25,58 @@ const DEFAULT_TEMPLATE = {
 <html>
 <head>
   <meta charset="utf-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
-    .alert-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0; }
-    .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
-    .detail-label { color: #6b7280; font-weight: 500; }
-    .detail-value { color: #111827; font-weight: 600; }
-    .priority-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-    .priority-urgent { background: #fef2f2; color: #dc2626; }
-    .priority-high { background: #fff7ed; color: #ea580c; }
-    .priority-medium { background: #fefce8; color: #ca8a04; }
-    .priority-low { background: #f0fdf4; color: #16a34a; }
-    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1 style="margin: 0; font-size: 24px;">⚠️ SLA Breach Alert</h1>
-      <p style="margin: 10px 0 0 0; opacity: 0.9;">A support ticket has exceeded its response time target</p>
-    </div>
-    <div class="content">
-      <div class="alert-box">
-        <strong style="color: #dc2626;">⏱️ Overdue by {{hours_overdue}} hours</strong>
-        <p style="margin: 10px 0 0 0; color: #7f1d1d;">This ticket requires immediate attention to meet SLA requirements.</p>
-      </div>
-      
-      <h2 style="color: #111827; margin-bottom: 20px;">Ticket Details</h2>
-      
-      <div class="detail-row">
-        <span class="detail-label">Ticket ID</span>
-        <span class="detail-value">{{ticket_id}}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Subject</span>
-        <span class="detail-value">{{ticket_subject}}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Cinema</span>
-        <span class="detail-value">{{cinema_name}}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Priority</span>
-        <span class="priority-badge priority-{{priority}}">{{priority}}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Created At</span>
-        <span class="detail-value">{{created_at}}</span>
-      </div>
-      
-      <div style="text-align: center; margin-top: 30px;">
-        <p style="color: #6b7280;">Please log in to the Platform Admin dashboard to respond to this ticket.</p>
-      </div>
-    </div>
-    <div class="footer">
-      <p>This is an automated SLA escalation notification from {{platform_name}}.</p>
-    </div>
-  </div>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <tr><td style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 24px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 22px;">⚠️ SLA Breach Alert</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 14px;">A support ticket has exceeded its response time target</p>
+          </td></tr>
+          <tr><td style="background: #ffffff; padding: 24px 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin-bottom: 20px;">
+              <tr><td style="padding: 20px;">
+                <strong style="color: #dc2626;">⏱️ Overdue by {{hours_overdue}} hours</strong>
+                <p style="margin: 10px 0 0 0; color: #7f1d1d; font-size: 14px;">This ticket requires immediate attention to meet SLA requirements.</p>
+              </td></tr>
+            </table>
+            <h2 style="color: #111827; margin-bottom: 20px; font-size: 18px;">Ticket Details</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-weight: 500; font-size: 14px;">Ticket ID</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #111827; font-weight: 600; text-align: right; font-size: 14px;">{{ticket_id}}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-weight: 500; font-size: 14px;">Subject</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #111827; font-weight: 600; text-align: right; font-size: 14px;">{{ticket_subject}}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-weight: 500; font-size: 14px;">Cinema</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #111827; font-weight: 600; text-align: right; font-size: 14px;">{{cinema_name}}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-weight: 500; font-size: 14px;">Priority</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; text-align: right; font-size: 14px;">
+                  <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; background: #fef2f2; color: #dc2626;">{{priority}}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #6b7280; font-weight: 500; font-size: 14px;">Created At</td>
+                <td style="padding: 12px 0; color: #111827; font-weight: 600; text-align: right; font-size: 14px;">{{created_at}}</td>
+              </tr>
+            </table>
+            <p style="color: #6b7280; text-align: center; margin-top: 30px; font-size: 14px;">Please log in to the Platform Admin dashboard to respond to this ticket.</p>
+          </td></tr>
+          <tr><td align="center" style="padding: 20px;">
+            <p style="color: #6b7280; font-size: 12px; margin: 0;">This is an automated SLA escalation notification from {{platform_name}}.</p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`,
 };

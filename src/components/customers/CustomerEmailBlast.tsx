@@ -99,24 +99,38 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       subject: 'Now Showing: {{movie_title}} at {{cinema_name}}!',
       html: `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
-  <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-    ${logoHtml}
-    <h1 style="color: white; margin: 0; font-size: 28px;">New Movie Alert!</h1>
-  </div>
-  <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="font-size: 18px; color: #374151;">Hi {{customer_name}},</p>
-    <p style="color: #6b7280; line-height: 1.6;">We're excited to announce a brand new movie is now showing at {{cinema_name}}!</p>
-    <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center;">
-      {{movie_poster}}
-      <h2 style="color: #1f2937; margin: 10px 0;">{{movie_title}}</h2>
-      <p style="color: #6b7280; margin: 10px 0 0 0;">{{movie_description}}</p>
-    </div>
-    <p style="color: #6b7280; line-height: 1.6;">Don't miss out on this cinematic experience. Book your tickets now and get the best seats!</p>
-    <a href="#" style="display: inline-block; background: #6366f1; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">Book Now</a>
-    <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">See you at the movies!<br><strong>{{cinema_name}}</strong></p>
-  </div>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9fafb; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb;">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <tr><td style="background: ${headerBg}; padding: 24px 20px; border-radius: 16px 16px 0 0; text-align: center;">
+            ${logoHtml}
+            <h1 style="color: white; margin: 0; font-size: 24px;">New Movie Alert!</h1>
+          </td></tr>
+          <tr><td style="background: white; padding: 24px 20px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #374151;">Hi {{customer_name}},</p>
+            <p style="color: #6b7280; line-height: 1.6;">We're excited to announce a brand new movie is now showing at {{cinema_name}}!</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f3f4f6; border-radius: 12px; margin: 20px 0;">
+              <tr><td align="center" style="padding: 20px;">
+                {{movie_poster}}
+                <h2 style="color: #1f2937; margin: 10px 0; font-size: 20px;">{{movie_title}}</h2>
+                <p style="color: #6b7280; margin: 10px 0 0 0;">{{movie_description}}</p>
+              </td></tr>
+            </table>
+            <p style="color: #6b7280; line-height: 1.6;">Don't miss out on this cinematic experience. Book your tickets now and get the best seats!</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-top: 20px;">
+                <a href="#" style="display: inline-block; background: #6366f1; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; min-width: 44px;">Book Now</a>
+              </td></tr>
+            </table>
+            <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">See you at the movies!<br><strong>{{cinema_name}}</strong></p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`,
     },
@@ -128,25 +142,39 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       subject: '🎁 {{offer_title}} - Exclusive for {{customer_name}}!',
       html: `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
-  <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-    ${logoHtml}
-    <h1 style="color: white; margin: 0; font-size: 28px;">🎁 Special Offer!</h1>
-  </div>
-  <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="font-size: 18px; color: #374151;">Hi {{customer_name}},</p>
-    <p style="color: #6b7280; line-height: 1.6;">As a valued customer of {{cinema_name}}, we have an exclusive offer just for you!</p>
-    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; border: 2px dashed #f59e0b;">
-      <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Limited Time Offer</p>
-      <h2 style="color: #b45309; margin: 0; font-size: 32px;">{{offer_title}}</h2>
-      <p style="color: #92400e; margin: 10px 0 0 0;">{{discount_text}}</p>
-      <p style="color: #78350f; font-size: 13px; margin: 15px 0 0 0; font-weight: 600;">{{offer_validity}}</p>
-    </div>
-    <p style="color: #6b7280; line-height: 1.6;">{{offer_details}}</p>
-    <a href="#" style="display: inline-block; background: #f59e0b; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">Claim Offer</a>
-    <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">Happy movie watching!<br><strong>{{cinema_name}}</strong></p>
-  </div>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9fafb; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb;">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <tr><td style="background: ${headerBg}; padding: 24px 20px; border-radius: 16px 16px 0 0; text-align: center;">
+            ${logoHtml}
+            <h1 style="color: white; margin: 0; font-size: 24px;">🎁 Special Offer!</h1>
+          </td></tr>
+          <tr><td style="background: white; padding: 24px 20px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #374151;">Hi {{customer_name}},</p>
+            <p style="color: #6b7280; line-height: 1.6;">As a valued customer of {{cinema_name}}, we have an exclusive offer just for you!</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; margin: 20px 0; border: 2px dashed #f59e0b;">
+              <tr><td align="center" style="padding: 25px;">
+                <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Limited Time Offer</p>
+                <h2 style="color: #b45309; margin: 0; font-size: 26px;">{{offer_title}}</h2>
+                <p style="color: #92400e; margin: 10px 0 0 0;">{{discount_text}}</p>
+                <p style="color: #78350f; font-size: 13px; margin: 15px 0 0 0; font-weight: 600;">{{offer_validity}}</p>
+              </td></tr>
+            </table>
+            <p style="color: #6b7280; line-height: 1.6;">{{offer_details}}</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-top: 20px;">
+                <a href="#" style="display: inline-block; background: #f59e0b; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; min-width: 44px;">Claim Offer</a>
+              </td></tr>
+            </table>
+            <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">Happy movie watching!<br><strong>{{cinema_name}}</strong></p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`,
     },
@@ -158,24 +186,36 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       subject: '📢 {{update_title}} - {{cinema_name}}',
       html: `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
-  <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-    ${logoHtml}
-    <h1 style="color: white; margin: 0; font-size: 28px;">📢 {{update_title}}</h1>
-  </div>
-  <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="font-size: 18px; color: #374151;">Dear {{customer_name}},</p>
-    <p style="color: #6b7280; line-height: 1.6;">We have some exciting news to share with you from {{cinema_name}}!</p>
-    <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
-      <p style="color: #374151; line-height: 1.8; margin: 0;">
-        {{update_message}}
-      </p>
-    </div>
-    <p style="color: #6b7280; line-height: 1.6;">Thank you for being part of our cinema family. We look forward to seeing you soon!</p>
-    <a href="#" style="display: inline-block; background: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">Learn More</a>
-    <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">Best regards,<br><strong>{{cinema_name}}</strong></p>
-  </div>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9fafb; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb;">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <tr><td style="background: ${headerBg}; padding: 24px 20px; border-radius: 16px 16px 0 0; text-align: center;">
+            ${logoHtml}
+            <h1 style="color: white; margin: 0; font-size: 24px;">📢 {{update_title}}</h1>
+          </td></tr>
+          <tr><td style="background: white; padding: 24px 20px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #374151;">Dear {{customer_name}},</p>
+            <p style="color: #6b7280; line-height: 1.6;">We have some exciting news to share with you from {{cinema_name}}!</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f3f4f6; border-radius: 12px; margin: 20px 0;">
+              <tr><td style="padding: 20px;">
+                <p style="color: #374151; line-height: 1.8; margin: 0;">{{update_message}}</p>
+              </td></tr>
+            </table>
+            <p style="color: #6b7280; line-height: 1.6;">Thank you for being part of our cinema family. We look forward to seeing you soon!</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-top: 20px;">
+                <a href="#" style="display: inline-block; background: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; min-width: 44px;">Learn More</a>
+              </td></tr>
+            </table>
+            <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">Best regards,<br><strong>{{cinema_name}}</strong></p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`,
     },
@@ -187,24 +227,38 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       subject: '⭐ {{customer_name}}, You\'ve Earned: {{reward_name}}!',
       html: `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
-  <div style="background: ${headerBg}; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-    ${logoHtml}
-    <h1 style="color: white; margin: 0; font-size: 28px;">⭐ Loyalty Reward!</h1>
-  </div>
-  <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="font-size: 18px; color: #374151;">Congratulations {{customer_name}}! 🎉</p>
-    <p style="color: #6b7280; line-height: 1.6;">Your loyalty to {{cinema_name}} has earned you a special reward!</p>
-    <div style="background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center;">
-      <p style="color: #7c3aed; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Your Reward</p>
-      <h2 style="color: #5b21b6; margin: 0; font-size: 24px;">{{reward_name}}</h2>
-      <p style="color: #7c3aed; margin: 10px 0 0 0;">{{reward_description}}</p>
-    </div>
-    <p style="color: #6b7280; line-height: 1.6;">{{reward_instructions}}</p>
-    <a href="#" style="display: inline-block; background: #8b5cf6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">View My Rewards</a>
-    <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">With appreciation,<br><strong>{{cinema_name}}</strong></p>
-  </div>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9fafb; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb;">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <tr><td style="background: ${headerBg}; padding: 24px 20px; border-radius: 16px 16px 0 0; text-align: center;">
+            ${logoHtml}
+            <h1 style="color: white; margin: 0; font-size: 24px;">⭐ Loyalty Reward!</h1>
+          </td></tr>
+          <tr><td style="background: white; padding: 24px 20px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #374151;">Congratulations {{customer_name}}! 🎉</p>
+            <p style="color: #6b7280; line-height: 1.6;">Your loyalty to {{cinema_name}} has earned you a special reward!</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); border-radius: 12px; margin: 20px 0;">
+              <tr><td align="center" style="padding: 25px;">
+                <p style="color: #7c3aed; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Your Reward</p>
+                <h2 style="color: #5b21b6; margin: 0; font-size: 22px;">{{reward_name}}</h2>
+                <p style="color: #7c3aed; margin: 10px 0 0 0;">{{reward_description}}</p>
+              </td></tr>
+            </table>
+            <p style="color: #6b7280; line-height: 1.6;">{{reward_instructions}}</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-top: 20px;">
+                <a href="#" style="display: inline-block; background: #8b5cf6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; min-width: 44px;">View My Rewards</a>
+              </td></tr>
+            </table>
+            <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">With appreciation,<br><strong>{{cinema_name}}</strong></p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`,
     },
