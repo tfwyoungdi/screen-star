@@ -99,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Zoho-enczapikey ${zeptomailApiKey}`,
+            Authorization: zeptomailApiKey,
           },
           body: JSON.stringify(emailBody),
         });

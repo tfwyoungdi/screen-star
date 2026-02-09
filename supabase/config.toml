@@ -14,5 +14,12 @@ verify_jwt = false
 [functions.recommend-movies]
 verify_jwt = false
 
+
 [functions.validate-access-code]
+verify_jwt = false
+
+[functions.send-platform-customer-email]
+verify_jwt = false
+
+[functions.send-customer-announcement]
 verify_jwt = false
