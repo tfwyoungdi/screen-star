@@ -125,7 +125,7 @@ function SidebarContentWrapper({ newMessagesCount }: { newMessagesCount: number 
               <img
                 src={displayOrg.logo_url}
                 alt={displayOrg.name}
-                className="h-9 w-9 rounded-xl object-cover"
+                className="h-9 max-w-[120px] rounded-xl object-contain"
               />
             ) : (
               <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center">
