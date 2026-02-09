@@ -96,7 +96,7 @@ const generateEmailTemplates = (logoUrl: string | null): EmailTemplate[] => {
       name: 'New Movie Announcement',
       description: 'Announce a new movie release',
       icon: <Film className="h-5 w-5" />,
-      subject: '🎬 Now Showing: {{movie_title}} at {{cinema_name}}!',
+      subject: 'Now Showing: {{movie_title}} at {{cinema_name}}!',
       html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
