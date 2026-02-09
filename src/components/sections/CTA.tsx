@@ -42,7 +42,7 @@ const CTA = () => {
           <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 text-primary-foreground/80">
             <div className="flex items-center justify-center gap-2 min-h-[44px]">
               <CheckCircle2 className="h-5 w-5 text-primary-foreground flex-shrink-0" />
-              <span className="text-sm sm:text-base">14-day free trial</span>
+              <span className="text-sm sm:text-base">7-day free trial</span>
             </div>
             <div className="flex items-center justify-center gap-2 min-h-[44px]">
               <CheckCircle2 className="h-5 w-5 text-primary-foreground flex-shrink-0" />
