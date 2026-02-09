@@ -37,7 +37,7 @@ const faqs = [
   },
   {
     question: "What happens after my free trial?",
-    answer: "After 14 days, you'll be prompted to choose a paid plan. If you don't upgrade, your account will be paused but all your data will be preserved. You can reactivate anytime by subscribing to a plan.",
+    answer: "After 7 days, you'll be prompted to choose a paid plan. If you don't upgrade, your account will be paused but all your data will be preserved. You can reactivate anytime by subscribing to a plan.",
     category: "Billing"
   }
 ];
