@@ -7,31 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { 
-  ArrowRight, MapPin, Phone, Mail, Clock, 
-  MessageSquare, Send, Building2
-} from "lucide-react";
+import { ArrowRight, MapPin, Phone, Mail, Clock, MessageSquare, Send, Building2 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { toast } from "sonner";
-
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
   email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
   company: z.string().trim().max(100, "Company name must be less than 100 characters").optional(),
   subject: z.string().trim().min(1, "Subject is required").max(200, "Subject must be less than 200 characters"),
-  message: z.string().trim().min(10, "Message must be at least 10 characters").max(2000, "Message must be less than 2000 characters"),
+  message: z.string().trim().min(10, "Message must be at least 10 characters").max(2000, "Message must be less than 2000 characters")
 });
-
 type ContactFormData = z.infer<typeof contactSchema>;
-
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: {
+      errors
+    }
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema)
   });
-
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
     try {
@@ -44,60 +43,48 @@ const Contact = () => {
       setIsSubmitting(false);
     }
   };
-
-  const offices = [
-    {
-      city: "San Francisco",
-      country: "United States",
-      address: "100 California St, Suite 800",
-      phone: "+1 (415) 555-0123",
-      email: "sf@cinitix.com",
-      timezone: "PST (UTC-8)",
-    },
-    {
-      city: "London",
-      country: "United Kingdom",
-      address: "1 Canada Square, Canary Wharf",
-      phone: "+44 20 7946 0958",
-      email: "london@cinitix.com",
-      timezone: "GMT (UTC+0)",
-    },
-    {
-      city: "Singapore",
-      country: "Singapore",
-      address: "1 Raffles Place, Tower 1",
-      phone: "+65 6789 0123",
-      email: "sg@cinitix.com",
-      timezone: "SGT (UTC+8)",
-    },
-  ];
-
-  const contactMethods = [
-    {
-      icon: MessageSquare,
-      title: "Chat with Sales",
-      description: "Talk to our team about enterprise plans",
-      action: "Start a conversation",
-      href: "#",
-    },
-    {
-      icon: Mail,
-      title: "Email Support",
-      description: "Get help with technical issues",
-      action: "support@cinitix.com",
-      href: "mailto:support@cinitix.com",
-    },
-    {
-      icon: Phone,
-      title: "Call Us",
-      description: "Mon-Fri from 8am to 6pm",
-      action: "+1 (800) 555-0199",
-      href: "tel:+18005550199",
-    },
-  ];
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
+  const offices = [{
+    city: "San Francisco",
+    country: "United States",
+    address: "100 California St, Suite 800",
+    phone: "+1 (415) 555-0123",
+    email: "sf@cinitix.com",
+    timezone: "PST (UTC-8)"
+  }, {
+    city: "London",
+    country: "United Kingdom",
+    address: "1 Canada Square, Canary Wharf",
+    phone: "+44 20 7946 0958",
+    email: "london@cinitix.com",
+    timezone: "GMT (UTC+0)"
+  }, {
+    city: "Singapore",
+    country: "Singapore",
+    address: "1 Raffles Place, Tower 1",
+    phone: "+65 6789 0123",
+    email: "sg@cinitix.com",
+    timezone: "SGT (UTC+8)"
+  }];
+  const contactMethods = [{
+    icon: MessageSquare,
+    title: "Chat with Sales",
+    description: "Talk to our team about enterprise plans",
+    action: "Start a conversation",
+    href: "#"
+  }, {
+    icon: Mail,
+    title: "Email Support",
+    description: "Get help with technical issues",
+    action: "support@cinitix.com",
+    href: "mailto:support@cinitix.com"
+  }, {
+    icon: Phone,
+    title: "Call Us",
+    description: "Mon-Fri from 8am to 6pm",
+    action: "+1 (800) 555-0199",
+    href: "tel:+18005550199"
+  }];
+  return <div className="min-h-screen bg-background text-foreground">
       <Header />
       
       {/* Hero Section */}
@@ -132,12 +119,7 @@ const Contact = () => {
       <section className="py-12 border-y border-border bg-secondary/30">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-6">
-            {contactMethods.map((method, index) => (
-              <a 
-                key={index}
-                href={method.href}
-                className="p-6 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all group text-center"
-              >
+            {contactMethods.map((method, index) => <a key={index} href={method.href} className="p-6 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all group text-center">
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 mx-auto group-hover:bg-primary/20 transition-colors">
                   <method.icon className="h-6 w-6 text-primary" />
                 </div>
@@ -146,8 +128,7 @@ const Contact = () => {
                 <span className="text-primary text-sm font-medium group-hover:underline">
                   {method.action}
                 </span>
-              </a>
-            ))}
+              </a>)}
           </div>
         </div>
       </section>
@@ -165,77 +146,40 @@ const Contact = () => {
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      placeholder="John Doe"
-                      {...register("name")}
-                    />
-                    {errors.name && (
-                      <p className="text-sm text-destructive">{errors.name.message}</p>
-                    )}
+                    <Input id="name" placeholder="John Doe" {...register("name")} />
+                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="john@example.com"
-                      {...register("email")}
-                    />
-                    {errors.email && (
-                      <p className="text-sm text-destructive">{errors.email.message}</p>
-                    )}
+                    <Input id="email" type="email" placeholder="john@example.com" {...register("email")} />
+                    {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
                   </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="company">Company</Label>
-                    <Input
-                      id="company"
-                      placeholder="Your cinema name"
-                      {...register("company")}
-                    />
-                    {errors.company && (
-                      <p className="text-sm text-destructive">{errors.company.message}</p>
-                    )}
+                    <Input id="company" placeholder="Your cinema name" {...register("company")} />
+                    {errors.company && <p className="text-sm text-destructive">{errors.company.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="subject">Subject *</Label>
-                    <Input
-                      id="subject"
-                      placeholder="How can we help?"
-                      {...register("subject")}
-                    />
-                    {errors.subject && (
-                      <p className="text-sm text-destructive">{errors.subject.message}</p>
-                    )}
+                    <Input id="subject" placeholder="How can we help?" {...register("subject")} />
+                    {errors.subject && <p className="text-sm text-destructive">{errors.subject.message}</p>}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="message">Message *</Label>
-                  <Textarea
-                    id="message"
-                    placeholder="Tell us more about your needs..."
-                    rows={6}
-                    {...register("message")}
-                    className="resize-none"
-                  />
-                  {errors.message && (
-                    <p className="text-sm text-destructive">{errors.message.message}</p>
-                  )}
+                  <Textarea id="message" placeholder="Tell us more about your needs..." rows={6} {...register("message")} className="resize-none" />
+                  {errors.message && <p className="text-sm text-destructive">{errors.message.message}</p>}
                 </div>
 
                 <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    "Sending..."
-                  ) : (
-                    <>
+                  {isSubmitting ? "Sending..." : <>
                       Send Message
                       <Send className="h-5 w-5 ml-2" />
-                    </>
-                  )}
+                    </>}
                 </Button>
               </form>
             </div>
@@ -246,18 +190,14 @@ const Contact = () => {
               <p className="text-muted-foreground mb-6">Visit us at our main office in Lagos.</p>
               
               <div className="aspect-video rounded-xl overflow-hidden bg-secondary border border-border relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1618828665011-0abd973f7bb8?w=800&h=450&fit=crop"
-                  alt="Lagos skyline"
-                  className="w-full h-full object-cover opacity-70"
-                />
+                <img src="https://images.unsplash.com/photo-1618828665011-0abd973f7bb8?w=800&h=450&fit=crop" alt="Lagos skyline" className="w-full h-full object-cover opacity-70" />
                 <div className="absolute inset-0 flex items-center justify-center bg-background/40">
                   <div className="text-center p-6">
                     <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
                       <MapPin className="h-8 w-8 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold text-foreground mb-2">Lagos, Nigeria</h3>
-                    <p className="text-muted-foreground">Victoria Island, Lagos</p>
+                    
                   </div>
                 </div>
               </div>
@@ -280,8 +220,6 @@ const Contact = () => {
       </section>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Contact;
