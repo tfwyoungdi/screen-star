@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { 
-  Star, ArrowRight, MapPin, Phone, Mail, Clock, 
-  MessageSquare, Send, Building2, Globe 
+  ArrowRight, MapPin, Phone, Mail, Clock, 
+  MessageSquare, Send, Building2
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -35,7 +35,6 @@ const Contact = () => {
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
     try {
-      // Simulate form submission
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success("Message sent successfully! We'll get back to you soon.");
       reset();
@@ -98,11 +97,12 @@ const Contact = () => {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
       
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 lg:pt-40 lg:pb-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-secondary/50" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse delay-1000" />
@@ -115,12 +115,12 @@ const Contact = () => {
               <span className="text-sm font-medium text-primary">Get in Touch</span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
               Let's Start a{" "}
               <span className="text-primary">Conversation</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Have questions about our platform? Want to see a demo? 
               We'd love to hear from you.
             </p>
@@ -129,20 +129,20 @@ const Contact = () => {
       </section>
 
       {/* Contact Methods */}
-      <section className="py-12 border-y border-white/10" style={{ backgroundColor: '#0f0f15' }}>
+      <section className="py-12 border-y border-border bg-secondary/30">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-6">
             {contactMethods.map((method, index) => (
               <a 
                 key={index}
                 href={method.href}
-                className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-primary/30 transition-colors group text-center"
+                className="p-6 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all group text-center"
               >
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 mx-auto group-hover:bg-primary/20 transition-colors">
                   <method.icon className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-1">{method.title}</h3>
-                <p className="text-white/60 text-sm mb-3">{method.description}</p>
+                <h3 className="text-lg font-semibold text-foreground mb-1">{method.title}</h3>
+                <p className="text-muted-foreground text-sm mb-3">{method.description}</p>
                 <span className="text-primary text-sm font-medium group-hover:underline">
                   {method.action}
                 </span>
@@ -158,76 +158,72 @@ const Contact = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
             {/* Contact Form */}
             <div>
-              <h2 className="text-3xl font-bold text-white mb-2">Send us a Message</h2>
-              <p className="text-white/60 mb-8">Fill out the form and we'll get back to you within 24 hours.</p>
+              <h2 className="text-3xl font-bold text-foreground mb-2">Send us a Message</h2>
+              <p className="text-muted-foreground mb-8">Fill out the form and we'll get back to you within 24 hours.</p>
               
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-white">Name *</Label>
+                    <Label htmlFor="name">Name *</Label>
                     <Input
                       id="name"
                       placeholder="John Doe"
                       {...register("name")}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary"
                     />
                     {errors.name && (
-                      <p className="text-sm text-red-400">{errors.name.message}</p>
+                      <p className="text-sm text-destructive">{errors.name.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white">Email *</Label>
+                    <Label htmlFor="email">Email *</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="john@example.com"
                       {...register("email")}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary"
                     />
                     {errors.email && (
-                      <p className="text-sm text-red-400">{errors.email.message}</p>
+                      <p className="text-sm text-destructive">{errors.email.message}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="company" className="text-white">Company</Label>
+                    <Label htmlFor="company">Company</Label>
                     <Input
                       id="company"
                       placeholder="Your cinema name"
                       {...register("company")}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary"
                     />
                     {errors.company && (
-                      <p className="text-sm text-red-400">{errors.company.message}</p>
+                      <p className="text-sm text-destructive">{errors.company.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="subject" className="text-white">Subject *</Label>
+                    <Label htmlFor="subject">Subject *</Label>
                     <Input
                       id="subject"
                       placeholder="How can we help?"
                       {...register("subject")}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary"
                     />
                     {errors.subject && (
-                      <p className="text-sm text-red-400">{errors.subject.message}</p>
+                      <p className="text-sm text-destructive">{errors.subject.message}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message" className="text-white">Message *</Label>
+                  <Label htmlFor="message">Message *</Label>
                   <Textarea
                     id="message"
                     placeholder="Tell us more about your needs..."
                     rows={6}
                     {...register("message")}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary resize-none"
+                    className="resize-none"
                   />
                   {errors.message && (
-                    <p className="text-sm text-red-400">{errors.message.message}</p>
+                    <p className="text-sm text-destructive">{errors.message.message}</p>
                   )}
                 </div>
 
@@ -246,35 +242,35 @@ const Contact = () => {
 
             {/* Map Placeholder */}
             <div className="space-y-6">
-              <h2 className="text-3xl font-bold text-white mb-2">Our Headquarters</h2>
-              <p className="text-white/60 mb-6">Visit us at our main office in San Francisco.</p>
+              <h2 className="text-3xl font-bold text-foreground mb-2">Our Headquarters</h2>
+              <p className="text-muted-foreground mb-6">Visit us at our main office in San Francisco.</p>
               
-              <div className="aspect-video rounded-xl overflow-hidden bg-white/5 border border-white/10 relative">
+              <div className="aspect-video rounded-xl overflow-hidden bg-secondary border border-border relative">
                 <img 
                   src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&h=450&fit=crop"
                   alt="San Francisco skyline"
-                  className="w-full h-full object-cover opacity-60"
+                  className="w-full h-full object-cover opacity-70"
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <div className="absolute inset-0 flex items-center justify-center bg-background/40">
                   <div className="text-center p-6">
                     <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
                       <MapPin className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">San Francisco, CA</h3>
-                    <p className="text-white/70">100 California St, Suite 800</p>
+                    <h3 className="text-xl font-bold text-foreground mb-2">San Francisco, CA</h3>
+                    <p className="text-muted-foreground">100 California St, Suite 800</p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+              <div className="p-6 rounded-xl bg-card border border-border">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <Clock className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white mb-1">Business Hours</h4>
-                    <p className="text-white/60 text-sm">Monday - Friday: 8:00 AM - 6:00 PM PST</p>
-                    <p className="text-white/60 text-sm">Saturday - Sunday: Closed</p>
+                    <h4 className="font-semibold text-foreground mb-1">Business Hours</h4>
+                    <p className="text-muted-foreground text-sm">Monday - Friday: 8:00 AM - 6:00 PM PST</p>
+                    <p className="text-muted-foreground text-sm">Saturday - Sunday: Closed</p>
                   </div>
                 </div>
               </div>
@@ -284,13 +280,13 @@ const Contact = () => {
       </section>
 
       {/* Global Offices Section */}
-      <section className="py-20 lg:py-28" style={{ backgroundColor: '#0f0f15' }}>
+      <section className="py-20 lg:py-28 bg-secondary/30">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Global Offices
             </h2>
-            <p className="text-white/70 text-lg">
+            <p className="text-muted-foreground text-lg">
               With offices around the world, we're always nearby to support you.
             </p>
           </div>
@@ -299,38 +295,38 @@ const Contact = () => {
             {offices.map((office, index) => (
               <div 
                 key={index} 
-                className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-primary/30 transition-colors"
+                className="p-6 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">{office.city}</h3>
-                    <p className="text-sm text-white/60">{office.country}</p>
+                    <h3 className="font-semibold text-foreground">{office.city}</h3>
+                    <p className="text-sm text-muted-foreground">{office.country}</p>
                   </div>
                 </div>
                 
                 <div className="space-y-3 text-sm">
                   <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-white/40 mt-0.5 shrink-0" />
-                    <span className="text-white/70">{office.address}</span>
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">{office.address}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-white/40 shrink-0" />
-                    <a href={`tel:${office.phone}`} className="text-white/70 hover:text-primary transition-colors">
+                    <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <a href={`tel:${office.phone}`} className="text-muted-foreground hover:text-primary transition-colors">
                       {office.phone}
                     </a>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-white/40 shrink-0" />
-                    <a href={`mailto:${office.email}`} className="text-white/70 hover:text-primary transition-colors">
+                    <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <a href={`mailto:${office.email}`} className="text-muted-foreground hover:text-primary transition-colors">
                       {office.email}
                     </a>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-white/40 shrink-0" />
-                    <span className="text-white/70">{office.timezone}</span>
+                    <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">{office.timezone}</span>
                   </div>
                 </div>
               </div>
@@ -343,10 +339,10 @@ const Contact = () => {
       <section className="py-20 lg:py-28">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center p-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Ready to Get Started?
             </h2>
-            <p className="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
               Start your free trial today and see why 500+ cinemas trust Cinitix.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -357,7 +353,7 @@ const Contact = () => {
                 </Button>
               </Link>
               <Link to="/about">
-                <Button variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10">
+                <Button variant="outline" size="lg">
                   Learn More
                 </Button>
               </Link>
