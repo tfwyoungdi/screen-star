@@ -32,12 +32,6 @@ const values = [
   },
 ];
 
-const team = [
-  { name: "Sarah Chen", role: "CEO & Co-founder", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop" },
-  { name: "Marcus Johnson", role: "CTO & Co-founder", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop" },
-  { name: "Emily Rodriguez", role: "Head of Product", image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop" },
-  { name: "David Kim", role: "Head of Engineering", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop" },
-];
 
 const whyChooseUs = [
   "No hidden fees or complicated pricing",
@@ -239,40 +233,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-20 lg:py-28 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-sm font-semibold text-primary tracking-wide uppercase">Team</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              Meet Our Leadership
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              A passionate team dedicated to transforming the cinema industry.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {team.map((member, index) => (
-              <div key={index} className="text-center group">
-                <div className="relative mb-4 overflow-hidden rounded-3xl aspect-square bg-card border border-border shadow-md">
-                  <img 
-                    src={member.image}
-                    alt={member.name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">{member.name}</h3>
-                <p className="text-sm text-muted-foreground">{member.role}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Why Choose Us Section */}
       <section className="py-20 lg:py-28 bg-muted/30">
