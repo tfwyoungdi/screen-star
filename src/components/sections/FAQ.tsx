@@ -36,11 +36,6 @@ const faqs = [
     category: "Setup"
   },
   {
-    question: "Can I migrate from my current system?",
-    answer: "Yes! We offer free migration assistance for all plans. Our team will help you transfer your movie database, customer records, and historical data to Cinitix with zero downtime.",
-    category: "Setup"
-  },
-  {
     question: "What happens after my free trial?",
     answer: "After 14 days, you'll be prompted to choose a paid plan. If you don't upgrade, your account will be paused but all your data will be preserved. You can reactivate anytime by subscribing to a plan.",
     category: "Billing"
