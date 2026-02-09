@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Check } from "lucide-react";
+import { Link } from "react-router-dom";
 import dashboardImage from "@/assets/dashboard-preview.jpg";
 const Hero = () => {
   return <section className="relative min-h-screen overflow-hidden pt-24 lg:pt-28 pb-8">
@@ -25,11 +26,13 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex justify-center">
-            <Button size="lg" className="group gap-2 px-7 py-6 text-base font-semibold rounded-full shadow-lg hover:shadow-xl transition-all">
-              Download Now
-              <div className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                <ArrowUpRight className="h-4 w-4 text-primary-foreground" />
-              </div>
+            <Button asChild size="lg" className="group gap-2 px-7 py-6 text-base font-semibold rounded-full shadow-lg hover:shadow-xl transition-all">
+              <Link to="/download">
+                Download Now
+                <div className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                  <ArrowUpRight className="h-4 w-4 text-primary-foreground" />
+                </div>
+              </Link>
             </Button>
           </div>
         </div>
