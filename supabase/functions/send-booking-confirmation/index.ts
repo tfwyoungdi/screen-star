@@ -23,34 +23,48 @@ interface BookingConfirmationRequest {
 const DEFAULT_HTML = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
-    <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">🎬 Booking Confirmed!</h1>
-    <p style="color: #f5f5f0; font-size: 16px; text-align: center;">Hi {{customer_name}}, your booking is confirmed!</p>
-    <p style="color: #22c55e; font-size: 14px; text-align: center; background-color: #1a1a1a; padding: 10px; border-radius: 8px;">📎 Your ticket is attached as a PDF - save it to your device!</p>
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
-      <p style="color: #D4AF37; font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase;">Your Ticket QR Code</p>
-      <img src="{{qr_code_url}}" alt="Booking QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border-radius: 8px; background: white; padding: 10px;" />
-      <p style="color: #888; font-size: 12px; margin: 15px 0 0 0;">Scan this code at the entrance</p>
-    </div>
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
-      <p style="color: #D4AF37; font-size: 14px; margin: 0;">Booking Reference</p>
-      <p style="color: #f5f5f0; font-size: 28px; font-weight: bold; margin: 0; font-family: monospace;">{{booking_reference}}</p>
-    </div>
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 10px 0; color: #888;">Cinema</td><td style="padding: 10px 0; color: #f5f5f0; text-align: right;">{{cinema_name}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Movie</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; text-align: right; font-weight: bold;">{{movie_title}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Date & Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; text-align: right;">{{showtime}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; text-align: right;">{{screen_name}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; text-align: right; font-weight: bold;">{{seats}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888;">Total</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #22c55e; font-size: 18px; text-align: right; font-weight: bold;">{{total_amount}}</td></tr>
-      </table>
-    </div>
-    <p style="color: #888; font-size: 14px; text-align: center;">Please arrive at least 15 minutes before the showtime. Present your QR code at the entrance.</p>
-    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
-    <p style="color: #666; font-size: 12px; text-align: center;">Thank you for booking with {{cinema_name}}!</p>
-  </div>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a;">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #121212; border-radius: 12px; border: 1px solid #2a2a2a;">
+          <tr><td style="padding: 24px 20px;">
+            <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 24px; text-align: center;">🎬 Booking Confirmed!</h1>
+            <p style="color: #f5f5f0; font-size: 16px; text-align: center;">Hi {{customer_name}}, your booking is confirmed!</p>
+            <p style="color: #22c55e; font-size: 14px; text-align: center; background-color: #1a1a1a; padding: 10px; border-radius: 8px;">📎 Your ticket is attached as a PDF - save it to your device!</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 8px; margin: 20px 0;">
+              <tr><td align="center" style="padding: 20px;">
+                <p style="color: #D4AF37; font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase;">Your Ticket QR Code</p>
+                <img src="{{qr_code_url}}" alt="Booking QR Code" style="width: 180px; max-width: 100%; height: auto; border-radius: 8px; background: white; padding: 10px;" />
+                <p style="color: #888; font-size: 12px; margin: 15px 0 0 0;">Scan this code at the entrance</p>
+              </td></tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 8px; margin: 20px 0;">
+              <tr><td style="padding: 20px;">
+                <p style="color: #D4AF37; font-size: 14px; margin: 0;">Booking Reference</p>
+                <p style="color: #f5f5f0; font-size: 22px; font-weight: bold; margin: 0; font-family: monospace; word-break: break-all;">{{booking_reference}}</p>
+              </td></tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 8px; margin-bottom: 20px;">
+              <tr><td style="padding: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr><td style="padding: 10px 0; color: #888; font-size: 14px;">Cinema</td><td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right;">{{cinema_name}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Movie</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">{{movie_title}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date & Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{showtime}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{screen_name}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{seats}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Total</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #22c55e; font-size: 18px; text-align: right; font-weight: bold;">{{total_amount}}</td></tr>
+                </table>
+              </td></tr>
+            </table>
+            <p style="color: #888; font-size: 14px; text-align: center;">Please arrive at least 15 minutes before the showtime. Present your QR code at the entrance.</p>
+            <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+            <p style="color: #666; font-size: 12px; text-align: center;">Thank you for booking with {{cinema_name}}!</p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 

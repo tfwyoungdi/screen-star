@@ -12,34 +12,50 @@ const DEFAULT_HTML = `<!DOCTYPE html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; padding: 40px 20px;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
-    <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 28px; text-align: center;">⏰ Your Movie Starts Soon!</h1>
-    <p style="color: #D4AF37; font-size: 18px; text-align: center; margin-bottom: 30px;">In approximately {{hours_until}} hours</p>
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin: 20px 0;">
-      <p style="color: #D4AF37; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">Booking Reference</p>
-      <p style="color: #f5f5f0; font-size: 24px; font-weight: bold; margin: 0; font-family: monospace; letter-spacing: 2px;">{{booking_reference}}</p>
-    </div>
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 10px 0; color: #888; font-size: 14px;">Movie</td><td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">{{movie_title}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{showtime_date}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{showtime_time}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{screen_name}}</td></tr>
-        <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{seats}}</td></tr>
-      </table>
-    </div>
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <p style="color: #888; font-size: 14px; margin: 0 0 5px 0;">📍 Location</p>
-      <p style="color: #f5f5f0; font-size: 16px; margin: 0; font-weight: bold;">{{cinema_name}}</p>
-      <p style="color: #888; font-size: 14px; margin: 5px 0 0 0;">{{cinema_address}}</p>
-    </div>
-    <div style="background-color: #D4AF37; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <p style="color: #0a0a0a; font-size: 14px; margin: 0; font-weight: bold; text-align: center;">💡 Pro tip: Arrive 15-20 minutes early to grab snacks and find your seats!</p>
-    </div>
-    <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
-    <p style="color: #666; font-size: 12px; text-align: center;">We're excited to have you! Enjoy your movie experience.</p>
-  </div>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #f5f5f0; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a;">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #121212; border-radius: 12px; border: 1px solid #2a2a2a;">
+          <tr><td style="padding: 24px 20px;">
+            <h1 style="color: #D4AF37; margin: 0 0 20px 0; font-size: 24px; text-align: center;">⏰ Your Movie Starts Soon!</h1>
+            <p style="color: #D4AF37; font-size: 18px; text-align: center; margin-bottom: 30px;">In approximately {{hours_until}} hours</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 8px; margin: 20px 0;">
+              <tr><td style="padding: 20px;">
+                <p style="color: #D4AF37; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">Booking Reference</p>
+                <p style="color: #f5f5f0; font-size: 22px; font-weight: bold; margin: 0; font-family: monospace; letter-spacing: 2px; word-break: break-all;">{{booking_reference}}</p>
+              </td></tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 8px; margin-bottom: 20px;">
+              <tr><td style="padding: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr><td style="padding: 10px 0; color: #888; font-size: 14px;">Movie</td><td style="padding: 10px 0; color: #f5f5f0; font-size: 14px; text-align: right; font-weight: bold;">{{movie_title}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Date</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{showtime_date}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Time</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{showtime_time}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Screen</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #f5f5f0; font-size: 14px; text-align: right;">{{screen_name}}</td></tr>
+                  <tr><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #888; font-size: 14px;">Seats</td><td style="padding: 10px 0; border-top: 1px solid #2a2a2a; color: #D4AF37; font-size: 14px; text-align: right; font-weight: bold;">{{seats}}</td></tr>
+                </table>
+              </td></tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 8px; margin-bottom: 20px;">
+              <tr><td style="padding: 20px;">
+                <p style="color: #888; font-size: 14px; margin: 0 0 5px 0;">📍 Location</p>
+                <p style="color: #f5f5f0; font-size: 16px; margin: 0; font-weight: bold;">{{cinema_name}}</p>
+                <p style="color: #888; font-size: 14px; margin: 5px 0 0 0;">{{cinema_address}}</p>
+              </td></tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #D4AF37; border-radius: 8px; margin-bottom: 20px;">
+              <tr><td style="padding: 20px;">
+                <p style="color: #0a0a0a; font-size: 14px; margin: 0; font-weight: bold; text-align: center;">💡 Pro tip: Arrive 15-20 minutes early to grab snacks and find your seats!</p>
+              </td></tr>
+            </table>
+            <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 30px 0;">
+            <p style="color: #666; font-size: 12px; text-align: center;">We're excited to have you! Enjoy your movie experience.</p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 
