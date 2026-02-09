@@ -243,7 +243,7 @@ const Contact = () => {
             {/* Map Placeholder */}
             <div className="space-y-6">
               <h2 className="text-3xl font-bold text-foreground mb-2">Our Headquarters</h2>
-              <p className="text-muted-foreground mb-6">Visit us at our main office in San Francisco.</p>
+              <p className="text-muted-foreground mb-6">Visit us at our main office in Lagos.</p>
               
               <div className="aspect-video rounded-xl overflow-hidden bg-secondary border border-border relative">
                 <img 
@@ -256,8 +256,8 @@ const Contact = () => {
                     <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
                       <MapPin className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">San Francisco, CA</h3>
-                    <p className="text-muted-foreground">100 California St, Suite 800</p>
+                    <h3 className="text-xl font-bold text-foreground mb-2">Lagos, Nigeria</h3>
+                    <p className="text-muted-foreground">Victoria Island, Lagos</p>
                   </div>
                 </div>
               </div>
