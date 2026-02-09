@@ -292,7 +292,7 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
   // Send email mutation
   const sendMutation = useMutation({
     mutationFn: async () => {
-      const sentLogoUrl = `https://immqqxnblovkdvokfbef.supabase.co/storage/v1/object/public/platform-email-assets/cinitix-logo.png`;
+      const sentLogoUrl = `https://screen-star.lovable.app/cinitix-email-logo.png`;
       const finalHtml = formData.htmlBody
         .replace(/\{\{logo_url\}\}/g, sentLogoUrl)
         .replace(/\{\{email_title\}\}/g, formData.title)
