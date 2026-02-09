@@ -106,16 +106,12 @@ const About = () => {
                 of our core mission — making cinema management simple and delightful.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/signup">
+                <Link to="/download">
                   <Button size="lg" className="group">
-                    Start Free Trial
+                    Download Now
                     <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="group border-white/20 text-white hover:bg-white/10">
-                  <Play className="h-5 w-5 mr-2" />
-                  Watch Our Story
-                </Button>
               </div>
             </div>
             <div className="relative">
@@ -248,9 +244,9 @@ const About = () => {
               and delight their audiences.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup">
+              <Link to="/download">
                 <Button size="lg" className="group">
-                  Start Free Trial
+                  Download Now
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
