@@ -279,33 +279,6 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 lg:py-28">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center p-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Ready to Get Started?
-            </h2>
-            <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
-              Start your free trial today and see why 500+ cinemas trust Cinitix.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup">
-                <Button size="lg" className="group">
-                  Start Free Trial
-                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/about">
-                <Button variant="outline" size="lg">
-                  Learn More
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <Footer />
     </div>
   );
