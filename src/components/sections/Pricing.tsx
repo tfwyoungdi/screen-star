@@ -165,14 +165,7 @@ const Pricing = () => {
                     Everything included
                   </h4>
                   <ul className="space-y-4">
-                    {buildFeatures(plan).map((feature, idx) => <li key={idx} className="flex items-start gap-3">
-                        <div className="mt-0.5 p-1 rounded-full bg-primary/15">
-                          <Check className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                        <span className="text-sm text-foreground font-medium">
-                          {feature.text}
-                        </span>
-                      </li>)}
+                    {buildFeatures(plan).map((feature, idx) => {})}
                   </ul>
 
                   <div className="mt-8 pt-6 border-t border-border">
