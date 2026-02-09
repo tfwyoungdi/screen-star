@@ -270,6 +270,25 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
     },
   });
 
+  // Delete campaign mutation
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const { error } = await supabase
+        .from('platform_customer_email_campaigns' as any)
+        .delete()
+        .eq('id', campaignId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Campaign deleted');
+      queryClient.invalidateQueries({ queryKey: ['platform-customer-campaigns'] });
+    },
+    onError: (error) => {
+      console.error('Failed to delete campaign:', error);
+      toast.error('Failed to delete campaign');
+    },
+  });
+
   // Delete template mutation
   const deleteTemplateMutation = useMutation({
     mutationFn: async (templateId: string) => {
@@ -446,11 +465,22 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                     >
                       <div className="flex items-center justify-between">
                         <p className="font-medium text-sm">{campaign.title}</p>
-                        <Badge
-                          variant={campaign.status === 'sent' ? 'default' : 'secondary'}
-                        >
-                          {campaign.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={campaign.status === 'sent' ? 'default' : 'secondary'}
+                          >
+                            {campaign.status}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => deleteCampaignMutation.mutate(campaign.id)}
+                            disabled={deleteCampaignMutation.isPending}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
