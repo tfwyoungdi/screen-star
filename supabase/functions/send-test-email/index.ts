@@ -50,16 +50,25 @@ const handler = async (req: Request): Promise<Response> => {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        Authorization: `Zoho-enczapikey ${ZEPTOMAIL_API_KEY}`,
+        Authorization: ZEPTOMAIL_API_KEY,
       },
       body: JSON.stringify(emailBody),
     });
 
-    const result = await response.json();
+    console.log("ZeptoMail response status:", response.status);
+    const responseText = await response.text();
+    console.log("ZeptoMail response body:", responseText);
+    
+    let result = {};
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      result = { raw: responseText };
+    }
 
     if (!response.ok) {
       console.error("Failed to send test email:", result);
-      throw new Error(result.message || "Failed to send email");
+      throw new Error((result as any).message || `Failed to send email (status ${response.status})`);
     }
 
     console.log("Test email sent successfully");
