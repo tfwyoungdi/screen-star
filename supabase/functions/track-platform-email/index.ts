@@ -29,17 +29,41 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     if (action === "open") {
-      const { error } = await supabase
+      // Update the individual email analytics record (only first open)
+      const { data: updatedRecord, error } = await supabase
         .from("platform_email_analytics")
         .update({ 
           opened_at: new Date().toISOString(),
           status: "opened"
         })
         .eq("tracking_id", trackingId)
-        .is("opened_at", null);
+        .is("opened_at", null)
+        .select("metadata")
+        .maybeSingle();
 
       if (error) {
         console.error("Failed to update open tracking:", error);
+      }
+
+      // Increment opened_count on the campaign record
+      if (updatedRecord?.metadata?.campaign_id) {
+        const campaignId = updatedRecord.metadata.campaign_id;
+        const { data: campaign } = await supabase
+          .from("platform_customer_email_campaigns")
+          .select("opened_count")
+          .eq("id", campaignId)
+          .single();
+
+        if (campaign) {
+          const { error: campError } = await supabase
+            .from("platform_customer_email_campaigns")
+            .update({ opened_count: (campaign.opened_count || 0) + 1 })
+            .eq("id", campaignId);
+
+          if (campError) {
+            console.error("Failed to update campaign opened_count:", campError);
+          }
+        }
       }
     } else if (action === "click") {
       const { error } = await supabase
