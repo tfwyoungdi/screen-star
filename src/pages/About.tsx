@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Film, Users, Star, Award, Target, Heart, ArrowRight, ArrowUpRight, CheckCircle } from "lucide-react";
+import { Film, Users, Star, Award, Target, Heart, ArrowRight, ArrowUpRight, CheckCircle, Zap, Shield, BarChart3, Quote } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -97,38 +97,76 @@ const About = () => {
       </section>
 
       {/* Mission Section */}
-      <section className="py-20 lg:py-28 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Built by Cinema Lovers,{" "}
-                <span className="text-primary">For Cinema Lovers</span>
-              </h2>
-              <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-                Cinitix was born from a simple observation: independent cinemas deserve the same 
-                powerful tools as major chains without the complexity or cost.
-              </p>
-              <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-                We exist to level the playing field for independent and community cinemas by providing 
-                smart, easy to use digital solutions that simplify operations, boost visibility, and 
-                improve the movie going experience. From ticketing and scheduling to audience engagement 
-                and data insights, Cinitix brings everything together in one streamlined platform 
-                designed specifically for smaller cinema operators.
-              </p>
-              <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-                Unlike bloated enterprise systems, Cinitix is built with clarity, flexibility, and 
-                affordability at its core. We understand the realities of running an independent cinema 
-                — tight margins, limited staff, and the need to move fast. That's why our tools are 
-                intuitive, reliable, and tailored to real-world cinema workflows.
-              </p>
-              <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-                At Cinitix, we believe independent cinemas are cultural hubs that deserve modern 
-                technology without compromise. Our mission is to empower them to compete, grow, and 
-                thrive in an increasingly digital world — while staying focused on what truly matters: 
-                great films and memorable experiences.
-              </p>
-              <Button asChild size="lg" className="group gap-2 rounded-full px-7 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all">
+      <section className="py-20 lg:py-28 bg-background relative overflow-hidden">
+        <div className="absolute top-1/2 -translate-y-1/2 -right-40 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Section header - centered */}
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-sm font-semibold text-primary tracking-wide uppercase">Our Mission</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6">
+              Built by Cinema Lovers,{" "}
+              <span className="text-primary">For Cinema Lovers</span>
+            </h2>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              Cinitix was born from a simple observation: independent cinemas deserve the same 
+              powerful tools as major chains without the complexity or cost.
+            </p>
+          </div>
+
+          {/* Two-column: content pillars + image */}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+            <div className="space-y-6">
+              {/* Content cards */}
+              <div className="group relative rounded-2xl bg-card border border-border p-6 hover:border-primary/30 transition-all duration-300">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mt-0.5">
+                    <Target className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Leveling the Playing Field</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      We exist to empower independent and community cinemas with smart, easy-to-use digital solutions 
+                      that simplify operations, boost visibility, and improve the moviegoing experience.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="group relative rounded-2xl bg-card border border-border p-6 hover:border-primary/30 transition-all duration-300">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mt-0.5">
+                    <Zap className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">One Streamlined Platform</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      From ticketing and scheduling to audience engagement and data insights — Cinitix brings 
+                      everything together in one platform designed specifically for smaller cinema operators.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="group relative rounded-2xl bg-card border border-border p-6 hover:border-primary/30 transition-all duration-300">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mt-0.5">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Built for Real-World Workflows</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Unlike bloated enterprise systems, Cinitix is built with clarity, flexibility, and affordability. 
+                      We understand tight margins, limited staff, and the need to move fast.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Button asChild size="lg" className="group gap-2 rounded-full px-7 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all mt-2">
                 <Link to="/download">
                   Download Now
                   <div className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center">
@@ -137,14 +175,28 @@ const About = () => {
                 </Link>
               </Button>
             </div>
-            <div className="relative">
-              <div className="aspect-video rounded-3xl overflow-hidden bg-card border border-border shadow-2xl">
-                <img 
-                  src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=450&fit=crop"
-                  alt="Cinema audience enjoying a movie"
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+
+            {/* Right column: image + pull quote */}
+            <div className="space-y-6">
+              <div className="relative rounded-3xl overflow-hidden bg-card border border-border shadow-2xl">
+                <div className="aspect-[4/3]">
+                  <img 
+                    src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=600&fit=crop"
+                    alt="Cinema audience enjoying a movie"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+              
+              {/* Pull quote */}
+              <div className="relative rounded-2xl bg-primary/5 border border-primary/15 p-6">
+                <Quote className="h-8 w-8 text-primary/30 mb-3" />
+                <p className="text-foreground font-medium leading-relaxed italic">
+                  "Independent cinemas are cultural hubs that deserve modern technology without compromise. 
+                  Our mission is to empower them to compete, grow, and thrive — while staying focused on 
+                  what truly matters: great films and memorable experiences."
+                </p>
               </div>
             </div>
           </div>
