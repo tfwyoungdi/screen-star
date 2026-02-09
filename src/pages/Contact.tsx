@@ -247,8 +247,8 @@ const Contact = () => {
               
               <div className="aspect-video rounded-xl overflow-hidden bg-secondary border border-border relative">
                 <img 
-                  src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&h=450&fit=crop"
-                  alt="San Francisco skyline"
+                  src="https://images.unsplash.com/photo-1618828665011-0abd973f7bb8?w=800&h=450&fit=crop"
+                  alt="Lagos skyline"
                   className="w-full h-full object-cover opacity-70"
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-background/40">
