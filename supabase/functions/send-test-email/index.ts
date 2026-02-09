@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        Authorization: ZEPTOMAIL_API_KEY,
+        Authorization: `Zoho-enczapikey ${ZEPTOMAIL_API_KEY}`,
       },
       body: JSON.stringify(emailBody),
     });
