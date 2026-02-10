@@ -8,9 +8,6 @@ const footerLinks = {
     label: "Pricing",
     href: "#pricing"
   }, {
-    label: "Integrations",
-    href: "#"
-  }, {
     label: "API",
     href: "#"
   }],
