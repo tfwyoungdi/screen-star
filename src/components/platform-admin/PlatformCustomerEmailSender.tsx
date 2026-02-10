@@ -651,10 +651,15 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                             <img
                               src={image.url}
                               alt={image.name}
-                              className="h-16 w-16 object-cover rounded-md border cursor-pointer hover:ring-2 hover:ring-primary"
+                              className={`h-16 w-16 object-cover rounded-md border cursor-pointer hover:ring-2 hover:ring-primary transition-all ${formData.content.includes(image.url) ? 'ring-2 ring-primary opacity-100' : 'opacity-80'}`}
                               onClick={() => handleInsertImage(image.url)}
                               title="Click to insert into email"
                             />
+                            {formData.content.includes(image.url) && (
+                              <div className="absolute top-0.5 left-0.5 bg-primary rounded-full p-0.5">
+                                <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                              </div>
+                            )}
                             <Button
                               variant="destructive"
                               size="icon"
