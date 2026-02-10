@@ -28,7 +28,7 @@ import {
 import { toast } from 'sonner';
 import { 
   Mail, Send, Eye, Users, Clock, Loader2, 
-  Save, Plus, FileText, Trash2, Image, Upload, Copy, Check
+  Save, Plus, Minus, FileText, Trash2, Image, Upload, Copy, Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { usePlatformAuditLog } from '@/hooks/usePlatformAuditLog';
@@ -240,6 +240,13 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
     }
   };
 
+  // Count how many times an image URL appears in the HTML body
+  const countImageInBody = (url: string) => {
+    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const matches = formData.htmlBody.match(new RegExp(escaped, 'g'));
+    return matches ? matches.length : 0;
+  };
+
   // Insert image into HTML template
   const handleInsertImage = (url: string) => {
     const imgTag = `<img src="${url}" alt="Email image" style="max-width: 100%; height: auto; margin-bottom: 16px;" />`;
@@ -247,7 +254,16 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
       ...formData,
       htmlBody: formData.htmlBody.replace('{{email_content}}', `${imgTag}\n{{email_content}}`),
     });
-    toast.success('Image tag inserted into template');
+    toast.success('Image inserted into template');
+  };
+
+  // Remove one occurrence of an image from the HTML body
+  const handleRemoveImageOnce = (url: string) => {
+    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`<img[^>]*src="${escaped}"[^>]*\\/?>\\s*`, '');
+    const newBody = formData.htmlBody.replace(regex, '');
+    setFormData({ ...formData, htmlBody: newBody });
+    toast.success('One image instance removed');
   };
 
   // Fetch saved templates
@@ -643,7 +659,9 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                   ) : uploadedImages && uploadedImages.length > 0 ? (
                     <ScrollArea className="w-full">
                       <div className="flex gap-2 pb-2">
-                        {uploadedImages.map((image) => (
+                        {uploadedImages.map((image) => {
+                          const insertCount = countImageInBody(image.url);
+                          return (
                           <div
                             key={image.name}
                             className="relative group flex-shrink-0"
@@ -651,14 +669,26 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                             <img
                               src={image.url}
                               alt={image.name}
-                              className={`h-16 w-16 object-cover rounded-md border cursor-pointer hover:ring-2 hover:ring-primary transition-all ${formData.htmlBody.includes(image.url) ? 'ring-2 ring-primary opacity-100' : 'opacity-80'}`}
+                              className={`h-16 w-16 object-cover rounded-md border cursor-pointer hover:ring-2 hover:ring-primary transition-all ${insertCount > 0 ? 'ring-2 ring-primary opacity-100' : 'opacity-80'}`}
                               onClick={() => handleInsertImage(image.url)}
-                              title="Click to insert into email"
+                              title="Click to add another instance"
                             />
-                            {formData.htmlBody.includes(image.url) && (
-                              <div className="absolute top-0.5 left-0.5 bg-primary rounded-full p-0.5">
-                                <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                            {insertCount > 0 && (
+                              <div className="absolute top-0.5 left-0.5 bg-primary rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                                <span className="text-[10px] font-bold text-primary-foreground">{insertCount}</span>
                               </div>
+                            )}
+                            {insertCount > 0 && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="icon"
+                                className="absolute -bottom-1 -left-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => { e.stopPropagation(); handleRemoveImageOnce(image.url); }}
+                                title="Remove one instance"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
                             )}
                             <Button
                               variant="destructive"
@@ -669,7 +699,8 @@ export function PlatformCustomerEmailSender({ customers, selectedCinema }: Platf
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </ScrollArea>
                   ) : (
