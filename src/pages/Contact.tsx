@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +13,7 @@ import { ArrowRight, MapPin, Phone, Mail, Clock, MessageSquare, Send, Building2 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { toast } from "sonner";
+
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
   email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
@@ -18,19 +21,35 @@ const contactSchema = z.object({
   subject: z.string().trim().min(1, "Subject is required").max(200, "Subject must be less than 200 characters"),
   message: z.string().trim().min(10, "Message must be at least 10 characters").max(2000, "Message must be less than 2000 characters")
 });
+
 type ContactFormData = z.infer<typeof contactSchema>;
+
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
     handleSubmit,
     reset,
-    formState: {
-      errors
-    }
+    formState: { errors }
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema)
   });
+
+  // Fetch contact info from platform settings
+  const { data: platformSettings } = useQuery({
+    queryKey: ['platform-settings-public-contact'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('platform_settings_public')
+        .select('support_email, contact_phone, contact_email_description, contact_phone_description')
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 300000,
+  });
+
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
     try {
@@ -43,41 +62,26 @@ const Contact = () => {
       setIsSubmitting(false);
     }
   };
-  const offices = [{
-    city: "San Francisco",
-    country: "United States",
-    address: "100 California St, Suite 800",
-    phone: "+1 (415) 555-0123",
-    email: "sf@cinitix.com",
-    timezone: "PST (UTC-8)"
-  }, {
-    city: "London",
-    country: "United Kingdom",
-    address: "1 Canada Square, Canary Wharf",
-    phone: "+44 20 7946 0958",
-    email: "london@cinitix.com",
-    timezone: "GMT (UTC+0)"
-  }, {
-    city: "Singapore",
-    country: "Singapore",
-    address: "1 Raffles Place, Tower 1",
-    phone: "+65 6789 0123",
-    email: "sg@cinitix.com",
-    timezone: "SGT (UTC+8)"
-  }];
+
+  const supportEmail = platformSettings?.support_email || 'support@cinitix.com';
+  const contactPhone = platformSettings?.contact_phone || '+1 (800) 555-0199';
+  const emailDescription = platformSettings?.contact_email_description || 'Get help with technical issues';
+  const phoneDescription = platformSettings?.contact_phone_description || 'Mon-Fri from 8am to 6pm';
+
   const contactMethods = [{
     icon: Mail,
     title: "Email Support",
-    description: "Get help with technical issues",
-    action: "support@cinitix.com",
-    href: "mailto:support@cinitix.com"
+    description: emailDescription,
+    action: supportEmail,
+    href: `mailto:${supportEmail}`
   }, {
     icon: Phone,
     title: "Call Us",
-    description: "Mon-Fri from 8am to 6pm",
-    action: "+1 (800) 555-0199",
-    href: "tel:+18005550199"
+    description: phoneDescription,
+    action: contactPhone,
+    href: `tel:${contactPhone.replace(/[^+\d]/g, '')}`
   }];
+
   return <div className="min-h-screen bg-background text-foreground">
       <Header />
       
@@ -191,7 +195,6 @@ const Contact = () => {
                       <MapPin className="h-8 w-8 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold text-foreground mb-2">Lagos, Nigeria</h3>
-                    
                   </div>
                 </div>
               </div>

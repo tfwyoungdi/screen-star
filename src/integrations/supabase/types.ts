@@ -2292,6 +2292,9 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          contact_email_description: string | null
+          contact_phone: string | null
+          contact_phone_description: string | null
           created_at: string
           email_templates: Json | null
           enable_cinema_gateways: boolean | null
@@ -2320,6 +2323,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contact_email_description?: string | null
+          contact_phone?: string | null
+          contact_phone_description?: string | null
           created_at?: string
           email_templates?: Json | null
           enable_cinema_gateways?: boolean | null
@@ -2348,6 +2354,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contact_email_description?: string | null
+          contact_phone?: string | null
+          contact_phone_description?: string | null
           created_at?: string
           email_templates?: Json | null
           enable_cinema_gateways?: boolean | null
@@ -3661,11 +3670,37 @@ export type Database = {
       }
       platform_settings_public: {
         Row: {
+          contact_email_description: string | null
+          contact_phone: string | null
+          contact_phone_description: string | null
           logo_url: string | null
           maintenance_message: string | null
           maintenance_mode: boolean | null
           platform_name: string | null
           primary_color: string | null
+          support_email: string | null
+        }
+        Insert: {
+          contact_email_description?: string | null
+          contact_phone?: string | null
+          contact_phone_description?: string | null
+          logo_url?: string | null
+          maintenance_message?: string | null
+          maintenance_mode?: boolean | null
+          platform_name?: string | null
+          primary_color?: string | null
+          support_email?: string | null
+        }
+        Update: {
+          contact_email_description?: string | null
+          contact_phone?: string | null
+          contact_phone_description?: string | null
+          logo_url?: string | null
+          maintenance_message?: string | null
+          maintenance_mode?: boolean | null
+          platform_name?: string | null
+          primary_color?: string | null
+          support_email?: string | null
         }
         Relationships: []
       }
