@@ -75,6 +75,7 @@ import PlatformMarketingDashboard from "./pages/platform-admin/PlatformMarketing
 import PlatformAccountsDashboard from "./pages/platform-admin/PlatformAccountsDashboard";
 import PlatformDevDashboard from "./pages/platform-admin/PlatformDevDashboard";
 import PlatformFAQ from "./pages/platform-admin/PlatformFAQ";
+import LiveChat from "./pages/LiveChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -432,7 +433,14 @@ const App = () => (
                   </PlatformProtectedRoute>
                 }
               />
-              
+              <Route
+                path="/live-chat"
+                element={
+                  <ProtectedRoute allowedRoles={['cinema_admin', 'manager', 'supervisor', 'box_office']}>
+                    <LiveChat />
+                  </ProtectedRoute>
+                }
+              />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

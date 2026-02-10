@@ -13,6 +13,7 @@ import { Film, Ticket, Clock, MapPin, Phone, Mail, Calendar, Play, X, Search, Fa
 import { Input } from '@/components/ui/input';
 import { CinemaHero } from '@/components/public/CinemaHero';
 import { CinemaChatbot } from '@/components/public/CinemaChatbot';
+import { VisitorLiveChat } from '@/components/public/VisitorLiveChat';
 
 interface CinemaData {
   id: string;
@@ -1538,6 +1539,15 @@ export default function PublicCinema() {
       {/* AI Chatbot */}
       {cinema?.id && (
         <CinemaChatbot
+          organizationId={cinema.id}
+          cinemaName={cinema.name}
+          primaryColor={cinema.primary_color || '#D4AF37'}
+        />
+      )}
+
+      {/* Live Chat */}
+      {cinema?.id && (
+        <VisitorLiveChat
           organizationId={cinema.id}
           cinemaName={cinema.name}
           primaryColor={cinema.primary_color || '#D4AF37'}

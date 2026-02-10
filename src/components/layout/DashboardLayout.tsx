@@ -40,6 +40,7 @@ import {
   Ticket,
   Gift,
   Brain,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -69,6 +70,7 @@ const navItems = [
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
   { title: 'AI Predictions', url: '/predictions', icon: Brain },
+  { title: 'Live Chat', url: '/live-chat', icon: MessageSquare },
   { title: 'Messages', url: '/messages', icon: Mail, showBadge: true },
   { title: 'Applications', url: '/applications', icon: Briefcase },
   { title: 'Scanner', url: '/scanner', icon: QrCode },
