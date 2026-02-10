@@ -1,53 +1,43 @@
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Search, ChevronRight, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-const faqs = [
-  {
-    question: "How does the multi-tenant system work?",
-    answer: "Each cinema operates as an independent organization within our platform. All data is completely isolated, meaning your cinema's information never mixes with others. You get your own admin dashboard, staff accounts, and customer-facing website — all managed from one account.",
-    category: "Platform"
-  },
-  {
-    question: "Can I connect my own domain?",
-    answer: "Absolutely! All Professional and Enterprise plans include custom domain support. Simply add your domain in the settings, configure the DNS records we provide, and your cinema website will be live on your own domain within hours.",
-    category: "Setup"
-  },
-  {
-    question: "What payment gateways are supported?",
-    answer: "We support major payment providers including Stripe, PayPal, Square, and many regional payment methods. Enterprise customers can also integrate custom payment solutions through our API.",
-    category: "Payments"
-  },
-  {
-    question: "How do the role-based dashboards work?",
-    answer: "You can create unlimited staff accounts with specific roles: Box Office (sell tickets), Gate Staff (scan QR codes), Manager (oversight), and Accountant (financial access). Each role sees a tailored dashboard with only the features they need.",
-    category: "Features"
-  },
-  {
-    question: "Is there a mobile app for customers?",
-    answer: "Your customers can book tickets through the mobile-optimized web interface. Tickets are delivered via email with QR codes that work perfectly on any smartphone. Native apps are available for Enterprise customers.",
-    category: "Features"
-  },
-  {
-    question: "How long does setup take?",
-    answer: "Most cinemas are up and running within a day. Create your account, configure your halls and seating layouts, add your first movies, and start selling tickets. Our onboarding team is available to help if you need it.",
-    category: "Setup"
-  },
-  {
-    question: "What happens after my free trial?",
-    answer: "After 7 days, you'll be prompted to choose a paid plan. If you don't upgrade, your account will be paused but all your data will be preserved. You can reactivate anytime by subscribing to a plan.",
-    category: "Billing"
-  }
-];
-
-const categories = ["All", "Platform", "Setup", "Features", "Payments", "Billing"];
+interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  display_order: number;
+}
 
 const FAQ = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+
+  const { data: faqs = [], isLoading } = useQuery({
+    queryKey: ['public-faqs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('platform_faqs')
+        .select('id, question, answer, category, display_order')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      return data as FAQItem[];
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  const categories = useMemo(() => {
+    const cats = new Set(faqs.map(f => f.category));
+    return ["All", ...Array.from(cats)];
+  }, [faqs]);
 
   const filteredFaqs = useMemo(() => {
     return faqs.filter((faq) => {
@@ -57,7 +47,7 @@ const FAQ = () => {
         faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, faqs]);
 
   return (
     <section id="faq" className="py-24 lg:py-32 relative overflow-hidden bg-background">
@@ -122,7 +112,16 @@ const FAQ = () => {
 
         {/* FAQ List */}
         <div className="space-y-3">
-          {filteredFaqs.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="rounded-2xl border bg-card/50 p-6">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
+              ))}
+            </div>
+          ) : filteredFaqs.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No questions found matching your search.</p>
               <Button 
@@ -140,7 +139,7 @@ const FAQ = () => {
               
               return (
                 <div
-                  key={originalIndex}
+                  key={faq.id}
                   className={cn(
                     "group rounded-2xl border transition-all duration-300 overflow-hidden",
                     isExpanded 
