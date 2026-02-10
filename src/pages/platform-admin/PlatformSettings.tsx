@@ -26,7 +26,7 @@ export default function PlatformSettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('platform_settings')
-        .select('id, platform_name, support_email, logo_url, primary_color, maintenance_mode, maintenance_message, enable_cinema_gateways, enable_custom_domains, enable_wallet_feature, enable_promotions, sla_response_time_low, sla_response_time_medium, sla_response_time_high, sla_response_time_urgent, sla_escalation_enabled, sla_escalation_email, subscription_payment_gateway, stripe_configured, flutterwave_configured, paystack_configured')
+        .select('id, platform_name, support_email, logo_url, primary_color, maintenance_mode, maintenance_message, enable_cinema_gateways, enable_custom_domains, enable_wallet_feature, enable_promotions, sla_response_time_low, sla_response_time_medium, sla_response_time_high, sla_response_time_urgent, sla_escalation_enabled, sla_escalation_email, subscription_payment_gateway, stripe_configured, flutterwave_configured, paystack_configured, contact_phone, contact_email_description, contact_phone_description')
         .limit(1)
         .maybeSingle();
 
@@ -56,6 +56,9 @@ export default function PlatformSettingsPage() {
     stripe_configured: false,
     flutterwave_configured: false,
     paystack_configured: false,
+    contact_phone: '+1 (800) 555-0199',
+    contact_email_description: 'Get help with technical issues',
+    contact_phone_description: 'Mon-Fri from 8am to 6pm',
   });
 
   useEffect(() => {
@@ -80,6 +83,9 @@ export default function PlatformSettingsPage() {
         stripe_configured: (settings as any).stripe_configured ?? false,
         flutterwave_configured: (settings as any).flutterwave_configured ?? false,
         paystack_configured: (settings as any).paystack_configured ?? false,
+        contact_phone: (settings as any).contact_phone || '+1 (800) 555-0199',
+        contact_email_description: (settings as any).contact_email_description || 'Get help with technical issues',
+        contact_phone_description: (settings as any).contact_phone_description || 'Mon-Fri from 8am to 6pm',
       });
     }
   }, [settings]);
