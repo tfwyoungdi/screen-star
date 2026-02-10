@@ -17,6 +17,7 @@ import {
   Timer,
   Mail,
   UserCircle,
+  HelpCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -164,6 +165,12 @@ export const PLATFORM_NAV_ITEMS: NavItem[] = [
     href: '/platform-admin/tickets', 
     icon: MessageSquare,
     roles: ['platform_admin'],
+  },
+  { 
+    title: 'FAQ Management', 
+    href: '/platform-admin/faq', 
+    icon: HelpCircle,
+    roles: ['platform_admin', 'platform_marketing'],
   },
   { 
     title: 'Settings', 

@@ -74,6 +74,7 @@ import PlatformCustomers from "./pages/platform-admin/PlatformCustomers";
 import PlatformMarketingDashboard from "./pages/platform-admin/PlatformMarketingDashboard";
 import PlatformAccountsDashboard from "./pages/platform-admin/PlatformAccountsDashboard";
 import PlatformDevDashboard from "./pages/platform-admin/PlatformDevDashboard";
+import PlatformFAQ from "./pages/platform-admin/PlatformFAQ";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -420,6 +421,14 @@ const App = () => (
                 element={
                   <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_marketing']}>
                     <PlatformCustomers />
+                  </PlatformProtectedRoute>
+                }
+              />
+              <Route
+                path="/platform-admin/faq"
+                element={
+                  <PlatformProtectedRoute allowedRoles={['platform_admin', 'platform_marketing']}>
+                    <PlatformFAQ />
                   </PlatformProtectedRoute>
                 }
               />
