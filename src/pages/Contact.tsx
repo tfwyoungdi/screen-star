@@ -112,7 +112,7 @@ const Contact = () => {
       {/* Contact Methods */}
       <section className="py-12 border-y border-border bg-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {contactMethods.map((method, index) => <a key={index} href={method.href} className="p-6 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all group text-center">
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 mx-auto group-hover:bg-primary/20 transition-colors">
                   <method.icon className="h-6 w-6 text-primary" />
