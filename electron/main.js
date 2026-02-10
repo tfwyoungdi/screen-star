@@ -94,6 +94,10 @@ ipcMain.handle('show-cinema-selector', () => {
   mainWindow.loadFile(path.join(__dirname, 'cinema-selector.html'));
 });
 
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
 app.whenReady().then(() => {
   createWindow();
 
