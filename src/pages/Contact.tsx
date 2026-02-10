@@ -66,12 +66,6 @@ const Contact = () => {
     timezone: "SGT (UTC+8)"
   }];
   const contactMethods = [{
-    icon: MessageSquare,
-    title: "Chat with Sales",
-    description: "Talk to our team about enterprise plans",
-    action: "Start a conversation",
-    href: "#"
-  }, {
     icon: Mail,
     title: "Email Support",
     description: "Get help with technical issues",
