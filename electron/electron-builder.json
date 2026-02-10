@@ -2,13 +2,16 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.cinetix.boxoffice",
   "productName": "Box Office",
+  "asar": false,
   "directories": {
     "output": "dist-electron",
     "buildResources": "electron/resources"
   },
   "files": [
     "dist/**/*",
-    "electron/**/*",
+    "electron/main.cjs",
+    "electron/preload.cjs",
+    "electron/cinema-selector.html",
     "public/favicon.ico"
   ],
   "extraMetadata": {
@@ -25,9 +28,9 @@
     "artifactName": "BoxOffice-${version}-Setup.${ext}"
   },
   "nsis": {
-    "oneClick": false,
-    "perMachine": true,
-    "allowToChangeInstallationDirectory": true,
+    "oneClick": true,
+    "perMachine": false,
+    "allowElevation": true,
     "installerIcon": "public/favicon.ico",
     "uninstallerIcon": "public/favicon.ico",
     "installerHeaderIcon": "public/favicon.ico",
