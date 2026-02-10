@@ -88,7 +88,7 @@ const Pricing = () => {
           </h2>
 
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Everything you need to run your cinema. Start with a 14-day free trial, no credit card required.
+            Everything you need to run your cinema. Start with a 14 day free trial, no credit card required.
           </p>
         </div>
 
