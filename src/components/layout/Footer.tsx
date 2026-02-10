@@ -18,19 +18,6 @@ const footerLinks = {
     label: "Contact",
     href: "#"
   }],
-  Resources: [{
-    label: "Documentation",
-    href: "#"
-  }, {
-    label: "Help Center",
-    href: "#"
-  }, {
-    label: "Community",
-    href: "#"
-  }, {
-    label: "Status",
-    href: "#"
-  }],
   Legal: [{
     label: "Privacy",
     href: "#"
