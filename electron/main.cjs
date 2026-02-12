@@ -24,13 +24,29 @@ function createWindow() {
     autoHideMenuBar: true,
   });
 
+  // Handle page load failures with retry
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error(`Failed to load: ${validatedURL} - ${errorDescription} (${errorCode})`);
+    // Show error page with retry option
+    mainWindow.loadFile(path.join(__dirname, 'load-error.html'));
+  });
+
+  // Handle blank page (renderer crash)
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    console.error('Render process gone:', details.reason);
+    mainWindow.loadFile(path.join(__dirname, 'load-error.html'));
+  });
+
+  // Handle unresponsive page
+  mainWindow.webContents.on('unresponsive', () => {
+    console.error('Page became unresponsive');
+  });
+
   // Check if cinema is already configured
   const config = loadConfig();
   
   if (config && config.cinemaSlug) {
-    // Load the Box Office for the configured cinema
-    const boxOfficeUrl = `https://cinitix.com/cinema/${config.cinemaSlug}/staff`;
-    mainWindow.loadURL(boxOfficeUrl);
+    loadBoxOffice(config.cinemaSlug);
   } else {
     // Show cinema selector
     mainWindow.loadFile(path.join(__dirname, 'cinema-selector.html'));
@@ -40,6 +56,11 @@ function createWindow() {
   if (process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
   }
+}
+
+function loadBoxOffice(slug) {
+  const boxOfficeUrl = `https://cinitix.com/cinema/${slug}/staff`;
+  mainWindow.loadURL(boxOfficeUrl);
 }
 
 function loadConfig() {
@@ -86,8 +107,16 @@ ipcMain.handle('clear-cinema-config', () => {
 });
 
 ipcMain.handle('navigate-to-box-office', (event, slug) => {
-  const boxOfficeUrl = `https://cinitix.com/cinema/${slug}/staff`;
-  mainWindow.loadURL(boxOfficeUrl);
+  loadBoxOffice(slug);
+});
+
+ipcMain.handle('retry-load', () => {
+  const config = loadConfig();
+  if (config && config.cinemaSlug) {
+    loadBoxOffice(config.cinemaSlug);
+  } else {
+    mainWindow.loadFile(path.join(__dirname, 'cinema-selector.html'));
+  }
 });
 
 ipcMain.handle('show-cinema-selector', () => {

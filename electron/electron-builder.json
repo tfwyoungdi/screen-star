@@ -12,6 +12,7 @@
     "electron/main.cjs",
     "electron/preload.cjs",
     "electron/cinema-selector.html",
+    "electron/load-error.html",
     "public/app-icon.ico"
   ],
   "extraMetadata": {
