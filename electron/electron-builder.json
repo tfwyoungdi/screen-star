@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.cinetix.boxoffice",
-  "productName": "Box Office",
+  "appId": "com.cinitix.boxoffice",
+  "productName": "Cinitix - Box Office",
   "asar": false,
   "directories": {
     "output": "dist-electron",
@@ -12,7 +12,7 @@
     "electron/main.cjs",
     "electron/preload.cjs",
     "electron/cinema-selector.html",
-    "public/favicon.ico"
+    "public/app-icon.ico"
   ],
   "extraMetadata": {
     "main": "electron/main.cjs"
@@ -24,19 +24,19 @@
         "arch": ["x64"]
       }
     ],
-    "icon": "public/favicon.ico",
-    "artifactName": "BoxOffice-${version}-Setup.${ext}"
+    "icon": "public/app-icon.ico",
+    "artifactName": "Cinitix-BoxOffice-${version}-Setup.${ext}"
   },
   "nsis": {
     "oneClick": true,
     "perMachine": false,
     "allowElevation": true,
-    "installerIcon": "public/favicon.ico",
-    "uninstallerIcon": "public/favicon.ico",
-    "installerHeaderIcon": "public/favicon.ico",
+    "installerIcon": "public/app-icon.ico",
+    "uninstallerIcon": "public/app-icon.ico",
+    "installerHeaderIcon": "public/app-icon.ico",
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "Box Office"
+    "shortcutName": "Cinitix - Box Office"
   },
   "mac": {
     "target": [
@@ -45,18 +45,18 @@
         "arch": ["x64", "arm64"]
       }
     ],
-    "icon": "public/favicon.ico",
-    "artifactName": "BoxOffice-${version}.${ext}",
+    "icon": "public/app-icon.ico",
+    "artifactName": "Cinitix-BoxOffice-${version}.${ext}",
     "category": "public.app-category.business"
   },
   "dmg": {
-    "title": "Box Office",
-    "icon": "public/favicon.ico"
+    "title": "Cinitix - Box Office",
+    "icon": "public/app-icon.ico"
   },
   "linux": {
     "target": ["AppImage"],
-    "icon": "public/favicon.ico",
+    "icon": "public/app-icon.ico",
     "category": "Office",
-    "artifactName": "BoxOffice-${version}.${ext}"
+    "artifactName": "Cinitix-BoxOffice-${version}.${ext}"
   }
 }
