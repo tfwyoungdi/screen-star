@@ -29,7 +29,7 @@ function createWindow() {
   
   if (config && config.cinemaSlug) {
     // Load the Box Office for the configured cinema
-    const boxOfficeUrl = `https://screen-star.lovable.app/cinema/${config.cinemaSlug}/staff`;
+    const boxOfficeUrl = `https://cinitix.com/cinema/${config.cinemaSlug}/staff`;
     mainWindow.loadURL(boxOfficeUrl);
   } else {
     // Show cinema selector
@@ -86,7 +86,7 @@ ipcMain.handle('clear-cinema-config', () => {
 });
 
 ipcMain.handle('navigate-to-box-office', (event, slug) => {
-  const boxOfficeUrl = `https://screen-star.lovable.app/cinema/${slug}/staff`;
+  const boxOfficeUrl = `https://cinitix.com/cinema/${slug}/staff`;
   mainWindow.loadURL(boxOfficeUrl);
 });
 
