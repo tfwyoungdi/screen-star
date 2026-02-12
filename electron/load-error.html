@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connection Error - Cinitix Box Office</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 48px;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .message {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    button {
+      width: 100%;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .countdown {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 13px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">⚠️</div>
+    <h1>Unable to Connect</h1>
+    <p class="message">
+      Could not load the Box Office page. This usually happens due to a network issue or the server being temporarily unavailable.
+    </p>
+    <div class="actions">
+      <button class="btn-primary" id="retryBtn" onclick="retry()">Try Again</button>
+      <button class="btn-secondary" onclick="reconfigure()">Change Cinema</button>
+    </div>
+    <p class="countdown" id="countdown">Auto-retrying in <span id="timer">15</span>s...</p>
+  </div>
+
+  <script>
+    let seconds = 15;
+    const timerEl = document.getElementById('timer');
+    const countdownEl = document.getElementById('countdown');
+
+    const interval = setInterval(() => {
+      seconds--;
+      timerEl.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(interval);
+        retry();
+      }
+    }, 1000);
+
+    async function retry() {
+      clearInterval(interval);
+      countdownEl.textContent = 'Reconnecting...';
+      document.getElementById('retryBtn').disabled = true;
+      if (window.electronAPI) {
+        await window.electronAPI.retryLoad();
+      }
+    }
+
+    async function reconfigure() {
+      clearInterval(interval);
+      if (window.electronAPI) {
+        await window.electronAPI.clearCinemaConfig();
+        await window.electronAPI.showCinemaSelector();
+      }
+    }
+  </script>
+</body>
+</html>

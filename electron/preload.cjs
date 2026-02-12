@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Navigation
   navigateToBoxOffice: (slug) => ipcRenderer.invoke('navigate-to-box-office', slug),
   showCinemaSelector: () => ipcRenderer.invoke('show-cinema-selector'),
+  retryLoad: () => ipcRenderer.invoke('retry-load'),
   
   // App info
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
