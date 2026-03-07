@@ -107,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
         .replace(/\{\{plan_name\}\}/g, plan?.name || "Unknown")
         .replace(/\{\{expiry_date\}\}/g, expiryDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }))
         .replace(/\{\{days_remaining\}\}/g, daysRemaining.toString())
-        .replace(/\{\{renewal_url\}\}/g, `${supabaseUrl.replace(".supabase.co", ".lovable.app")}/billing`)
+        .replace(/\{\{renewal_url\}\}/g, `https://cinitix.com/billing`)
         .replace(/\{\{platform_name\}\}/g, platformName);
 
       // Send email

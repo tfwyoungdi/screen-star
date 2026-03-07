@@ -93,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
       .replace(/\{\{amount\}\}/g, `$${amount.toFixed(2)}`)
       .replace(/\{\{failure_reason\}\}/g, failure_reason)
       .replace(/\{\{retry_date\}\}/g, retryDateObj.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }))
-      .replace(/\{\{update_payment_url\}\}/g, `${supabaseUrl.replace(".supabase.co", ".lovable.app")}/billing`)
+      .replace(/\{\{update_payment_url\}\}/g, `https://cinitix.com/billing`)
       .replace(/\{\{platform_name\}\}/g, platformName);
 
     // Send email
