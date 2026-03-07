@@ -20,33 +20,21 @@ function createWindow() {
       nodeIntegration: false,
     },
     icon: path.join(__dirname, '../public/favicon.ico'),
-    title: 'Box Office',
+    title: 'Cinitix - Box Office',
     autoHideMenuBar: true,
+    show: false, // Don't show until ready
   });
 
-  // Handle page load failures with retry
-  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-    console.error(`Failed to load: ${validatedURL} - ${errorDescription} (${errorCode})`);
-    // Show error page with retry option
-    mainWindow.loadFile(path.join(__dirname, 'load-error.html'));
-  });
-
-  // Handle blank page (renderer crash)
-  mainWindow.webContents.on('render-process-gone', (event, details) => {
-    console.error('Render process gone:', details.reason);
-    mainWindow.loadFile(path.join(__dirname, 'load-error.html'));
-  });
-
-  // Handle unresponsive page
-  mainWindow.webContents.on('unresponsive', () => {
-    console.error('Page became unresponsive');
+  // Show window once content is ready to prevent white flash
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 
   // Check if cinema is already configured
   const config = loadConfig();
   
   if (config && config.cinemaSlug) {
-    loadBoxOffice(config.cinemaSlug);
+    loadBoxOfficeWithSplash(config.cinemaSlug);
   } else {
     // Show cinema selector
     mainWindow.loadFile(path.join(__dirname, 'cinema-selector.html'));
@@ -58,9 +46,83 @@ function createWindow() {
   }
 }
 
-function loadBoxOffice(slug) {
+function loadBoxOfficeWithSplash(slug) {
+  // First show the splash screen
+  mainWindow.loadFile(path.join(__dirname, 'splash.html'));
+  
   const boxOfficeUrl = `https://cinitix.com/cinema/${slug}/staff`;
-  mainWindow.loadURL(boxOfficeUrl);
+  
+  // Create a hidden BrowserView or use webContents to preload
+  // We'll use a timeout-based approach: load splash, then navigate
+  let loadAttempts = 0;
+  const maxAttempts = 3;
+  
+  function attemptLoad() {
+    loadAttempts++;
+    
+    // Set up one-time handlers for this load attempt
+    const onFinish = () => {
+      cleanup();
+      // Successfully loaded - verify it's not a blank page
+      // Give the SPA a moment to render
+      setTimeout(() => {
+        mainWindow.webContents.executeJavaScript(
+          `document.querySelector('#root')?.innerHTML?.length > 0 || document.body?.innerHTML?.length > 100`
+        ).then((hasContent) => {
+          if (!hasContent) {
+            console.error('Page loaded but appears blank, retrying...');
+            if (loadAttempts < maxAttempts) {
+              mainWindow.loadFile(path.join(__dirname, 'splash.html'));
+              setTimeout(attemptLoad, 2000);
+            } else {
+              mainWindow.loadFile(path.join(__dirname, 'load-error.html'));
+            }
+          }
+          // else: page loaded successfully, do nothing
+        }).catch(() => {
+          // JS execution failed, page is probably fine or navigating
+        });
+      }, 3000); // Wait 3s for SPA to hydrate
+    };
+    
+    const onFail = (event, errorCode, errorDescription, validatedURL) => {
+      cleanup();
+      console.error(`Load attempt ${loadAttempts}/${maxAttempts} failed: ${errorDescription} (${errorCode})`);
+      
+      if (loadAttempts < maxAttempts) {
+        // Show splash and retry after a delay
+        mainWindow.loadFile(path.join(__dirname, 'splash.html'));
+        setTimeout(attemptLoad, 2000 * loadAttempts); // Exponential backoff
+      } else {
+        mainWindow.loadFile(path.join(__dirname, 'load-error.html'));
+      }
+    };
+
+    const onCrash = (event, details) => {
+      cleanup();
+      console.error('Render process gone:', details.reason);
+      mainWindow.loadFile(path.join(__dirname, 'load-error.html'));
+    };
+    
+    function cleanup() {
+      mainWindow.webContents.removeListener('did-finish-load', onFinish);
+      mainWindow.webContents.removeListener('did-fail-load', onFail);
+      mainWindow.webContents.removeListener('render-process-gone', onCrash);
+    }
+    
+    mainWindow.webContents.on('did-finish-load', onFinish);
+    mainWindow.webContents.on('did-fail-load', onFail);
+    mainWindow.webContents.on('render-process-gone', onCrash);
+    
+    mainWindow.loadURL(boxOfficeUrl);
+  }
+  
+  // Start loading after splash is shown
+  setTimeout(attemptLoad, 500);
+}
+
+function loadBoxOffice(slug) {
+  loadBoxOfficeWithSplash(slug);
 }
 
 function loadConfig() {
