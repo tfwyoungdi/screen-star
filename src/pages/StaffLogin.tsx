@@ -43,7 +43,8 @@ export default function StaffLogin() {
       return data;
     },
     enabled: !!slug,
-    retry: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
   // Check if user is already logged in and belongs to this organization
