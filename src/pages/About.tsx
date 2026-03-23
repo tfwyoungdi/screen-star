@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Film, Users, Star, Award, Target, Heart, ArrowRight, ArrowUpRight, CheckCircle, Zap, Shield, BarChart3, Quote } from "lucide-react";
+import { Users, Star, Target, Heart, ArrowRight, ArrowUpRight, CheckCircle, Zap, Shield, BarChart3, Quote } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
