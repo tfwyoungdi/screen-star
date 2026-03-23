@@ -4,12 +4,6 @@ import { Film, Users, Star, Award, Target, Heart, ArrowRight, ArrowUpRight, Chec
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
-const stats = [
-  { label: "Active Cinemas", value: "500+", icon: Film },
-  { label: "Tickets Sold", value: "2M+", icon: Award },
-  { label: "Customer Rating", value: "4.9/5", icon: Star },
-  { label: "Team Members", value: "50+", icon: Users },
-];
 
 const values = [
   {
