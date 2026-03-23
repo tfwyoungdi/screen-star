@@ -1,15 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Film, Users, Star, Award, Target, Heart, ArrowRight, ArrowUpRight, CheckCircle, Zap, Shield, BarChart3, Quote } from "lucide-react";
+import { Users, Star, Target, Heart, ArrowRight, ArrowUpRight, CheckCircle, Zap, Shield, BarChart3, Quote } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
-const stats = [
-  { label: "Active Cinemas", value: "500+", icon: Film },
-  { label: "Tickets Sold", value: "2M+", icon: Award },
-  { label: "Customer Rating", value: "4.9/5", icon: Star },
-  { label: "Team Members", value: "50+", icon: Users },
-];
 
 const values = [
   {
@@ -73,22 +67,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 border-y border-border bg-card">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
-                  <stat.icon className="h-7 w-7 text-primary" />
-                </div>
-                <div className="text-3xl md:text-4xl font-bold text-foreground mb-2">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Mission Section */}
       <section className="py-20 lg:py-28 bg-background relative overflow-hidden">
