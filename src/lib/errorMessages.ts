@@ -27,7 +27,7 @@ export function getSecureErrorMessage(
   category?: ErrorCategory
 ): string {
   // Log detailed error for debugging (in development or to error tracking)
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     console.error('[Debug Error]:', error);
   }
   
