@@ -10,7 +10,7 @@ interface UseRealtimeContactSubmissionsOptions {
 
 // Debounce helper to prevent rapid-fire invalidations
 function useDebouncedInvalidate(queryClient: ReturnType<typeof useQueryClient>, delay = 2000) {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingKeysRef = useRef<Set<string>>(new Set());
 
   const invalidate = useCallback((queryKey: string[]) => {
