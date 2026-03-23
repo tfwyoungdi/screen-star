@@ -49,10 +49,6 @@ const About = () => {
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-sm font-semibold text-primary tracking-wide uppercase">Our Story</span>
-            </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold text-foreground leading-tight mb-6">
               Revolutionizing the{" "}
